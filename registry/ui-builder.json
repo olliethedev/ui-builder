@@ -1,0 +1,41 @@
+{
+  "name": "UI Builder Components",
+  "type": "registry:ui",
+  "registryDependencies": [
+    "accordion",
+    "button",
+    "calendar",
+    "card",
+    "checkbox",
+    "form",
+    "input",
+    "label",
+    "popover",
+    "radio-group",
+    "select",
+    "separator",
+    "switch",
+    "textarea",
+    "tooltip",
+    "toggle",
+    "https://raw.githubusercontent.com/vantezzen/auto-form/main/registry/auto-form.json"
+  ],
+  "dependencies": [
+    "react-hook-form",
+    "zod",
+    "zustand"
+  ],
+  "devDependencies": [],
+  "tailwind": {
+    "config": {}
+  },
+  "cssVars": {},
+  "files": [
+    {
+      "path": "ui/ui-builder/hello.tsx",
+      "target": "components/ui/ui-builder/hello.tsx",
+      "content": "import React from 'react'\n\nconst Hello = () => {\n  return (\n    <div>hello</div>\n  )\n}\n\nexport default Hello",
+      "type": "registry:ui"
+    }
+  ]
+}
