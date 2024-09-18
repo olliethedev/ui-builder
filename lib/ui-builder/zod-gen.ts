@@ -60,11 +60,11 @@ function generateDocs(dir: string) {
 
   if (interfaceDataArray.length > 0) {
     // Generate the consolidated schemas file
-    let dirPart = dir !== componentsDir ? path.basename(dir) : undefined;
+    const dirParts = dir !== componentsDir ? path.relative(componentsDir, dir).split(path.sep) : [];
     const schemaFileContent = interfacesToSchema(interfaceDataArray);
-    console.log({ componentsDir, dirPart });
-    const schemaPathParts: string[] = [componentsDir, dirPart ?? '', 'generated-schemas.ts'];
-    let schemaFilePath = path.join(...schemaPathParts);
+    console.log({ componentsDir, dirParts });
+    const schemaPathParts: string[] = [componentsDir, ...dirParts, 'generated-schemas.ts'];
+    const schemaFilePath = path.join(...schemaPathParts);
 
     fs.writeFileSync(schemaFilePath, schemaFileContent);
     console.log(`Generated zod schema file: ${ schemaFilePath }`);
