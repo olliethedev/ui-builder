@@ -63,7 +63,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
       <ErrorBoundary key={layer.id}>
         <Suspense key={layer.id} fallback={<div>Loading...</div>}>
           <Component
-            {...childProps}
+            {...childProps as any}
             className={`${isSelected ? 'ring-2 ring-blue-500 ring-offset-0' : ''} ${
               childProps.className || ""
             }`}

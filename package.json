@@ -13,6 +13,7 @@
     "host-registry": "npx http-server registry"
   },
   "dependencies": {
+    "@anatine/zod-mock": "^3.13.4",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-checkbox": "^1.1.1",
