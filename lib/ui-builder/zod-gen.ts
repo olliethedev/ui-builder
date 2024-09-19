@@ -9,7 +9,7 @@ import { interfacesToSchema } from './interfaces-to-schema';
 // NOTE: for the script to find a component, it must take props
 
 // Define directories and paths
-const componentsDir = path.join(__dirname, '..', 'components');
+const componentsDir = path.join(__dirname, '..', '..', 'components');
 
 /**
  * Recursively traverses the components directory to find and process .tsx files.
