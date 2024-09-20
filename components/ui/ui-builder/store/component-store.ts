@@ -88,9 +88,9 @@ export type ComponentLayer = Exclude<Layer, { type: '_text_'; text: string }>;
 interface ComponentStore {
   components: CustomComponentType[];
   layers: Layer[];
-  addComponentLayer: (layerType: keyof typeof componentRegistry, parentId?: string) => void;
-  addTextLayer: (text: string, parentId?: string) => void;
-  duplicateLayer: (layerId: string) => void;
+  addComponentLayer: (layerType: keyof typeof componentRegistry, parentId?: string, parentPosition?: number) => void;
+  addTextLayer: (text: string, parentId?: string, parentPosition?: number) => void;
+  duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
   updateLayerProps: (layerId: string, newProps: Record<string, any>) => void;
   selectLayer: (layerId: string) => void;
@@ -105,7 +105,7 @@ export const useComponentStore = create<ComponentStore>((set: any) => ({
   })),
   layers: [],
   selectedLayer: null,
-  addComponentLayer: (layerType: keyof typeof componentRegistry, parentId?: string) => set((state: ComponentStore) => {
+  addComponentLayer: (layerType: keyof typeof componentRegistry, parentId?: string, parentPosition?: number) => set((state: ComponentStore) => {
     const defaultProps = getDefaultProps(componentRegistry[layerType].schema);
     console.log({defaultProps});
     const initialProps = Object.entries(defaultProps).reduce((acc, [key, propDef]) => {
@@ -121,17 +121,17 @@ export const useComponentStore = create<ComponentStore>((set: any) => ({
       children: []
     };
 
-    return addLayerToState(state, newLayer, parentId);
+    return addLayerToState(state, newLayer, parentId, parentPosition);
   }),
 
-  addTextLayer: (text: string, parentId?: string) => set((state: ComponentStore) => {
+  addTextLayer: (text: string, parentId?: string, parentPosition?: number) => set((state: ComponentStore) => {
     const newLayer: Layer = {
       id: createId(),
       type: '_text_',
       text
     };
 
-    return addLayerToState(state, newLayer, parentId);
+    return addLayerToState(state, newLayer, parentId, parentPosition);
   }),
   duplicateLayer: (layerId: string) => set((state: ComponentStore) => {
     const layerToDuplicate = findLayerRecursive(state.layers, layerId);
@@ -214,30 +214,60 @@ function isTextLayer(layer: Layer): layer is Layer & { type: '_text_'; text: str
   return layer.type === '_text_';
 }
 
-const addLayerToState = (state: ComponentStore, newLayer: Layer, parentId?: string) => {
+const addLayerToState = (
+  state: ComponentStore, 
+  newLayer: Layer, 
+  parentId?: string, 
+  parentPosition?: number
+): ComponentStore => {
   const addLayerRecursive = (layers: Layer[]): Layer[] => {
     return layers.map(layer => {
-      if (layer.id === parentId) {
-        if (!isTextLayer(layer)) {
-          return { ...layer, children: [...(layer.children || []), newLayer] };
+      if (layer.id === parentId && !isTextLayer(layer)) {
+        const updatedChildren = layer.children ? [...layer.children] : [];
+
+        if (parentPosition !== undefined) {
+          // Insert the new layer at the specified position
+          updatedChildren.splice(parentPosition, 0, newLayer);
+        } else {
+          // Append the new layer to the children
+          updatedChildren.push(newLayer);
         }
-        return layer; // Text layers can't have children
+
+        return { ...layer, children: updatedChildren };
       }
+
       if (!isTextLayer(layer) && layer.children) {
-        return { ...layer, children: addLayerRecursive(layer.children) };
+        return { 
+          ...layer, 
+          children: addLayerRecursive(layer.children) 
+        };
       }
+
       return layer;
     });
   };
 
-  const updatedLayers = parentId ? addLayerRecursive(state.layers) : [...state.layers, newLayer];
+  let updatedLayers = [...state.layers];
 
-  // Only update selectedLayer if the new layer is not a text layer
-  const updatedSelectedLayer = !isTextLayer(newLayer) ? newLayer : state.selectedLayer;
+  if (parentId) {
+    updatedLayers = addLayerRecursive(state.layers);
+  } else if (parentPosition !== undefined) {
+    // Respect the parentPosition when adding to root layers
+    updatedLayers.splice(parentPosition, 0, newLayer);
+  } else {
+    // Append to the root layers if no position is specified
+    updatedLayers.push(newLayer);
+  }
+
+  // Update selectedLayer only if the new layer is not a text layer
+  const updatedSelectedLayer = !isTextLayer(newLayer) 
+    ? newLayer 
+    : state.selectedLayer;
 
   return {
+    ...state,
     layers: updatedLayers,
-    selectedLayer: updatedSelectedLayer
+    selectedLayer: updatedSelectedLayer,
   };
 };
 

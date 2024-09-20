@@ -3,8 +3,11 @@ import React, {
   ReactNode,
   Component as ReactComponent,
   Suspense,
+  useState,
+  useEffect,
+  useRef,
 } from "react";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, ChevronRight, Plus, Trash, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -26,26 +29,91 @@ import {
   Layer,
   useComponentStore,
 } from "@/components/ui/ui-builder/store/component-store";
+import { cn } from "@/lib/utils";
 
 interface PreviewPanelProps {
   className?: string;
 }
 
 const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
-  const { layers, selectLayer, addComponentLayer, selectedLayer } = useComponentStore();
+  const {
+    layers,
+    selectLayer,
+    addComponentLayer,
+    selectedLayer,
+    duplicateLayer,
+    removeLayer,
+  } = useComponentStore();
+  const [menuPosition, setMenuPosition] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-
-  const onAddElement = (componentName: keyof typeof componentRegistry) => {
-    addComponentLayer(componentName);
+  const onAddElement = (
+    componentName: keyof typeof componentRegistry,
+    parentId?: string,
+    parentPosition?: number
+  ) => {
+    addComponentLayer(componentName, parentId, parentPosition);
   };
 
-  const onSelectElement = (layerId: string) => {
+  const onSelectElement = (layerId: string, event: React.MouseEvent) => {
     selectLayer(layerId);
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    setMenuPosition({
+      x: rect.left,
+      y: rect.top,
+      width: rect.width,
+      height: rect.height,
+    });
+    setIsMenuOpen(true);
   };
+
+  const handleDeleteLayer = () => {
+    if (selectedLayer) {
+      removeLayer(selectedLayer.id);
+    }
+  };
+
+  const handleDuplicateLayer = () => {
+    if (selectedLayer) {
+      duplicateLayer(selectedLayer.id);
+    }
+  };
+
+  // Update menu position when selectedLayer changes
+  useEffect(() => {
+    if (selectedLayer && containerRef.current) {
+      const element = containerRef.current.querySelector<HTMLElement>(
+        `[data-layer-id="${selectedLayer.id}"]`
+      );
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        const containerRect = containerRef.current.getBoundingClientRect();
+        setMenuPosition({
+          x: rect.left - containerRect.left,
+          y: rect.top - containerRect.top,
+          width: rect.width,
+          height: rect.height,
+        });
+        setIsMenuOpen(true);
+      }
+    } else {
+      setIsMenuOpen(false);
+    }
+  }, [selectedLayer]);
 
   const renderLayer = (layer: Layer) => {
     if (isTextLayer(layer)) {
-      return <span key={layer.id}>{layer.text}</span>;
+      return (
+        <span key={layer.id} data-layer-id={layer.id}>
+          {layer.text}
+        </span>
+      );
     }
 
     const { component: Component } =
@@ -63,16 +131,20 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
       <ErrorBoundary key={layer.id}>
         <Suspense key={layer.id} fallback={<div>Loading...</div>}>
           <Component
-            {...childProps as any}
-            className={`${isSelected ? 'ring-2 ring-blue-500 ring-offset-0' : ''} ${
-              childProps.className || ""
-            }`}
+            {...(childProps as any)}
+            className={`${
+              isSelected ? "ring-2 ring-blue-500 ring-offset-0" : ""
+            } ${childProps.className || ""}`}
+            data-layer-id={layer.id} // Added data attribute for easy selection
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
-              onSelectElement(layer.id);
+              onSelectElement(layer.id, e);
             }}
             onMouseDown={(e: React.MouseEvent) => {
-              if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+              if (
+                e.target instanceof HTMLInputElement ||
+                e.target instanceof HTMLTextAreaElement
+              ) {
                 e.preventDefault();
               }
             }}
@@ -87,17 +159,43 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
   return (
     <div className={className}>
       <h2 className="text-xl font-semibold mb-4">Preview</h2>
-      
-      <div className="border p-4">
-        {layers.map(renderLayer)}
+
+      <div className="border p-4 relative" ref={containerRef}>
         <DividerControl
-          onComponentSelect={onAddElement}
+          handleAddComponent={(elem) => onAddElement(elem, undefined, 0)}
           availableComponents={
             Object.keys(componentRegistry) as Array<
               keyof typeof componentRegistry
             >
           }
         />
+        <div className="flex flex-col w-min max-w-full">
+          {layers.map(renderLayer)}
+        </div>
+        <DividerControl
+          handleAddComponent={(elem) => onAddElement(elem)}
+          availableComponents={
+            Object.keys(componentRegistry) as Array<
+              keyof typeof componentRegistry
+            >
+          }
+        />
+        {isMenuOpen && menuPosition && selectedLayer && (
+          <LayerMenu
+            x={menuPosition.x}
+            y={menuPosition.y}
+            width={menuPosition.width}
+            height={menuPosition.height}
+            handleAddComponent={(elem) => onAddElement(elem, selectedLayer.id)}
+            handleDuplicateComponent={handleDuplicateLayer}
+            handleDeleteComponent={handleDeleteLayer}
+            availableComponents={
+              Object.keys(componentRegistry) as Array<
+                keyof typeof componentRegistry
+              >
+            }
+          />
+        )}
       </div>
     </div>
   );
@@ -105,63 +203,140 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
 
 export default PreviewPanel;
 
+// Menu component that appears at the top-left corner of a selected layer
+interface MenuProps {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  handleAddComponent: (componentName: keyof typeof componentRegistry) => void;
+  handleDuplicateComponent: () => void;
+  handleDeleteComponent: () => void;
+  availableComponents: Array<keyof typeof componentRegistry>;
+}
+
+const LayerMenu: React.FC<MenuProps> = ({
+  x,
+  y,
+  width,
+  height,
+  handleAddComponent,
+  handleDuplicateComponent,
+  handleDeleteComponent,
+  availableComponents,
+}) => {
+  return (
+    <div
+      className="absolute"
+      style={{
+        top: y + height,
+        left: x - 3,
+        zIndex: 1000,
+      }}
+    >
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-5 group flex items-center rounded-bl-full rounded-r-full bg-white p-0 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 hover:h-10 transition-all duration-200 ease-in-out overflow-hidden"
+      >
+        <ChevronRight className="h-5 w-5 text-gray-400 group-hover:size-8 transition-all duration-200 ease-in-out group-hover:opacity-30" />
+        <span className="sr-only">Add component</span>
+        <div className="overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out">
+          <AddComponentsPopover
+            className="flex-shrink w-min inline-flex"
+            handleAddComponent={handleAddComponent}
+            availableComponents={availableComponents}
+          >
+            <Button size="sm" variant="ghost">
+              <span className="sr-only">Duplicate</span>
+              <Plus className="h-5 w-5 text-gray-400" />
+            </Button>
+          </AddComponentsPopover>
+          <Button size="sm" variant="ghost" onClick={handleDuplicateComponent}>
+            <span className="sr-only">Duplicate</span>
+            <Copy className="h-5 w-5 text-gray-400" />
+          </Button>
+          <Button size="sm" variant="ghost" onClick={handleDeleteComponent}>
+            <span className="sr-only">Delete</span>
+            <Trash className="h-5 w-5 text-gray-400" />
+          </Button>
+        </div>
+      </Button>
+    </div>
+  );
+};
+
 type DividerControlProps = {
-  onComponentSelect: (componentId: keyof typeof componentRegistry) => void;
+  className?: string;
+  handleAddComponent: (componentId: keyof typeof componentRegistry) => void;
   availableComponents: Array<keyof typeof componentRegistry>;
 };
 
 function DividerControl({
-  onComponentSelect,
+  handleAddComponent,
   availableComponents = [],
 }: DividerControlProps) {
-  const [open, setOpen] = React.useState(false);
-
-  const handleComponentSelect = (
-    componentId: keyof typeof componentRegistry
-  ) => {
-    onComponentSelect(componentId);
-    setOpen(false);
-  };
-
   return (
     <div className="relative py-0">
       <div className="absolute inset-0 flex items-center" aria-hidden="true">
         <div className="w-full border-t border-gray-300 border-dashed" />
       </div>
-      <div className="relative flex justify-center">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="group flex items-center rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-all duration-200 ease-in-out"
-            >
-              <PlusCircle className="h-5 w-5 text-gray-400" />
-              <span className="sr-only">Add component</span>
-              <span className="overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out group-hover:pl-2">
-                Add component
-              </span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[300px] p-0" align="center">
-            <Command>
-              <CommandInput placeholder="Search components..." />
-              <CommandList>
-                <CommandEmpty>No components found.</CommandEmpty>
-                <CommandGroup>
-                  {availableComponents.map((component) => (
-                    <CommandItem
-                      key={component}
-                      onSelect={() => handleComponentSelect(component)}
-                    >
-                      {component}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-      </div>
+      <AddComponentsPopover
+        handleAddComponent={handleAddComponent}
+        availableComponents={availableComponents}
+      >
+        <Button
+          variant="outline"
+          className="group flex items-center rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-all duration-200 ease-in-out"
+        >
+          <PlusCircle className="h-5 w-5 text-gray-400" />
+          <span className="sr-only">Add component</span>
+          <span className="overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out group-hover:pl-2">
+            Add component
+          </span>
+        </Button>
+      </AddComponentsPopover>
+    </div>
+  );
+}
+
+function AddComponentsPopover({
+  className,
+  handleAddComponent,
+  availableComponents = [],
+  children,
+}: DividerControlProps & { children: ReactNode }) {
+  const [open, setOpen] = React.useState(false);
+
+  const handleComponentSelect = (
+    componentId: keyof typeof componentRegistry
+  ) => {
+    handleAddComponent(componentId);
+    setOpen(false);
+  };
+  return (
+    <div className={cn("relative flex justify-center", className)}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>{children}</PopoverTrigger>
+        <PopoverContent className="w-[300px] p-0" align="center">
+          <Command>
+            <CommandInput placeholder="Search components..." />
+            <CommandList>
+              <CommandEmpty>No components found.</CommandEmpty>
+              <CommandGroup>
+                {availableComponents.map((component) => (
+                  <CommandItem
+                    key={component}
+                    onSelect={() => handleComponentSelect(component)}
+                  >
+                    {component}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
