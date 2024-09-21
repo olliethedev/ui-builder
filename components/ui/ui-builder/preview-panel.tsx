@@ -6,6 +6,7 @@ import React, {
   useState,
   useEffect,
   useRef,
+  useLayoutEffect,
 } from "react";
 import { PlusCircle, ChevronRight, Plus, Trash, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
     duplicateLayer,
     removeLayer,
   } = useComponentStore();
+  console.log("PreviewPanel", { selectedLayer });
   const [menuPosition, setMenuPosition] = useState<{
     x: number;
     y: number;
@@ -86,8 +88,8 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
   };
 
   // Update menu position when selectedLayer changes
-  useEffect(() => {
-    if (selectedLayer && containerRef.current) {
+  useLayoutEffect(() => {
+    if (selectedLayer && !isTextLayer(selectedLayer) && containerRef.current) {
       const element = containerRef.current.querySelector<HTMLElement>(
         `[data-layer-id="${selectedLayer.id}"]`
       );
@@ -133,19 +135,28 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
           <Component
             {...(childProps as any)}
             className={`${
-              isSelected ? "ring-2 ring-blue-500 ring-offset-0" : ""
+              isSelected
+                ? "border-2 border-blue-500"
+                : " hover:ring-1 hover:ring-blue-300 hover:ring-offset-0" //ring-2 ring-blue-500 ring-offset-0
             } ${childProps.className || ""}`}
-            data-layer-id={layer.id} // Added data attribute for easy selection
+            data-layer-id={layer.id}
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
+              e.preventDefault();
+              console.log("selectedLayer", selectedLayer);
               onSelectElement(layer.id, e);
             }}
+            // onClickCapture={(e: React.MouseEvent) => {
+            //   // Prevent click events from reaching child elements
+            //   e.stopPropagation();
+            //   e.preventDefault();
+            //   onSelectElement(layer.id, e);
+            // }}
             onMouseDown={(e: React.MouseEvent) => {
               if (
                 e.target instanceof HTMLInputElement ||
                 e.target instanceof HTMLTextAreaElement
               ) {
-                e.preventDefault();
               }
             }}
           >
@@ -229,16 +240,12 @@ const LayerMenu: React.FC<MenuProps> = ({
     <div
       className="absolute"
       style={{
-        top: y + height,
+        top: y + height - 2,
         left: x - 3,
         zIndex: 1000,
       }}
     >
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-5 group flex items-center rounded-bl-full rounded-r-full bg-white p-0 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 hover:h-10 transition-all duration-200 ease-in-out overflow-hidden"
-      >
+      <span className="h-5 group flex items-center rounded-bl-full rounded-r-full bg-white/90 p-0 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50/95 hover:h-10 transition-all duration-200 ease-in-out overflow-hidden cursor-pointer hover:cursor-auto">
         <ChevronRight className="h-5 w-5 text-gray-400 group-hover:size-8 transition-all duration-200 ease-in-out group-hover:opacity-30" />
         <span className="sr-only">Add component</span>
         <div className="overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out">
@@ -261,7 +268,7 @@ const LayerMenu: React.FC<MenuProps> = ({
             <Trash className="h-5 w-5 text-gray-400" />
           </Button>
         </div>
-      </Button>
+      </span>
     </div>
   );
 };

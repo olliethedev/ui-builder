@@ -94,6 +94,7 @@ interface ComponentStore {
   removeLayer: (layerId: string) => void;
   updateLayerProps: (layerId: string, newProps: Record<string, any>) => void;
   selectLayer: (layerId: string) => void;
+  reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => void;
   selectedLayer: ComponentLayer | null;
 }
 
@@ -208,6 +209,50 @@ export const useComponentStore = create<ComponentStore>((set: any) => ({
     }
     return {};
   }),
+  reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => set((state: ComponentStore) => {
+    console.log("reorderChildrenLayers", parentId, orderedChildrenIds);
+    const reorderRecursive = (layers: Layer[]): Layer[] => {
+      return layers.map(layer => {
+        // Check if the current layer is the parent layer to reorder
+        if (layer.id === parentId && !isTextLayer(layer)) {
+          if (!layer.children) {
+            // If the parent layer exists but has no children, return it unchanged
+            return layer;
+          }
+          console.log("layer.children", layer.children);
+          // Reorder children based on orderedChildrenIds
+          const newChildren = orderedChildrenIds
+            .map(id => layer.children?.find(child => child.id === id))
+            .filter(child => child !== undefined) as Layer[];
+          console.log("newChildren", newChildren);
+
+          // Return the layer with reordered and filtered children
+          return {
+            ...layer,
+            children: newChildren
+          };
+        }
+
+        // If the layer is a Component Layer and has children, recurse into them
+        if (!isTextLayer(layer) && layer.children) {
+          return { 
+            ...layer, 
+            children: reorderRecursive(layer.children) 
+          };
+        }
+
+        // For Text Layers or layers without children, return them unchanged
+        return layer;
+      });
+    };
+
+    const updatedLayers = reorderRecursive(state.layers);
+
+    return {
+      ...state,
+      layers: updatedLayers,
+    };
+  }),
 }));
 
 function isTextLayer(layer: Layer): layer is Layer & { type: '_text_'; text: string } {
@@ -259,10 +304,34 @@ const addLayerToState = (
     updatedLayers.push(newLayer);
   }
 
-  // Update selectedLayer only if the new layer is not a text layer
-  const updatedSelectedLayer = !isTextLayer(newLayer) 
-    ? newLayer 
-    : state.selectedLayer;
+  // Update selectedLayer only 
+  // If a parentId is provided and it matches the current selectedLayer,
+  // update selectedLayer to the updated parent layer with new children.
+  let updatedSelectedLayer = state.selectedLayer;
+
+  if (parentId && state.selectedLayer?.id === parentId) {
+    // Recursive function to find and return the updated parent layer
+    const findAndReturnUpdatedLayer = (layers: Layer[]): Layer | null => {
+      for (const layer of layers) {
+        if (layer.id === parentId) {
+          return layer;
+        }
+        if (!isTextLayer(layer) && layer.children) {
+          const found = findAndReturnUpdatedLayer(layer.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const newSelectedLayer = findAndReturnUpdatedLayer(updatedLayers);
+    if (newSelectedLayer) {
+      updatedSelectedLayer = newSelectedLayer as ComponentLayer;
+    }
+  } else if (!parentId && !isTextLayer(newLayer)) {
+    // If adding a new root component layer, set it as selectedLayer
+    updatedSelectedLayer = newLayer;
+  }
 
   return {
     ...state,
@@ -394,6 +463,7 @@ function transformUnionToEnum<T extends ZodTypeAny>(schema: T): T {
 
       // Apply default before adding modifiers to ensure it doesn't get overridden
       transformedSchema = enumSchema.default(enumValues[0]);
+
 
       if (schema.isNullable()) {
         transformedSchema = transformedSchema.nullable();
