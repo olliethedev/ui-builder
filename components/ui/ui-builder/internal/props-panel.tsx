@@ -548,9 +548,7 @@ function ChildrenSearchableMultiSelect({
                   id: child.id,
                   reactElement: (
                     <div key={child.id} className="flex items-center space-x-2">
-                      <span>
-                        {isTextLayer(child) ? `"${child.text}"` : child.type}
-                      </span>
+                      <span className="truncate inline-block max-w-[150px]">{isTextLayer(child) ? `"${child.text}"` : child.type}</span>
                       <Button
                         variant="ghost"
                         size="icon"
