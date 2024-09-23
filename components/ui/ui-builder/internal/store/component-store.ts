@@ -3,10 +3,10 @@ import { create } from 'zustand';
 import { generateMock } from '@anatine/zod-mock';
 import { z, ZodTypeAny, ZodUnion, ZodLiteral, ZodOptional, ZodNullable, ZodEnum, ZodObject, ZodRawShape, ZodNumber, ZodDate, ZodArray, ZodString, ZodTuple, ZodRecord } from 'zod';
 // import { ComponentDefinitions } from '@/components/ui/generated-schemas';
-import { customAlphabet } from "nanoid";
-import { Button } from '../../button';
-import { Badge } from '../../badge';
-import { Transactions } from '../../transactions';
+
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Transactions } from '@/components/ui/transactions';
 
 
 // Component registry with Zod schemas or add manually like:
@@ -95,17 +95,28 @@ interface ComponentStore {
   updateLayerProps: (layerId: string, newProps: Record<string, any>) => void;
   selectLayer: (layerId: string) => void;
   reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => void;
-  selectedLayer: ComponentLayer | null;
+  selectedLayerId: string | null;
+  findLayerById: (layerId: string | null) => ComponentLayer | undefined;
 }
 
-export const useComponentStore = create<ComponentStore>((set: any) => ({
+export const useComponentStore = create<ComponentStore>((set, get) => ({
+
   components: Object.entries(componentRegistry).map(([name, { component, schema }]) => ({
     name: name as keyof typeof componentRegistry,
     component,
     schema,
   })),
+
   layers: [],
-  selectedLayer: null,
+
+  selectedLayerId: null,
+
+  findLayerById: (layerId: string | null) =>  {
+    const { layers } = get();
+    if (!layerId) return undefined;
+    return findLayerRecursive(layers , layerId);
+  },
+
   addComponentLayer: (layerType: keyof typeof componentRegistry, parentId?: string, parentPosition?: number) => set((state: ComponentStore) => {
     const defaultProps = getDefaultProps(componentRegistry[layerType].schema);
     console.log({defaultProps});
@@ -134,6 +145,7 @@ export const useComponentStore = create<ComponentStore>((set: any) => ({
 
     return addLayerToState(state, newLayer, parentId, parentPosition);
   }),
+
   duplicateLayer: (layerId: string) => set((state: ComponentStore) => {
     const layerToDuplicate = findLayerRecursive(state.layers, layerId);
     if (layerToDuplicate) {
@@ -151,24 +163,29 @@ export const useComponentStore = create<ComponentStore>((set: any) => ({
     }
     return state;
   }),
+
   removeLayer: (layerId: string) => set((state: ComponentStore) => {
-
-
+    // Find the parent layer before removing the layer
+    const parentLayer = findParentLayerRecursive(state.layers, layerId);
+    console.log("removeLayer", layerId, {parentLayer: parentLayer?.id}, {layers: state.layers});
+    // Remove the target layer
     const updatedLayers = removeLayerRecursive(state.layers, layerId);
-
-    // Find the parent of the removed layer
-
-    const parentLayer = findParentLayerRecursive(updatedLayers, layerId);
-
-    // Select the parent layer or null if the removed layer was a top-level layer
-    const updatedSelectedLayer = parentLayer && !isTextLayer(parentLayer) ? parentLayer :
-      (updatedLayers.length > 0 && !isTextLayer(updatedLayers[0]) ? updatedLayers[0] : null);
-
+    console.log("updatedLayers", {updatedLayers});
+    // Determine the new selected layer
+    let updatedSelectedLayer: Layer | null = null;
+  
+    if (parentLayer && !isTextLayer(parentLayer)) {
+      updatedSelectedLayer = parentLayer;
+    } else if (updatedLayers.length > 0 && !isTextLayer(updatedLayers[0])) {
+      updatedSelectedLayer = updatedLayers[0];
+    }
+  
     return {
       layers: updatedLayers,
-      selectedLayer: updatedSelectedLayer
+      selectedLayerId: updatedSelectedLayer?.id || null
     };
   }),
+
   updateLayerProps: (layerId: string, newProps: Record<string, any>) => set((state: ComponentStore) => {
     const updateLayerRecursive = (layers: Layer[]): Layer[] => {
       return layers.map(layer => {
@@ -189,26 +206,25 @@ export const useComponentStore = create<ComponentStore>((set: any) => ({
     };
 
     const updatedLayers = updateLayerRecursive(state.layers);
-    const updatedSelectedLayer = state.selectedLayer && state.selectedLayer.id === layerId && !isTextLayer(state.selectedLayer) ?
-      updateLayerRecursive([state.selectedLayer])[0] as ComponentLayer :
-      state.selectedLayer;
+
 
     return {
       layers: updatedLayers,
-      selectedLayer: updatedSelectedLayer
     };
   }),
+
   selectLayer: (layerId: string) => set((state: ComponentStore) => {
 
 
     const layer = findLayerRecursive(state.layers, layerId);
     if (layer) {
       return {
-        selectedLayer: layer,
+        selectedLayerId: layer.id
       };
     }
     return {};
   }),
+
   reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => set((state: ComponentStore) => {
     console.log("reorderChildrenLayers", parentId, orderedChildrenIds);
     const reorderRecursive = (layers: Layer[]): Layer[] => {
@@ -253,6 +269,7 @@ export const useComponentStore = create<ComponentStore>((set: any) => ({
       layers: updatedLayers,
     };
   }),
+
 }));
 
 function isTextLayer(layer: Layer): layer is Layer & { type: '_text_'; text: string } {
@@ -304,39 +321,12 @@ const addLayerToState = (
     updatedLayers.push(newLayer);
   }
 
-  // Update selectedLayer only 
-  // If a parentId is provided and it matches the current selectedLayer,
-  // update selectedLayer to the updated parent layer with new children.
-  let updatedSelectedLayer = state.selectedLayer;
-
-  if (parentId && state.selectedLayer?.id === parentId) {
-    // Recursive function to find and return the updated parent layer
-    const findAndReturnUpdatedLayer = (layers: Layer[]): Layer | null => {
-      for (const layer of layers) {
-        if (layer.id === parentId) {
-          return layer;
-        }
-        if (!isTextLayer(layer) && layer.children) {
-          const found = findAndReturnUpdatedLayer(layer.children);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
-
-    const newSelectedLayer = findAndReturnUpdatedLayer(updatedLayers);
-    if (newSelectedLayer) {
-      updatedSelectedLayer = newSelectedLayer as ComponentLayer;
-    }
-  } else if (!parentId && !isTextLayer(newLayer)) {
-    // If adding a new root component layer, set it as selectedLayer
-    updatedSelectedLayer = newLayer;
-  }
+  const oldSelectedLayerId = state.selectedLayerId;
 
   return {
     ...state,
     layers: updatedLayers,
-    selectedLayer: updatedSelectedLayer,
+    selectedLayerId: isTextLayer(newLayer) ? oldSelectedLayerId : newLayer.id
   };
 };
 
@@ -369,21 +359,38 @@ const findLayerRecursive = (layers: Layer[], layerId: string): ComponentLayer | 
 };
 
 const removeLayerRecursive = (layers: Layer[], layerId: string): Layer[] => {
-  return layers.filter(layer => {
+  return layers.reduce<Layer[]>((acc, layer) => {
     if (layer.id === layerId) {
-      return false;
+      // Skip this layer (i.e., remove it)
+      return acc;
     }
+
     if (!isTextLayer(layer) && layer.children) {
-      layer.children = removeLayerRecursive(layer.children, layerId);
+      // Recursively remove the layer from children without mutating
+      const newChildren = removeLayerRecursive(layer.children, layerId);
+      acc.push({ ...layer, children: newChildren });
+    } else {
+      // No children to process, add the layer as is
+      acc.push(layer);
     }
-    return true;
-  });
+
+    return acc;
+  }, []);
 };
 
-const createId = customAlphabet(
-  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
-  7
-) // 7-character random string
+function createId(): string {
+  const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  const ID_LENGTH = 7;
+  let result = '';
+  const alphabetLength = ALPHABET.length;
+  
+  for (let i = 0; i < ID_LENGTH; i++) {
+    const randomIndex = Math.floor(Math.random() * alphabetLength);
+    result += ALPHABET.charAt(randomIndex);
+  }
+  
+  return result;
+}
 
 function getDefaultProps(schema: ZodObject<any>) {
   // Transform schema to a new schema with only the required fields from the original schema

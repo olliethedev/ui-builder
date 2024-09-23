@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import LayersPanel from "./layers-panel";
-import PreviewPanel from "./preview-panel";
-import PropsPanel from "./props-panel";
-import { NavBar } from "./nav";
+import LayersPanel from "@/components/ui/ui-builder/internal/layers-panel";
+import PreviewPanel from "@/components/ui/ui-builder/internal/preview-panel";
+import PropsPanel from "@/components/ui/ui-builder/internal/props-panel";
+import { NavBar } from "@/components/ui/ui-builder/internal/nav";
 
 const ComponentEditor = () => {
   return (

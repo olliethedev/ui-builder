@@ -1,7 +1,7 @@
 import ComponentEditor from "@/components/ui/ui-builder/component-editor";
 
 export const metadata = {
-  title: "App Router",
+  title: "UI Builder",
 };
 
 export default function Page() {

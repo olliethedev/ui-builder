@@ -1,13 +1,14 @@
 import React from "react";
-import { Layer, useComponentStore, isTextLayer } from "@/components/ui/ui-builder/store/component-store";
+import { Layer, useComponentStore, isTextLayer } from "@/components/ui/ui-builder/internal/store/component-store";
 
 interface LayersPanelProps {
   className?: string;
 }
 
 const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
-  const { layers, selectLayer, selectedLayer } = useComponentStore();
+  const { layers, selectLayer, selectedLayerId, findLayerById } = useComponentStore();
 
+  const selectedLayer = findLayerById(selectedLayerId);
   const isSelected = (layer: Layer): boolean => {
     if (isTextLayer(layer)) return false;
     return layer.id === selectedLayer?.id || 

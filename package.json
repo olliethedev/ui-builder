@@ -39,6 +39,7 @@
     "react": "^18.2.0",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.2.0",
+    "react-error-boundary": "^4.0.13",
     "react-hook-form": "^7.53.0",
     "server-only": "^0.0.1",
     "swapy": "^0.2.1",
@@ -49,7 +50,7 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "6.1.5",
-    "@testing-library/react": "14.1.2",
+    "@testing-library/react": "^16.0.1",
     "@types/jest": "29.5.11",
     "@types/react": "18.2.45",
     "autoprefixer": "^10.4.20",

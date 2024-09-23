@@ -4,11 +4,11 @@ import React, {
   Component as ReactComponent,
   Suspense,
   useState,
-  useEffect,
   useRef,
   useLayoutEffect,
 } from "react";
 import { PlusCircle, ChevronRight, Plus, Trash, Copy } from "lucide-react";
+import { ErrorBoundary } from "react-error-boundary";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -29,7 +29,7 @@ import {
   isTextLayer,
   Layer,
   useComponentStore,
-} from "@/components/ui/ui-builder/store/component-store";
+} from "@/components/ui/ui-builder/internal/store/component-store";
 import { cn } from "@/lib/utils";
 
 interface PreviewPanelProps {
@@ -41,11 +41,13 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
     layers,
     selectLayer,
     addComponentLayer,
-    selectedLayer,
+    selectedLayerId,
+    findLayerById,
     duplicateLayer,
     removeLayer,
   } = useComponentStore();
-  console.log("PreviewPanel", { selectedLayer });
+  console.log("PreviewPanel", { selectedLayerId });
+  const selectedLayer = findLayerById(selectedLayerId);
   const [menuPosition, setMenuPosition] = useState<{
     x: number;
     y: number;
@@ -130,7 +132,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
     const isSelected = layer.id === selectedLayer?.id;
 
     return (
-      <ErrorBoundary key={layer.id}>
+      <ErrorBoundary key={layer.id} fallbackRender={ErrorFallback}>
         <Suspense key={layer.id} fallback={<div>Loading...</div>}>
           <Component
             {...(childProps as any)}
@@ -171,7 +173,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
     <div className={className}>
       <h2 className="text-xl font-semibold mb-4">Preview</h2>
 
-      <div className="border p-4 relative" ref={containerRef}>
+      <div className="border p-4 relative w-full" ref={containerRef}>
         <DividerControl
           handleAddComponent={(elem) => onAddElement(elem, undefined, 0)}
           availableComponents={
@@ -180,7 +182,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
             >
           }
         />
-        <div className="flex flex-col w-min max-w-full">
+        <div className="flex flex-col w-full overflow-hidden">
           {layers.map(renderLayer)}
         </div>
         <DividerControl
@@ -348,52 +350,17 @@ function AddComponentsPopover({
   );
 }
 
-interface ErrorBoundaryProps {
-  children: ReactNode;
-}
+function ErrorFallback({ error }: { error: Error }) {
+  // Call resetErrorBoundary() to reset the error boundary and retry the render.
 
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
-
-class ErrorBoundary extends ReactComponent<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      if (process.env.NODE_ENV === "production") {
-        return null;
-      }
-
-      return (
-        <div className="p-4 border border-red-500 bg-red-100 text-red-700 rounded">
-          <h3 className="font-bold mb-2">Component Error</h3>
-          <p>Error: {this.state.error?.message || "Unknown error"}</p>
-          <details className="mt-2">
-            <summary className="cursor-pointer">Stack trace</summary>
-            <pre className="mt-2 text-xs whitespace-pre-wrap">
-              {this.state.error?.stack}
-            </pre>
-          </details>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
+  return (
+    <div className="p-4 border border-red-500 bg-red-100 text-red-700 rounded flex-grow w-full">
+      <h3 className="font-bold mb-2">Component Error</h3>
+      <p>Error: {error?.message || "Unknown error"}</p>
+      <details className="mt-2">
+        <summary className="cursor-pointer">Stack trace</summary>
+        <pre className="mt-2 text-xs whitespace-pre-wrap">{error?.stack}</pre>
+      </details>
+    </div>
+  );
 }

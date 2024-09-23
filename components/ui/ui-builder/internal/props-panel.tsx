@@ -6,7 +6,7 @@ import {
   componentRegistry,
   ComponentLayer,
   isTextLayer,
-} from "@/components/ui/ui-builder/store/component-store";
+} from "@/components/ui/ui-builder/internal/store/component-store";
 import {
   FormControl,
   FormDescription,
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/popover";
 import AutoForm from "@/components/ui/auto-form";
 import { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
-import DraggableList from "./draggable-list";
+import DraggableList from "@/components/ui/ui-builder/internal/draggable-list";
 
 interface PropsPanelProps {
   className?: string;
@@ -39,7 +39,8 @@ interface PropsPanelProps {
 
 const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
   const {
-    selectedLayer,
+    selectedLayerId,
+    findLayerById,
     addComponentLayer,
     addTextLayer,
     removeLayer,
@@ -47,6 +48,8 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
     updateLayerProps,
     reorderChildrenLayers,
   } = useComponentStore();
+
+  const selectedLayer = findLayerById(selectedLayerId);
 
   const handleAddComponentLayer = useCallback(
     (componentName: keyof typeof componentRegistry) => {
@@ -62,11 +65,9 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
     [selectedLayer?.id, addTextLayer]
   );
 
-  const handleDeleteLayer = useCallback(() => {
-    if (selectedLayer) {
-      removeLayer(selectedLayer.id);
-    }
-  }, [selectedLayer?.id, removeLayer]);
+  const handleDeleteLayer = useCallback((layerId: string) => {
+    removeLayer(layerId);
+  }, [ removeLayer]);
 
   const handleDuplicateLayer = useCallback(() => {
     if (selectedLayer) {
@@ -293,7 +294,9 @@ function ChildrenSearchableMultiSelect({
   const [inputValue, setInputValue] = React.useState("");
   const [textInputValue, setTextInputValue] = React.useState("");
 
-  const {selectedLayer} = useComponentStore();
+  const {selectedLayerId, findLayerById} = useComponentStore();
+
+  const selectedLayer = findLayerById(selectedLayerId);
 
   console.log({selectedLayer});
 
