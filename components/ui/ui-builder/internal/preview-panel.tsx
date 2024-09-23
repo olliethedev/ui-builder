@@ -114,9 +114,12 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
 
   const renderLayer = (layer: Layer) => {
     if (isTextLayer(layer)) {
-      if (layer.textType === "rich_text") {
+      console.log("renderLayer", { layer });
+      if (layer.textType === "markdown") {
         return (
-          <Markdown key={layer.id} data-layer-id={layer.id} content={layer.text} />
+          <Markdown key={layer.id} data-layer-id={layer.id}>
+            {layer.text}
+          </Markdown>
         );
       }
       return (

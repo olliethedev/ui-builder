@@ -1,17 +1,17 @@
 "use client";
 
 import React, { FC, memo } from "react";
-import ReactMarkdown, { Options, ExtraProps } from "react-markdown";
+import ReactMarkdown, { Options } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { CodeBlock } from "@/components/ui/ui-builder/codeblock";
 import { cn } from "@/lib/utils";
 
 interface MarkdownProps {
-  content: string;
   className?: string;
+  children: string;
 }
-export function Markdown({ content, className }: MarkdownProps) {
+export function Markdown({ children, className }: MarkdownProps) {
   return (
     <MemoizedReactMarkdown
       className={cn(
@@ -52,7 +52,7 @@ export function Markdown({ content, className }: MarkdownProps) {
         },
       }}
     >
-      {content}
+      {children}
     </MemoizedReactMarkdown>
   );
 }

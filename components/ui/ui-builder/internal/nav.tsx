@@ -11,9 +11,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layer, useComponentStore, isTextLayer, componentRegistry } from "@/components/ui/ui-builder/internal/store/component-store";
-
-
+import {
+  Layer,
+  useComponentStore,
+  isTextLayer,
+  componentRegistry,
+} from "@/components/ui/ui-builder/internal/store/component-store";
 
 export function NavBar() {
   const { layers } = useComponentStore();
@@ -21,6 +24,14 @@ export function NavBar() {
 
   const generateLayerCode = (layer: Layer, indent = 0): string => {
     if (isTextLayer(layer)) {
+      if (layer.textType === "markdown") {
+        const indentation = "  ".repeat(indent);
+        // Wrap markdown with Markdown component
+        return `${indentation}<Markdown>\n${layer.text
+          .split("\n")
+          .map((line) => `${indentation+"  "}${line}`)
+          .join("\n")}\n${indentation}</Markdown>`;
+      }
       const indentation = "  ".repeat(indent);
       return `${indentation}${layer.text}`;
     }
@@ -31,9 +42,9 @@ export function NavBar() {
       .filter(([_, value]) => value !== undefined)
       .map(([key, value]) => {
         let propValue;
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
           propValue = `"${value}"`;
-        } else if (typeof value === 'number') {
+        } else if (typeof value === "number") {
           propValue = value;
         } else {
           propValue = `{${JSON.stringify(value)}}`;
@@ -59,16 +70,18 @@ export function NavBar() {
   };
 
   const generateComponentCode = () => {
-    const imports = new Set();
+    const imports = new Set<string>();
 
     const collectImports = (layer: Layer) => {
-      if (!isTextLayer(layer)) {
+      if (isTextLayer(layer)) {
+        if (layer.textType === "markdown") {
+          imports.add(`import { Markdown } from "@/components/ui/ui-builder/markdown";`); 
+        }
+      } else {
         const componentDefinition = componentRegistry[layer.type];
-        if (layer.type) {
+        if (layer.type && componentDefinition) {
           imports.add(
-            `import { ${
-              layer.type
-            } } from "${componentDefinition.from}"`
+            `import { ${layer.type} } from "${componentDefinition.from}";`
           );
         }
         if (layer.children) {

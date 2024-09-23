@@ -84,13 +84,13 @@ export type TextLayer = {
   id: string;
   type: '_text_';
   text: string;
-  textType: 'text' | 'rich_text';
+  textType: 'text' | 'markdown';
 };
 interface ComponentStore {
   components: CustomComponentType[];
   layers: Layer[];
   addComponentLayer: (layerType: keyof typeof componentRegistry, parentId?: string, parentPosition?: number) => void;
-  addTextLayer: (text: string, textType: 'text' | 'rich_text', parentId?: string, parentPosition?: number) => void;
+  addTextLayer: (text: string, textType: 'text' | 'markdown', parentId?: string, parentPosition?: number) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
   updateLayerProps: (layerId: string, newProps: Record<string, any>) => void;
@@ -137,7 +137,7 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
     return addLayerToState(state, newLayer, parentId, parentPosition);
   }),
 
-  addTextLayer: (text: string, textType: 'text' | 'rich_text', parentId?: string, parentPosition?: number) => set((state: ComponentStore) => {
+  addTextLayer: (text: string, textType: 'text' | 'markdown', parentId?: string, parentPosition?: number) => set((state: ComponentStore) => {
     const newLayer: Layer = {
       id: createId(),
       type: '_text_',

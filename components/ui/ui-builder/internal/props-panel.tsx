@@ -33,6 +33,8 @@ import {
 import AutoForm from "@/components/ui/auto-form";
 import { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
 import DraggableList from "@/components/ui/ui-builder/internal/draggable-list";
+import Link from "next/link";
+import { Label } from "@/components/ui/label";
 
 interface PropsPanelProps {
   className?: string;
@@ -46,7 +48,9 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
   return (
     <div className={className}>
       <h2 className="text-xl font-semibold mb-4">
-        {selectedLayer && isTextLayer(selectedLayer) ? "Text Properties" : selectedLayer?.type ?? "Component Properties"}
+        {selectedLayer && isTextLayer(selectedLayer)
+          ? "Text Properties"
+          : selectedLayer?.type ?? "Component Properties"}
       </h2>
       {!selectedLayer && <p>No component selected</p>}
       {selectedLayer && <PropsPanelForm selectedLayer={selectedLayer} />}
@@ -76,7 +80,7 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
   );
 
   const handleAddTextLayer = useCallback(
-    (text: string, textType: "text" | "rich_text") => {
+    (text: string, textType: "text" | "markdown") => {
       addTextLayer(text, textType, selectedLayer?.id);
     },
     [selectedLayer?.id, addTextLayer]
@@ -146,10 +150,9 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
   duplicateLayer,
   updateLayerProps,
 }) => {
-
   const schema = z.object({
     text: z.string(),
-    textType: z.enum(["text", "rich_text"]),
+    textType: z.enum(["text", "markdown"]),
   });
 
   const handleSetValues = useCallback(
@@ -166,7 +169,6 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
     [selectedLayer.id, selectedLayer, updateLayerProps]
   );
 
-  
   return (
     <AutoForm
       formSchema={addDefaultValues(schema, {
@@ -194,6 +196,22 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
             value: selectedLayer.textType,
             defaultValue: selectedLayer.textType,
           },
+          description: (
+            <>
+              <Label>
+                What Is{" "}
+                <Link
+                  href="https://www.markdownguide.org/basic-syntax/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link underline"
+                >
+                  Markdown
+                </Link>
+                ?
+              </Label>
+            </>
+          ),
         },
       }}
     >
@@ -222,7 +240,7 @@ interface ComponentPropsAutoFormProps {
   handleAddComponentLayer: (
     componentName: keyof typeof componentRegistry
   ) => void;
-  handleAddTextLayer: (text: string, textType: "text" | "rich_text") => void;
+  handleAddTextLayer: (text: string, textType: "text" | "markdown") => void;
   removeLayer: (id: string) => void;
   duplicateLayer: (id: string) => void;
   updateLayerProps: (id: string, props: Record<string, any>) => void;
@@ -386,7 +404,7 @@ interface ChildrenInputProps {
   handleAddComponentLayer: (
     componentName: keyof typeof componentRegistry
   ) => void;
-  handleAddTextLayer: (text: string, textType: "text" | "rich_text") => void;
+  handleAddTextLayer: (text: string, textType: "text" | "markdown") => void;
   removeLayer: (id: string) => void;
   handleReorderChildrenLayers: (parentId: string, childIds: string[]) => void;
 }
@@ -548,7 +566,9 @@ function ChildrenSearchableMultiSelect({
                   id: child.id,
                   reactElement: (
                     <div key={child.id} className="flex items-center space-x-2">
-                      <span className="truncate inline-block max-w-[150px]">{isTextLayer(child) ? `"${child.text}"` : child.type}</span>
+                      <span className="truncate inline-block max-w-[150px]">
+                        {isTextLayer(child) ? `"${child.text}"` : child.type}
+                      </span>
                       <Button
                         variant="ghost"
                         size="icon"

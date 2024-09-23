@@ -37,7 +37,30 @@ async function buildRegistry() {
             tailwind: {
                 config: {
                     plugins: ["tailwindcss-animate", "@tailwindcss/typography"],
+                    theme: {
+                        extend: {
+                            typography: {
+                                DEFAULT: {
+                                    css: {
+                                        'code::before': {
+                                            content: '""',
+                                        },
+                                        'code::after': {
+                                            content: '""',
+                                        },
+                                        code: {
+                                            background: '#f3f3f3',
+                                            wordWrap: 'break-word',
+                                            padding: '.1rem .2rem',
+                                            borderRadius: '.2rem',
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 },
+
             },
             cssVars: {},
             files: [],
