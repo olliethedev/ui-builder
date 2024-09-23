@@ -69,34 +69,35 @@ export interface CustomComponentType<T = any> {
 
 export type LayerType = keyof typeof componentRegistry | '_text_';
 
-export type Layer = {
-  id: string;
-} & (
-    | {
+export type Layer = 
+  | {
+      id: string;
       type: keyof typeof componentRegistry;
       props: Record<string, any>;
       children?: Layer[];
     }
-    | {
-      type: '_text_';
-      text: string;
-    }
-  );
+  | TextLayer;
 
-export type ComponentLayer = Exclude<Layer, { type: '_text_'; text: string }>;
+export type ComponentLayer = Exclude<Layer, TextLayer>;
 
+export type TextLayer = {
+  id: string;
+  type: '_text_';
+  text: string;
+  textType: 'text' | 'rich_text';
+};
 interface ComponentStore {
   components: CustomComponentType[];
   layers: Layer[];
   addComponentLayer: (layerType: keyof typeof componentRegistry, parentId?: string, parentPosition?: number) => void;
-  addTextLayer: (text: string, parentId?: string, parentPosition?: number) => void;
+  addTextLayer: (text: string, textType: 'text' | 'rich_text', parentId?: string, parentPosition?: number) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
   updateLayerProps: (layerId: string, newProps: Record<string, any>) => void;
   selectLayer: (layerId: string) => void;
   reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => void;
   selectedLayerId: string | null;
-  findLayerById: (layerId: string | null) => ComponentLayer | undefined;
+  findLayerById: (layerId: string | null) => Layer | undefined;
 }
 
 export const useComponentStore = create<ComponentStore>((set, get) => ({
@@ -136,11 +137,12 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
     return addLayerToState(state, newLayer, parentId, parentPosition);
   }),
 
-  addTextLayer: (text: string, parentId?: string, parentPosition?: number) => set((state: ComponentStore) => {
+  addTextLayer: (text: string, textType: 'text' | 'rich_text', parentId?: string, parentPosition?: number) => set((state: ComponentStore) => {
     const newLayer: Layer = {
       id: createId(),
       type: '_text_',
-      text
+      text,
+      textType: textType
     };
 
     return addLayerToState(state, newLayer, parentId, parentPosition);
@@ -192,7 +194,7 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
         if (layer.id === layerId) {
           if (isTextLayer(layer)) {
             // For text layers, update the text property
-            return { ...layer, text: newProps.text || layer.text };
+            return { ...layer, text: newProps.text || layer.text, textType: newProps.textType || layer.textType };
           } else {
             // For component layers, update the props
             return { ...layer, props: { ...layer.props, ...newProps } };
@@ -214,8 +216,6 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
   }),
 
   selectLayer: (layerId: string) => set((state: ComponentStore) => {
-
-
     const layer = findLayerRecursive(state.layers, layerId);
     if (layer) {
       return {
@@ -272,7 +272,7 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
 
 }));
 
-function isTextLayer(layer: Layer): layer is Layer & { type: '_text_'; text: string } {
+function isTextLayer(layer: Layer): layer is TextLayer {
   return layer.type === '_text_';
 }
 
@@ -321,12 +321,9 @@ const addLayerToState = (
     updatedLayers.push(newLayer);
   }
 
-  const oldSelectedLayerId = state.selectedLayerId;
-
   return {
     ...state,
     layers: updatedLayers,
-    selectedLayerId: isTextLayer(newLayer) ? oldSelectedLayerId : newLayer.id
   };
 };
 
@@ -343,9 +340,9 @@ const findParentLayerRecursive = (layers: Layer[], layerId: string): Layer | nul
   return null;
 };
 
-const findLayerRecursive = (layers: Layer[], layerId: string): ComponentLayer | undefined => {
+const findLayerRecursive = (layers: Layer[], layerId: string): Layer | undefined => {
   for (const layer of layers) {
-    if (layer.id === layerId && !isTextLayer(layer)) {
+    if (layer.id === layerId ) {
       return layer;
     }
     if (!isTextLayer(layer) && layer.children) {

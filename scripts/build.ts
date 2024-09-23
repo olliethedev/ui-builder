@@ -35,7 +35,9 @@ async function buildRegistry() {
             dependencies: getDependencies(config.type),
             devDependencies: getDevDependencies(config.type),
             tailwind: {
-                config: {},
+                config: {
+                    plugins: ["tailwindcss-animate", "@tailwindcss/typography"],
+                },
             },
             cssVars: {},
             files: [],
@@ -111,7 +113,7 @@ function getRegistryComponentDependencies(type: RegistryType): string[] {
 function getDependencies(type: RegistryType): string[] {
     switch (type) {
         case "registry:ui":
-            return ["@anatine/zod-mock", "react-error-boundary", "react-hook-form", "swapy", "zod", "zustand"];
+            return ["@anatine/zod-mock", "react-error-boundary", "react-hook-form", "swapy", "zod", "zustand", "react-markdown", "remark-gfm", "remark-math", "react-syntax-highlighter", "@types/react-syntax-highlighter"];
         case "registry:lib":
             return ["react-docgen-typescript", "ts-morph", "ts-to-zod"]; // all dependencies for the lib can be devDependencies but shadcn/ui is not seeing them for some reason
         default:

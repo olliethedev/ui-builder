@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layer, useComponentStore, isTextLayer, componentRegistry } from "./store/component-store";
+import { Layer, useComponentStore, isTextLayer, componentRegistry } from "@/components/ui/ui-builder/internal/store/component-store";
 
 
 
@@ -86,7 +86,7 @@ export function NavBar() {
   };
 
   const codeBlocks = {
-    React: layers.map(generateComponentCode).join("\n"),
+    React: generateComponentCode(),
     Serialized: JSON.stringify(
       layers,
       (key, value) => (typeof value === "function" ? undefined : value),

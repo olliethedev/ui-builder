@@ -19,7 +19,7 @@ interface TransactionsProps {
 }
 
 export function Transactions({ data, className }: TransactionsProps) {
-  throw new Error("Transactions error");
+
   return (
     <Table className={className}>
       <TableHeader>

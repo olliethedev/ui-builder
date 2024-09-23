@@ -6,6 +6,7 @@ import {
   componentRegistry,
   ComponentLayer,
   isTextLayer,
+  TextLayer,
 } from "@/components/ui/ui-builder/internal/store/component-store";
 import {
   FormControl,
@@ -38,9 +39,27 @@ interface PropsPanelProps {
 }
 
 const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
+  const { selectedLayerId, findLayerById } = useComponentStore();
+
+  const selectedLayer = findLayerById(selectedLayerId);
+
+  return (
+    <div className={className}>
+      <h2 className="text-xl font-semibold mb-4">
+        {selectedLayer && isTextLayer(selectedLayer) ? "Text Properties" : selectedLayer?.type ?? "Component Properties"}
+      </h2>
+      {!selectedLayer && <p>No component selected</p>}
+      {selectedLayer && <PropsPanelForm selectedLayer={selectedLayer} />}
+    </div>
+  );
+};
+
+interface PropsPanelFormProps {
+  selectedLayer: ComponentLayer | TextLayer;
+}
+
+function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
   const {
-    selectedLayerId,
-    findLayerById,
     addComponentLayer,
     addTextLayer,
     removeLayer,
@@ -48,8 +67,6 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
     updateLayerProps,
     reorderChildrenLayers,
   } = useComponentStore();
-
-  const selectedLayer = findLayerById(selectedLayerId);
 
   const handleAddComponentLayer = useCallback(
     (componentName: keyof typeof componentRegistry) => {
@@ -59,15 +76,18 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
   );
 
   const handleAddTextLayer = useCallback(
-    (text: string) => {
-      addTextLayer(text, selectedLayer?.id);
+    (text: string, textType: "text" | "rich_text") => {
+      addTextLayer(text, textType, selectedLayer?.id);
     },
     [selectedLayer?.id, addTextLayer]
   );
 
-  const handleDeleteLayer = useCallback((layerId: string) => {
-    removeLayer(layerId);
-  }, [ removeLayer]);
+  const handleDeleteLayer = useCallback(
+    (layerId: string) => {
+      removeLayer(layerId);
+    },
+    [removeLayer]
+  );
 
   const handleDuplicateLayer = useCallback(() => {
     if (selectedLayer) {
@@ -88,188 +108,277 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
     },
     [reorderChildrenLayers]
   );
-
+  if (isTextLayer(selectedLayer)) {
+    return (
+      <TextLayerForm
+        key={selectedLayer.id}
+        selectedLayer={selectedLayer}
+        removeLayer={handleDeleteLayer}
+        duplicateLayer={handleDuplicateLayer}
+        updateLayerProps={handleUpdateLayerProps}
+      />
+    );
+  }
   return (
-    <div className={className}>
-      <h2 className="text-xl font-semibold mb-4">
-        {selectedLayer?.type ?? "Component"} Properties
-      </h2>
-      {!selectedLayer && <p>No component selected</p>}
-      {selectedLayer && (
-        <WrappedAutoForm
-          key={selectedLayer.id}
-          selectedLayer={selectedLayer}
-          handleAddComponentLayer={handleAddComponentLayer}
-          handleAddTextLayer={handleAddTextLayer}
-          removeLayer={handleDeleteLayer}
-          duplicateLayer={handleDuplicateLayer}
-          updateLayerProps={handleUpdateLayerProps}
-          handleReorderChildrenLayers={handleReorderChildrenLayers}
-        />
-      )}
-    </div>
+    <ComponentPropsAutoForm
+      key={selectedLayer.id}
+      selectedLayer={selectedLayer}
+      handleAddComponentLayer={handleAddComponentLayer}
+      handleAddTextLayer={handleAddTextLayer}
+      removeLayer={handleDeleteLayer}
+      duplicateLayer={handleDuplicateLayer}
+      updateLayerProps={handleUpdateLayerProps}
+      handleReorderChildrenLayers={handleReorderChildrenLayers}
+    />
+  );
+}
+
+interface TextLayerFormProps {
+  selectedLayer: TextLayer;
+  removeLayer: (id: string) => void;
+  duplicateLayer: (id: string) => void;
+  updateLayerProps: (id: string, props: Record<string, any>) => void;
+}
+
+const TextLayerForm: React.FC<TextLayerFormProps> = ({
+  selectedLayer,
+  removeLayer,
+  duplicateLayer,
+  updateLayerProps,
+}) => {
+
+  const schema = z.object({
+    text: z.string(),
+    textType: z.enum(["text", "rich_text"]),
+  });
+
+  const handleSetValues = useCallback(
+    (data: Partial<z.infer<typeof schema>>) => {
+      console.log("handleSetValues", { data });
+      console.log("old values", selectedLayer);
+
+      // Merge the changed fields into the existing props
+      const mergedValues = { ...selectedLayer, ...data };
+
+      // setValues(mergedValues);
+      updateLayerProps(selectedLayer.id, mergedValues);
+    },
+    [selectedLayer.id, selectedLayer, updateLayerProps]
+  );
+
+  
+  return (
+    <AutoForm
+      formSchema={addDefaultValues(schema, {
+        text: selectedLayer.text,
+        textType: selectedLayer.textType,
+      })}
+      onValuesChange={handleSetValues}
+      onSubmit={(data) => {
+        console.log({ onSubmit: data });
+      }}
+      values={{
+        text: selectedLayer.text,
+        textType: selectedLayer.textType,
+      }}
+      fieldConfig={{
+        text: {
+          inputProps: {
+            value: selectedLayer.text,
+            defaultValue: selectedLayer.text,
+          },
+          fieldType: "textarea",
+        },
+        textType: {
+          inputProps: {
+            value: selectedLayer.textType,
+            defaultValue: selectedLayer.textType,
+          },
+        },
+      }}
+    >
+      <Button
+        type="button"
+        variant="secondary"
+        className="mt-4 w-full"
+        onClick={() => duplicateLayer(selectedLayer.id)}
+      >
+        Duplicate Component
+      </Button>
+      <Button
+        type="button"
+        variant="destructive"
+        className="mt-4 w-full"
+        onClick={() => removeLayer(selectedLayer.id)}
+      >
+        Delete Component
+      </Button>
+    </AutoForm>
   );
 };
 
-interface WrappedAutoFormProps {
+interface ComponentPropsAutoFormProps {
   selectedLayer: ComponentLayer;
   handleAddComponentLayer: (
     componentName: keyof typeof componentRegistry
   ) => void;
-  handleAddTextLayer: (text: string) => void;
+  handleAddTextLayer: (text: string, textType: "text" | "rich_text") => void;
   removeLayer: (id: string) => void;
   duplicateLayer: (id: string) => void;
   updateLayerProps: (id: string, props: Record<string, any>) => void;
   handleReorderChildrenLayers: (parentId: string, childIds: string[]) => void;
 }
 
-const WrappedAutoForm: React.FC<WrappedAutoFormProps> = React.memo(
-  ({
-    selectedLayer,
-    handleAddComponentLayer,
-    handleAddTextLayer,
-    removeLayer,
-    duplicateLayer,
-    updateLayerProps,
-    handleReorderChildrenLayers,
-  }: WrappedAutoFormProps) => {
-    console.log(
-      "autoform rerender for",
-      selectedLayer.id,
-      "with props",
-      selectedLayer.props
-    );
+const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
+  React.memo(
+    ({
+      selectedLayer,
+      handleAddComponentLayer,
+      handleAddTextLayer,
+      removeLayer,
+      duplicateLayer,
+      updateLayerProps,
+      handleReorderChildrenLayers,
+    }: ComponentPropsAutoFormProps) => {
+      console.log(
+        "autoform rerender for",
+        selectedLayer.id,
+        "with props",
+        selectedLayer.props
+      );
 
-    const [values, setValues] = useState<Partial<z.infer<typeof schema>>>(
-      selectedLayer.props
-    );
+      const [values, setValues] = useState<Partial<z.infer<typeof schema>>>(
+        selectedLayer.props
+      );
 
-    const { schema } =
-      componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
+      const { schema } =
+        componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
 
-    const hasChildrenInSchema = schema.shape.children !== undefined;
+      const hasChildrenInSchema = schema.shape.children !== undefined;
 
-    const handleSetValues = useCallback(
-      (data: Partial<z.infer<typeof schema>>) => {
-        console.log("handleSetValues", { data });
-        console.log("old values", selectedLayer.props);
+      const handleSetValues = useCallback(
+        (data: Partial<z.infer<typeof schema>>) => {
+          console.log("handleSetValues", { data });
+          console.log("old values", selectedLayer.props);
 
-        // Identify keys that have changed by comparing new data with existing props
-        const changedFields = Object.keys(data).reduce(
-          (acc, key) => {
-            const newValue = data[key];
-            const oldValue = selectedLayer.props[key];
-            if (JSON.stringify(newValue) !== JSON.stringify(oldValue)) {
-              acc[key] = newValue;
-            }
-
-            return acc;
-          },
-          {} as Partial<z.infer<typeof schema>>
-        );
-
-        console.log("changed fields", changedFields);
-
-        const hasChanges = Object.keys(changedFields).length > 0;
-
-        if (hasChanges) {
-          console.log("updating layer props with", changedFields);
-
-          // Merge the changed fields into the existing props
-          const mergedValues = { ...selectedLayer.props, ...changedFields };
-
-          // setValues(mergedValues);
-          updateLayerProps(selectedLayer.id, mergedValues);
-        }
-      },
-      [selectedLayer.id, selectedLayer.props, updateLayerProps, setValues]
-    );
-
-    const defualtFieldConfig = Object.fromEntries(
-      Object.entries(selectedLayer.props).map(([key, value]) => [
-        key,
-        {
-          inputProps: {
-            value,
-            defaultValue: value,
-          },
-        },
-      ])
-    );
-    console.log({ defualtFieldConfig });
-    console.log({ initialValues: selectedLayer.props });
-
-    return (
-      <AutoForm
-        key={selectedLayer.id}
-        values={selectedLayer.props}
-        onValuesChange={handleSetValues}
-        // onParsedValuesChange={handleSetValues}
-        formSchema={addDefaultValues(schema, selectedLayer.props)}
-        onSubmit={(data) => {
-          console.log({ onSubmit: data });
-        }}
-        fieldConfig={{
-          // ...defualtFieldConfig,
-          ...(hasChildrenInSchema
-            ? {
-                children: {
-                  fieldType: ({
-                    label,
-                    isRequired,
-                    field,
-                    fieldConfigItem,
-                    fieldProps,
-                  }: AutoFormInputComponentProps) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>
-                        {label}
-                        {isRequired && (
-                          <span className="text-destructive"> *</span>
-                        )}
-                      </FormLabel>
-                      <FormControl>
-                        <ChildrenSearchableMultiSelect
-                          field={field}
-                          selectedLayer={selectedLayer}
-                          handleAddComponentLayer={handleAddComponentLayer}
-                          handleAddTextLayer={handleAddTextLayer}
-                          removeLayer={removeLayer}
-                          handleReorderChildrenLayers={handleReorderChildrenLayers}
-                        />
-                      </FormControl>
-                      {fieldConfigItem.description && (
-                        <FormDescription>
-                          {fieldConfigItem.description}
-                        </FormDescription>
-                      )}
-                    </FormItem>
-                  ),
-                },
+          // Identify keys that have changed by comparing new data with existing props
+          const changedFields = Object.keys(data).reduce(
+            (acc, key) => {
+              const newValue = data[key];
+              const oldValue = selectedLayer.props[key];
+              if (JSON.stringify(newValue) !== JSON.stringify(oldValue)) {
+                acc[key] = newValue;
               }
-            : undefined),
-        }}
-      >
-        <Button
-          type="button"
-          variant="secondary"
-          className="mt-4 w-full"
-          onClick={() => duplicateLayer(selectedLayer.id)}
+
+              return acc;
+            },
+            {} as Partial<z.infer<typeof schema>>
+          );
+
+          console.log("changed fields", changedFields);
+
+          const hasChanges = Object.keys(changedFields).length > 0;
+
+          if (hasChanges) {
+            console.log("updating layer props with", changedFields);
+
+            // Merge the changed fields into the existing props
+            const mergedValues = { ...selectedLayer.props, ...changedFields };
+
+            // setValues(mergedValues);
+            updateLayerProps(selectedLayer.id, mergedValues);
+          }
+        },
+        [selectedLayer.id, selectedLayer.props, updateLayerProps, setValues]
+      );
+
+      const defualtFieldConfig = Object.fromEntries(
+        Object.entries(selectedLayer.props).map(([key, value]) => [
+          key,
+          {
+            inputProps: {
+              value,
+              defaultValue: value,
+            },
+          },
+        ])
+      );
+      console.log({ defualtFieldConfig });
+      console.log({ initialValues: selectedLayer.props });
+
+      return (
+        <AutoForm
+          key={selectedLayer.id}
+          values={selectedLayer.props}
+          onValuesChange={handleSetValues}
+          // onParsedValuesChange={handleSetValues}
+          formSchema={addDefaultValues(schema, selectedLayer.props)}
+          onSubmit={(data) => {
+            console.log({ onSubmit: data });
+          }}
+          fieldConfig={{
+            // ...defualtFieldConfig,
+            ...(hasChildrenInSchema
+              ? {
+                  children: {
+                    fieldType: ({
+                      label,
+                      isRequired,
+                      field,
+                      fieldConfigItem,
+                      fieldProps,
+                    }: AutoFormInputComponentProps) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>
+                          {label}
+                          {isRequired && (
+                            <span className="text-destructive"> *</span>
+                          )}
+                        </FormLabel>
+                        <FormControl>
+                          <ChildrenSearchableMultiSelect
+                            field={field}
+                            selectedLayer={selectedLayer}
+                            handleAddComponentLayer={handleAddComponentLayer}
+                            handleAddTextLayer={handleAddTextLayer}
+                            removeLayer={removeLayer}
+                            handleReorderChildrenLayers={
+                              handleReorderChildrenLayers
+                            }
+                          />
+                        </FormControl>
+                        {fieldConfigItem.description && (
+                          <FormDescription>
+                            {fieldConfigItem.description}
+                          </FormDescription>
+                        )}
+                      </FormItem>
+                    ),
+                  },
+                }
+              : undefined),
+          }}
         >
-          Duplicate Component
-        </Button>
-        <Button
-          type="button"
-          variant="destructive"
-          className="mt-4 w-full"
-          onClick={() => removeLayer(selectedLayer.id)}
-        >
-          Delete Component
-        </Button>
-      </AutoForm>
-    );
-  }
-);
+          <Button
+            type="button"
+            variant="secondary"
+            className="mt-4 w-full"
+            onClick={() => duplicateLayer(selectedLayer.id)}
+          >
+            Duplicate Component
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            className="mt-4 w-full"
+            onClick={() => removeLayer(selectedLayer.id)}
+          >
+            Delete Component
+          </Button>
+        </AutoForm>
+      );
+    }
+  );
 
 interface ChildrenInputProps {
   field: any;
@@ -277,7 +386,7 @@ interface ChildrenInputProps {
   handleAddComponentLayer: (
     componentName: keyof typeof componentRegistry
   ) => void;
-  handleAddTextLayer: (text: string) => void;
+  handleAddTextLayer: (text: string, textType: "text" | "rich_text") => void;
   removeLayer: (id: string) => void;
   handleReorderChildrenLayers: (parentId: string, childIds: string[]) => void;
 }
@@ -287,18 +396,18 @@ function ChildrenSearchableMultiSelect({
   handleAddComponentLayer,
   handleAddTextLayer,
   removeLayer,
-  handleReorderChildrenLayers
+  handleReorderChildrenLayers,
 }: ChildrenInputProps) {
   console.log("ChildrenSearchableMultiSelect", "render");
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
   const [textInputValue, setTextInputValue] = React.useState("");
 
-  const {selectedLayerId, findLayerById} = useComponentStore();
+  const { selectedLayerId, findLayerById } = useComponentStore();
 
   const selectedLayer = findLayerById(selectedLayerId);
 
-  console.log({selectedLayer});
+  console.log({ selectedLayer });
 
   const componentOptions = Object.keys(componentRegistry).map((name) => ({
     value: name,
@@ -319,11 +428,10 @@ function ChildrenSearchableMultiSelect({
     {} as Record<string, typeof componentOptions>
   );
 
-
   const handleSelect = React.useCallback(
     (currentValue: string) => {
       if (currentValue === "text" && inputValue.trim()) {
-        handleAddTextLayer(inputValue.trim());
+        handleAddTextLayer(inputValue.trim(), "text");
         setInputValue("");
       } else {
         // Check if the currentValue is a valid component name
@@ -350,7 +458,7 @@ function ChildrenSearchableMultiSelect({
       className="w-full"
       onSubmit={(e) => {
         e.preventDefault();
-        handleAddTextLayer(textInputValue);
+        handleAddTextLayer(textInputValue, "text");
         setTextInputValue("");
       }}
     >
@@ -363,7 +471,7 @@ function ChildrenSearchableMultiSelect({
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
-              handleAddTextLayer(textInputValue);
+              handleAddTextLayer(textInputValue, "text");
               setTextInputValue("");
             }
           }}
@@ -406,50 +514,55 @@ function ChildrenSearchableMultiSelect({
                 <CommandItem>{textInputForm}</CommandItem>
               </CommandGroup>
               <CommandSeparator />
-              {Object.entries(groupedOptions).map(
-                ([group, components]) => (
-                  <CommandGroup key={group} heading={group}>
-                    {components.map((component) => (
-                      <CommandItem
-                        key={component.value}
-                        onSelect={() => handleSelect(component.value)}
-                      >
-                        {component.label}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                )
-              )}
+              {Object.entries(groupedOptions).map(([group, components]) => (
+                <CommandGroup key={group} heading={group}>
+                  {components.map((component) => (
+                    <CommandItem
+                      key={component.value}
+                      onSelect={() => handleSelect(component.value)}
+                    >
+                      {component.label}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              ))}
             </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
 
       {selectedLayer && (
-      <DraggableList
-        // className={`w-full grid grid-cols-1 grid-rows-${selectedLayer.children?.length || 0} gap-1`}
-        onOrderChange={(newOrder) => {
-          console.log("new order", newOrder);
-          handleReorderChildrenLayers(selectedLayer.id, newOrder.map(item => item.id));
-        }}
-        items={selectedLayer.children?.map((child, index) => ({id: child.id, reactElement:
-          <div
-            key={child.id}
-            className="flex items-center space-x-2"
-          >
-            <span>{isTextLayer(child) ? `"${child.text}"` : child.type}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() =>
-                handleRemove(child.id)
-              }
-            >
-              <XIcon className="w-4 h-4" />
-            </Button>
-          </div>
-        })) || []}
-      ></DraggableList>
+        <DraggableList
+          // className={`w-full grid grid-cols-1 grid-rows-${selectedLayer.children?.length || 0} gap-1`}
+          onOrderChange={(newOrder) => {
+            console.log("new order", newOrder);
+            handleReorderChildrenLayers(
+              selectedLayer.id,
+              newOrder.map((item) => item.id)
+            );
+          }}
+          items={
+            isTextLayer(selectedLayer)
+              ? []
+              : selectedLayer.children?.map((child, index) => ({
+                  id: child.id,
+                  reactElement: (
+                    <div key={child.id} className="flex items-center space-x-2">
+                      <span>
+                        {isTextLayer(child) ? `"${child.text}"` : child.type}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemove(child.id)}
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ),
+                })) || []
+          }
+        ></DraggableList>
       )}
     </div>
   );
@@ -473,7 +586,9 @@ function addDefaultValues<T extends ZodObject<any>>(
       // Apply the default value to the existing schema field
       updatedShape[key] = updatedShape[key].default(defaultValues[key]);
     } else {
-      console.warn(`Key "${key}" does not exist in the schema and will be ignored.`);
+      console.warn(
+        `Key "${key}" does not exist in the schema and will be ignored.`
+      );
     }
   }
 
