@@ -1,10 +1,4 @@
-import React, {
-  ReactNode,
-  Suspense,
-  useState,
-  useEffect,
-  useRef,
-} from "react";
+import React, { ReactNode, Suspense, useState, useEffect, useRef } from "react";
 import { ChevronRight, Plus, Trash, Copy } from "lucide-react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Button } from "@/components/ui/button";
@@ -114,25 +108,11 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
       <h2 className="text-xl font-semibold mb-4">Preview</h2>
 
       <div className="border p-4 relative w-full">
-        <DividerControl
-          handleAddComponent={(elem) => onAddElement(elem, undefined, 0)}
-          availableComponents={
-            Object.keys(componentRegistry) as Array<
-              keyof typeof componentRegistry
-            >
-          }
-        />
+        <DividerControl addPosition={0} />
         <div className="flex flex-col w-full overflow-y-visible relative">
           {layers.map(renderLayer)}
         </div>
-        <DividerControl
-          handleAddComponent={(elem) => onAddElement(elem)}
-          availableComponents={
-            Object.keys(componentRegistry) as Array<
-              keyof typeof componentRegistry
-            >
-          }
-        />
+        <DividerControl />
       </div>
     </div>
   );
@@ -150,7 +130,6 @@ interface MenuProps {
   handleAddComponent: (componentName: keyof typeof componentRegistry) => void;
   handleDuplicateComponent: () => void;
   handleDeleteComponent: () => void;
-  availableComponents: Array<keyof typeof componentRegistry>;
 }
 
 const LayerMenu: React.FC<MenuProps> = ({
@@ -159,10 +138,8 @@ const LayerMenu: React.FC<MenuProps> = ({
   width,
   height,
   zIndex,
-  handleAddComponent,
   handleDuplicateComponent,
   handleDeleteComponent,
-  availableComponents,
 }) => {
   return (
     <>
@@ -178,11 +155,7 @@ const LayerMenu: React.FC<MenuProps> = ({
           <ChevronRight className="h-5 w-5 text-gray-400 group-hover:size-8 transition-all duration-200 ease-in-out group-hover:opacity-30" />
           <span className="sr-only">Add component</span>
           <div className="overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out">
-            <AddComponentsPopover
-              className="flex-shrink w-min inline-flex"
-              handleAddComponent={handleAddComponent}
-              availableComponents={availableComponents}
-            >
+            <AddComponentsPopover className="flex-shrink w-min inline-flex">
               <Button size="sm" variant="ghost">
                 <span className="sr-only">Add Component</span>
                 <Plus className="h-5 w-5 text-gray-400" />
@@ -309,11 +282,6 @@ const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
             handleAddComponent={(elem) => onAddElement(elem, layer.id)}
             handleDuplicateComponent={onDuplicateLayer}
             handleDeleteComponent={onDeleteLayer}
-            availableComponents={
-              Object.keys(componentRegistry) as Array<
-                keyof typeof componentRegistry
-              >
-            }
           />
         )}
 

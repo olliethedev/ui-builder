@@ -452,7 +452,7 @@ function transformUnionToEnum<T extends ZodTypeAny>(schema: T): T {
     ) {
       const enumValues = options.map(
         (option: ZodLiteral<string>) => option.value
-      );
+      ).reverse();
 
       // Ensure there is at least one value to create an enum
       if (enumValues.length === 0) {

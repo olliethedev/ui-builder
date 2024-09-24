@@ -37,6 +37,7 @@ import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import MultipleSelector, { Option } from "../multi-select";
 import { TAILWIND_CLASSES } from "./tailwind-classes";
+import { AddComponentsPopover } from "./add-component-popover";
 
 interface PropsPanelProps {
   className?: string;
@@ -68,27 +69,12 @@ interface PropsPanelFormProps {
 
 function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
   const {
-    addComponentLayer,
-    addTextLayer,
     removeLayer,
     duplicateLayer,
     updateLayerProps,
     reorderChildrenLayers,
   } = useComponentStore();
 
-  const handleAddComponentLayer = useCallback(
-    (componentName: keyof typeof componentRegistry) => {
-      addComponentLayer(componentName, selectedLayer?.id);
-    },
-    [selectedLayer?.id, addComponentLayer]
-  );
-
-  const handleAddTextLayer = useCallback(
-    (text: string, textType: "text" | "markdown") => {
-      addTextLayer(text, textType, selectedLayer?.id);
-    },
-    [selectedLayer?.id, addTextLayer]
-  );
 
   const handleDeleteLayer = useCallback(
     (layerId: string) => {
@@ -131,8 +117,6 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
     <ComponentPropsAutoForm
       key={selectedLayer.id}
       selectedLayer={selectedLayer}
-      handleAddComponentLayer={handleAddComponentLayer}
-      handleAddTextLayer={handleAddTextLayer}
       removeLayer={handleDeleteLayer}
       duplicateLayer={handleDuplicateLayer}
       updateLayerProps={handleUpdateLayerProps}
@@ -241,10 +225,6 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
 
 interface ComponentPropsAutoFormProps {
   selectedLayer: ComponentLayer;
-  handleAddComponentLayer: (
-    componentName: keyof typeof componentRegistry
-  ) => void;
-  handleAddTextLayer: (text: string, textType: "text" | "markdown") => void;
   removeLayer: (id: string) => void;
   duplicateLayer: (id: string) => void;
   updateLayerProps: (id: string, props: Record<string, any>) => void;
@@ -255,8 +235,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
   React.memo(
     ({
       selectedLayer,
-      handleAddComponentLayer,
-      handleAddTextLayer,
       removeLayer,
       duplicateLayer,
       updateLayerProps,
@@ -374,8 +352,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
                           <ChildrenSearchableMultiSelect
                             field={field}
                             selectedLayer={selectedLayer}
-                            handleAddComponentLayer={handleAddComponentLayer}
-                            handleAddTextLayer={handleAddTextLayer}
                             removeLayer={removeLayer}
                             handleReorderChildrenLayers={
                               handleReorderChildrenLayers
@@ -475,68 +451,20 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
 interface ChildrenInputProps {
   field: any;
   selectedLayer: ComponentLayer;
-  handleAddComponentLayer: (
-    componentName: keyof typeof componentRegistry
-  ) => void;
-  handleAddTextLayer: (text: string, textType: "text" | "markdown") => void;
   removeLayer: (id: string) => void;
   handleReorderChildrenLayers: (parentId: string, childIds: string[]) => void;
 }
 
 function ChildrenSearchableMultiSelect({
   field,
-  handleAddComponentLayer,
-  handleAddTextLayer,
   removeLayer,
   handleReorderChildrenLayers,
 }: ChildrenInputProps) {
   console.log("ChildrenSearchableMultiSelect", "render");
-  const [open, setOpen] = React.useState(false);
-  const [inputValue, setInputValue] = React.useState("");
-  const [textInputValue, setTextInputValue] = React.useState("");
 
   const { selectedLayerId, findLayerById } = useComponentStore();
-
   const selectedLayer = findLayerById(selectedLayerId);
 
-  console.log({ selectedLayer });
-
-  const componentOptions = Object.keys(componentRegistry).map((name) => ({
-    value: name,
-    label: name,
-    type: "component",
-    from: componentRegistry[name as keyof typeof componentRegistry].from,
-  }));
-
-  const groupedOptions = componentOptions.reduce(
-    (acc, option) => {
-      const group = option.from || "Other";
-      if (!acc[group]) {
-        acc[group] = [];
-      }
-      acc[group].push(option);
-      return acc;
-    },
-    {} as Record<string, typeof componentOptions>
-  );
-
-  const handleSelect = React.useCallback(
-    (currentValue: string) => {
-      if (currentValue === "text" && inputValue.trim()) {
-        handleAddTextLayer(inputValue.trim(), "text");
-        setInputValue("");
-      } else {
-        // Check if the currentValue is a valid component name
-        if (componentRegistry[currentValue as keyof typeof componentRegistry]) {
-          handleAddComponentLayer(
-            currentValue as keyof typeof componentRegistry
-          );
-        }
-      }
-      setOpen(false);
-    },
-    [handleAddComponentLayer, handleAddTextLayer, inputValue]
-  );
 
   const handleRemove = React.useCallback(
     (childId: string) => {
@@ -545,83 +473,20 @@ function ChildrenSearchableMultiSelect({
     [removeLayer]
   );
 
-  const textInputForm = (
-    <form
-      className="w-full"
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleAddTextLayer(textInputValue, "text");
-        setTextInputValue("");
-      }}
-    >
-      <div className="w-full flex items-center space-x-2">
-        <Input
-          className="w-full flex-grow"
-          placeholder="Enter text..."
-          value={textInputValue}
-          onChange={(e) => setTextInputValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleAddTextLayer(textInputValue, "text");
-              setTextInputValue("");
-            }
-          }}
-        />
-        <Button type="submit" variant="secondary">
-          {" "}
-          <PlusIcon className="w-4 h-4" />
-        </Button>
-      </div>
-    </form>
-  );
-
   return (
     <div className="w-full space-y-4">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
+      <AddComponentsPopover
+        parentLayerId={selectedLayer?.id}
+      >
+        <Button
             variant="outline"
             role="combobox"
-            aria-expanded={open}
             className="w-full justify-between"
           >
             Add Component or Text
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
-          <Command>
-            <CommandInput
-              placeholder="Add component or text..."
-              value={inputValue}
-              onValueChange={setInputValue}
-            />
-            <CommandList>
-              <CommandEmpty>
-                No components found
-                {textInputForm}
-              </CommandEmpty>
-              <CommandGroup heading="Text">
-                <CommandItem>{textInputForm}</CommandItem>
-              </CommandGroup>
-              <CommandSeparator />
-              {Object.entries(groupedOptions).map(([group, components]) => (
-                <CommandGroup key={group} heading={group}>
-                  {components.map((component) => (
-                    <CommandItem
-                      key={component.value}
-                      onSelect={() => handleSelect(component.value)}
-                    >
-                      {component.label}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              ))}
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      </AddComponentsPopover>
 
       {selectedLayer && (
         <DraggableList

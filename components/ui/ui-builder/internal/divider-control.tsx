@@ -6,13 +6,11 @@ import { PlusCircle } from "lucide-react";
 
 type DividerControlProps = {
   className?: string;
-  handleAddComponent: (componentId: keyof typeof componentRegistry) => void;
-  availableComponents: Array<keyof typeof componentRegistry>;
+  addPosition?: number;
 };
 
 export function DividerControl({
-  handleAddComponent,
-  availableComponents = [],
+  addPosition,
 }: DividerControlProps) {
   return (
     <div className="relative py-0">
@@ -20,8 +18,7 @@ export function DividerControl({
         <div className="w-full border-t border-gray-300 border-dashed" />
       </div>
       <AddComponentsPopover
-        handleAddComponent={handleAddComponent}
-        availableComponents={availableComponents}
+        addPosition={addPosition}
       >
         <Button
           variant="outline"
