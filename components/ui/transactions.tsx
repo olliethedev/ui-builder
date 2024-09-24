@@ -15,13 +15,12 @@ interface TransactionsProps {
     email: string;
     amount: number;
   }[];
-  className?: string;
 }
 
-export function Transactions({ data, className }: TransactionsProps) {
+export function Transactions({ data }: TransactionsProps) {
 
   return (
-    <Table className={className}>
+    <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Customer</TableHead>

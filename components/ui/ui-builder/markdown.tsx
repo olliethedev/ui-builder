@@ -15,7 +15,7 @@ export function Markdown({ children, className }: MarkdownProps) {
   return (
     <MemoizedReactMarkdown
       className={cn(
-        "prose min-w-full break-words prose-p:leading-relaxed prose-pre:p-0",
+        "prose min-w-full break-words prose-p:leading-relaxed prose-pre:p-0 prose-p:text-base prose-p:font-normal",
         className
       )}
       remarkPlugins={[remarkGfm, remarkMath]}

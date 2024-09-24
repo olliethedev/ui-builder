@@ -3,9 +3,7 @@ import React, {
   Suspense,
   useState,
   useEffect,
-  cloneElement, 
-  isValidElement, 
-  useRef
+  useRef,
 } from "react";
 import { ChevronRight, Plus, Trash, Copy } from "lucide-react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -19,6 +17,7 @@ import {
 import { Markdown } from "../markdown";
 import { DividerControl } from "./divider-control";
 import { AddComponentsPopover } from "./add-component-popover";
+import { cn } from "@/lib/utils";
 
 interface PreviewPanelProps {
   className?: string;
@@ -63,7 +62,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
     }
   };
 
-  const renderLayer = (layer: Layer) => {
+  const renderLayer = (layer: Layer, zIndex: number = 10) => {
     if (isTextLayer(layer)) {
       const TextComponent = layer.textType === "markdown" ? Markdown : "span";
 
@@ -71,15 +70,14 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
         <ClickableWrapper
           key={layer.id}
           layer={layer}
+          zIndex={zIndex}
           isSelected={layer.id === selectedLayer?.id}
           onSelectElement={onSelectElement}
           onAddElement={onAddElement}
           onDuplicateLayer={handleDuplicateLayer}
           onDeleteLayer={handleDeleteLayer}
         >
-          <TextComponent>
-            {layer.text}
-          </TextComponent>
+          <TextComponent>{layer.text}</TextComponent>
         </ClickableWrapper>
       );
     }
@@ -90,13 +88,16 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
 
     const childProps = { ...layer.props };
     if (layer.children && layer.children.length > 0) {
-      childProps.children = layer.children.map(renderLayer);
+      childProps.children = layer.children.map((child) =>
+        renderLayer(child, zIndex + 1)
+      );
     }
 
     return (
       <ClickableWrapper
         key={layer.id}
         layer={layer}
+        zIndex={zIndex}
         isSelected={layer.id === selectedLayer?.id}
         onSelectElement={onSelectElement}
         onAddElement={onAddElement}
@@ -132,7 +133,6 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
             >
           }
         />
-        {/* Removed the existing LayerMenu outside the layers */}
       </div>
     </div>
   );
@@ -146,6 +146,7 @@ interface MenuProps {
   y: number;
   width: number;
   height: number;
+  zIndex: number;
   handleAddComponent: (componentName: keyof typeof componentRegistry) => void;
   handleDuplicateComponent: () => void;
   handleDeleteComponent: () => void;
@@ -157,6 +158,7 @@ const LayerMenu: React.FC<MenuProps> = ({
   y,
   width,
   height,
+  zIndex,
   handleAddComponent,
   handleDuplicateComponent,
   handleDeleteComponent,
@@ -165,13 +167,14 @@ const LayerMenu: React.FC<MenuProps> = ({
   return (
     <>
       <div
-        className="fixed z-20"
+        className="fixed"
         style={{
           top: y,
-          left: x ,
+          left: x,
+          zIndex: zIndex,
         }}
       >
-        <span className="h-5 group flex items-center rounded-bl-full rounded-r-full bg-white/90 p-0 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50/95 hover:h-10 transition-all duration-200 ease-in-out overflow-hidden cursor-pointer hover:cursor-auto">
+        <span className="h-5 group flex items-center rounded-bl-full rounded-r-full bg-white/90 p-0 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-blue-500 hover:bg-gray-50/95 hover:h-10 hover:ring-2 transition-all duration-200 ease-in-out overflow-hidden cursor-pointer hover:cursor-auto">
           <ChevronRight className="h-5 w-5 text-gray-400 group-hover:size-8 transition-all duration-200 ease-in-out group-hover:opacity-30" />
           <span className="sr-only">Add component</span>
           <div className="overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out">
@@ -181,7 +184,7 @@ const LayerMenu: React.FC<MenuProps> = ({
               availableComponents={availableComponents}
             >
               <Button size="sm" variant="ghost">
-                <span className="sr-only">Duplicate</span>
+                <span className="sr-only">Add Component</span>
                 <Plus className="h-5 w-5 text-gray-400" />
               </Button>
             </AddComponentsPopover>
@@ -193,7 +196,12 @@ const LayerMenu: React.FC<MenuProps> = ({
               <span className="sr-only">Duplicate</span>
               <Copy className="h-5 w-5 text-gray-400" />
             </Button>
-            <Button size="sm" variant="ghost" onClick={handleDeleteComponent}>
+            <Button
+              className="rounded-r-full mr-1"
+              size="sm"
+              variant="ghost"
+              onClick={handleDeleteComponent}
+            >
               <span className="sr-only">Delete</span>
               <Trash className="h-5 w-5 text-gray-400" />
             </Button>
@@ -207,7 +215,8 @@ const LayerMenu: React.FC<MenuProps> = ({
 interface ClickableWrapperProps {
   layer: Layer;
   isSelected: boolean;
-  onSelectElement: (layerId: string, event: React.MouseEvent) => void;
+  zIndex: number;
+  onSelectElement: (layerId: string) => void;
   children: ReactNode;
   onAddElement: (
     componentName: keyof typeof componentRegistry,
@@ -221,6 +230,7 @@ interface ClickableWrapperProps {
 const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   layer,
   isSelected,
+  zIndex,
   onSelectElement,
   children,
   onAddElement,
@@ -231,10 +241,10 @@ const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   const wrapperRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
-    if (!isSelected) {
-      setBoundingRect(null);
-      return;
-    }
+    // if (!isSelected) {
+    //   setBoundingRect(null);
+    //   return;
+    // }
 
     const element = wrapperRef.current?.firstElementChild as HTMLElement | null;
     if (!element) {
@@ -250,7 +260,7 @@ const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
     updateBoundingRect();
 
     let resizeObserver: ResizeObserver | null = null;
-    if ('ResizeObserver' in window) {
+    if ("ResizeObserver" in window) {
       resizeObserver = new ResizeObserver(updateBoundingRect);
       resizeObserver.observe(element);
     }
@@ -276,16 +286,15 @@ const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    onSelectElement(layer.id, e);
+    onSelectElement(layer.id);
   };
 
   return (
     <ErrorBoundary fallbackRender={ErrorFallback}>
       <Suspense fallback={<div>Loading...</div>}>
         <span
+          className="contents" // Preserves layout
           ref={wrapperRef}
-          onClick={handleClick}
-          style={{ display: "contents" }} // Preserves layout
         >
           {children}
         </span>
@@ -294,27 +303,41 @@ const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
           <LayerMenu
             x={boundingRect.left + window.scrollX}
             y={boundingRect.bottom + window.scrollY}
+            zIndex={40 + zIndex}
             width={boundingRect.width}
             height={boundingRect.height}
             handleAddComponent={(elem) => onAddElement(elem, layer.id)}
             handleDuplicateComponent={onDuplicateLayer}
             handleDeleteComponent={onDeleteLayer}
             availableComponents={
-              Object.keys(componentRegistry) as Array<keyof typeof componentRegistry>
+              Object.keys(componentRegistry) as Array<
+                keyof typeof componentRegistry
+              >
             }
           />
         )}
 
-        {isSelected && boundingRect && (
+        {boundingRect && (
           <div
-            className="fixed border-2 border-blue-500 pointer-events-none z-20"
+            onClick={handleClick}
+            className={cn(
+              "fixed box-border hover:border-blue-300 hover:border-2",
+              isSelected ? "border-2 border-blue-500 hover:border-blue-500" : ""
+            )}
+            onWheel={(e) => {
+              console.log("wheel", e);
+              const scrollParent = getScrollParent(e.target as HTMLElement);
+              if (scrollParent) {
+                scrollParent.scrollLeft += e.deltaX;
+                scrollParent.scrollTop += e.deltaY;
+              }
+            }}
             style={{
               top: boundingRect.top,
               left: boundingRect.left,
               width: boundingRect.width,
               height: boundingRect.height,
-              boxSizing: "border-box",
-              position: "fixed",
+              zIndex: zIndex,
             }}
           />
         )}
