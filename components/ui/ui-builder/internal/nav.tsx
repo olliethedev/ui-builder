@@ -131,7 +131,7 @@ const CodeDialog = ({
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
       <DialogTrigger asChild>
-        <Button>Save</Button>
+        <Button>Export</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[625px] max-h-[625px]">
         <DialogHeader>

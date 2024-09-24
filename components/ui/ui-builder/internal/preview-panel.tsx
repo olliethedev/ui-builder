@@ -1,37 +1,24 @@
 import React, {
-  ErrorInfo,
   ReactNode,
-  Component as ReactComponent,
   Suspense,
   useState,
-  useRef,
-  useLayoutEffect,
+  useEffect,
+  cloneElement, 
+  isValidElement, 
+  useRef
 } from "react";
-import { PlusCircle, ChevronRight, Plus, Trash, Copy } from "lucide-react";
+import { ChevronRight, Plus, Trash, Copy } from "lucide-react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-
 import {
   componentRegistry,
   isTextLayer,
   Layer,
   useComponentStore,
 } from "@/components/ui/ui-builder/internal/store/component-store";
-import { cn } from "@/lib/utils";
 import { Markdown } from "../markdown";
+import { DividerControl } from "./divider-control";
+import { AddComponentsPopover } from "./add-component-popover";
 
 interface PreviewPanelProps {
   className?: string;
@@ -47,16 +34,9 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
     duplicateLayer,
     removeLayer,
   } = useComponentStore();
+
   console.log("PreviewPanel", { selectedLayerId });
   const selectedLayer = findLayerById(selectedLayerId);
-  const [menuPosition, setMenuPosition] = useState<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const onAddElement = (
     componentName: keyof typeof componentRegistry,
@@ -66,16 +46,9 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
     addComponentLayer(componentName, parentId, parentPosition);
   };
 
-  const onSelectElement = (layerId: string, event: React.MouseEvent) => {
+  const onSelectElement = (layerId: string) => {
+    console.log("onSelectElement", layerId);
     selectLayer(layerId);
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    setMenuPosition({
-      x: rect.left,
-      y: rect.top,
-      width: rect.width,
-      height: rect.height,
-    });
-    setIsMenuOpen(true);
   };
 
   const handleDeleteLayer = () => {
@@ -90,42 +63,24 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
     }
   };
 
-  // Update menu position when selectedLayer changes
-  useLayoutEffect(() => {
-    if (selectedLayer && !isTextLayer(selectedLayer) && containerRef.current) {
-      const element = containerRef.current.querySelector<HTMLElement>(
-        `[data-layer-id="${selectedLayer.id}"]`
-      );
-      if (element) {
-        const rect = element.getBoundingClientRect();
-        const containerRect = containerRef.current.getBoundingClientRect();
-        setMenuPosition({
-          x: rect.left - containerRect.left,
-          y: rect.top - containerRect.top,
-          width: rect.width,
-          height: rect.height,
-        });
-        setIsMenuOpen(true);
-      }
-    } else {
-      setIsMenuOpen(false);
-    }
-  }, [selectedLayer]);
-
   const renderLayer = (layer: Layer) => {
     if (isTextLayer(layer)) {
-      console.log("renderLayer", { layer });
-      if (layer.textType === "markdown") {
-        return (
-          <Markdown key={layer.id} data-layer-id={layer.id}>
-            {layer.text}
-          </Markdown>
-        );
-      }
+      const TextComponent = layer.textType === "markdown" ? Markdown : "span";
+
       return (
-        <span key={layer.id} data-layer-id={layer.id}>
-          {layer.text}
-        </span>
+        <ClickableWrapper
+          key={layer.id}
+          layer={layer}
+          isSelected={layer.id === selectedLayer?.id}
+          onSelectElement={onSelectElement}
+          onAddElement={onAddElement}
+          onDuplicateLayer={handleDuplicateLayer}
+          onDeleteLayer={handleDeleteLayer}
+        >
+          <TextComponent>
+            {layer.text}
+          </TextComponent>
+        </ClickableWrapper>
       );
     }
 
@@ -138,43 +93,18 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
       childProps.children = layer.children.map(renderLayer);
     }
 
-    const isSelected = layer.id === selectedLayer?.id;
-
     return (
-      <ErrorBoundary key={layer.id} fallbackRender={ErrorFallback}>
-        <Suspense key={layer.id} fallback={<div>Loading...</div>}>
-          <Component
-            {...(childProps as any)}
-            className={`${
-              isSelected
-                ? "border-2 border-blue-500"
-                : " hover:ring-1 hover:ring-blue-300 hover:ring-offset-0" //ring-2 ring-blue-500 ring-offset-0
-            } ${childProps.className || ""}`}
-            data-layer-id={layer.id}
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              e.preventDefault();
-              console.log("selectedLayer", selectedLayer);
-              onSelectElement(layer.id, e);
-            }}
-            // onClickCapture={(e: React.MouseEvent) => {
-            //   // Prevent click events from reaching child elements
-            //   e.stopPropagation();
-            //   e.preventDefault();
-            //   onSelectElement(layer.id, e);
-            // }}
-            onMouseDown={(e: React.MouseEvent) => {
-              if (
-                e.target instanceof HTMLInputElement ||
-                e.target instanceof HTMLTextAreaElement
-              ) {
-              }
-            }}
-          >
-            {childProps.children}
-          </Component>
-        </Suspense>
-      </ErrorBoundary>
+      <ClickableWrapper
+        key={layer.id}
+        layer={layer}
+        isSelected={layer.id === selectedLayer?.id}
+        onSelectElement={onSelectElement}
+        onAddElement={onAddElement}
+        onDuplicateLayer={handleDuplicateLayer}
+        onDeleteLayer={handleDeleteLayer}
+      >
+        <Component {...(childProps as any)} />
+      </ClickableWrapper>
     );
   };
 
@@ -182,7 +112,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
     <div className={className}>
       <h2 className="text-xl font-semibold mb-4">Preview</h2>
 
-      <div className="border p-4 relative w-full" ref={containerRef}>
+      <div className="border p-4 relative w-full">
         <DividerControl
           handleAddComponent={(elem) => onAddElement(elem, undefined, 0)}
           availableComponents={
@@ -191,7 +121,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
             >
           }
         />
-        <div className="flex flex-col w-full overflow-hidden">
+        <div className="flex flex-col w-full overflow-y-visible relative">
           {layers.map(renderLayer)}
         </div>
         <DividerControl
@@ -202,22 +132,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
             >
           }
         />
-        {isMenuOpen && menuPosition && selectedLayer && (
-          <LayerMenu
-            x={menuPosition.x}
-            y={menuPosition.y}
-            width={menuPosition.width}
-            height={menuPosition.height}
-            handleAddComponent={(elem) => onAddElement(elem, selectedLayer.id)}
-            handleDuplicateComponent={handleDuplicateLayer}
-            handleDeleteComponent={handleDeleteLayer}
-            availableComponents={
-              Object.keys(componentRegistry) as Array<
-                keyof typeof componentRegistry
-              >
-            }
-          />
-        )}
+        {/* Removed the existing LayerMenu outside the layers */}
       </div>
     </div>
   );
@@ -248,116 +163,165 @@ const LayerMenu: React.FC<MenuProps> = ({
   availableComponents,
 }) => {
   return (
-    <div
-      className="absolute"
-      style={{
-        top: y + height - 2,
-        left: x - 3,
-        zIndex: 1000,
-      }}
-    >
-      <span className="h-5 group flex items-center rounded-bl-full rounded-r-full bg-white/90 p-0 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50/95 hover:h-10 transition-all duration-200 ease-in-out overflow-hidden cursor-pointer hover:cursor-auto">
-        <ChevronRight className="h-5 w-5 text-gray-400 group-hover:size-8 transition-all duration-200 ease-in-out group-hover:opacity-30" />
-        <span className="sr-only">Add component</span>
-        <div className="overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out">
-          <AddComponentsPopover
-            className="flex-shrink w-min inline-flex"
-            handleAddComponent={handleAddComponent}
-            availableComponents={availableComponents}
-          >
-            <Button size="sm" variant="ghost">
-              <span className="sr-only">Duplicate</span>
-              <Plus className="h-5 w-5 text-gray-400" />
-            </Button>
-          </AddComponentsPopover>
-          <Button size="sm" variant="ghost" onClick={handleDuplicateComponent}>
-            <span className="sr-only">Duplicate</span>
-            <Copy className="h-5 w-5 text-gray-400" />
-          </Button>
-          <Button size="sm" variant="ghost" onClick={handleDeleteComponent}>
-            <span className="sr-only">Delete</span>
-            <Trash className="h-5 w-5 text-gray-400" />
-          </Button>
-        </div>
-      </span>
-    </div>
-  );
-};
-
-type DividerControlProps = {
-  className?: string;
-  handleAddComponent: (componentId: keyof typeof componentRegistry) => void;
-  availableComponents: Array<keyof typeof componentRegistry>;
-};
-
-function DividerControl({
-  handleAddComponent,
-  availableComponents = [],
-}: DividerControlProps) {
-  return (
-    <div className="relative py-0">
-      <div className="absolute inset-0 flex items-center" aria-hidden="true">
-        <div className="w-full border-t border-gray-300 border-dashed" />
-      </div>
-      <AddComponentsPopover
-        handleAddComponent={handleAddComponent}
-        availableComponents={availableComponents}
+    <>
+      <div
+        className="fixed z-20"
+        style={{
+          top: y,
+          left: x ,
+        }}
       >
-        <Button
-          variant="outline"
-          className="group flex items-center rounded-full bg-white h-min p-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 transition-all duration-200 ease-in-out"
-        >
-          <PlusCircle className="h-5 w-5 text-gray-400" />
+        <span className="h-5 group flex items-center rounded-bl-full rounded-r-full bg-white/90 p-0 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50/95 hover:h-10 transition-all duration-200 ease-in-out overflow-hidden cursor-pointer hover:cursor-auto">
+          <ChevronRight className="h-5 w-5 text-gray-400 group-hover:size-8 transition-all duration-200 ease-in-out group-hover:opacity-30" />
           <span className="sr-only">Add component</span>
-          <span className="overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out group-hover:pl-2">
-            Add component
-          </span>
-        </Button>
-      </AddComponentsPopover>
-    </div>
+          <div className="overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out">
+            <AddComponentsPopover
+              className="flex-shrink w-min inline-flex"
+              handleAddComponent={handleAddComponent}
+              availableComponents={availableComponents}
+            >
+              <Button size="sm" variant="ghost">
+                <span className="sr-only">Duplicate</span>
+                <Plus className="h-5 w-5 text-gray-400" />
+              </Button>
+            </AddComponentsPopover>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleDuplicateComponent}
+            >
+              <span className="sr-only">Duplicate</span>
+              <Copy className="h-5 w-5 text-gray-400" />
+            </Button>
+            <Button size="sm" variant="ghost" onClick={handleDeleteComponent}>
+              <span className="sr-only">Delete</span>
+              <Trash className="h-5 w-5 text-gray-400" />
+            </Button>
+          </div>
+        </span>
+      </div>
+    </>
   );
+};
+
+interface ClickableWrapperProps {
+  layer: Layer;
+  isSelected: boolean;
+  onSelectElement: (layerId: string, event: React.MouseEvent) => void;
+  children: ReactNode;
+  onAddElement: (
+    componentName: keyof typeof componentRegistry,
+    parentId?: string,
+    parentPosition?: number
+  ) => void;
+  onDuplicateLayer: () => void;
+  onDeleteLayer: () => void;
 }
 
-function AddComponentsPopover({
-  className,
-  handleAddComponent,
-  availableComponents = [],
+const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
+  layer,
+  isSelected,
+  onSelectElement,
   children,
-}: DividerControlProps & { children: ReactNode }) {
-  const [open, setOpen] = React.useState(false);
+  onAddElement,
+  onDuplicateLayer,
+  onDeleteLayer,
+}) => {
+  const [boundingRect, setBoundingRect] = useState<DOMRect | null>(null);
+  const wrapperRef = useRef<HTMLSpanElement | null>(null);
 
-  const handleComponentSelect = (
-    componentId: keyof typeof componentRegistry
-  ) => {
-    handleAddComponent(componentId);
-    setOpen(false);
+  useEffect(() => {
+    if (!isSelected) {
+      setBoundingRect(null);
+      return;
+    }
+
+    const element = wrapperRef.current?.firstElementChild as HTMLElement | null;
+    if (!element) {
+      setBoundingRect(null);
+      return;
+    }
+
+    const updateBoundingRect = () => {
+      const rect = element.getBoundingClientRect();
+      setBoundingRect(rect);
+    };
+
+    updateBoundingRect();
+
+    let resizeObserver: ResizeObserver | null = null;
+    if ('ResizeObserver' in window) {
+      resizeObserver = new ResizeObserver(updateBoundingRect);
+      resizeObserver.observe(element);
+    }
+
+    const scrollParent = getScrollParent(element);
+    if (scrollParent) {
+      scrollParent.addEventListener("scroll", updateBoundingRect);
+    }
+    window.addEventListener("resize", updateBoundingRect);
+
+    return () => {
+      if (resizeObserver) {
+        resizeObserver.unobserve(element);
+        resizeObserver.disconnect();
+      }
+      if (scrollParent) {
+        scrollParent.removeEventListener("scroll", updateBoundingRect);
+      }
+      window.removeEventListener("resize", updateBoundingRect);
+    };
+  }, [isSelected, layer.id, children]);
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onSelectElement(layer.id, e);
   };
+
   return (
-    <div className={cn("relative flex justify-center", className)}>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>{children}</PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="center">
-          <Command>
-            <CommandInput placeholder="Search components..." />
-            <CommandList>
-              <CommandEmpty>No components found.</CommandEmpty>
-              <CommandGroup>
-                {availableComponents.map((component) => (
-                  <CommandItem
-                    key={component}
-                    onSelect={() => handleComponentSelect(component)}
-                  >
-                    {component}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </div>
+    <ErrorBoundary fallbackRender={ErrorFallback}>
+      <Suspense fallback={<div>Loading...</div>}>
+        <span
+          ref={wrapperRef}
+          onClick={handleClick}
+          style={{ display: "contents" }} // Preserves layout
+        >
+          {children}
+        </span>
+
+        {isSelected && boundingRect && (
+          <LayerMenu
+            x={boundingRect.left + window.scrollX}
+            y={boundingRect.bottom + window.scrollY}
+            width={boundingRect.width}
+            height={boundingRect.height}
+            handleAddComponent={(elem) => onAddElement(elem, layer.id)}
+            handleDuplicateComponent={onDuplicateLayer}
+            handleDeleteComponent={onDeleteLayer}
+            availableComponents={
+              Object.keys(componentRegistry) as Array<keyof typeof componentRegistry>
+            }
+          />
+        )}
+
+        {isSelected && boundingRect && (
+          <div
+            className="fixed border-2 border-blue-500 pointer-events-none z-20"
+            style={{
+              top: boundingRect.top,
+              left: boundingRect.left,
+              width: boundingRect.width,
+              height: boundingRect.height,
+              boxSizing: "border-box",
+              position: "fixed",
+            }}
+          />
+        )}
+      </Suspense>
+    </ErrorBoundary>
   );
-}
+};
 
 function ErrorFallback({ error }: { error: Error }) {
   // Call resetErrorBoundary() to reset the error boundary and retry the render.
@@ -372,4 +336,26 @@ function ErrorFallback({ error }: { error: Error }) {
       </details>
     </div>
   );
+}
+
+function getScrollParent(element: HTMLElement | null): HTMLElement | null {
+  if (!element) return null;
+
+  const overflowRegex = /(auto|scroll)/;
+
+  let parent: HTMLElement | null = element.parentElement;
+
+  while (parent) {
+    const style = getComputedStyle(parent);
+    const overflowY = style.overflowY;
+    const overflowX = style.overflowX;
+
+    if (overflowRegex.test(overflowY) || overflowRegex.test(overflowX)) {
+      return parent;
+    }
+
+    parent = parent.parentElement;
+  }
+
+  return null;
 }
