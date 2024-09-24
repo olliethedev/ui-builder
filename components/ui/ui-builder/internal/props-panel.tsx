@@ -35,6 +35,8 @@ import { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
 import DraggableList from "@/components/ui/ui-builder/internal/draggable-list";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
+import MultipleSelector, { Option } from "../multi-select";
+import { TAILWIND_CLASSES } from "./tailwind-classes";
 
 interface PropsPanelProps {
   className?: string;
@@ -50,7 +52,9 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
       <h2 className="text-xl font-semibold mb-4">
         {selectedLayer && isTextLayer(selectedLayer)
           ? "Text Properties"
-          : selectedLayer?.type ?? "Component Properties"}
+          : selectedLayer?.type
+          ? selectedLayer.type + " Properties"
+          : "Component Properties"}
       </h2>
       {!selectedLayer && <p>No component selected</p>}
       {selectedLayer && <PropsPanelForm selectedLayer={selectedLayer} />}
@@ -273,6 +277,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
         componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
 
       const hasChildrenInSchema = schema.shape.children !== undefined;
+      const hasClassNameInSchema = schema.shape.className !== undefined;
 
       const handleSetValues = useCallback(
         (data: Partial<z.infer<typeof schema>>) => {
@@ -324,6 +329,18 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
       console.log({ defualtFieldConfig });
       console.log({ initialValues: selectedLayer.props });
 
+      const [isTriggered, setIsTriggered] = React.useState(false);
+
+      const searchClasses = async (value: string): Promise<Option[]> => {
+        return new Promise((resolve) => {
+          const res = TAILWIND_CLASSES.filter((option) => option.includes(value));
+            resolve(res.map((cls) => ({
+              value: cls,
+              label: cls,
+            })));
+        });
+      };
+
       return (
         <AutoForm
           key={selectedLayer.id}
@@ -363,6 +380,63 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
                             handleReorderChildrenLayers={
                               handleReorderChildrenLayers
                             }
+                          />
+                        </FormControl>
+                        {fieldConfigItem.description && (
+                          <FormDescription>
+                            {fieldConfigItem.description}
+                          </FormDescription>
+                        )}
+                      </FormItem>
+                    ),
+                  },
+                }
+              : undefined),
+            ...(hasClassNameInSchema
+              ? {
+                  className: {
+                    fieldType: ({
+                      label,
+                      isRequired,
+                      field,
+                      fieldConfigItem,
+                      fieldProps,
+                    }: AutoFormInputComponentProps) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>
+                          {label}
+                          {isRequired && (
+                            <span className="text-destructive"> *</span>
+                          )}
+                        </FormLabel>
+                        <FormControl>
+                          <MultipleSelector
+                            defaultOptions={[]}
+                            value={selectedLayer.props.className?.split(" ").map((cls:string) => ({
+                              value: cls,
+                              label: cls,
+                            }))?? []}
+                            onChange={(values) => {
+                              console.log({ values });
+                              updateLayerProps(selectedLayer.id, {
+                                ...selectedLayer.props,
+                                className: values.map((v) => v.value).join(" "),
+                              });
+                            }}
+                            placeholder="Type class name..."
+                            creatable
+                            emptyIndicator={
+                              <p className="text-center text-lg leading-10 text-gray-600 dark:text-gray-400">
+                                No results found.
+                              </p>
+                            }
+                            loadingIndicator={
+                              <p className="py-2 text-center text-lg leading-10 text-muted-foreground">loading...</p>
+                            }
+                            onSearch={async (value) => {
+                              const res = await searchClasses(value);
+                              return res;
+                            }}
                           />
                         </FormControl>
                         {fieldConfigItem.description && (
