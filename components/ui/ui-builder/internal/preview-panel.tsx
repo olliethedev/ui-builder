@@ -59,7 +59,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
   const renderLayer = (layer: Layer, zIndex: number = 10) => {
     if (isTextLayer(layer)) {
       const TextComponent = layer.textType === "markdown" ? Markdown : "span";
-
+      console.log("text layer", layer);
       return (
         <ClickableWrapper
           key={layer.id}
@@ -71,7 +71,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
           onDuplicateLayer={handleDuplicateLayer}
           onDeleteLayer={handleDeleteLayer}
         >
-          <TextComponent>{layer.text}</TextComponent>
+          <TextComponent { ...layer.props }>{layer.text}</TextComponent>
         </ClickableWrapper>
       );
     }

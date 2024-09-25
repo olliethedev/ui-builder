@@ -65,7 +65,6 @@ export function AddComponentsPopover({
   const {
     addComponentLayer,
     addTextLayer,
-    findLayerById
   } = useComponentStore();
 
 

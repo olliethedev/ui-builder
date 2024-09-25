@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { PlusIcon, X as XIcon, ChevronsUpDown } from "lucide-react";
+import { X as XIcon, ChevronsUpDown } from "lucide-react";
 import { z, ZodObject, ZodTypeAny } from "zod";
 import {
   useComponentStore,
@@ -15,29 +15,13 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import AutoForm from "@/components/ui/auto-form";
 import { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
 import DraggableList from "@/components/ui/ui-builder/internal/draggable-list";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
-import MultipleSelector, { Option } from "../multi-select";
-import { TAILWIND_CLASSES } from "./tailwind-classes";
 import { AddComponentsPopover } from "./add-component-popover";
+import ClassNameField from "./classname-field";
 
 interface PropsPanelProps {
   className?: string;
@@ -62,6 +46,8 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
     </div>
   );
 };
+PropsPanel.displayName = "PropsPanel";
+export default PropsPanel;
 
 interface PropsPanelFormProps {
   selectedLayer: ComponentLayer | TextLayer;
@@ -141,6 +127,7 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
   const schema = z.object({
     text: z.string(),
     textType: z.enum(["text", "markdown"]),
+    className: z.string().optional(),
   });
 
   const handleSetValues = useCallback(
@@ -162,6 +149,7 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
       formSchema={addDefaultValues(schema, {
         text: selectedLayer.text,
         textType: selectedLayer.textType,
+        className: selectedLayer.props.className,
       })}
       onValuesChange={handleSetValues}
       onSubmit={(data) => {
@@ -170,6 +158,7 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
       values={{
         text: selectedLayer.text,
         textType: selectedLayer.textType,
+        className: selectedLayer.props.className,
       }}
       fieldConfig={{
         text: {
@@ -199,6 +188,27 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
                 ?
               </Label>
             </>
+          ),
+        },
+        className: {
+          fieldType: ({
+            label,
+            isRequired,
+            field,
+            fieldConfigItem,
+            fieldProps,
+          }: AutoFormInputComponentProps) => (  
+            <ClassNameField
+              label={label}
+              isRequired={isRequired}
+              className={selectedLayer.props.className}
+              onChange={(value) => {
+                console.log({ value });
+                updateLayerProps(selectedLayer.id, {
+                  className: value,
+                });
+              }}
+            />
           ),
         },
       }}
@@ -307,17 +317,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
       console.log({ defualtFieldConfig });
       console.log({ initialValues: selectedLayer.props });
 
-      const [isTriggered, setIsTriggered] = React.useState(false);
-
-      const searchClasses = async (value: string): Promise<Option[]> => {
-        return new Promise((resolve) => {
-          const res = TAILWIND_CLASSES.filter((option) => option.includes(value));
-            resolve(res.map((cls) => ({
-              value: cls,
-              label: cls,
-            })));
-        });
-      };
 
       return (
         <AutoForm
@@ -341,6 +340,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
                       fieldConfigItem,
                       fieldProps,
                     }: AutoFormInputComponentProps) => (
+                      
                       <FormItem className="flex flex-col">
                         <FormLabel>
                           {label}
@@ -364,6 +364,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
                           </FormDescription>
                         )}
                       </FormItem>
+                      
                     ),
                   },
                 }
@@ -378,49 +379,18 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
                       fieldConfigItem,
                       fieldProps,
                     }: AutoFormInputComponentProps) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>
-                          {label}
-                          {isRequired && (
-                            <span className="text-destructive"> *</span>
-                          )}
-                        </FormLabel>
-                        <FormControl>
-                          <MultipleSelector
-                            defaultOptions={[]}
-                            value={selectedLayer.props.className?.split(" ").map((cls:string) => ({
-                              value: cls,
-                              label: cls,
-                            }))?? []}
-                            onChange={(values) => {
-                              console.log({ values });
-                              updateLayerProps(selectedLayer.id, {
-                                ...selectedLayer.props,
-                                className: values.map((v) => v.value).join(" "),
-                              });
-                            }}
-                            placeholder="Type class name..."
-                            creatable
-                            emptyIndicator={
-                              <p className="text-center text-lg leading-10 text-gray-600 dark:text-gray-400">
-                                No results found.
-                              </p>
-                            }
-                            loadingIndicator={
-                              <p className="py-2 text-center text-lg leading-10 text-muted-foreground">loading...</p>
-                            }
-                            onSearch={async (value) => {
-                              const res = await searchClasses(value);
-                              return res;
-                            }}
-                          />
-                        </FormControl>
-                        {fieldConfigItem.description && (
-                          <FormDescription>
-                            {fieldConfigItem.description}
-                          </FormDescription>
-                        )}
-                      </FormItem>
+                      <ClassNameField
+                        label={label}
+                        isRequired={isRequired}
+                        className={selectedLayer.props.className}
+                        onChange={(value) => {
+                          console.log({ value });
+                          updateLayerProps(selectedLayer.id, {
+                            ...selectedLayer.props,
+                            className: value,
+                          });
+                        }}
+                      />
                     ),
                   },
                 }
@@ -525,9 +495,7 @@ function ChildrenSearchableMultiSelect({
   );
 }
 
-PropsPanel.displayName = "PropsPanel";
 
-export default PropsPanel;
 
 // patch for autoform to respect existing values
 function addDefaultValues<T extends ZodObject<any>>(

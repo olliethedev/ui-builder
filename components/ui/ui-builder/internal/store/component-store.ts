@@ -7,6 +7,7 @@ import { z, ZodTypeAny, ZodUnion, ZodLiteral, ZodOptional, ZodNullable, ZodEnum,
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Transactions } from '@/components/ui/transactions';
+import { Flexbox } from '@/components/ui/ui-builder/flexbox';
 
 
 // Component registry with Zod schemas or add manually like:
@@ -57,6 +58,18 @@ const componentRegistry = {
       }))
   })),
     from: '@/components/ui/transactions'
+  },
+  Flexbox:{
+    component: Flexbox,
+    schema: patchSchema(z.object({
+      children: z.any().optional(),
+    direction: z.union([z.literal("row"), z.literal("column"), z.literal("rowReverse"), z.literal("columnReverse")]).optional().nullable(),
+    justify: z.union([z.literal("start"), z.literal("end"), z.literal("center"), z.literal("between"), z.literal("around"), z.literal("evenly")]).optional().nullable(),
+    align: z.union([z.literal("start"), z.literal("end"), z.literal("center"), z.literal("baseline"), z.literal("stretch")]).optional().nullable(),
+    wrap: z.union([z.literal("wrap"), z.literal("nowrap"), z.literal("wrapReverse")]).optional().nullable(),
+    gap: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(4), z.literal(8)]).optional().nullable()
+    })),
+    from: '@/components/ui/ui-builder/flexbox'
   }
 };
 
@@ -83,6 +96,7 @@ export type ComponentLayer = Exclude<Layer, TextLayer>;
 export type TextLayer = {
   id: string;
   type: '_text_';
+  props: Record<string, any>;
   text: string;
   textType: 'text' | 'markdown';
 };
@@ -142,7 +156,8 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
       id: createId(),
       type: '_text_',
       text,
-      textType: textType
+      textType: textType,
+      props: {}
     };
 
     return addLayerToState(state, newLayer, parentId, parentPosition);
@@ -193,8 +208,16 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
       return layers.map(layer => {
         if (layer.id === layerId) {
           if (isTextLayer(layer)) {
+            console.log("update Text Layer Props", {layer, newProps});
             // For text layers, update the text property
-            return { ...layer, text: newProps.text || layer.text, textType: newProps.textType || layer.textType };
+            const { text, textType, type, id, props: nestedProps, ...rest } = newProps;
+
+          return {
+            ...layer,
+            text: text || layer.text,
+            textType: textType || layer.textType,
+            props: { ...layer.props, ...rest }
+          };
           } else {
             // For component layers, update the props
             return { ...layer, props: { ...layer.props, ...newProps } };

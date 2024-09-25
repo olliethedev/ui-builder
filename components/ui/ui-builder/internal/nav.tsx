@@ -22,23 +22,8 @@ export function NavBar() {
   const { layers } = useComponentStore();
   console.log({ layers });
 
-  const generateLayerCode = (layer: Layer, indent = 0): string => {
-    if (isTextLayer(layer)) {
-      if (layer.textType === "markdown") {
-        const indentation = "  ".repeat(indent);
-        // Wrap markdown with Markdown component
-        return `${indentation}<Markdown>\n${layer.text
-          .split("\n")
-          .map((line) => `${indentation+"  "}${line}`)
-          .join("\n")}\n${indentation}</Markdown>`;
-      }
-      const indentation = "  ".repeat(indent);
-      return `${indentation}${layer.text}`;
-    }
-
-    const { type, props, children } = layer;
-
-    let propsString = Object.entries(props)
+  const generatePropsString = (props: Record<string, any>): string => {
+    return Object.entries(props)
       .filter(([_, value]) => value !== undefined)
       .map(([key, value]) => {
         let propValue;
@@ -52,6 +37,25 @@ export function NavBar() {
         return `${key}=${propValue}`;
       })
       .join(" ");
+  };
+
+  const generateLayerCode = (layer: Layer, indent = 0): string => {
+    if (isTextLayer(layer)) {
+      if (layer.textType === "markdown") {
+        const indentation = "  ".repeat(indent);
+        // Wrap markdown with Markdown component
+        return `${indentation}<Markdown ${generatePropsString(
+          layer.props
+        )}>\n${layer.text
+          .split("\n")
+          .map((line) => `${indentation + "  "}${line}`)
+          .join("\n")}\n${indentation}</Markdown>`;
+      }
+      const indentation = "  ".repeat(indent);
+      return `${indentation}<span ${generatePropsString(layer.props)}>${layer.text}</span>`;
+    }
+
+    const { type, children } = layer;
 
     const indentation = "  ".repeat(indent);
 
@@ -63,9 +67,11 @@ export function NavBar() {
     }
 
     if (childrenCode) {
-      return `${indentation}<${type} ${propsString}>\n${childrenCode}\n${indentation}</${type}>`;
+      return `${indentation}<${type} ${generatePropsString(
+        layer.props
+      )}>\n${childrenCode}\n${indentation}</${type}>`;
     } else {
-      return `${indentation}<${type} ${propsString} />`;
+      return `${indentation}<${type} ${generatePropsString(layer.props)} />`;
     }
   };
 
@@ -75,7 +81,9 @@ export function NavBar() {
     const collectImports = (layer: Layer) => {
       if (isTextLayer(layer)) {
         if (layer.textType === "markdown") {
-          imports.add(`import { Markdown } from "@/components/ui/ui-builder/markdown";`); 
+          imports.add(
+            `import { Markdown } from "@/components/ui/ui-builder/markdown";`
+          );
         }
       } else {
         const componentDefinition = componentRegistry[layer.type];
