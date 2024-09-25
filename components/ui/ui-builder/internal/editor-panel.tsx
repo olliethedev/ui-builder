@@ -13,11 +13,11 @@ import { DividerControl } from "./divider-control";
 import { AddComponentsPopover } from "./add-component-popover";
 import { cn } from "@/lib/utils";
 
-interface PreviewPanelProps {
+interface EditorPanelProps {
   className?: string;
 }
 
-const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
+const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
   const {
     layers,
     selectLayer,
@@ -27,7 +27,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
     removeLayer,
   } = useComponentStore();
 
-  console.log("PreviewPanel", { selectedLayerId });
+  console.log("EditorPanel", { selectedLayerId });
   const selectedLayer = findLayerById(selectedLayerId);
 
 
@@ -95,9 +95,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
 
   return (
     <div className={className}>
-      <h2 className="text-xl font-semibold mb-4">Preview</h2>
-
-      <div className="border p-4 relative w-full">
+      <div className="relative w-full">
         <DividerControl addPosition={0} />
         <div className="flex flex-col w-full overflow-y-visible relative">
           {layers.map(renderLayer)}
@@ -108,7 +106,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
   );
 };
 
-export default PreviewPanel;
+export default EditorPanel;
 
 // Menu component that appears at the top-left corner of a selected layer
 interface MenuProps {

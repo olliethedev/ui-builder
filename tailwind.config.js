@@ -97,24 +97,24 @@ module.exports = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
-	  typography: {
-		DEFAULT: {
-		  css: {
-			  'code::before': {
-				content: '""',
-			  },
-			  'code::after': {
-				content: '""',
-			  },
-			  code: {
-				background: '#f3f3f3',
-				wordWrap: 'break-word',
-				padding: '.1rem .2rem',
-				borderRadius: '.2rem',
-			  }
-			},
-		},
-	  },
+      typography: {
+        DEFAULT: {
+          css: {
+            "code::before": {
+              content: '""',
+            },
+            "code::after": {
+              content: '""',
+            },
+            code: {
+              background: "#f3f3f3",
+              wordWrap: "break-word",
+              padding: ".1rem .2rem",
+              borderRadius: ".2rem",
+            },
+          },
+        },
+      },
     },
   },
   plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],

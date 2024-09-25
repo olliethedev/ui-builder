@@ -21,7 +21,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
             selectLayer(layer.id);
           }}
           className={`text-left mb-1 w-full p-1 rounded ${
-            layer.id === selectedLayerId ? 'bg-blue-200' : 'bg-gray-50 hover:bg-blue-100'
+            layer.id === selectedLayerId ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground'
           }`}
         >
           {isTextLayer(layer) ? "Text" : layer.type}

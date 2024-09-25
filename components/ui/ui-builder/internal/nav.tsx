@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ClipboardCopy, Redo, Undo } from "lucide-react";
+import { ClipboardCopy, Eye, FileUp, Redo, Undo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,6 +17,7 @@ import {
   isTextLayer,
   componentRegistry,
 } from "@/components/ui/ui-builder/internal/store/component-store";
+import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 
 export function NavBar() {
   const { layers, } = useComponentStore();
@@ -163,21 +164,44 @@ export function NavBar() {
 
   return (
     <div className="bg-background">
-      <header className="flex items-center justify-between px-6 py-4 border-b">
+      <div className="flex items-center justify-between px-6 py-4 border-b h-full">
         <h1 className="text-2xl font-bold">UI Builder</h1>
         <div className="flex space-x-2">
           <Button onClick={handleUndo} variant="secondary" size="icon" disabled={!canUndo}>
+            <span className="sr-only">Undo</span>
             <Undo className="w-4 h-4" />
           </Button>
           <Button onClick={handleRedo} variant="secondary" size="icon" disabled={!canRedo}>
+            <span className="sr-only">Redo</span>
             <Redo className="w-4 h-4" />
           </Button>
+          <div className="h-10 flex w-px bg-border"></div>
+          <PreviewDialog layers={layers} />
           <CodeDialog codeBlocks={codeBlocks} />
         </div>
-      </header>
+      </div>
     </div>
   );
 }
+
+const PreviewDialog = ({
+  layers,
+}: {
+  layers: Layer[];
+}) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  return <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+  <DialogTrigger asChild>
+    <Button variant="secondary" size="icon">
+      <span className="sr-only">Preview</span>
+      <Eye className="w-4 h-4" />
+    </Button>
+  </DialogTrigger>
+  <DialogContent className="max-w-[calc(100dvw)] max-h-[calc(100dvh)] overflow-auto p-0">
+    <LayerRenderer layers={layers} />
+  </DialogContent>
+</Dialog>;
+};
 
 const CodeDialog = ({
   codeBlocks,
@@ -193,7 +217,10 @@ const CodeDialog = ({
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
       <DialogTrigger asChild>
-        <Button>Export</Button>
+        <Button variant="default" size="icon">
+          <span className="sr-only">Export</span>
+          <FileUp className="w-4 h-4" />
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[625px] max-h-[625px]">
         <DialogHeader>

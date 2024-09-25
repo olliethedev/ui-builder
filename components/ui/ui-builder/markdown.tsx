@@ -15,20 +15,31 @@ export function Markdown({ children, className }: MarkdownProps) {
   return (
     <MemoizedReactMarkdown
       className={cn(
-        "prose min-w-full break-words prose-p:leading-relaxed prose-pre:p-0 prose-p:text-base prose-p:font-normal",
+        "prose break-words prose-p:leading-relaxed prose-pre:p-0 prose-pre:m-1 prose-p:text-base prose-p:font-normal prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:py-0 prose-li:my-0 max-w-none",
         className
       )}
       remarkPlugins={[remarkGfm, remarkMath]}
       components={{
-        a({ children, href }) {
+        a({ children, href, className,  }) {
           return (
-            <a href={href} target="_blank" rel="noopener noreferrer">
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(className, "text-blue-500 hover:text-blue-600")}
+            >
               {children}
             </a>
           );
         },
-        p({ children }) {
-          return <p className="mb-2 last:mb-0">{children}</p>;
+        img({ src, alt, className, }) {
+          return (
+            <img
+              src={src}
+              alt={alt}
+              className={cn(className, "w-full h-auto")}
+            />
+          );
         },
         code({ node, className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || "");
@@ -45,7 +56,7 @@ export function Markdown({ children, className }: MarkdownProps) {
           }
 
           return (
-            <code className={className} {...props}>
+            <code className={cn(className, "whitespace-pre-wrap")} {...props}>
               {children}
             </code>
           );
