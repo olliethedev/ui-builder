@@ -39,6 +39,7 @@ export const programmingLanguages: languageMap = {
   sql: ".sql",
   html: ".html",
   css: ".css",
+  tsx: ".tsx",
   // add more file extensions here
 };
 

@@ -18,11 +18,17 @@ import {
   componentRegistry,
 } from "@/components/ui/ui-builder/internal/store/component-store";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
+import { CodeBlock } from "../codeblock";
 
 export function NavBar() {
-  const { layers, } = useComponentStore();
-  const { undo, redo, futureStates, pastStates } = useComponentStore.temporal.getState();
-  console.log({ layers, futureStates: JSON.stringify(futureStates), pastStates: JSON.stringify(pastStates) });
+  const { layers } = useComponentStore();
+  const { undo, redo, futureStates, pastStates } =
+    useComponentStore.temporal.getState();
+  console.log({
+    layers,
+    futureStates: JSON.stringify(futureStates),
+    pastStates: JSON.stringify(pastStates),
+  });
 
   const canUndo = !!pastStates.length;
   const canRedo = !!futureStates.length;
@@ -30,14 +36,13 @@ export function NavBar() {
   // Handle keyboard shortcuts for Undo and Redo
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      const isMac = navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
+      const isMac = navigator.userAgent.toUpperCase().indexOf("MAC") >= 0;
       const modifierKey = isMac ? event.metaKey : event.ctrlKey;
-      const key = event.key.toLowerCase(); 
+      const key = event.key.toLowerCase();
 
-  
-      const isUndo = modifierKey && !event.shiftKey && key === 'z';
-      const isRedo = modifierKey && event.shiftKey && key === 'z';
-      
+      const isUndo = modifierKey && !event.shiftKey && key === "z";
+      const isRedo = modifierKey && event.shiftKey && key === "z";
+
       if (isUndo) {
         event.preventDefault();
         if (canUndo) {
@@ -51,11 +56,11 @@ export function NavBar() {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
 
     // Cleanup event listener on component unmount
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [canUndo, canRedo, undo, redo]);
 
@@ -83,13 +88,10 @@ export function NavBar() {
         // Wrap markdown with Markdown component
         return `${indentation}<Markdown ${generatePropsString(
           layer.props
-        )}>\n${layer.text
-          .split("\n")
-          .map((line) => `${indentation + "  "}${line}`)
-          .join("\n")}\n${indentation}</Markdown>`;
+        )}>{${JSON.stringify(layer.text)}}</Markdown>`;
       }
       const indentation = "  ".repeat(indent);
-      return `${indentation}<span ${generatePropsString(layer.props)}>${layer.text}</span>`;
+      return `${indentation}<span ${generatePropsString(layer.props)}>{${JSON.stringify(layer.text)}}</span>`;
     }
 
     const { type, children } = layer;
@@ -140,7 +142,20 @@ export function NavBar() {
     const code = layers.map((layer) => generateLayerCode(layer)).join("\n");
     const importsString = Array.from(imports).join("\n");
 
-    return `${importsString}\n\n${code}`;
+    const reactComponentTemplate = (imports: string, children: string) => {
+      return `
+import React from "react";\n
+${imports}\n
+const Component = () => {
+  return (
+    <>
+${children.split("\n").map((line) => `      ${line}`).join("\n")}
+    </>
+  );
+};\n`;
+    };
+
+    return reactComponentTemplate(importsString, code);
   };
 
   const codeBlocks = {
@@ -152,8 +167,8 @@ export function NavBar() {
     ),
   };
 
-   // Empty click handler for Undo
-   const handleUndo = useCallback(() => {
+  // Empty click handler for Undo
+  const handleUndo = useCallback(() => {
     undo();
   }, []);
 
@@ -167,11 +182,21 @@ export function NavBar() {
       <div className="flex items-center justify-between px-6 py-4 border-b h-full">
         <h1 className="text-2xl font-bold">UI Builder</h1>
         <div className="flex space-x-2">
-          <Button onClick={handleUndo} variant="secondary" size="icon" disabled={!canUndo}>
+          <Button
+            onClick={handleUndo}
+            variant="secondary"
+            size="icon"
+            disabled={!canUndo}
+          >
             <span className="sr-only">Undo</span>
             <Undo className="w-4 h-4" />
           </Button>
-          <Button onClick={handleRedo} variant="secondary" size="icon" disabled={!canRedo}>
+          <Button
+            onClick={handleRedo}
+            variant="secondary"
+            size="icon"
+            disabled={!canRedo}
+          >
             <span className="sr-only">Redo</span>
             <Redo className="w-4 h-4" />
           </Button>
@@ -184,23 +209,21 @@ export function NavBar() {
   );
 }
 
-const PreviewDialog = ({
-  layers,
-}: {
-  layers: Layer[];
-}) => {
+const PreviewDialog = ({ layers }: { layers: Layer[] }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  return <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-  <DialogTrigger asChild>
-    <Button variant="secondary" size="icon">
-      <span className="sr-only">Preview</span>
-      <Eye className="w-4 h-4" />
-    </Button>
-  </DialogTrigger>
-  <DialogContent className="max-w-[calc(100dvw)] max-h-[calc(100dvh)] overflow-auto p-0">
-    <LayerRenderer layers={layers} />
-  </DialogContent>
-</Dialog>;
+  return (
+    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <DialogTrigger asChild>
+        <Button variant="secondary" size="icon">
+          <span className="sr-only">Preview</span>
+          <Eye className="w-4 h-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-[calc(100dvw)] max-h-[calc(100dvh)] overflow-auto p-0">
+        <LayerRenderer layers={layers} />
+      </DialogContent>
+    </Dialog>
+  );
 };
 
 const CodeDialog = ({
@@ -209,11 +232,7 @@ const CodeDialog = ({
   codeBlocks: Record<"React" | "Serialized", string>;
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      alert("Copied to clipboard!");
-    });
-  };
+
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
       <DialogTrigger asChild>
@@ -234,20 +253,9 @@ const CodeDialog = ({
           {Object.entries(codeBlocks).map(([lang, code]) => (
             <TabsContent key={lang} value={lang} className="mt-4">
               <div className="relative">
-                <div className="overflow-x-auto max-h-[400px] w-full">
-                  <pre className="rounded-md bg-muted p-4 whitespace-pre inline-block min-w-full">
-                    <code>{code}</code>
-                  </pre>
+                <div className="overflow-auto max-h-[400px] w-full">
+                  <CodeBlock language="tsx" value={code} />
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="absolute top-2 right-2 z-10"
-                  onClick={() => copyToClipboard(code)}
-                >
-                  <ClipboardCopy className="w-4 h-4 mr-2" />
-                  Copy
-                </Button>
               </div>
             </TabsContent>
           ))}
