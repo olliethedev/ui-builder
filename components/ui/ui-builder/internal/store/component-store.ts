@@ -104,7 +104,7 @@ export type TextLayer = {
   textType: 'text' | 'markdown';
 };
 interface ComponentStore {
-  components: CustomComponentType[];
+  // components: CustomComponentType[];
   layers: Layer[];
   addComponentLayer: (layerType: keyof typeof componentRegistry, parentId?: string, parentPosition?: number) => void;
   addTextLayer: (text: string, textType: 'text' | 'markdown', parentId?: string, parentPosition?: number) => void;
@@ -119,11 +119,11 @@ interface ComponentStore {
 
 export const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
 
-  components: Object.entries(componentRegistry).map(([name, { component, schema }]) => ({
-    name: name as keyof typeof componentRegistry,
-    component,
-    schema,
-  })),
+  // components: Object.entries(componentRegistry).map(([name, { component, schema }]) => ({
+  //   name: name as keyof typeof componentRegistry,
+  //   component,
+  //   schema,
+  // })),
 
   layers: [],
 

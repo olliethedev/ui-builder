@@ -21,7 +21,6 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
   const {
     layers,
     selectLayer,
-    addComponentLayer,
     selectedLayerId,
     findLayerById,
     duplicateLayer,
@@ -31,13 +30,6 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
   console.log("PreviewPanel", { selectedLayerId });
   const selectedLayer = findLayerById(selectedLayerId);
 
-  const onAddElement = (
-    componentName: keyof typeof componentRegistry,
-    parentId?: string,
-    parentPosition?: number
-  ) => {
-    addComponentLayer(componentName, parentId, parentPosition);
-  };
 
   const onSelectElement = (layerId: string) => {
     console.log("onSelectElement", layerId);
@@ -67,7 +59,6 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
           zIndex={zIndex}
           isSelected={layer.id === selectedLayer?.id}
           onSelectElement={onSelectElement}
-          onAddElement={onAddElement}
           onDuplicateLayer={handleDuplicateLayer}
           onDeleteLayer={handleDeleteLayer}
         >
@@ -94,7 +85,6 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ className }) => {
         zIndex={zIndex}
         isSelected={layer.id === selectedLayer?.id}
         onSelectElement={onSelectElement}
-        onAddElement={onAddElement}
         onDuplicateLayer={handleDuplicateLayer}
         onDeleteLayer={handleDeleteLayer}
       >
@@ -122,17 +112,18 @@ export default PreviewPanel;
 
 // Menu component that appears at the top-left corner of a selected layer
 interface MenuProps {
+  layerId: string;
   x: number;
   y: number;
   width: number;
   height: number;
   zIndex: number;
-  handleAddComponent: (componentName: keyof typeof componentRegistry) => void;
   handleDuplicateComponent: () => void;
   handleDeleteComponent: () => void;
 }
 
 const LayerMenu: React.FC<MenuProps> = ({
+  layerId,
   x,
   y,
   width,
@@ -141,6 +132,10 @@ const LayerMenu: React.FC<MenuProps> = ({
   handleDuplicateComponent,
   handleDeleteComponent,
 }) => {
+  const selectedLayer = useComponentStore((state) => state.findLayerById(layerId));
+  
+  //const hasChildrenInSchema = schema.shape.children !== undefined;
+  const hasChildrenInSchema = selectedLayer && !isTextLayer(selectedLayer) && componentRegistry[selectedLayer.type as keyof typeof componentRegistry].schema.shape.children !== undefined;
   return (
     <>
       <div
@@ -153,14 +148,16 @@ const LayerMenu: React.FC<MenuProps> = ({
       >
         <span className="h-5 group flex items-center rounded-bl-full rounded-r-full bg-white/90 p-0 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-blue-500 hover:bg-gray-50/95 hover:h-10 hover:ring-2 transition-all duration-200 ease-in-out overflow-hidden cursor-pointer hover:cursor-auto">
           <ChevronRight className="h-5 w-5 text-gray-400 group-hover:size-8 transition-all duration-200 ease-in-out group-hover:opacity-30" />
-          <span className="sr-only">Add component</span>
+          
           <div className="overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out">
-            <AddComponentsPopover className="flex-shrink w-min inline-flex">
+            {hasChildrenInSchema && (
+            <AddComponentsPopover parentLayerId={layerId} className="flex-shrink w-min inline-flex">
               <Button size="sm" variant="ghost">
                 <span className="sr-only">Add Component</span>
                 <Plus className="h-5 w-5 text-gray-400" />
               </Button>
             </AddComponentsPopover>
+            )}
             <Button
               size="sm"
               variant="ghost"
@@ -191,11 +188,6 @@ interface ClickableWrapperProps {
   zIndex: number;
   onSelectElement: (layerId: string) => void;
   children: ReactNode;
-  onAddElement: (
-    componentName: keyof typeof componentRegistry,
-    parentId?: string,
-    parentPosition?: number
-  ) => void;
   onDuplicateLayer: () => void;
   onDeleteLayer: () => void;
 }
@@ -206,7 +198,6 @@ const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   zIndex,
   onSelectElement,
   children,
-  onAddElement,
   onDuplicateLayer,
   onDeleteLayer,
 }) => {
@@ -274,12 +265,12 @@ const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
 
         {isSelected && boundingRect && (
           <LayerMenu
+            layerId={layer.id}
             x={boundingRect.left + window.scrollX}
             y={boundingRect.bottom + window.scrollY}
             zIndex={40 + zIndex}
             width={boundingRect.width}
             height={boundingRect.height}
-            handleAddComponent={(elem) => onAddElement(elem, layer.id)}
             handleDuplicateComponent={onDuplicateLayer}
             handleDeleteComponent={onDeleteLayer}
           />

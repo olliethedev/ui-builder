@@ -1,5 +1,4 @@
 import React from "react";
-import { componentRegistry } from "@/components/ui/ui-builder/internal/store/component-store";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";

@@ -7,8 +7,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 interface TransactionsProps {
+  className?: string;
   data: {
     id: string;
     customer: string;
@@ -17,10 +19,10 @@ interface TransactionsProps {
   }[];
 }
 
-export function Transactions({ data }: TransactionsProps) {
+export function Transactions({ data, className }: TransactionsProps) {
 
   return (
-    <Table>
+    <Table className={cn(className)}>
       <TableHeader>
         <TableRow>
           <TableHead>Customer</TableHead>
