@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ClipboardCopy } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { ClipboardCopy, Redo, Undo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,8 +19,44 @@ import {
 } from "@/components/ui/ui-builder/internal/store/component-store";
 
 export function NavBar() {
-  const { layers } = useComponentStore();
-  console.log({ layers });
+  const { layers, } = useComponentStore();
+  const { undo, redo, futureStates, pastStates } = useComponentStore.temporal.getState();
+  console.log({ layers, futureStates: JSON.stringify(futureStates), pastStates: JSON.stringify(pastStates) });
+
+  const canUndo = !!pastStates.length;
+  const canRedo = !!futureStates.length;
+
+  // Handle keyboard shortcuts for Undo and Redo
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const isMac = navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
+      const modifierKey = isMac ? event.metaKey : event.ctrlKey;
+      const key = event.key.toLowerCase(); 
+
+  
+      const isUndo = modifierKey && !event.shiftKey && key === 'z';
+      const isRedo = modifierKey && event.shiftKey && key === 'z';
+      
+      if (isUndo) {
+        event.preventDefault();
+        if (canUndo) {
+          undo();
+        }
+      } else if (isRedo) {
+        event.preventDefault();
+        if (canRedo) {
+          redo();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [canUndo, canRedo, undo, redo]);
 
   const generatePropsString = (props: Record<string, any>): string => {
     return Object.entries(props)
@@ -115,11 +151,29 @@ export function NavBar() {
     ),
   };
 
+   // Empty click handler for Undo
+   const handleUndo = useCallback(() => {
+    undo();
+  }, []);
+
+  // Empty click handler for Redo
+  const handleRedo = useCallback(() => {
+    redo();
+  }, []);
+
   return (
     <div className="bg-background">
       <header className="flex items-center justify-between px-6 py-4 border-b">
         <h1 className="text-2xl font-bold">UI Builder</h1>
-        <CodeDialog codeBlocks={codeBlocks} />
+        <div className="flex space-x-2">
+          <Button onClick={handleUndo} variant="secondary" size="icon" disabled={!canUndo}>
+            <Undo className="w-4 h-4" />
+          </Button>
+          <Button onClick={handleRedo} variant="secondary" size="icon" disabled={!canRedo}>
+            <Redo className="w-4 h-4" />
+          </Button>
+          <CodeDialog codeBlocks={codeBlocks} />
+        </div>
       </header>
     </div>
   );

@@ -1,7 +1,10 @@
 import { ComponentType as ReactComponentType } from 'react';
-import { create } from 'zustand';
+import { create, useStore } from 'zustand';
+import { produce } from 'immer';
+import { temporal, TemporalState } from 'zundo';
 import { generateMock } from '@anatine/zod-mock';
-import { z, ZodTypeAny, ZodUnion, ZodLiteral, ZodOptional, ZodNullable, ZodEnum, ZodObject, ZodRawShape, ZodNumber, ZodDate, ZodArray, ZodString, ZodTuple, ZodRecord } from 'zod';
+import isDeepEqual from 'fast-deep-equal';
+import { z, ZodTypeAny, ZodUnion, ZodLiteral, ZodOptional, ZodNullable, ZodEnum, ZodObject, ZodRawShape, ZodNumber, ZodDate, ZodArray, ZodString, ZodTuple, ZodRecord, set } from 'zod';
 // import { ComponentDefinitions } from '@/components/ui/generated-schemas';
 
 import { Button } from '@/components/ui/button';
@@ -39,7 +42,7 @@ const componentRegistry = {
     })),
     from: '@/components/ui/button'
   },
-  Badge:{
+  Badge: {
     component: Badge,
     schema: patchSchema(z.object({
       children: z.any().optional(),
@@ -47,27 +50,27 @@ const componentRegistry = {
     })),
     from: '@/components/ui/badge'
   },
-  Transactions:{
+  Transactions: {
     component: Transactions,
     schema: patchSchema(z.object({
       data: z.array(z.object({
-          id: z.string(),
-          customer: z.string(),
-          email: z.string(),
-          amount: z.number()
+        id: z.string(),
+        customer: z.string(),
+        email: z.string(),
+        amount: z.number()
       }))
-  })),
+    })),
     from: '@/components/ui/transactions'
   },
-  Flexbox:{
+  Flexbox: {
     component: Flexbox,
     schema: patchSchema(z.object({
       children: z.any().optional(),
-    direction: z.union([z.literal("row"), z.literal("column"), z.literal("rowReverse"), z.literal("columnReverse")]).optional().nullable(),
-    justify: z.union([z.literal("start"), z.literal("end"), z.literal("center"), z.literal("between"), z.literal("around"), z.literal("evenly")]).optional().nullable(),
-    align: z.union([z.literal("start"), z.literal("end"), z.literal("center"), z.literal("baseline"), z.literal("stretch")]).optional().nullable(),
-    wrap: z.union([z.literal("wrap"), z.literal("nowrap"), z.literal("wrapReverse")]).optional().nullable(),
-    gap: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(4), z.literal(8)]).optional().nullable()
+      direction: z.union([z.literal("row"), z.literal("column"), z.literal("rowReverse"), z.literal("columnReverse")]).optional().nullable(),
+      justify: z.union([z.literal("start"), z.literal("end"), z.literal("center"), z.literal("between"), z.literal("around"), z.literal("evenly")]).optional().nullable(),
+      align: z.union([z.literal("start"), z.literal("end"), z.literal("center"), z.literal("baseline"), z.literal("stretch")]).optional().nullable(),
+      wrap: z.union([z.literal("wrap"), z.literal("nowrap"), z.literal("wrapReverse")]).optional().nullable(),
+      gap: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(4), z.literal(8)]).optional().nullable()
     })),
     from: '@/components/ui/ui-builder/flexbox'
   }
@@ -82,13 +85,13 @@ export interface CustomComponentType<T = any> {
 
 export type LayerType = keyof typeof componentRegistry | '_text_';
 
-export type Layer = 
+export type Layer =
   | {
-      id: string;
-      type: keyof typeof componentRegistry;
-      props: Record<string, any>;
-      children?: Layer[];
-    }
+    id: string;
+    type: keyof typeof componentRegistry;
+    props: Record<string, any>;
+    children?: Layer[];
+  }
   | TextLayer;
 
 export type ComponentLayer = Exclude<Layer, TextLayer>;
@@ -114,7 +117,7 @@ interface ComponentStore {
   findLayerById: (layerId: string | null) => Layer | undefined;
 }
 
-export const useComponentStore = create<ComponentStore>((set, get) => ({
+export const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
 
   components: Object.entries(componentRegistry).map(([name, { component, schema }]) => ({
     name: name as keyof typeof componentRegistry,
@@ -126,15 +129,15 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
 
   selectedLayerId: null,
 
-  findLayerById: (layerId: string | null) =>  {
+  findLayerById: (layerId: string | null) => {
     const { layers } = get();
     if (!layerId) return undefined;
-    return findLayerRecursive(layers , layerId);
+    return findLayerRecursive(layers, layerId);
   },
 
-  addComponentLayer: (layerType: keyof typeof componentRegistry, parentId?: string, parentPosition?: number) => set((state: ComponentStore) => {
+  addComponentLayer: (layerType: keyof typeof componentRegistry, parentId?: string, parentPosition?: number) => set(produce((state: ComponentStore) => {
     const defaultProps = getDefaultProps(componentRegistry[layerType].schema);
-    console.log({defaultProps});
+    console.log({ defaultProps });
     const initialProps = Object.entries(defaultProps).reduce((acc, [key, propDef]) => {
       if (key !== 'children') {
         acc[key] = propDef;
@@ -149,9 +152,9 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
     };
 
     return addLayerToState(state, newLayer, parentId, parentPosition);
-  }),
+  })),
 
-  addTextLayer: (text: string, textType: 'text' | 'markdown', parentId?: string, parentPosition?: number) => set((state: ComponentStore) => {
+  addTextLayer: (text: string, textType: 'text' | 'markdown', parentId?: string, parentPosition?: number) => set(produce((state: ComponentStore) => {
     const newLayer: Layer = {
       id: createId(),
       type: '_text_',
@@ -161,9 +164,9 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
     };
 
     return addLayerToState(state, newLayer, parentId, parentPosition);
-  }),
+  })),
 
-  duplicateLayer: (layerId: string) => set((state: ComponentStore) => {
+  duplicateLayer: (layerId: string) => set(produce((state: ComponentStore) => {
     const layerToDuplicate = findLayerRecursive(state.layers, layerId);
     if (layerToDuplicate) {
       const duplicateWithNewIds = (layer: Layer): Layer => {
@@ -179,66 +182,68 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
       return addLayerToState(state, newLayer, parentLayer?.id);
     }
     return state;
-  }),
+  })),
 
-  removeLayer: (layerId: string) => set((state: ComponentStore) => {
+  removeLayer: (layerId: string) => set(produce((state: ComponentStore) => {
     // Find the parent layer before removing the layer
     const parentLayer = findParentLayerRecursive(state.layers, layerId);
-    console.log("removeLayer", layerId, {parentLayer: parentLayer?.id}, {layers: state.layers});
+    console.log("removeLayer", layerId, { parentLayer: parentLayer?.id }, { layers: state.layers });
     // Remove the target layer
     const updatedLayers = removeLayerRecursive(state.layers, layerId);
-    console.log("updatedLayers", {updatedLayers});
+    console.log("updatedLayers", { updatedLayers });
     // Determine the new selected layer
     let updatedSelectedLayer: Layer | null = null;
-  
+
     if (parentLayer && !isTextLayer(parentLayer)) {
       updatedSelectedLayer = parentLayer;
     } else if (updatedLayers.length > 0 && !isTextLayer(updatedLayers[0])) {
       updatedSelectedLayer = updatedLayers[0];
     }
-  
+
     return {
       layers: updatedLayers,
       selectedLayerId: updatedSelectedLayer?.id || null
     };
-  }),
+  })),
 
-  updateLayerProps: (layerId: string, newProps: Record<string, any>) => set((state: ComponentStore) => {
-    const updateLayerRecursive = (layers: Layer[]): Layer[] => {
-      return layers.map(layer => {
-        if (layer.id === layerId) {
-          if (isTextLayer(layer)) {
-            console.log("update Text Layer Props", {layer, newProps});
-            // For text layers, update the text property
-            const { text, textType, type, id, props: nestedProps, ...rest } = newProps;
+  updateLayerProps: (layerId: string, newProps: Record<string, any>) => set(
+    produce((state: ComponentStore) => {
+      const updateLayerRecursive = (layers: Layer[]): Layer[] => {
+        return layers.map(layer => {
+          if (layer.id === layerId) {
+            if (isTextLayer(layer)) {
+              console.log("update Text Layer Props", { layer, newProps });
+              // For text layers, update the text property
+              const { text, textType, type, id, props: nestedProps, ...rest } = newProps;
 
-          return {
-            ...layer,
-            text: text || layer.text,
-            textType: textType || layer.textType,
-            props: { ...layer.props, ...rest }
-          };
-          } else {
-            // For component layers, update the props
-            return { ...layer, props: { ...layer.props, ...newProps } };
+              return {
+                ...layer,
+                text: text || layer.text,
+                textType: textType || layer.textType,
+                props: { ...layer.props, ...rest }
+              };
+            } else {
+              // For component layers, update the props
+              return { ...layer, props: { ...layer.props, ...newProps } };
+            }
           }
-        }
-        if (!isTextLayer(layer) && layer.children) {
-          return { ...layer, children: updateLayerRecursive(layer.children) };
-        }
-        return layer;
-      });
-    };
+          if (!isTextLayer(layer) && layer.children) {
+            return { ...layer, children: updateLayerRecursive(layer.children) };
+          }
+          return layer;
+        });
+      };
 
-    const updatedLayers = updateLayerRecursive(state.layers);
+      const updatedLayers = updateLayerRecursive(state.layers);
+
+      return {
+        layers: updatedLayers,
+      };
+    })
+  ),
 
 
-    return {
-      layers: updatedLayers,
-    };
-  }),
-
-  selectLayer: (layerId: string) => set((state: ComponentStore) => {
+  selectLayer: (layerId: string) => set(produce((state: ComponentStore) => {
     const layer = findLayerRecursive(state.layers, layerId);
     if (layer) {
       return {
@@ -246,9 +251,9 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
       };
     }
     return {};
-  }),
+  })),
 
-  reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => set((state: ComponentStore) => {
+  reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => set(produce((state: ComponentStore) => {
     console.log("reorderChildrenLayers", parentId, orderedChildrenIds);
     const reorderRecursive = (layers: Layer[]): Layer[] => {
       return layers.map(layer => {
@@ -274,9 +279,9 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
 
         // If the layer is a Component Layer and has children, recurse into them
         if (!isTextLayer(layer) && layer.children) {
-          return { 
-            ...layer, 
-            children: reorderRecursive(layer.children) 
+          return {
+            ...layer,
+            children: reorderRecursive(layer.children)
           };
         }
 
@@ -291,28 +296,39 @@ export const useComponentStore = create<ComponentStore>((set, get) => ({
       ...state,
       layers: updatedLayers,
     };
-  }),
-
-}));
+  })),
+}), 
+{
+  onSave: (state: ComponentStore) => {
+    console.log("onSave", state);
+  },
+  equality: (pastState, currentState) =>
+    isDeepEqual(pastState, currentState),
+}
+))
 
 function isTextLayer(layer: Layer): layer is TextLayer {
   return layer.type === '_text_';
 }
 
 const addLayerToState = (
-  state: ComponentStore, 
-  newLayer: Layer, 
-  parentId?: string, 
+  state: ComponentStore,
+  newLayer: Layer,
+  parentId?: string,
   parentPosition?: number
 ): ComponentStore => {
   const addLayerRecursive = (layers: Layer[]): Layer[] => {
     return layers.map(layer => {
       if (layer.id === parentId && !isTextLayer(layer)) {
-        const updatedChildren = layer.children ? [...layer.children] : [];
+        let updatedChildren = layer.children ? [...layer.children] : [];
 
         if (parentPosition !== undefined) {
           // Insert the new layer at the specified position
-          updatedChildren.splice(parentPosition, 0, newLayer);
+          updatedChildren = [
+            ...updatedChildren.slice(0, parentPosition),
+            newLayer,
+            ...updatedChildren.slice(parentPosition)
+          ];
         } else {
           // Append the new layer to the children
           updatedChildren.push(newLayer);
@@ -322,9 +338,9 @@ const addLayerToState = (
       }
 
       if (!isTextLayer(layer) && layer.children) {
-        return { 
-          ...layer, 
-          children: addLayerRecursive(layer.children) 
+        return {
+          ...layer,
+          children: addLayerRecursive(layer.children)
         };
       }
 
@@ -338,7 +354,11 @@ const addLayerToState = (
     updatedLayers = addLayerRecursive(state.layers);
   } else if (parentPosition !== undefined) {
     // Respect the parentPosition when adding to root layers
-    updatedLayers.splice(parentPosition, 0, newLayer);
+    updatedLayers = [
+      ...updatedLayers.slice(0, parentPosition),
+      newLayer,
+      ...updatedLayers.slice(parentPosition)
+    ];
   } else {
     // Append to the root layers if no position is specified
     updatedLayers.push(newLayer);
@@ -365,7 +385,7 @@ const findParentLayerRecursive = (layers: Layer[], layerId: string): Layer | nul
 
 const findLayerRecursive = (layers: Layer[], layerId: string): Layer | undefined => {
   for (const layer of layers) {
-    if (layer.id === layerId ) {
+    if (layer.id === layerId) {
       return layer;
     }
     if (!isTextLayer(layer) && layer.children) {
@@ -403,12 +423,12 @@ function createId(): string {
   const ID_LENGTH = 7;
   let result = '';
   const alphabetLength = ALPHABET.length;
-  
+
   for (let i = 0; i < ID_LENGTH; i++) {
     const randomIndex = Math.floor(Math.random() * alphabetLength);
     result += ALPHABET.charAt(randomIndex);
   }
-  
+
   return result;
 }
 
@@ -427,8 +447,8 @@ function getDefaultProps(schema: ZodObject<any>) {
   const requiredSchema = z.object(requiredShape);
 
   // Generate mock data based on the requiredSchema
-  const mockData = generateMock(requiredSchema, {seed: 1234});
-  
+  const mockData = generateMock(requiredSchema, { seed: 1234 });
+
   return mockData;
 }
 
@@ -437,7 +457,7 @@ function patchSchema(schema: ZodObject<any>): ZodObject<any> {
   const schemaWithCoercedTypes = addCoerceToNumberAndDate(schemaWithFixedEnums);
   const schemaWithCommon = addCommon(schemaWithCoercedTypes);
   //log the patched schema in a readable way
-  console.log({patchSchema: schemaWithCommon.shape});
+  console.log({ patchSchema: schemaWithCommon.shape });
   return schemaWithCommon;
 }
 
