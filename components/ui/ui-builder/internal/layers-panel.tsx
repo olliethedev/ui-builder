@@ -7,8 +7,9 @@ interface LayersPanelProps {
 }
 
 const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
-  const { layers, selectLayer, selectedLayerId } = useComponentStore();
+  const { selectedPageId, findLayersForPageId, selectLayer, selectedLayerId } = useComponentStore();
 
+  const layers = findLayersForPageId(selectedPageId);
 
   const renderLayer = (layer: Layer, depth = 0) => {
     

@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { ClipboardCopy, Eye, FileUp, Redo, Undo } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Eye, FileUp, Redo, Undo, SunIcon, MoonIcon, CheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,14 +16,29 @@ import {
   useComponentStore,
   isTextLayer,
   componentRegistry,
+  isPageLayer,
 } from "@/components/ui/ui-builder/internal/store/component-store";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
-import { CodeBlock } from "../codeblock";
+import { CodeBlock } from "@/components/ui/ui-builder/codeblock";
+import { useTheme } from "next-themes";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
+import { PlusIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function NavBar() {
-  const { layers } = useComponentStore();
+  const { pages, selectedPageId, findLayersForPageId } = useComponentStore();
   const { undo, redo, futureStates, pastStates } =
     useComponentStore.temporal.getState();
+
+  const layers = findLayersForPageId(selectedPageId);
   console.log({
     layers,
     futureStates: JSON.stringify(futureStates),
@@ -43,6 +58,9 @@ export function NavBar() {
       const isUndo = modifierKey && !event.shiftKey && key === "z";
       const isRedo = modifierKey && event.shiftKey && key === "z";
 
+      const isSpin = modifierKey && event.shiftKey && key === "9";
+      const isStopSpin = modifierKey && event.shiftKey && key === "0";
+
       if (isUndo) {
         event.preventDefault();
         if (canUndo) {
@@ -53,6 +71,18 @@ export function NavBar() {
         if (canRedo) {
           redo();
         }
+      } else if (isSpin) {
+        event.preventDefault();
+        const elements = document.querySelectorAll('*');
+        elements.forEach((element) => {
+          element.classList.add('animate-spin', 'origin-center');
+        });
+      } else if (isStopSpin) {
+        event.preventDefault();
+        const elements = document.querySelectorAll('*');
+        elements.forEach((element) => {
+          element.classList.remove('animate-spin', 'origin-center');
+        });
       }
     };
 
@@ -124,6 +154,10 @@ export function NavBar() {
             `import { Markdown } from "@/components/ui/ui-builder/markdown";`
           );
         }
+      } else if (isPageLayer(layer)) {
+        imports.add(
+          `import { Page } from "@/components/ui/ui-builder/theme-wrapper";`
+        );
       } else {
         const componentDefinition = componentRegistry[layer.type];
         if (layer.type && componentDefinition) {
@@ -180,7 +214,8 @@ ${children.split("\n").map((line) => `      ${line}`).join("\n")}
   return (
     <div className="bg-background">
       <div className="flex items-center justify-between px-6 py-4 border-b h-full">
-        <h1 className="text-2xl font-bold">UI Builder</h1>
+        <h1 className="text-2xl font-bold min-w-60">UI Builder</h1>
+        <PagesPopover />
         <div className="flex space-x-2">
           <Button
             onClick={handleUndo}
@@ -203,6 +238,8 @@ ${children.split("\n").map((line) => `      ${line}`).join("\n")}
           <div className="h-10 flex w-px bg-border"></div>
           <PreviewDialog layers={layers} />
           <CodeDialog codeBlocks={codeBlocks} />
+          <div className="h-10 flex w-px bg-border"></div>
+          <ModeToggle />
         </div>
       </div>
     </div>
@@ -264,3 +301,124 @@ const CodeDialog = ({
     </Dialog>
   );
 };
+
+function ModeToggle() {
+  const { setTheme } = useTheme()
+ 
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon">
+          <SunIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+          <MoonIcon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setTheme("light")}>
+          Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
+          System
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+function PagesPopover(){
+  const {pages, selectedPageId, addPageLayer, selectPage} = useComponentStore();
+  const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [selectedPage, setSelectedPage] = useState<string | null>(selectedPageId);
+  const [textInputValue, setTextInputValue] = useState("");
+
+  const selectedPageData = useMemo(() => {
+    return pages.find((page) => page.id === selectedPageId);
+  }, [pages, selectedPageId]);
+
+  const handleSelect = (pageId: string) => {
+    setSelectedPage(pageId);
+    selectPage(pageId);
+    setOpen(false);
+  };
+
+  const handleAddPageLayer = (pageName: string) => {
+    addPageLayer(pageName);
+    setTextInputValue("");
+  };
+
+  const textInputForm = (
+    <form
+      className="w-full"
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleAddPageLayer(textInputValue);
+      }}
+    >
+      <div className="w-full flex items-center space-x-2">
+        <Input
+          className="w-full flex-grow"
+          placeholder="New page name..."
+          value={textInputValue}
+          onChange={(e) => setTextInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleAddPageLayer(textInputValue);
+            }
+          }}
+        />
+        <Button type="submit" variant="secondary">
+          {" "}
+          <PlusIcon className="w-4 h-4" />
+        </Button>
+      </div>
+    </form>
+  );
+  return (
+    <div className="relative flex justify-center">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="secondary" size="default">
+            Pages: {selectedPageData?.name}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[300px] p-0">
+          <Command>
+            <CommandInput
+              placeholder="Select page or create new..."
+              value={inputValue}
+              onValueChange={setInputValue}
+            />
+            <CommandList>
+              <CommandEmpty>
+                No pages found
+                {textInputForm}
+              </CommandEmpty>
+              {pages.map((page) => (
+                <CommandItem
+                  key={page.id}
+                  value={page.name}
+                  onSelect={() => handleSelect(page.id)}
+                  className={cn(selectedPageId === page.id ? "bg-secondary text-secondary-foreground" : "")}
+                >
+                  {selectedPageId === page.id ? <CheckIcon className="w-4 h-4 mr-2" /> : null}
+                  {page.name}
+                </CommandItem>
+              ))}
+              <CommandSeparator />
+              <CommandGroup heading="Create new page">
+                <CommandItem>{textInputForm}</CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
+}
+

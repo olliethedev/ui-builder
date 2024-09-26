@@ -445,6 +445,7 @@ function ChildrenSearchableMultiSelect({
 
   return (
     <div className="w-full space-y-4">
+      {selectedLayer && (
       <AddComponentsPopover
         parentLayerId={selectedLayer?.id}
       >
@@ -457,6 +458,7 @@ function ChildrenSearchableMultiSelect({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
       </AddComponentsPopover>
+      )}
 
       {selectedLayer && (
         <DraggableList

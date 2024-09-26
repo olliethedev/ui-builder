@@ -136,7 +136,7 @@ function getRegistryComponentDependencies(type: RegistryType): string[] {
 function getDependencies(type: RegistryType): string[] {
     switch (type) {
         case "registry:ui":
-            return ["@anatine/zod-mock", "react-error-boundary", "react-hook-form", "swapy", "zod", "zustand", "zundo", "immer", "fast-deep-equal", "react-markdown", "remark-gfm", "remark-math", "react-syntax-highlighter", "@types/react-syntax-highlighter"];
+            return ["@anatine/zod-mock", "react-error-boundary", "react-hook-form", "swapy", "zod", "zustand", "zundo", "immer", "fast-deep-equal", "next-themes", "react-markdown", "remark-gfm", "remark-math", "react-syntax-highlighter", "@types/react-syntax-highlighter"];
         case "registry:lib":
             return ["react-docgen-typescript", "ts-morph", "ts-to-zod"]; // all dependencies for the lib can be devDependencies but shadcn/ui is not seeing them for some reason
         default:

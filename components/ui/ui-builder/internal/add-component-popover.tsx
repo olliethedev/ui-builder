@@ -25,7 +25,7 @@ type AddComponentsPopoverProps = {
   className?: string;
   children: ReactNode;
   addPosition?: number;
-  parentLayerId?: string;
+  parentLayerId: string;
 };
 
 export function AddComponentsPopover({

@@ -6,10 +6,12 @@ import { PlusCircle } from "lucide-react";
 type DividerControlProps = {
   className?: string;
   addPosition?: number;
+  parentLayerId: string;
 };
 
 export function DividerControl({
   addPosition,
+  parentLayerId,
 }: DividerControlProps) {
   return (
     <div className="relative py-0">
@@ -18,6 +20,7 @@ export function DividerControl({
       </div>
       <AddComponentsPopover
         addPosition={addPosition}
+        parentLayerId={parentLayerId}
       >
         <Button
           variant="outline"

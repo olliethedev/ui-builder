@@ -12,6 +12,7 @@ import { Markdown } from "../markdown";
 import { DividerControl } from "./divider-control";
 import { AddComponentsPopover } from "./add-component-popover";
 import { cn } from "@/lib/utils";
+import ThemeWrapper from "./theme-wrapper";
 
 interface EditorPanelProps {
   className?: string;
@@ -19,16 +20,20 @@ interface EditorPanelProps {
 
 const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
   const {
-    layers,
+    pages,
     selectLayer,
     selectedLayerId,
     findLayerById,
     duplicateLayer,
     removeLayer,
+    findLayersForPageId,
+    selectedPageId,
   } = useComponentStore();
 
   console.log("EditorPanel", { selectedLayerId });
   const selectedLayer = findLayerById(selectedLayerId);
+
+  const layers = findLayersForPageId(selectedPageId);
 
 
   const onSelectElement = (layerId: string) => {
@@ -94,15 +99,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
   };
 
   return (
-    <div className={className}>
+    <ThemeWrapper className={className} colorName="blue" radius="0.5rem">
+    {/* className={className} */}
+    <div > 
       <div className="relative w-full">
-        <DividerControl addPosition={0} />
+        <DividerControl addPosition={0} parentLayerId={selectedPageId} />
         <div className="flex flex-col w-full overflow-y-visible relative">
+        
           {layers.map(renderLayer)}
+        
         </div>
-        <DividerControl />
+        <DividerControl parentLayerId={selectedPageId} />
       </div>
     </div>
+    </ThemeWrapper>
   );
 };
 

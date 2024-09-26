@@ -88,36 +88,52 @@ export type LayerType = keyof typeof componentRegistry | '_text_';
 export type Layer =
   | {
     id: string;
+    name?: string;
     type: keyof typeof componentRegistry;
     props: Record<string, any>;
     children?: Layer[];
   }
-  | TextLayer;
+  | TextLayer
+  | PageLayer;
 
 export type ComponentLayer = Exclude<Layer, TextLayer>;
 
 export type TextLayer = {
   id: string;
+  name?: string;
   type: '_text_';
   props: Record<string, any>;
   text: string;
   textType: 'text' | 'markdown';
 };
+
+export type PageLayer = {
+  id: string;
+  name?: string;
+  type: '_page_';
+  props: Record<string, any>;
+  children: Layer[];
+}
+
 interface ComponentStore {
   // components: CustomComponentType[];
-  layers: Layer[];
-  addComponentLayer: (layerType: keyof typeof componentRegistry, parentId?: string, parentPosition?: number) => void;
-  addTextLayer: (text: string, textType: 'text' | 'markdown', parentId?: string, parentPosition?: number) => void;
+  pages: PageLayer[];
+  addComponentLayer: (layerType: keyof typeof componentRegistry, parentId: string, parentPosition?: number) => void;
+  addTextLayer: (text: string, textType: 'text' | 'markdown', parentId: string, parentPosition?: number) => void;
+  addPageLayer: (pageId: string) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
   updateLayerProps: (layerId: string, newProps: Record<string, any>) => void;
   selectLayer: (layerId: string) => void;
+  selectPage: (pageId: string) => void;
   reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => void;
   selectedLayerId: string | null;
+  selectedPageId: string;
   findLayerById: (layerId: string | null) => Layer | undefined;
+  findLayersForPageId: (pageId: string) => Layer[];
 }
 
-export const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
+const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
 
   // components: Object.entries(componentRegistry).map(([name, { component, schema }]) => ({
   //   name: name as keyof typeof componentRegistry,
@@ -125,19 +141,34 @@ export const useComponentStore = create(temporal<ComponentStore>((set, get) => (
   //   schema,
   // })),
 
-  layers: [],
+  pages: [
+    {
+      id: '1',
+      type: '_page_',
+      name: 'Page 1',
+      props: {},
+      children: [],
+    }
+  ],
 
   selectedLayerId: null,
-
+  selectedPageId: '1',
   findLayerById: (layerId: string | null) => {
-    const { layers } = get();
-    if (!layerId) return undefined;
+    const {selectedPageId, findLayersForPageId } = get();
+    if (!layerId || !selectedPageId) return undefined;
+    const layers = findLayersForPageId(selectedPageId);
+    if (!layers) return undefined;
     return findLayerRecursive(layers, layerId);
   },
+  findLayersForPageId: (pageId: string) => {
+    const { pages } = get();
+    const page = pages.find(page => page.id === pageId);
+    return page?.children || [];
+  },
 
-  addComponentLayer: (layerType: keyof typeof componentRegistry, parentId?: string, parentPosition?: number) => set(produce((state: ComponentStore) => {
+  addComponentLayer: (layerType: keyof typeof componentRegistry, parentId: string, parentPosition?: number) => set(produce((state: ComponentStore) => {
     const defaultProps = getDefaultProps(componentRegistry[layerType].schema);
-    console.log({ defaultProps });
+    console.log("addComponentLayer", { layerType, parentId, parentPosition, defaultProps });
     const initialProps = Object.entries(defaultProps).reduce((acc, [key, propDef]) => {
       if (key !== 'children') {
         acc[key] = propDef;
@@ -154,7 +185,7 @@ export const useComponentStore = create(temporal<ComponentStore>((set, get) => (
     return addLayerToState(state, newLayer, parentId, parentPosition);
   })),
 
-  addTextLayer: (text: string, textType: 'text' | 'markdown', parentId?: string, parentPosition?: number) => set(produce((state: ComponentStore) => {
+  addTextLayer: (text: string, textType: 'text' | 'markdown', parentId: string, parentPosition?: number) => set(produce((state: ComponentStore) => {
     const newLayer: Layer = {
       id: createId(),
       type: '_text_',
@@ -166,8 +197,26 @@ export const useComponentStore = create(temporal<ComponentStore>((set, get) => (
     return addLayerToState(state, newLayer, parentId, parentPosition);
   })),
 
+  addPageLayer: (pageName: string) => set(produce((state: ComponentStore) => {
+    const newPage: PageLayer = {
+      id: createId(),
+      type: '_page_',
+      name: pageName,
+      props: {},
+      children: [],
+    };
+    return {
+      pages: [...state.pages, newPage],
+      selectedPageId: newPage.id,
+    };
+  })),
+
   duplicateLayer: (layerId: string) => set(produce((state: ComponentStore) => {
-    const layerToDuplicate = findLayerRecursive(state.layers, layerId);
+    const { selectedPageId, findLayersForPageId } = get();
+    if (!selectedPageId) return state;
+    const layers = findLayersForPageId(selectedPageId);
+    if (!layers) return state;
+    const layerToDuplicate = findLayerRecursive(layers, layerId);
     if (layerToDuplicate) {
       const duplicateWithNewIds = (layer: Layer): Layer => {
         const newLayer = { ...layer, id: createId() };
@@ -178,18 +227,23 @@ export const useComponentStore = create(temporal<ComponentStore>((set, get) => (
       };
 
       const newLayer = duplicateWithNewIds(layerToDuplicate);
-      const parentLayer = findParentLayerRecursive(state.layers, layerId);
-      return addLayerToState(state, newLayer, parentLayer?.id);
+      const parentLayer = findParentLayerRecursive(layers, layerId);
+      if (!parentLayer) return state;
+      return addLayerToState(state, newLayer, parentLayer.id);
     }
     return state;
   })),
 
   removeLayer: (layerId: string) => set(produce((state: ComponentStore) => {
+    const { selectedPageId, findLayersForPageId } = get();
+    if (!selectedPageId) return state;
+    const layers = findLayersForPageId(selectedPageId);
+    if (!layers) return state;
     // Find the parent layer before removing the layer
-    const parentLayer = findParentLayerRecursive(state.layers, layerId);
-    console.log("removeLayer", layerId, { parentLayer: parentLayer?.id }, { layers: state.layers });
+    const parentLayer = findParentLayerRecursive(layers, layerId);
+    console.log("removeLayer", layerId, { parentLayer: parentLayer?.id }, { layers: layers });
     // Remove the target layer
-    const updatedLayers = removeLayerRecursive(state.layers, layerId);
+    const updatedLayers = removeLayerRecursive(layers, layerId);
     console.log("updatedLayers", { updatedLayers });
     // Determine the new selected layer
     let updatedSelectedLayer: Layer | null = null;
@@ -208,6 +262,10 @@ export const useComponentStore = create(temporal<ComponentStore>((set, get) => (
 
   updateLayerProps: (layerId: string, newProps: Record<string, any>) => set(
     produce((state: ComponentStore) => {
+      const { selectedPageId, findLayersForPageId } = get();
+    if (!selectedPageId) return state;
+    const layers = findLayersForPageId(selectedPageId);
+    if (!layers) return state;
       const updateLayerRecursive = (layers: Layer[]): Layer[] => {
         return layers.map(layer => {
           if (layer.id === layerId) {
@@ -234,7 +292,7 @@ export const useComponentStore = create(temporal<ComponentStore>((set, get) => (
         });
       };
 
-      const updatedLayers = updateLayerRecursive(state.layers);
+      const updatedLayers = updateLayerRecursive(layers);
 
       return {
         layers: updatedLayers,
@@ -244,7 +302,11 @@ export const useComponentStore = create(temporal<ComponentStore>((set, get) => (
 
 
   selectLayer: (layerId: string) => set(produce((state: ComponentStore) => {
-    const layer = findLayerRecursive(state.layers, layerId);
+    const { selectedPageId, findLayersForPageId } = get();
+    if (!selectedPageId) return state;
+    const layers = findLayersForPageId(selectedPageId);
+    if (!layers) return state;
+    const layer = findLayerRecursive(layers, layerId);
     if (layer) {
       return {
         selectedLayerId: layer.id
@@ -253,8 +315,21 @@ export const useComponentStore = create(temporal<ComponentStore>((set, get) => (
     return {};
   })),
 
+  selectPage: (pageId: string) => set(produce((state: ComponentStore) => {
+    const page = state.pages.find(page => page.id === pageId);
+    if (!page) return state;
+    return {
+      selectedPageId: pageId
+    };
+  })),
+
   reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => set(produce((state: ComponentStore) => {
     console.log("reorderChildrenLayers", parentId, orderedChildrenIds);
+    const { selectedPageId, findLayersForPageId } = get();
+    if (!selectedPageId) return state;
+    const layers = findLayersForPageId(selectedPageId);
+    if (!layers) return state;
+
     const reorderRecursive = (layers: Layer[]): Layer[] => {
       return layers.map(layer => {
         // Check if the current layer is the parent layer to reorder
@@ -290,7 +365,7 @@ export const useComponentStore = create(temporal<ComponentStore>((set, get) => (
       });
     };
 
-    const updatedLayers = reorderRecursive(state.layers);
+    const updatedLayers = reorderRecursive(layers);
 
     return {
       ...state,
@@ -311,14 +386,20 @@ function isTextLayer(layer: Layer): layer is TextLayer {
   return layer.type === '_text_';
 }
 
+function isPageLayer(layer: Layer): layer is PageLayer {
+  return layer.type === '_page_';
+}
+
 const addLayerToState = (
   state: ComponentStore,
   newLayer: Layer,
-  parentId?: string,
+  parentId: string,
   parentPosition?: number
 ): ComponentStore => {
-  const addLayerRecursive = (layers: Layer[]): Layer[] => {
-    return layers.map(layer => {
+
+  const addLayerRecursive = (layers: Layer[], iteration = 0): Layer[] | PageLayer[] => {
+    console.log("addLayerRecursive", { parentId, parentPosition, newLayer, iteration });
+    return layers.map((layer) => {
       if (layer.id === parentId && !isTextLayer(layer)) {
         let updatedChildren = layer.children ? [...layer.children] : [];
 
@@ -333,8 +414,12 @@ const addLayerToState = (
           // Append the new layer to the children
           updatedChildren.push(newLayer);
         }
-
-        return { ...layer, children: updatedChildren };
+        console.log("addLayerRecursive", { updatedChildren });
+        if (iteration === 0) {
+          return { ...layer, children: updatedChildren } as PageLayer;
+        }else{
+          return { ...layer, children: updatedChildren } as Layer;
+        }
       }
 
       if (!isTextLayer(layer) && layer.children) {
@@ -348,25 +433,28 @@ const addLayerToState = (
     });
   };
 
-  let updatedLayers = [...state.layers];
+  // let updatedLayers = [...state.pages];
 
-  if (parentId) {
-    updatedLayers = addLayerRecursive(state.layers);
-  } else if (parentPosition !== undefined) {
-    // Respect the parentPosition when adding to root layers
-    updatedLayers = [
-      ...updatedLayers.slice(0, parentPosition),
-      newLayer,
-      ...updatedLayers.slice(parentPosition)
-    ];
-  } else {
-    // Append to the root layers if no position is specified
-    updatedLayers.push(newLayer);
-  }
+  const { pages } = state;
+  const updatedLayersForPage = addLayerRecursive(pages);
+  console.log("addLayerToState", { updatedLayersForPage });
+  // if (parentId) {
+    
+  // } else if (parentPosition !== undefined) {
+  //   // Respect the parentPosition when adding to root layers
+  //   updatedLayers = [
+  //     ...updatedLayers.slice(0, parentPosition),
+  //     newLayer,
+  //     ...updatedLayers.slice(parentPosition)
+  //   ];
+  // } else {
+  //   // Append to the root layers if no position is specified
+  //   updatedLayers.push(newLayer);
+  // }
 
   return {
     ...state,
-    layers: updatedLayers,
+    pages: updatedLayersForPage as PageLayer[],
   };
 };
 
@@ -630,4 +718,4 @@ function addCoerceToNumberAndDate<T extends ZodTypeAny>(schema: T): T {
 
 
 
-export { componentRegistry, isTextLayer };
+export { useComponentStore, componentRegistry, isTextLayer, isPageLayer };
