@@ -36,7 +36,6 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
 
   return (
     <div className={cn(className, "flex flex-col flex-shrink-0")}>
-      <h2 className="text-xl font-semibold mb-4">Component Tree</h2>
       {layers.map((layer: Layer) => renderLayer(layer))}
     </div>
   );

@@ -383,8 +383,8 @@ function PagesPopover(){
     <div className="relative flex justify-center">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="secondary" size="default">
-            Pages: {selectedPageData?.name}
+          <Button variant="outline" size="default">
+            Page: {selectedPageData?.name}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0">
