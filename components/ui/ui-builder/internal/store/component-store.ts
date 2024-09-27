@@ -154,8 +154,11 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
   selectedLayerId: null,
   selectedPageId: '1',
   findLayerById: (layerId: string | null) => {
-    const {selectedPageId, findLayersForPageId } = get();
+    const { selectedPageId, findLayersForPageId, pages } = get();
     if (!layerId || !selectedPageId) return undefined;
+    if (layerId === selectedPageId) {
+      return pages.find(page => page.id === selectedPageId);
+    }
     const layers = findLayersForPageId(selectedPageId);
     if (!layers) return undefined;
     return findLayerRecursive(layers, layerId);
@@ -263,9 +266,20 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
   updateLayerProps: (layerId: string, newProps: Record<string, any>) => set(
     produce((state: ComponentStore) => {
       const { selectedPageId, findLayersForPageId } = get();
-    if (!selectedPageId) return state;
-    const layers = findLayersForPageId(selectedPageId);
-    if (!layers) return state;
+      if (!selectedPageId) return state;
+      if (layerId === selectedPageId) {
+        return {
+          pages: state.pages.map(page => {
+            if (page.id === selectedPageId) {
+              return { ...page, props: { ...page.props, ...newProps } };
+            }
+            return page;
+          })
+        };
+      }
+      const layers = findLayersForPageId(selectedPageId);
+      console.log("updateLayerProps", { layerId, newProps, layers });
+      if (!layers) return state;
       const updateLayerRecursive = (layers: Layer[]): Layer[] => {
         return layers.map(layer => {
           if (layer.id === layerId) {
@@ -282,6 +296,7 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
               };
             } else {
               // For component layers, update the props
+              console.log("update Component Layer Props", { layer, newProps });
               return { ...layer, props: { ...layer.props, ...newProps } };
             }
           }
@@ -293,9 +308,16 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
       };
 
       const updatedLayers = updateLayerRecursive(layers);
+      console.log("updatedLayers", { updatedLayers });
 
       return {
-        layers: updatedLayers,
+        ...state,
+        pages: state.pages.map(page => {
+          if (page.id === selectedPageId) {
+            return { ...page, children: updatedLayers };
+          }
+          return page;
+        })
       };
     })
   ),
@@ -372,14 +394,14 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
       layers: updatedLayers,
     };
   })),
-}), 
-{
-  onSave: (state: ComponentStore) => {
-    console.log("onSave", state);
-  },
-  equality: (pastState, currentState) =>
-    isDeepEqual(pastState, currentState),
-}
+}),
+  {
+    onSave: (state: ComponentStore) => {
+      console.log("onSave", state);
+    },
+    equality: (pastState, currentState) =>
+      isDeepEqual(pastState, currentState),
+  }
 ))
 
 function isTextLayer(layer: Layer): layer is TextLayer {
@@ -417,7 +439,7 @@ const addLayerToState = (
         console.log("addLayerRecursive", { updatedChildren });
         if (iteration === 0) {
           return { ...layer, children: updatedChildren } as PageLayer;
-        }else{
+        } else {
           return { ...layer, children: updatedChildren } as Layer;
         }
       }
@@ -439,7 +461,7 @@ const addLayerToState = (
   const updatedLayersForPage = addLayerRecursive(pages);
   console.log("addLayerToState", { updatedLayersForPage });
   // if (parentId) {
-    
+
   // } else if (parentPosition !== undefined) {
   //   // Respect the parentPosition when adding to root layers
   //   updatedLayers = [

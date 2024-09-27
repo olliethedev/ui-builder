@@ -52,7 +52,7 @@
     "remark-gfm": "^4.0.0",
     "remark-math": "^6.0.0",
     "server-only": "^0.0.1",
-    "swapy": "^0.2.1",
+    "swapy": "^0.3.1",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.23.8",

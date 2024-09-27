@@ -91,10 +91,11 @@ const DraggableList: React.FC<DraggableListProps> = ({
 
       swapyRef.current = createSwapy(container, {
         manualSwap: true,
+        swapMode: "drop"
       });
 
       // Handle the swap event
-      swapyRef.current.onSwap(({ data }) => {
+      swapyRef.current.onSwapEnd(({ data }) => {
         try {
           setSlotItemsMap(data.array);
 

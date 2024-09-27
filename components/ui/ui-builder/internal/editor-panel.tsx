@@ -6,13 +6,15 @@ import {
   componentRegistry,
   isTextLayer,
   Layer,
+  PageLayer,
   useComponentStore,
 } from "@/components/ui/ui-builder/internal/store/component-store";
-import { Markdown } from "../markdown";
-import { DividerControl } from "./divider-control";
-import { AddComponentsPopover } from "./add-component-popover";
+import { Markdown } from "@/components/ui/ui-builder/markdown";
+import { DividerControl } from "@/components/ui/ui-builder/internal/divider-control";
+import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { cn } from "@/lib/utils";
-import ThemeWrapper from "./theme-wrapper";
+import ThemeWrapper from "@/components/ui/ui-builder/internal/theme-wrapper";
+import { BaseColor } from "./base-colors";
 
 interface EditorPanelProps {
   className?: string;
@@ -20,7 +22,6 @@ interface EditorPanelProps {
 
 const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
   const {
-    pages,
     selectLayer,
     selectedLayerId,
     findLayerById,
@@ -31,10 +32,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
   } = useComponentStore();
 
   console.log("EditorPanel", { selectedLayerId });
-  const selectedLayer = findLayerById(selectedLayerId);
+  const selectedLayer = findLayerById(selectedPageId) as PageLayer;
+  console.log("selectedLayer", selectedLayer);
 
-  const layers = findLayersForPageId(selectedPageId);
+  const layers = selectedLayer?.children || [];
 
+  const themeColors = selectedLayer?.props?.themeColors as BaseColor | undefined;
+    const themeMode = (selectedLayer?.props?.mode || "light" )as "light" | "dark";
+
+    const styleVariables = Object.entries(themeColors?.cssVars[themeMode] || {}).reduce((acc, [key, value]) => {
+      acc[`--${key}`] = value;
+      return acc;
+    }, {} as { [key: string]: string });
 
   const onSelectElement = (layerId: string) => {
     console.log("onSelectElement", layerId);
@@ -67,7 +76,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
           onDuplicateLayer={handleDuplicateLayer}
           onDeleteLayer={handleDeleteLayer}
         >
-          <TextComponent { ...layer.props }>{layer.text}</TextComponent>
+          <TextComponent {...layer.props}>{layer.text}</TextComponent>
         </ClickableWrapper>
       );
     }
@@ -82,6 +91,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
         renderLayer(child, zIndex + 1)
       );
     }
+
+    
 
     return (
       <ClickableWrapper
@@ -99,19 +110,22 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
   };
 
   return (
-    <ThemeWrapper className={className} colorName="blue" radius="0.5rem">
-    {/* className={className} */}
-    <div > 
-      <div className="relative w-full">
-        <DividerControl addPosition={0} parentLayerId={selectedPageId} />
-        <div className="flex flex-col w-full overflow-y-visible relative">
-        
-          {layers.map(renderLayer)}
-        
+    <ThemeWrapper
+      className={className}
+      style={{
+        ...styleVariables
+      }}
+    >
+      {/* className={className} */}
+      <div>
+        <div className="relative w-full">
+          <DividerControl addPosition={0} parentLayerId={selectedPageId} />
+          <div className="flex flex-col w-full overflow-y-visible relative">
+            {layers.map(renderLayer)}
+          </div>
+          <DividerControl parentLayerId={selectedPageId} />
         </div>
-        <DividerControl parentLayerId={selectedPageId} />
       </div>
-    </div>
     </ThemeWrapper>
   );
 };
@@ -140,10 +154,16 @@ const LayerMenu: React.FC<MenuProps> = ({
   handleDuplicateComponent,
   handleDeleteComponent,
 }) => {
-  const selectedLayer = useComponentStore((state) => state.findLayerById(layerId));
-  
+  const selectedLayer = useComponentStore((state) =>
+    state.findLayerById(layerId)
+  );
+
   //const hasChildrenInSchema = schema.shape.children !== undefined;
-  const hasChildrenInSchema = selectedLayer && !isTextLayer(selectedLayer) && componentRegistry[selectedLayer.type as keyof typeof componentRegistry].schema.shape.children !== undefined;
+  const hasChildrenInSchema =
+    selectedLayer &&
+    !isTextLayer(selectedLayer) &&
+    componentRegistry[selectedLayer.type as keyof typeof componentRegistry]
+      .schema.shape.children !== undefined;
   return (
     <>
       <div
@@ -156,15 +176,18 @@ const LayerMenu: React.FC<MenuProps> = ({
       >
         <span className="h-5 group flex items-center rounded-bl-full rounded-r-full bg-white/90 p-0 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-blue-500 hover:bg-gray-50/95 hover:h-10 hover:ring-2 transition-all duration-200 ease-in-out overflow-hidden cursor-pointer hover:cursor-auto">
           <ChevronRight className="h-5 w-5 text-gray-400 group-hover:size-8 transition-all duration-200 ease-in-out group-hover:opacity-30" />
-          
+
           <div className="overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out">
             {hasChildrenInSchema && (
-            <AddComponentsPopover parentLayerId={layerId} className="flex-shrink w-min inline-flex">
-              <Button size="sm" variant="ghost">
-                <span className="sr-only">Add Component</span>
-                <Plus className="h-5 w-5 text-gray-400" />
-              </Button>
-            </AddComponentsPopover>
+              <AddComponentsPopover
+                parentLayerId={layerId}
+                className="flex-shrink w-min inline-flex"
+              >
+                <Button size="sm" variant="ghost">
+                  <span className="sr-only">Add Component</span>
+                  <Plus className="h-5 w-5 text-gray-400" />
+                </Button>
+              </AddComponentsPopover>
             )}
             <Button
               size="sm"
