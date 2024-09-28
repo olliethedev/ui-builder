@@ -13,7 +13,6 @@ import { Markdown } from "@/components/ui/ui-builder/markdown";
 import { DividerControl } from "@/components/ui/ui-builder/internal/divider-control";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { cn } from "@/lib/utils";
-import ThemeWrapper from "@/components/ui/ui-builder/internal/theme-wrapper";
 import { BaseColor } from "./base-colors";
 
 interface EditorPanelProps {
@@ -27,18 +26,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
     findLayerById,
     duplicateLayer,
     removeLayer,
-    findLayersForPageId,
     selectedPageId,
   } = useComponentStore();
 
   console.log("EditorPanel", { selectedLayerId });
-  const selectedLayer = findLayerById(selectedPageId) as PageLayer;
-  console.log("selectedLayer", selectedLayer);
+  const selectedLayer = findLayerById(selectedLayerId) as Layer;
+  const selectedPage = findLayerById(selectedPageId) as PageLayer;
+  console.log("selected", {selectedLayer, selectedPage});
 
-  const layers = selectedLayer?.children || [];
+  const layers = selectedPage.children;
 
-  const themeColors = selectedLayer?.props?.themeColors as BaseColor | undefined;
-    const themeMode = (selectedLayer?.props?.mode || "light" )as "light" | "dark";
+  const themeColors = selectedPage?.props?.themeColors as BaseColor | undefined;
+    const themeMode = (selectedPage?.props?.mode || "light" )as "light" | "dark";
 
     const styleVariables = Object.entries(themeColors?.cssVars[themeMode] || {}).reduce((acc, [key, value]) => {
       acc[`--${key}`] = value;
@@ -110,10 +109,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
   };
 
   return (
-    <ThemeWrapper
+    <div
       className={className}
       style={{
-        ...styleVariables
+        ...styleVariables,
+        backgroundColor:themeColors?.cssVars[themeMode].background? `hsl(${themeColors?.cssVars[themeMode].background})` : undefined,
+        color:themeColors?.cssVars[themeMode].foreground? `hsl(${themeColors?.cssVars[themeMode].foreground})` : undefined,
       }}
     >
       {/* className={className} */}
@@ -126,7 +127,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
           <DividerControl parentLayerId={selectedPageId} />
         </div>
       </div>
-    </ThemeWrapper>
+    </div>
   );
 };
 

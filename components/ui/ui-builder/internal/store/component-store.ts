@@ -172,32 +172,46 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
   addComponentLayer: (layerType: keyof typeof componentRegistry, parentId: string, parentPosition?: number) => set(produce((state: ComponentStore) => {
     const defaultProps = getDefaultProps(componentRegistry[layerType].schema);
     console.log("addComponentLayer", { layerType, parentId, parentPosition, defaultProps });
+
     const initialProps = Object.entries(defaultProps).reduce((acc, [key, propDef]) => {
-      if (key !== 'children') {
+      if (key !== "children") {
         acc[key] = propDef;
       }
       return acc;
     }, {} as Record<string, any>);
+
     const newLayer: Layer = {
       id: createId(),
       type: layerType,
       props: initialProps,
-      children: []
+      children: [],
     };
 
-    return addLayerToState(state, newLayer, parentId, parentPosition);
+    // Traverse and update the pages to add the new layer
+    const updatedPages = addLayer(state.pages, newLayer, parentId, parentPosition);
+    console.log("updatedPages", { updatedPages });
+    return {
+      ...state,
+      pages: updatedPages
+    };
   })),
 
   addTextLayer: (text: string, textType: 'text' | 'markdown', parentId: string, parentPosition?: number) => set(produce((state: ComponentStore) => {
-    const newLayer: Layer = {
+    const newLayer: TextLayer = {
       id: createId(),
       type: '_text_',
       text,
-      textType: textType,
-      props: {}
+      textType,
+      props: {},
     };
 
-    return addLayerToState(state, newLayer, parentId, parentPosition);
+    // Traverse and update the pages to add the new text layer
+    const updatedPages = addLayer(state.pages, newLayer, parentId, parentPosition);
+    console.log("updatedPages", { updatedPages });
+    return {
+      ...state,
+      pages: updatedPages
+    };
   })),
 
   addPageLayer: (pageName: string) => set(produce((state: ComponentStore) => {
@@ -215,110 +229,142 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
   })),
 
   duplicateLayer: (layerId: string) => set(produce((state: ComponentStore) => {
-    const { selectedPageId, findLayersForPageId } = get();
-    if (!selectedPageId) return state;
-    const layers = findLayersForPageId(selectedPageId);
-    if (!layers) return state;
-    const layerToDuplicate = findLayerRecursive(layers, layerId);
-    if (layerToDuplicate) {
-      const duplicateWithNewIds = (layer: Layer): Layer => {
-        const newLayer = { ...layer, id: createId() };
-        if (!isTextLayer(newLayer) && newLayer.children) {
-          newLayer.children = newLayer.children.map(duplicateWithNewIds);
+    let layerToDuplicate: Layer | undefined;
+    let parentId: string | undefined;
+    let parentPosition: number | undefined;
+    // Find the layer to duplicate
+    state.pages.forEach((page) =>
+      visitLayer(page, null, (layer, parent) => {
+        if (layer.id === layerId) {
+          layerToDuplicate = layer;
+          parentId = parent?.id;
+          if (parent && hasChildren(parent)) {
+            parentPosition = parent.children.indexOf(layer) + 1;
+          }
         }
-        return newLayer;
-      };
-
-      const newLayer = duplicateWithNewIds(layerToDuplicate);
-      const parentLayer = findParentLayerRecursive(layers, layerId);
-      if (!parentLayer) return state;
-      return addLayerToState(state, newLayer, parentLayer.id);
+        return layer;
+      })
+    );
+    if (!layerToDuplicate) {
+      console.warn(`Layer with ID ${ layerId } not found.`);
+      return;
     }
-    return state;
+
+    // Create a deep copy of the layer with new IDs
+    const duplicateWithNewIds = (layer: Layer): Layer => {
+      const newLayer: Layer = { ...layer, id: createId() };
+      if (hasChildren(newLayer) && hasChildren(layer)) {
+        newLayer.children = layer.children.map(duplicateWithNewIds);
+      }
+      return newLayer;
+    };
+
+    const newLayer = duplicateWithNewIds(layerToDuplicate);
+
+    const updatedPages = addLayer(state.pages, newLayer, parentId, parentPosition);
+
+    // Insert the duplicated layer
+    return {
+      ...state,
+      pages: updatedPages
+    };
   })),
 
   removeLayer: (layerId: string) => set(produce((state: ComponentStore) => {
-    const { selectedPageId, findLayersForPageId } = get();
-    if (!selectedPageId) return state;
-    const layers = findLayersForPageId(selectedPageId);
-    if (!layers) return state;
-    // Find the parent layer before removing the layer
-    const parentLayer = findParentLayerRecursive(layers, layerId);
-    console.log("removeLayer", layerId, { parentLayer: parentLayer?.id }, { layers: layers });
-    // Remove the target layer
-    const updatedLayers = removeLayerRecursive(layers, layerId);
-    console.log("updatedLayers", { updatedLayers });
-    // Determine the new selected layer
-    let updatedSelectedLayer: Layer | null = null;
+    const { selectedLayerId, pages } = get();
 
-    if (parentLayer && !isTextLayer(parentLayer)) {
-      updatedSelectedLayer = parentLayer;
-    } else if (updatedLayers.length > 0 && !isTextLayer(updatedLayers[0])) {
-      updatedSelectedLayer = updatedLayers[0];
+    let newSelectedLayerId = selectedLayerId;
+
+    // Traverse and update the pages to remove the specified layer
+    const updatedPages = pages.map((page) =>
+      visitLayer(page, null, (layer, parent) => {
+
+        console.log("removeLayer", { layer, parent });
+        if (hasChildren(layer)) {
+
+          // Remove the layer by filtering it out from the children
+          const updatedChildren = layer.children.filter((child) => child.id !== layerId);
+          return { ...layer, children: updatedChildren };
+        }
+
+        return layer;
+      })
+    );
+
+    if (selectedLayerId === layerId) {
+      // If the removed layer was selected, deselect it 
+      newSelectedLayerId = null;
     }
-
     return {
-      layers: updatedLayers,
-      selectedLayerId: updatedSelectedLayer?.id || null
+      ...state,
+      selectedLayerId: newSelectedLayerId,
+      pages: updatedPages,
     };
   })),
 
   updateLayerProps: (layerId: string, newProps: Record<string, any>) => set(
     produce((state: ComponentStore) => {
-      const { selectedPageId, findLayersForPageId } = get();
-      if (!selectedPageId) return state;
-      if (layerId === selectedPageId) {
-        return {
-          pages: state.pages.map(page => {
-            if (page.id === selectedPageId) {
-              return { ...page, props: { ...page.props, ...newProps } };
-            }
-            return page;
-          })
-        };
+      const { selectedPageId, findLayersForPageId, pages } = get();
+
+      if (!selectedPageId) {
+        console.warn("No page is currently selected.");
+        return state;
       }
+
+      console.log("updateLayerProps", { layerId, newProps });
+
+      // Handle updating the root page's properties
+      if (layerId === selectedPageId) {
+        const updatedPages = pages.map(page =>
+          page.id === selectedPageId
+            ? { ...page, props: { ...page.props, ...newProps } }
+            : page
+        );
+        console.log("updatedPages", { updatedPages });
+        return { ...state, pages: updatedPages };
+      }
+
       const layers = findLayersForPageId(selectedPageId);
-      console.log("updateLayerProps", { layerId, newProps, layers });
-      if (!layers) return state;
-      const updateLayerRecursive = (layers: Layer[]): Layer[] => {
-        return layers.map(layer => {
-          if (layer.id === layerId) {
-            if (isTextLayer(layer)) {
-              console.log("update Text Layer Props", { layer, newProps });
-              // For text layers, update the text property
-              const { text, textType, type, id, props: nestedProps, ...rest } = newProps;
+      if (!layers) {
+        console.warn(`No layers found for page ID: ${ selectedPageId }`);
+        return state;
+      }
 
-              return {
-                ...layer,
-                text: text || layer.text,
-                textType: textType || layer.textType,
-                props: { ...layer.props, ...rest }
-              };
-            } else {
-              // For component layers, update the props
-              console.log("update Component Layer Props", { layer, newProps });
-              return { ...layer, props: { ...layer.props, ...newProps } };
-            }
+      // Visitor function to update layer properties
+      const visitor = (layer: Layer): Layer => {
+        if (layer.id === layerId) {
+          if (isTextLayer(layer)) {
+            const { text, textType, ...rest } = newProps;
+            return {
+              ...layer,
+              text: text !== undefined ? text : layer.text,
+              textType: textType !== undefined ? textType : layer.textType,
+              props: { ...layer.props, ...rest },
+            };
+          } else {
+            return {
+              ...layer,
+              props: { ...layer.props, ...newProps },
+            };
           }
-          if (!isTextLayer(layer) && layer.children) {
-            return { ...layer, children: updateLayerRecursive(layer.children) };
-          }
-          return layer;
-        });
+        }
+        return layer;
       };
 
-      const updatedLayers = updateLayerRecursive(layers);
-      console.log("updatedLayers", { updatedLayers });
+      // Apply the visitor to update layers
+      const updatedLayers = layers.map(layer => visitLayer(layer, null, visitor));
 
-      return {
-        ...state,
-        pages: state.pages.map(page => {
-          if (page.id === selectedPageId) {
-            return { ...page, children: updatedLayers };
-          }
-          return page;
-        })
-      };
+      if (updatedLayers === layers) {
+        console.warn(`Layer with ID ${ layerId } was not found.`);
+        return state;
+      }
+
+      // Update the state with the modified layers
+      const updatedPages = state.pages.map(page =>
+        page.id === selectedPageId ? { ...page, children: updatedLayers } : page
+      );
+
+      return { ...state, pages: updatedPages };
     })
   ),
 
@@ -347,51 +393,43 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
 
   reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => set(produce((state: ComponentStore) => {
     console.log("reorderChildrenLayers", parentId, orderedChildrenIds);
-    const { selectedPageId, findLayersForPageId } = get();
-    if (!selectedPageId) return state;
-    const layers = findLayersForPageId(selectedPageId);
-    if (!layers) return state;
+    const { pages } = get();
 
-    const reorderRecursive = (layers: Layer[]): Layer[] => {
-      return layers.map(layer => {
-        // Check if the current layer is the parent layer to reorder
-        if (layer.id === parentId && !isTextLayer(layer)) {
-          if (!layer.children) {
-            // If the parent layer exists but has no children, return it unchanged
-            return layer;
-          }
-          console.log("layer.children", layer.children);
-          // Reorder children based on orderedChildrenIds
-          const newChildren = orderedChildrenIds
-            .map(id => layer.children?.find(child => child.id === id))
-            .filter(child => child !== undefined) as Layer[];
-          console.log("newChildren", newChildren);
-
-          // Return the layer with reordered and filtered children
-          return {
-            ...layer,
-            children: newChildren
-          };
+    // Define the visitor function
+    const visitor = (layer: Layer, parent: Layer | null): Layer => {
+      if (layer.id === parentId && hasChildren(layer)) {
+        if (!layer.children) {
+          // If the parent layer has no children, return it unchanged
+          return layer;
         }
 
-        // If the layer is a Component Layer and has children, recurse into them
-        if (!isTextLayer(layer) && layer.children) {
-          return {
-            ...layer,
-            children: reorderRecursive(layer.children)
-          };
-        }
+        console.log("layer.children before reorder", layer.children);
 
-        // For Text Layers or layers without children, return them unchanged
-        return layer;
-      });
+        // Reorder children based on orderedChildrenIds
+        const newChildren = orderedChildrenIds
+          .map(id => layer.children!.find(child => child.id === id))
+          .filter(child => child !== undefined) as Layer[];
+
+        console.log("newChildren after reorder", newChildren);
+
+        return {
+          ...layer,
+          children: newChildren,
+        };
+      }
+
+      return layer;
     };
 
-    const updatedLayers = reorderRecursive(layers);
+    // Apply the visitor to all layers
+    const updatedPages = pages.map(page => ({
+      ...page,
+      children: page.children.map(layer => visitLayer(layer, null, visitor)),
+    }));
 
     return {
       ...state,
-      layers: updatedLayers,
+      pages: updatedPages,
     };
   })),
 }),
@@ -403,82 +441,6 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
       isDeepEqual(pastState, currentState),
   }
 ))
-
-function isTextLayer(layer: Layer): layer is TextLayer {
-  return layer.type === '_text_';
-}
-
-function isPageLayer(layer: Layer): layer is PageLayer {
-  return layer.type === '_page_';
-}
-
-const addLayerToState = (
-  state: ComponentStore,
-  newLayer: Layer,
-  parentId: string,
-  parentPosition?: number
-): ComponentStore => {
-
-  const addLayerRecursive = (layers: Layer[], iteration = 0): Layer[] | PageLayer[] => {
-    console.log("addLayerRecursive", { parentId, parentPosition, newLayer, iteration });
-    return layers.map((layer) => {
-      if (layer.id === parentId && !isTextLayer(layer)) {
-        let updatedChildren = layer.children ? [...layer.children] : [];
-
-        if (parentPosition !== undefined) {
-          // Insert the new layer at the specified position
-          updatedChildren = [
-            ...updatedChildren.slice(0, parentPosition),
-            newLayer,
-            ...updatedChildren.slice(parentPosition)
-          ];
-        } else {
-          // Append the new layer to the children
-          updatedChildren.push(newLayer);
-        }
-        console.log("addLayerRecursive", { updatedChildren });
-        if (iteration === 0) {
-          return { ...layer, children: updatedChildren } as PageLayer;
-        } else {
-          return { ...layer, children: updatedChildren } as Layer;
-        }
-      }
-
-      if (!isTextLayer(layer) && layer.children) {
-        return {
-          ...layer,
-          children: addLayerRecursive(layer.children)
-        };
-      }
-
-      return layer;
-    });
-  };
-
-  // let updatedLayers = [...state.pages];
-
-  const { pages } = state;
-  const updatedLayersForPage = addLayerRecursive(pages);
-  console.log("addLayerToState", { updatedLayersForPage });
-  // if (parentId) {
-
-  // } else if (parentPosition !== undefined) {
-  //   // Respect the parentPosition when adding to root layers
-  //   updatedLayers = [
-  //     ...updatedLayers.slice(0, parentPosition),
-  //     newLayer,
-  //     ...updatedLayers.slice(parentPosition)
-  //   ];
-  // } else {
-  //   // Append to the root layers if no position is specified
-  //   updatedLayers.push(newLayer);
-  // }
-
-  return {
-    ...state,
-    pages: updatedLayersForPage as PageLayer[],
-  };
-};
 
 const findParentLayerRecursive = (layers: Layer[], layerId: string): Layer | null => {
   for (const layer of layers) {
@@ -508,25 +470,41 @@ const findLayerRecursive = (layers: Layer[], layerId: string): Layer | undefined
   return undefined;
 };
 
-const removeLayerRecursive = (layers: Layer[], layerId: string): Layer[] => {
-  return layers.reduce<Layer[]>((acc, layer) => {
-    if (layer.id === layerId) {
-      // Skip this layer (i.e., remove it)
-      return acc;
-    }
+const addLayer = (layers: Layer[], newLayer: Layer, parentId?: string, parentPosition?: number): Layer[] => {
+  const updatedPages = layers.map((page) =>
+    visitLayer(page, null, (layer, parent) => {
+      if (layer.id === parentId && hasChildren(layer)) {
+        let updatedChildren = layer.children ? [...layer.children] : [];
 
-    if (!isTextLayer(layer) && layer.children) {
-      // Recursively remove the layer from children without mutating
-      const newChildren = removeLayerRecursive(layer.children, layerId);
-      acc.push({ ...layer, children: newChildren });
-    } else {
-      // No children to process, add the layer as is
-      acc.push(layer);
-    }
+        if (parentPosition !== undefined) {
+          if (parentPosition < 0) {
+            // If parentPosition is negative, insert at the beginning
+            updatedChildren = [newLayer, ...updatedChildren];
+          } else if (parentPosition >= updatedChildren.length) {
+            // If parentPosition is greater than or equal to the length, append to the end
+            updatedChildren = [...updatedChildren, newLayer];
+          } else {
+            // Insert at the specified position
+            updatedChildren = [
+              ...updatedChildren.slice(0, parentPosition),
+              newLayer,
+              ...updatedChildren.slice(parentPosition)
+            ];
+          }
+        } else {
+          // If parentPosition is undefined, append to the end
+          updatedChildren = [...updatedChildren, newLayer];
+        }
 
-    return acc;
-  }, []);
-};
+        return { ...layer, children: updatedChildren };
+      }
+
+      return layer;
+    })
+  );
+  return updatedPages;
+}
+
 
 function createId(): string {
   const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -735,6 +713,42 @@ function addCoerceToNumberAndDate<T extends ZodTypeAny>(schema: T): T {
 
   // If none of the above, return the schema unchanged
   return schema;
+}
+
+
+/**
+ * Recursively visits each layer in the layer tree and applies the provided visitor function to each layer.
+ * The visitor function can modify the layer and its children as needed.
+ *
+ * @param layer - The current layer to visit.
+ * @param visitor - A function that takes a layer and returns a modified layer.
+ * @returns The modified layer after applying the visitor function.
+ */
+const visitLayer = (layer: Layer, parentLayer: Layer | null, visitor: (layer: Layer, parentLayer: Layer | null) => Layer): Layer => {
+  // Apply the visitor to the current layer
+  const updatedLayer = visitor(layer, parentLayer);
+
+  // Recursively traverse and update children if they exist
+  if (hasChildren(updatedLayer)) {
+    const updatedChildren = updatedLayer.children.map((child) =>
+      visitLayer(child, updatedLayer, visitor)
+    );
+    return { ...updatedLayer, children: updatedChildren };
+  }
+
+  return updatedLayer;
+};
+
+const hasChildren = (layer: Layer): layer is ComponentLayer & { children: Layer[] } => {
+  return 'children' in layer && Array.isArray(layer.children);
+};
+
+function isTextLayer(layer: Layer): layer is TextLayer {
+  return layer.type === '_text_';
+}
+
+function isPageLayer(layer: Layer): layer is PageLayer {
+  return layer.type === '_page_';
 }
 
 
