@@ -1,7 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Eye, FileUp, Redo, Undo, SunIcon, MoonIcon, CheckIcon } from "lucide-react";
+import {
+  Eye,
+  FileUp,
+  Redo,
+  Undo,
+  SunIcon,
+  MoonIcon,
+  CheckIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,6 +25,7 @@ import {
   isTextLayer,
   componentRegistry,
   isPageLayer,
+  PageLayer,
 } from "@/components/ui/ui-builder/internal/store/component-store";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { CodeBlock } from "@/components/ui/ui-builder/codeblock";
@@ -26,19 +35,36 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { PlusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { pageLayerToCode } from "@/components/ui/ui-builder/internal/templates";
+
 
 export function NavBar() {
-  const { pages, selectedPageId, findLayersForPageId } = useComponentStore();
+  const { selectedPageId, findLayerById } = useComponentStore();
   const { undo, redo, futureStates, pastStates } =
     useComponentStore.temporal.getState();
 
-  const layers = findLayersForPageId(selectedPageId);
+  const page = findLayerById(selectedPageId) as PageLayer;
+
+  const layers = page?.children || [];
   console.log({
     layers,
     futureStates: JSON.stringify(futureStates),
@@ -73,15 +99,15 @@ export function NavBar() {
         }
       } else if (isSpin) {
         event.preventDefault();
-        const elements = document.querySelectorAll('*');
+        const elements = document.querySelectorAll("*");
         elements.forEach((element) => {
-          element.classList.add('animate-spin', 'origin-center');
+          element.classList.add("animate-spin", "origin-center");
         });
       } else if (isStopSpin) {
         event.preventDefault();
-        const elements = document.querySelectorAll('*');
+        const elements = document.querySelectorAll("*");
         elements.forEach((element) => {
-          element.classList.remove('animate-spin', 'origin-center');
+          element.classList.remove("animate-spin", "origin-center");
         });
       }
     };
@@ -94,108 +120,11 @@ export function NavBar() {
     };
   }, [canUndo, canRedo, undo, redo]);
 
-  const generatePropsString = (props: Record<string, any>): string => {
-    return Object.entries(props)
-      .filter(([_, value]) => value !== undefined)
-      .map(([key, value]) => {
-        let propValue;
-        if (typeof value === "string") {
-          propValue = `"${value}"`;
-        } else if (typeof value === "number") {
-          propValue = value;
-        } else {
-          propValue = `{${JSON.stringify(value)}}`;
-        }
-        return `${key}=${propValue}`;
-      })
-      .join(" ");
-  };
-
-  const generateLayerCode = (layer: Layer, indent = 0): string => {
-    if (isTextLayer(layer)) {
-      if (layer.textType === "markdown") {
-        const indentation = "  ".repeat(indent);
-        // Wrap markdown with Markdown component
-        return `${indentation}<Markdown ${generatePropsString(
-          layer.props
-        )}>{${JSON.stringify(layer.text)}}</Markdown>`;
-      }
-      const indentation = "  ".repeat(indent);
-      return `${indentation}<span ${generatePropsString(layer.props)}>{${JSON.stringify(layer.text)}}</span>`;
-    }
-
-    const { type, children } = layer;
-
-    const indentation = "  ".repeat(indent);
-
-    let childrenCode = "";
-    if (children && children.length > 0) {
-      childrenCode = children
-        .map((child) => generateLayerCode(child, indent + 1))
-        .join("\n");
-    }
-
-    if (childrenCode) {
-      return `${indentation}<${type} ${generatePropsString(
-        layer.props
-      )}>\n${childrenCode}\n${indentation}</${type}>`;
-    } else {
-      return `${indentation}<${type} ${generatePropsString(layer.props)} />`;
-    }
-  };
-
-  const generateComponentCode = () => {
-    const imports = new Set<string>();
-
-    const collectImports = (layer: Layer) => {
-      if (isTextLayer(layer)) {
-        if (layer.textType === "markdown") {
-          imports.add(
-            `import { Markdown } from "@/components/ui/ui-builder/markdown";`
-          );
-        }
-      } else if (isPageLayer(layer)) {
-        imports.add(
-          `import { Page } from "@/components/ui/ui-builder/theme-wrapper";`
-        );
-      } else {
-        const componentDefinition = componentRegistry[layer.type];
-        if (layer.type && componentDefinition) {
-          imports.add(
-            `import { ${layer.type} } from "${componentDefinition.from}";`
-          );
-        }
-        if (layer.children) {
-          layer.children.forEach(collectImports);
-        }
-      }
-    };
-
-    layers.forEach(collectImports);
-
-    const code = layers.map((layer) => generateLayerCode(layer)).join("\n");
-    const importsString = Array.from(imports).join("\n");
-
-    const reactComponentTemplate = (imports: string, children: string) => {
-      return `
-import React from "react";\n
-${imports}\n
-const Component = () => {
-  return (
-    <>
-${children.split("\n").map((line) => `      ${line}`).join("\n")}
-    </>
-  );
-};\n`;
-    };
-
-    return reactComponentTemplate(importsString, code);
-  };
 
   const codeBlocks = {
-    React: generateComponentCode(),
+    React: pageLayerToCode(page),
     Serialized: JSON.stringify(
-      layers,
+      page,
       (key, value) => (typeof value === "function" ? undefined : value),
       2
     ),
@@ -222,21 +151,25 @@ ${children.split("\n").map((line) => `      ${line}`).join("\n")}
             variant="secondary"
             size="icon"
             disabled={!canUndo}
+            className="flex flex-col justify-center"
           >
             <span className="sr-only">Undo</span>
             <Undo className="w-4 h-4" />
+            <CommandShortcut className="ml-0 text-[8px] leading-3">⌘Z</CommandShortcut>
           </Button>
           <Button
             onClick={handleRedo}
             variant="secondary"
             size="icon"
             disabled={!canRedo}
+            className="flex flex-col justify-center"
           >
             <span className="sr-only">Redo</span>
             <Redo className="w-4 h-4" />
+            <CommandShortcut className="ml-0 text-[8px] leading-3">⌘+⇧+Z</CommandShortcut>
           </Button>
           <div className="h-10 flex w-px bg-border"></div>
-          <PreviewDialog layers={layers} />
+          <PreviewDialog page={page} />
           <CodeDialog codeBlocks={codeBlocks} />
           <div className="h-10 flex w-px bg-border"></div>
           <ModeToggle />
@@ -246,7 +179,7 @@ ${children.split("\n").map((line) => `      ${line}`).join("\n")}
   );
 }
 
-const PreviewDialog = ({ layers }: { layers: Layer[] }) => {
+const PreviewDialog = ({ page }: { page: PageLayer }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -256,8 +189,14 @@ const PreviewDialog = ({ layers }: { layers: Layer[] }) => {
           <Eye className="w-4 h-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[calc(100dvw)] max-h-[calc(100dvh)] overflow-auto p-0">
-        <LayerRenderer layers={layers} />
+      
+      <DialogContent className="max-w-[calc(100dvw)] max-h-[calc(100dvh)] overflow-auto p-0 gap-0">
+      <DialogHeader>
+        <DialogTitle className="py-3 bg-yellow-600 text-center">
+          <span className="text-lg font-semibold">Page Preview</span>
+        </DialogTitle>
+      </DialogHeader>
+        <LayerRenderer className="w-full h-full flex flex-col" page={page} />
       </DialogContent>
     </Dialog>
   );
@@ -303,8 +242,8 @@ const CodeDialog = ({
 };
 
 function ModeToggle() {
-  const { setTheme } = useTheme()
- 
+  const { setTheme } = useTheme();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -326,14 +265,17 @@ function ModeToggle() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
 
-function PagesPopover(){
-  const {pages, selectedPageId, addPageLayer, selectPage} = useComponentStore();
+function PagesPopover() {
+  const { pages, selectedPageId, addPageLayer, selectPage } =
+    useComponentStore();
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
-  const [selectedPage, setSelectedPage] = useState<string | null>(selectedPageId);
+  const [selectedPage, setSelectedPage] = useState<string | null>(
+    selectedPageId
+  );
   const [textInputValue, setTextInputValue] = useState("");
 
   const selectedPageData = useMemo(() => {
@@ -404,9 +346,15 @@ function PagesPopover(){
                   key={page.id}
                   value={page.name}
                   onSelect={() => handleSelect(page.id)}
-                  className={cn(selectedPageId === page.id ? "bg-secondary text-secondary-foreground" : "")}
+                  className={cn(
+                    selectedPageId === page.id
+                      ? "bg-secondary text-secondary-foreground"
+                      : ""
+                  )}
                 >
-                  {selectedPageId === page.id ? <CheckIcon className="w-4 h-4 mr-2" /> : null}
+                  {selectedPageId === page.id ? (
+                    <CheckIcon className="w-4 h-4 mr-2" />
+                  ) : null}
                   {page.name}
                 </CommandItem>
               ))}
@@ -419,6 +367,5 @@ function PagesPopover(){
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }
-

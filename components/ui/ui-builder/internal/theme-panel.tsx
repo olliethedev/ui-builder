@@ -9,18 +9,22 @@ import { CheckIcon, InfoIcon, MoonIcon, SunIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageLayer, useComponentStore } from "@/components/ui/ui-builder/internal/store/component-store";
 import { Toggle } from "@/components/ui/toggle";
+import { themeToStyleVars } from "@/components/ui/ui-builder/theme-utils";
 
 export function ThemePanel() {
     const {pages, selectedPageId, updateLayer: updateLayerProps} = useComponentStore();
     const selectedPageData = useMemo(() => {
         return pages.find((page) => page.id === selectedPageId);
       }, [pages, selectedPageId]);
-  const [isCustomTheme, setIsCustomTheme] = useState(false);
+  const [isCustomTheme, setIsCustomTheme] = useState(selectedPageData?.props.colorTheme !== undefined);
   //if not isCustomTheme we delete the themeColors from the pageLayer
   useEffect(() => {
     if (!isCustomTheme) {
       updateLayerProps(selectedPageId, {
-        themeColors: null,
+        style: undefined,
+        mode: undefined,
+        colorTheme: undefined,
+        borderRadius: undefined,
       });
     }
   }, [isCustomTheme]);
@@ -49,9 +53,9 @@ function ThemePicker({ className, isDisabled, pageLayer }: { className?: string,
   
     const {updateLayer: updateLayerProps} = useComponentStore();
 
-  const [colorTheme, setColorTheme] = useState<BaseColor["name"]>(pageLayer.props.themeColors?.name || "red");
-  const [borderRadius, setBorderRadius] = useState(pageLayer.props.themeColors?.cssVars.radius || 0.3);
-  const [mode, setMode] = useState<"light" | "dark">(pageLayer.props.themeColors?.mode || "light");
+  const [colorTheme, setColorTheme] = useState<BaseColor["name"]>(pageLayer.props?.colorTheme || "red");
+  const [borderRadius, setBorderRadius] = useState(pageLayer.props?.borderRadius || 0.3);
+  const [mode, setMode] = useState<"light" | "dark">(pageLayer.props?.mode || "light");
 
   useEffect(() => {
     if (isDisabled) return;
@@ -68,11 +72,15 @@ function ThemePicker({ className, isDisabled, pageLayer }: { className?: string,
                     radius: `${borderRadius}rem`
                 }
             }
-        };
+        } as const;
+
+        const themeStyle = themeToStyleVars(colorDataWithBorder.cssVars[mode] );
 
         updateLayerProps(pageLayer.id, {
-            themeColors: colorDataWithBorder,
-            mode, //mode is separate from colorTheme so that user can toggle light/dark modes without changing the colorTheme
+            style: themeStyle,
+            mode,
+            colorTheme,
+            borderRadius,
         });
     }
 }, [colorTheme, borderRadius, mode, isDisabled]);

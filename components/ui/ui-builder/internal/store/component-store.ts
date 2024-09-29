@@ -122,7 +122,7 @@ interface ComponentStore {
   addPageLayer: (pageId: string) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
-  updateLayer: (layerId: string, newProps: Record<string, any>) => void;
+  updateLayer: (layerId: string, newProps: Record<string, any>, layerRest?: Omit<Layer, 'props' | 'children'>) => void;
   selectLayer: (layerId: string) => void;
   selectPage: (pageId: string) => void;
   reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => void;
@@ -333,13 +333,11 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
       const visitor = (layer: Layer): Layer => {
         if (layer.id === layerId) {
           if (isTextLayer(layer)) {
-            const { text, textType, ...rest } = newProps;
+            const { props, ...rest } = newProps;
             return {
               ...layer,
-              ...(layerRest || {}),
-              text: text !== undefined ? text : layer.text,
-              textType: textType !== undefined ? textType : layer.textType,
               props: { ...layer.props, ...rest },
+              ...(layerRest || {}),
             } as TextLayer;
           } else {
             return {

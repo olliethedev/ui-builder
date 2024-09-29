@@ -7,6 +7,7 @@ import {
   ComponentLayer,
   isTextLayer,
   TextLayer,
+  Layer,
 } from "@/components/ui/ui-builder/internal/store/component-store";
 import {
   FormControl,
@@ -76,8 +77,8 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
   }, [selectedLayer?.id, duplicateLayer]);
 
   const handleUpdateLayerProps = useCallback(
-    (id: string, props: Record<string, any>) => {
-      updateLayerProps(id, props);
+    (id: string, props: Record<string, any>, rest?: Omit<Layer, 'props' | 'children'>) => {
+      updateLayerProps(id, props, rest);
     },
     [selectedLayer?.id, updateLayerProps]
   );
@@ -115,7 +116,7 @@ interface TextLayerFormProps {
   selectedLayer: TextLayer;
   removeLayer: (id: string) => void;
   duplicateLayer: (id: string) => void;
-  updateLayerProps: (id: string, props: Record<string, any>) => void;
+  updateLayerProps: (id: string, props: Record<string, any>, rest?: Omit<Layer, 'props' | 'children'>) => void;
 }
 
 const TextLayerForm: React.FC<TextLayerFormProps> = ({
@@ -138,8 +139,11 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
       // Merge the changed fields into the existing props
       const mergedValues = { ...selectedLayer, ...data };
 
+      const {props, ...rest} = mergedValues;
+
       // setValues(mergedValues);
-      updateLayerProps(selectedLayer.id, mergedValues);
+      console.log("calling updateLayerProps with", {props, rest});
+      updateLayerProps(selectedLayer.id, props, rest);
     },
     [selectedLayer.id, selectedLayer, updateLayerProps]
   );

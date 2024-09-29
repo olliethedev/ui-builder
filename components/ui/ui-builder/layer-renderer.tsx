@@ -4,19 +4,22 @@ import {
   componentRegistry,
   isTextLayer,
   Layer,
+  PageLayer,
 } from "@/components/ui/ui-builder/internal/store/component-store";
 import { Markdown } from "@/components/ui/ui-builder/markdown";
 import { ErrorBoundary } from "react-error-boundary";
+import { baseColors } from "@/components/ui/ui-builder/internal/base-colors";
 
 interface LayerRendererProps {
   className?: string;
-  layers: Layer[];
+  page: PageLayer;
 }
 
 const LayerRenderer: React.FC<LayerRendererProps> = ({
   className,
-  layers,
+  page,
 }: LayerRendererProps) => {
+
   const renderLayer = (layer: Layer) => {
     if (isTextLayer(layer)) {
       const TextComponent = layer.textType === "markdown" ? Markdown : "span";
@@ -47,7 +50,40 @@ const LayerRenderer: React.FC<LayerRendererProps> = ({
     );
   };
 
-  return <div className={className}>{layers.map(renderLayer)}</div>;
+  const renderPage = (page: PageLayer) => {
+    const { mode, colorTheme, style, ...rest } = page.props;
+    console.log("page", { mode, colorTheme, style, ...rest });
+    const colorData = colorTheme
+      ? baseColors.find((color) => color.name === colorTheme)
+      : undefined;
+
+    let globalOverrides = colorData
+      ? {
+          backgroundColor:`hsl(${colorData.cssVars[mode as "light" | "dark"].background})`,
+          color:`hsl(${colorData.cssVars[mode as "light" | "dark"].foreground})`,
+          borderColor:`hsl(${colorData.cssVars[mode as "light" | "dark"].border})`,
+        }
+      : {};
+      console.log("globalOverrides", globalOverrides);
+    return (
+      <div
+        className="flex flex-col w-full overflow-y-visible relative"
+        style={{
+          ...style,
+          ...globalOverrides,
+        }}
+        {...rest}
+      >
+        {page.children.map(renderLayer)}
+      </div>
+    );
+  };
+
+  return (
+    <div className={className}>
+      {renderPage(page)}
+    </div>
+  );
 };
 
 export default LayerRenderer;

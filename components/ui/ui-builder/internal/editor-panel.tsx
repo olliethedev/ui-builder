@@ -13,7 +13,7 @@ import { Markdown } from "@/components/ui/ui-builder/markdown";
 import { DividerControl } from "@/components/ui/ui-builder/internal/divider-control";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { cn } from "@/lib/utils";
-import { BaseColor } from "./base-colors";
+import { baseColors } from "./base-colors";
 
 interface EditorPanelProps {
   className?: string;
@@ -36,7 +36,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
 
   const layers = selectedPage.children;
 
-  const { styleVariables, themeColors, themeMode } = getPageStyles(selectedPage);
+  // const { styleVariables, themeColors, themeMode } = getPageStyles(selectedPage);
 
   const onSelectElement = (layerId: string) => {
     console.log("onSelectElement", layerId);
@@ -100,31 +100,42 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
     );
   };
 
+  const renderPage = (page: PageLayer) => {
+    const { mode, colorTheme, style, ...rest } = page.props;
+    console.log("page", { mode, colorTheme, style, ...rest });
+    const colorData = colorTheme
+      ? baseColors.find((color) => color.name === colorTheme)
+      : undefined;
+
+    let globalOverrides = colorData
+      ? {
+          backgroundColor:`hsl(${colorData.cssVars[mode as "light" | "dark"].background})`,
+          color:`hsl(${colorData.cssVars[mode as "light" | "dark"].foreground})`,
+          borderColor:`hsl(${colorData.cssVars[mode as "light" | "dark"].border})`,
+        }
+      : {};
+      console.log("globalOverrides", globalOverrides);
+    return (
+      <div
+        className="flex flex-col w-full overflow-y-visible relative"
+        style={{
+          ...style,
+          ...globalOverrides,
+        }}
+        {...rest}
+      >
+        {page.children.map(renderLayer)}
+      </div>
+    );
+  };
+
   return (
     <div className={className}>
       <div className="relative w-full">
         {layers.length > 0 && (
           <DividerControl addPosition={0} parentLayerId={selectedPageId} />
         )}
-        <div
-          className="flex flex-col w-full overflow-y-visible relative"
-          style={{
-            //set the theme color variables if defined in theme
-            ...styleVariables,
-            //override the styles inherited from globals.css if defined in theme
-            backgroundColor: themeColors?.cssVars[themeMode].background
-              ? `hsl(${themeColors?.cssVars[themeMode].background})`
-              : undefined,
-            color: themeColors?.cssVars[themeMode].foreground
-              ? `hsl(${themeColors?.cssVars[themeMode].foreground})`
-              : undefined,
-            borderColor: themeColors?.cssVars[themeMode].border
-              ? `hsl(${themeColors?.cssVars[themeMode].border})`
-              : undefined,
-          }}
-        >
-          {layers.map(renderLayer)}
-        </div>
+        {renderPage(selectedPage)}
         <DividerControl parentLayerId={selectedPageId} />
       </div>
     </div>
@@ -372,20 +383,4 @@ function getScrollParent(element: HTMLElement | null): HTMLElement | null {
   }
 
   return null;
-}
-
-function getPageStyles(page: PageLayer) {
-  const themeColors = page?.props?.themeColors as BaseColor | undefined;
-  const themeMode = (page?.props?.mode || "light") as "light" | "dark";
-
-  const styleVariables = Object.entries(
-    themeColors?.cssVars[themeMode] || {}
-  ).reduce(
-    (acc, [key, value]) => {
-      acc[`--${key}`] = value;
-      return acc;
-    },
-    {} as { [key: string]: string }
-  );
-  return { styleVariables, themeColors, themeMode };
 }
