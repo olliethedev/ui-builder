@@ -1,5 +1,8 @@
 export const TAILWIND_CLASSES = [
     // MARK: Layout
+
+    /* SHADCN specific */
+    "bg-primary","bg-primary-foreground","bg-secondary","bg-secondary-foreground","bg-destructive","bg-destructive-foreground","bg-muted","bg-muted-foreground","bg-accent","bg-accent-foreground","bg-popover","bg-popover-foreground","bg-card","bg-card-foreground","bg-border","bg-input","bg-ring","bg-background","bg-foreground","text-primary","text-primary-foreground","text-secondary","text-secondary-foreground","text-destructive","text-destructive-foreground","text-muted","text-muted-foreground","text-accent","text-accent-foreground","text-popover","text-popover-foreground","text-card","text-card-foreground","text-border","text-input","text-ring","text-background","text-foreground","border-primary","border-primary-foreground","border-secondary","border-secondary-foreground","border-destructive","border-destructive-foreground","border-muted","border-muted-foreground","border-accent","border-accent-foreground","border-popover","border-popover-foreground","border-card","border-card-foreground","border-border","border-input","border-ring","border-background","border-foreground",
     
     /* Aspect Ratio */
     "aspect-auto","aspect-video","aspect-square",

@@ -57,7 +57,7 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
   const {
     removeLayer,
     duplicateLayer,
-    updateLayerProps,
+    updateLayer: updateLayerProps,
     reorderChildrenLayers,
   } = useComponentStore();
 

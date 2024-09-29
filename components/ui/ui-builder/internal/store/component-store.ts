@@ -122,7 +122,7 @@ interface ComponentStore {
   addPageLayer: (pageId: string) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
-  updateLayerProps: (layerId: string, newProps: Record<string, any>) => void;
+  updateLayer: (layerId: string, newProps: Record<string, any>) => void;
   selectLayer: (layerId: string) => void;
   selectPage: (pageId: string) => void;
   reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => void;
@@ -301,7 +301,7 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
     };
   })),
 
-  updateLayerProps: (layerId: string, newProps: Record<string, any>) => set(
+  updateLayer: (layerId: string, newProps: Layer['props'], layerRest?: Omit<Layer, 'props' | 'children'>) => set(
     produce((state: ComponentStore) => {
       const { selectedPageId, findLayersForPageId, pages } = get();
 
@@ -316,7 +316,7 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
       if (layerId === selectedPageId) {
         const updatedPages = pages.map(page =>
           page.id === selectedPageId
-            ? { ...page, props: { ...page.props, ...newProps } }
+            ? { ...page, props: { ...page.props, ...newProps }, ...(layerRest || {}) }
             : page
         );
         console.log("updatedPages", { updatedPages });
@@ -325,7 +325,7 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
 
       const layers = findLayersForPageId(selectedPageId);
       if (!layers) {
-        console.warn(`No layers found for page ID: ${ selectedPageId }`);
+        console.warn(`No layers found for page ID: ${selectedPageId}`);
         return state;
       }
 
@@ -336,15 +336,17 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
             const { text, textType, ...rest } = newProps;
             return {
               ...layer,
+              ...(layerRest || {}),
               text: text !== undefined ? text : layer.text,
               textType: textType !== undefined ? textType : layer.textType,
               props: { ...layer.props, ...rest },
-            };
+            } as TextLayer;
           } else {
             return {
               ...layer,
+              ...(layerRest || {}),
               props: { ...layer.props, ...newProps },
-            };
+            } as ComponentLayer;
           }
         }
         return layer;
@@ -354,7 +356,7 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
       const updatedLayers = layers.map(layer => visitLayer(layer, null, visitor));
 
       if (updatedLayers === layers) {
-        console.warn(`Layer with ID ${ layerId } was not found.`);
+        console.warn(`Layer with ID ${layerId} was not found.`);
         return state;
       }
 

@@ -11,7 +11,7 @@ import { PageLayer, useComponentStore } from "@/components/ui/ui-builder/interna
 import { Toggle } from "@/components/ui/toggle";
 
 export function ThemePanel() {
-    const {pages, selectedPageId, updateLayerProps} = useComponentStore();
+    const {pages, selectedPageId, updateLayer: updateLayerProps} = useComponentStore();
     const selectedPageData = useMemo(() => {
         return pages.find((page) => page.id === selectedPageId);
       }, [pages, selectedPageId]);
@@ -47,7 +47,7 @@ export function ThemePanel() {
 
 function ThemePicker({ className, isDisabled, pageLayer }: { className?: string, isDisabled: boolean, pageLayer: PageLayer }) {
   
-    const {updateLayerProps} = useComponentStore();
+    const {updateLayer: updateLayerProps} = useComponentStore();
 
   const [colorTheme, setColorTheme] = useState<BaseColor["name"]>(pageLayer.props.themeColors?.name || "red");
   const [borderRadius, setBorderRadius] = useState(pageLayer.props.themeColors?.cssVars.radius || 0.3);

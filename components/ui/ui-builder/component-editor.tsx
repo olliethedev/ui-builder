@@ -36,7 +36,7 @@ const ComponentEditor = () => {
             </TabsContent>
           </Tabs>
 
-          <EditorPanel className="w-1/2 p-4 overflow-y-auto" />
+          <EditorPanel className="w-1/2 overflow-y-auto" />
           <PropsPanel className="w-1/4 p-4 border-l overflow-y-auto" />
         </div>
       </div>

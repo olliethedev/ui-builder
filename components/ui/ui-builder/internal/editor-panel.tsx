@@ -32,17 +32,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
   console.log("EditorPanel", { selectedLayerId });
   const selectedLayer = findLayerById(selectedLayerId) as Layer;
   const selectedPage = findLayerById(selectedPageId) as PageLayer;
-  console.log("selected", {selectedLayer, selectedPage});
+  console.log("selected", { selectedLayer, selectedPage });
 
   const layers = selectedPage.children;
 
-  const themeColors = selectedPage?.props?.themeColors as BaseColor | undefined;
-    const themeMode = (selectedPage?.props?.mode || "light" )as "light" | "dark";
-
-    const styleVariables = Object.entries(themeColors?.cssVars[themeMode] || {}).reduce((acc, [key, value]) => {
-      acc[`--${key}`] = value;
-      return acc;
-    }, {} as { [key: string]: string });
+  const { styleVariables, themeColors, themeMode } = getPageStyles(selectedPage);
 
   const onSelectElement = (layerId: string) => {
     console.log("onSelectElement", layerId);
@@ -91,8 +85,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
       );
     }
 
-    
-
     return (
       <ClickableWrapper
         key={layer.id}
@@ -109,23 +101,31 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
   };
 
   return (
-    <div
-      className={className}
-      style={{
-        ...styleVariables,
-        backgroundColor:themeColors?.cssVars[themeMode].background? `hsl(${themeColors?.cssVars[themeMode].background})` : undefined,
-        color:themeColors?.cssVars[themeMode].foreground? `hsl(${themeColors?.cssVars[themeMode].foreground})` : undefined,
-      }}
-    >
-      {/* className={className} */}
-      <div>
-        <div className="relative w-full">
+    <div className={className}>
+      <div className="relative w-full">
+        {layers.length > 0 && (
           <DividerControl addPosition={0} parentLayerId={selectedPageId} />
-          <div className="flex flex-col w-full overflow-y-visible relative">
-            {layers.map(renderLayer)}
-          </div>
-          <DividerControl parentLayerId={selectedPageId} />
+        )}
+        <div
+          className="flex flex-col w-full overflow-y-visible relative"
+          style={{
+            //set the theme color variables if defined in theme
+            ...styleVariables,
+            //override the styles inherited from globals.css if defined in theme
+            backgroundColor: themeColors?.cssVars[themeMode].background
+              ? `hsl(${themeColors?.cssVars[themeMode].background})`
+              : undefined,
+            color: themeColors?.cssVars[themeMode].foreground
+              ? `hsl(${themeColors?.cssVars[themeMode].foreground})`
+              : undefined,
+            borderColor: themeColors?.cssVars[themeMode].border
+              ? `hsl(${themeColors?.cssVars[themeMode].border})`
+              : undefined,
+          }}
+        >
+          {layers.map(renderLayer)}
         </div>
+        <DividerControl parentLayerId={selectedPageId} />
       </div>
     </div>
   );
@@ -175,8 +175,8 @@ const LayerMenu: React.FC<MenuProps> = ({
           zIndex: zIndex,
         }}
       >
-        <span className="h-5 group flex items-center rounded-bl-full rounded-r-full bg-white/90 p-0 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-blue-500 hover:bg-gray-50/95 hover:h-10 hover:ring-2 transition-all duration-200 ease-in-out overflow-hidden cursor-pointer hover:cursor-auto">
-          <ChevronRight className="h-5 w-5 text-gray-400 group-hover:size-8 transition-all duration-200 ease-in-out group-hover:opacity-30" />
+        <span className="h-5 group flex items-center rounded-bl-full rounded-r-full bg-blue-500 p-0 text-sm font-semibold text-secondary-foreground shadow-sm ring-1 ring-inset ring-blue-500 hover:bg-secondary/95 hover:h-10 hover:ring-2 transition-all duration-200 ease-in-out overflow-hidden cursor-pointer hover:cursor-auto">
+          <ChevronRight className="h-5 w-5 text-secondary-foreground group-hover:size-8 transition-all duration-200 ease-in-out group-hover:opacity-30" />
 
           <div className="overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out">
             {hasChildrenInSchema && (
@@ -186,7 +186,7 @@ const LayerMenu: React.FC<MenuProps> = ({
               >
                 <Button size="sm" variant="ghost">
                   <span className="sr-only">Add Component</span>
-                  <Plus className="h-5 w-5 text-gray-400" />
+                  <Plus className="h-5 w-5 text-secondary-foreground" />
                 </Button>
               </AddComponentsPopover>
             )}
@@ -196,7 +196,7 @@ const LayerMenu: React.FC<MenuProps> = ({
               onClick={handleDuplicateComponent}
             >
               <span className="sr-only">Duplicate</span>
-              <Copy className="h-5 w-5 text-gray-400" />
+              <Copy className="h-5 w-5 text-secondary-foreground" />
             </Button>
             <Button
               className="rounded-r-full mr-1"
@@ -205,7 +205,7 @@ const LayerMenu: React.FC<MenuProps> = ({
               onClick={handleDeleteComponent}
             >
               <span className="sr-only">Delete</span>
-              <Trash className="h-5 w-5 text-gray-400" />
+              <Trash className="h-5 w-5 text-secondary-foreground" />
             </Button>
           </div>
         </span>
@@ -372,4 +372,20 @@ function getScrollParent(element: HTMLElement | null): HTMLElement | null {
   }
 
   return null;
+}
+
+function getPageStyles(page: PageLayer) {
+  const themeColors = page?.props?.themeColors as BaseColor | undefined;
+  const themeMode = (page?.props?.mode || "light") as "light" | "dark";
+
+  const styleVariables = Object.entries(
+    themeColors?.cssVars[themeMode] || {}
+  ).reduce(
+    (acc, [key, value]) => {
+      acc[`--${key}`] = value;
+      return acc;
+    },
+    {} as { [key: string]: string }
+  );
+  return { styleVariables, themeColors, themeMode };
 }
