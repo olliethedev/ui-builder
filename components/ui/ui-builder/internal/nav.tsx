@@ -141,9 +141,8 @@ export function NavBar() {
   }, []);
 
   return (
-    <div className="bg-background">
-      <div className="flex items-center justify-between px-6 py-4 border-b h-full">
-        <h1 className="text-2xl font-bold min-w-60">UI Builder</h1>
+    <div className="flex items-center justify-between bg-background z-50 px-6 py-4 border-b gap-2">
+        <h1 className="md:block hidden text-2xl font-bold md:min-w-60 min-w-max">UI Builder</h1>
         <PagesPopover />
         <div className="flex space-x-2">
           <Button
@@ -175,7 +174,6 @@ export function NavBar() {
           <ModeToggle />
         </div>
       </div>
-    </div>
   );
 }
 

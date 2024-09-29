@@ -2,6 +2,7 @@ import React from "react";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 type DividerControlProps = {
   className?: string;
@@ -10,11 +11,12 @@ type DividerControlProps = {
 };
 
 export function DividerControl({
+  className,
   addPosition,
   parentLayerId,
 }: DividerControlProps) {
   return (
-    <div className="relative py-0">
+    <div className={cn("relative py-0", className)}>
       <div className="absolute inset-0 flex items-center" aria-hidden="true">
         <div className="w-full border-t border-primary border-dashed" />
       </div>
