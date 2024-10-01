@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
+import { z } from "zod";
 import { X as XIcon, ChevronsUpDown } from "lucide-react";
-import { z, ZodObject, ZodTypeAny } from "zod";
 import {
   useComponentStore,
   componentRegistry,
@@ -21,8 +21,9 @@ import { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
 import DraggableList from "@/components/ui/ui-builder/internal/draggable-list";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
-import { AddComponentsPopover } from "./add-component-popover";
-import ClassNameField from "./classname-field";
+import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
+import ClassNameField from "@/components/ui/ui-builder/internal/classname-field";
+import { addDefaultValues } from "@/components/ui/ui-builder/internal/store/schema-utils";
 
 interface PropsPanelProps {
   className?: string;
@@ -501,27 +502,3 @@ function ChildrenSearchableMultiSelect({
   );
 }
 
-
-
-// patch for autoform to respect existing values
-function addDefaultValues<T extends ZodObject<any>>(
-  schema: T,
-  defaultValues: Partial<z.infer<T>>
-): T {
-  const shape = schema.shape;
-
-  const updatedShape = { ...shape };
-
-  for (const key in defaultValues) {
-    if (updatedShape[key]) {
-      // Apply the default value to the existing schema field
-      updatedShape[key] = updatedShape[key].default(defaultValues[key]);
-    } else {
-      console.warn(
-        `Key "${key}" does not exist in the schema and will be ignored.`
-      );
-    }
-  }
-
-  return z.object(updatedShape) as T;
-}

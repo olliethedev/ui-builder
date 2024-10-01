@@ -195,3 +195,26 @@ function addCoerceToNumberAndDate<T extends ZodTypeAny>(schema: T): T {
     // If none of the above, return the schema unchanged
     return schema;
 }
+
+// patch for autoform to respect existing values
+export function addDefaultValues<T extends ZodObject<any>>(
+  schema: T,
+  defaultValues: Partial<z.infer<T>>
+): T {
+  const shape = schema.shape;
+
+  const updatedShape = { ...shape };
+
+  for (const key in defaultValues) {
+    if (updatedShape[key]) {
+      // Apply the default value to the existing schema field
+      updatedShape[key] = updatedShape[key].default(defaultValues[key]);
+    } else {
+      console.warn(
+        `Key "${key}" does not exist in the schema and will be ignored.`
+      );
+    }
+  }
+
+  return z.object(updatedShape) as T;
+}

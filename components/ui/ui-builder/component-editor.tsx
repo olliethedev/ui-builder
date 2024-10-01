@@ -14,12 +14,13 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
+import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
 
 const ComponentEditor = () => {
   const mainPanels = [
     {
       title: "Page Config",
-      content: <PageConfigPanel className="p-4 overflow-y-auto" />,
+      content: <PageConfigPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />,
       defaultSize: 25,
     },
     {
@@ -29,7 +30,7 @@ const ComponentEditor = () => {
     },
     {
       title: "Props",
-      content: <PropsPanel className="p-4 overflow-y-auto" />,
+      content: <PropsPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />,
       defaultSize: 25,
     },
   ];
@@ -44,19 +45,23 @@ const ComponentEditor = () => {
     >
       <div
         data-testid="component-editor"
-        className="flex flex-col w-full flex-grow h-full"
+        className="flex flex-col w-full flex-grow h-screen"
       >
         <NavBar />
         {/* Desktop Layout */}
-        <div className="hidden md:flex size-full">
+        <div className="hidden md:flex flex-1 overflow-hidden">
           <ResizablePanelGroup
             direction="horizontal"
-            className="flex overflow-hidden size-full"
+            className="flex overflow-hidden flex-1"
           >
             {mainPanels.map((panel, index) => (
               <React.Fragment key={panel.title}>
                 {index > 0 && <ResizableHandle withHandle />}
-                <ResizablePanel defaultSize={panel.defaultSize} minSize={15} className="min-h-full">
+                <ResizablePanel
+                  defaultSize={panel.defaultSize}
+                  minSize={15}
+                  className="min-h-full flex-1"
+                >
                   {panel.content}
                 </ResizablePanel>
               </React.Fragment>
@@ -71,7 +76,11 @@ const ComponentEditor = () => {
               {mainPanels.map((panel, index) => (
                 <Button
                   key={panel.title}
-                  variant={selectedPanel.title !== panel.title ? "default" : "secondary"}
+                  variant={
+                    selectedPanel.title !== panel.title
+                      ? "default"
+                      : "secondary"
+                  }
                   size="sm"
                   className="flex-1"
                   onClick={() => setSelectedPanel(panel)}
@@ -92,13 +101,16 @@ function PageConfigPanel({ className }: { className: string }) {
     <Tabs defaultValue="layers" className={className}>
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="layers">Layers</TabsTrigger>
-        <TabsTrigger value="theme">Theme</TabsTrigger>
+        <TabsTrigger value="appearance">Appearance</TabsTrigger>
       </TabsList>
       <TabsContent value="layers">
         <LayersPanel />
       </TabsContent>
-      <TabsContent value="theme">
-        <ThemePanel />
+      <TabsContent value="appearance">
+        <div className="py-2 gap-2 flex flex-col overflow-y-auto overflow-x-auto">
+          <ConfigPanel />
+          <ThemePanel />
+        </div>
       </TabsContent>
     </Tabs>
   );

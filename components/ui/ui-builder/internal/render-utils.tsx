@@ -31,9 +31,9 @@ export const renderPage = (page: PageLayer, editorConfig?: EditorConfig) => {
 
   let globalOverrides = colorData
     ? {
-        backgroundColor: `hsl(${
-          colorData.cssVars[mode as "light" | "dark"].background
-        })`,
+        // backgroundColor: `hsl(${
+        //   colorData.cssVars[mode as "light" | "dark"].background
+        // })`,
         color: `hsl(${colorData.cssVars[mode as "light" | "dark"].foreground})`,
         borderColor: `hsl(${
           colorData.cssVars[mode as "light" | "dark"].border

@@ -14,6 +14,10 @@ import { visitLayer, addLayer, hasChildren, isTextLayer, isPageLayer, findLayerR
 import { patchSchema, getDefaultProps } from '@/components/ui/ui-builder/internal/store/schema-utils';
 // import { ComponentDefinitions } from '@/components/ui/generated-schemas';
 
+const DEFAULT_PAGE_PROPS = {
+  className: "p-4 flex flex-col gap-2",
+};
+
 // Component registry with Zod schemas or add manually like:
 // Button: {
 //   component: Button,
@@ -145,7 +149,7 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
       id: '1',
       type: '_page_',
       name: 'Page 1',
-      props: {},
+      props: DEFAULT_PAGE_PROPS,
       children: [],
     }
   ],
@@ -182,6 +186,7 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
     const newLayer: Layer = {
       id: createId(),
       type: layerType,
+      name: layerType,
       props: initialProps,
       children: [],
     };
@@ -199,6 +204,7 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
     const newLayer: TextLayer = {
       id: createId(),
       type: '_text_',
+      name: "Text",
       text,
       textType,
       props: {},
@@ -218,7 +224,7 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
       id: createId(),
       type: '_page_',
       name: pageName,
-      props: {},
+      props: DEFAULT_PAGE_PROPS,
       children: [],
     };
     return {
@@ -250,15 +256,18 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
     }
 
     // Create a deep copy of the layer with new IDs
-    const duplicateWithNewIds = (layer: Layer): Layer => {
+    const duplicateWithNewIdsAndName = (layer: Layer): Layer => {
       const newLayer: Layer = { ...layer, id: createId() };
+      if (layer.name) {
+        newLayer.name = `${layer.name} (Copy)`;
+      }
       if (hasChildren(newLayer) && hasChildren(layer)) {
-        newLayer.children = layer.children.map(duplicateWithNewIds);
+        newLayer.children = layer.children.map(duplicateWithNewIdsAndName);
       }
       return newLayer;
     };
 
-    const newLayer = duplicateWithNewIds(layerToDuplicate);
+    const newLayer = duplicateWithNewIdsAndName(layerToDuplicate);
 
     const updatedPages = addLayer(state.pages, newLayer, parentId, parentPosition);
 
@@ -270,9 +279,18 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
   })),
 
   removeLayer: (layerId: string) => set(produce((state: ComponentStore) => {
-    const { selectedLayerId, pages } = get();
+    const { selectedLayerId, pages, findLayerById } = get();
 
     let newSelectedLayerId = selectedLayerId;
+
+    if(isPageLayer(findLayerById(layerId) as Layer) && pages.length > 1) {
+      const newPages = state.pages.filter(page => page.id !== layerId);
+      return {
+        ...state,
+        pages: newPages,
+        selectedPageId: newPages[0].id,
+      };
+    }
 
     // Traverse and update the pages to remove the specified layer
     const updatedPages = pages.map((page) =>

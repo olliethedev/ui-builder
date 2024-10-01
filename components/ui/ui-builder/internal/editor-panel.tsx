@@ -57,8 +57,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
   };
 
   return (
-    <div className={cn("relative size-full", className)}>
-      <div className="absolute inset-0 size-full  bg-[radial-gradient(hsl(var(--border))_1px,transparent_1px)] [background-size:16px_16px]" />
+    <div className={cn("relative size-full bg-primary/5", className)}>
+      <div className="absolute inset-0 size-full z-[-1] bg-[radial-gradient(hsl(var(--border))_1px,transparent_1px)] [background-size:16px_16px]" />
       {layers.length > 0 && (
         <DividerControl addPosition={0} parentLayerId={selectedPageId} />
       )}

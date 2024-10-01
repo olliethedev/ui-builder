@@ -22,7 +22,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
   
 
   return (
-    <div className={cn(className, "flex flex-col flex-shrink-0")}>
+    <div className={cn(className, "flex flex-col size-full overflow-x-auto")}>
       {layers.map((layer: Layer) => (
         <LayerItem key={layer.id} layer={layer} />
       ))}
@@ -54,6 +54,7 @@ const LayerItem: React.FC<{ layer: Layer; depth?: number }> = ({
             onClick={(e) => {
               e.stopPropagation();
               setIsOpen(!isOpen);
+              console.log("clicked chevron")
             }}
             className="size-[20px] focus:outline-none"
           >
@@ -98,15 +99,10 @@ interface CollapseProps {
 }
 
 const Collapse = ({ open, children }: CollapseProps) => {
-  return (
-    <div
-      className={`overflow-hidden transition-all duration-100 ease-in-out ${
-        open ? "max-h-96" : "max-h-0"
-      }`}
-    >
-      {children}
-    </div>
-  );
+  if(open) {
+    return children;
+  }
+  return null;
 };
 
 

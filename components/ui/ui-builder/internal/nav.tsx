@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Layer,
   useComponentStore,
   PageLayer,
 } from "@/components/ui/ui-builder/internal/store/component-store";
@@ -143,7 +142,7 @@ export function NavBar() {
 
   return (
     <div
-      className="flex items-center justify-between bg-background px-6 py-4 border-b gap-2"
+      className="flex items-center justify-between bg-background px-2 md:px-6 py-4 border-b gap-2"
       style={{ zIndex: Z_INDEX }}
     >
       <h1 className="md:block hidden text-2xl font-bold md:min-w-60 min-w-max">
@@ -333,8 +332,8 @@ function PagesPopover() {
     <div className="relative flex justify-center">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="default">
-            Page: {selectedPageData?.name}
+          <Button variant="outline" size="default" className="max-w-30 overflow-hidden">
+            {selectedPageData?.name}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0" style={{ zIndex: Z_INDEX+1 }}>
