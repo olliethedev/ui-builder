@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
+"use client";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useRef,
+} from "react";
 import { GripVertical } from "lucide-react";
 import { createSwapy, SlotItemMap, Swapy } from "swapy";
 
@@ -10,89 +16,84 @@ interface DraggableListItem {
 
 // Define the props for DraggableList
 interface DraggableListProps {
+  containerId: string;
   items: DraggableListItem[];
   onOrderChange: (newOrder: DraggableListItem[]) => void;
 }
 
 const DraggableList: React.FC<DraggableListProps> = ({
+  containerId,
   items,
   onOrderChange,
 }) => {
   const swapyRef = useRef<Swapy | null>(null);
 
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   // Initialize slotItemsMap based on items prop
   const [slotItemsMap, setSlotItemsMap] = useState<SlotItemMap>(() => [
-    ...items.map((item) => ({
-      slotId: item.id,
+    ...items.map((item, index) => ({
+      slotId: index.toString(),
       itemId: item.id,
     })),
-    // Optionally, define an empty slot
-    { slotId: `empty-${Math.round(Math.random() * 99999)}`, itemId: null },
   ]);
 
-  // Memoize the slotted items for performance optimization
-  const slottedItems = useMemo(
-    () =>
-      slotItemsMap.map(({ slotId, itemId }) => ({
-        slotId,
-        itemId,
-        item: items.find((item) => item.id === itemId),
-      })),
-    [items, slotItemsMap]
-  );
+  const slottedItems = slotItemsMap.map(({ slotId, itemId }, index) => ({
+    slotId,
+    itemId,
+    item: items.find((item) => item.id === itemId),
+  }));
 
   // Synchronize slotItemsMap with items prop when items change
   useEffect(() => {
     try {
+      console.log("dragable-list: got new items", items);
       // Identify new items that aren't in slotItemsMap
       const newItems = items
-        .filter(
-          (item) =>
-            !slotItemsMap.some((slotItem) => slotItem.itemId === item.id)
-        )
-        .map((item) => ({
-          slotId: item.id,
+        .map((item, index) => ({
+          slotId: index.toString(),
           itemId: item.id,
         }));
 
-      // Remove items from slotItemsMap that no longer exist in items
-      const updatedSlotItemsMap = slotItemsMap
-        .filter(
-          (slotItem) =>
-            items.some((item) => item.id === slotItem.itemId) ||
-            slotItem.itemId === null
-        )
-        .concat(newItems);
-
-      // Only update if there's a change to prevent unnecessary re-renders
-      const isDifferent =
-        updatedSlotItemsMap.length !== slotItemsMap.length ||
-        updatedSlotItemsMap.some(
-          (slot, index) =>
-            slot.slotId !== slotItemsMap[index].slotId ||
-            slot.itemId !== slotItemsMap[index].itemId
-        );
-
-      if (isDifferent) {
-        setSlotItemsMap(updatedSlotItemsMap);
-        swapyRef.current?.setData({ array: updatedSlotItemsMap });
-      }
+        setSlotItemsMap(newItems);
+        swapyRef.current?.setData({ array: newItems });
     } catch (e) {
       console.error("Error in DraggableList", e);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items]); // Depend only on 'items' to avoid loop
+  }, [items]); 
 
-  // Initialize Swapy and handle swaps
-  useEffect(() => {
+  // Initialize Swapy
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      console.warn("Container not found for ", containerId);
+      return;
+    }
+
     try {
-      const container = document.querySelector(".draggable-list-container");
-      if (!container) return;
-
       swapyRef.current = createSwapy(container, {
-        manualSwap: true,
-        swapMode: "drop"
+        // manualSwap: true,
+        swapMode: "drop",
       });
+      console.log("created swapy instance for ", containerId);
+    } catch (error) {
+      console.error("Error in DraggableList", error);
+    }
+
+    // Cleanup on unmount
+    return () => {
+      swapyRef.current?.destroy();
+    };
+  }, []);
+  //handle swaps
+  useLayoutEffect(() => {
+    try {
+      const container = containerRef.current;
+      if (!swapyRef.current) {
+        console.warn("Swapy instance not found for ", containerId);
+        return;
+      }
 
       // Handle the swap event
       swapyRef.current.onSwapEnd(({ data }) => {
@@ -124,16 +125,17 @@ const DraggableList: React.FC<DraggableListProps> = ({
       console.error("Error in DraggableList", e);
     }
 
-    // Cleanup on unmount
-    return () => {
-      swapyRef.current?.destroy();
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Initialize only once
 
   return (
     <div className="draggable-list">
-      <div className="draggable-list-container">
+      <div ref={containerRef}>
+        {slottedItems.length === 0 && (
+          <div className="slot" data-swapy-slot="empty-slot">
+            <div data-swapy-item="empty-slot" />
+          </div>
+        )}
         {slottedItems.map(({ slotId, itemId, item }) => (
           <div className="slot" data-swapy-slot={slotId} key={slotId}>
             {item ? (

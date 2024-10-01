@@ -61,7 +61,7 @@ const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
     console.log("text layer", layer);
     if (!editorConfig) {
       return (
-        <ErrorSuspenseWrapper key={layer.id}>
+        <ErrorSuspenseWrapper id={layer.id}>
           <TextComponent {...layer.props}>{layer.text}</TextComponent>
         </ErrorSuspenseWrapper>
       );
@@ -85,7 +85,7 @@ const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
           onDuplicateLayer={handleDuplicateLayer}
           onDeleteLayer={handleDeleteLayer}
         >
-          <ErrorSuspenseWrapper key={layer.id}>
+          <ErrorSuspenseWrapper id={layer.id}>
             <TextComponent {...layer.props}>{layer.text}</TextComponent>
           </ErrorSuspenseWrapper>
         </ClickableWrapper>
@@ -113,7 +113,7 @@ const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
 
   if (!editorConfig) {
     return (
-      <ErrorSuspenseWrapper key={layer.id}>
+      <ErrorSuspenseWrapper id={layer.id}>
         <Component {...(childProps as any)} />
       </ErrorSuspenseWrapper>
     );
@@ -137,7 +137,7 @@ const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
         onDuplicateLayer={handleDuplicateLayer}
         onDeleteLayer={handleDeleteLayer}
       >
-        <ErrorSuspenseWrapper key={layer.id}>
+        <ErrorSuspenseWrapper id={layer.id}>
           <Component {...(childProps as any)} />
         </ErrorSuspenseWrapper>
       </ClickableWrapper>
@@ -146,11 +146,11 @@ const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
 };
 
 const ErrorSuspenseWrapper: React.FC<{
-  key: string;
+  id: string;
   children: React.ReactNode;
-}> = ({ key, children }) => (
-  <ErrorBoundary key={key} fallbackRender={ErrorFallback}>
-    <Suspense key={key} fallback={<div>Loading...</div>}>
+}> = ({ id, children }) => (
+  <ErrorBoundary key={id} fallbackRender={ErrorFallback}>
+    <Suspense key={id} fallback={<div>Loading...</div>}>
       {children}
     </Suspense>
   </ErrorBoundary>

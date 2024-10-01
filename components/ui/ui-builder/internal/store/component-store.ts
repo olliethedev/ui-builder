@@ -95,7 +95,7 @@ export type Layer =
     name?: string;
     type: keyof typeof componentRegistry;
     props: Record<string, any>;
-    children?: Layer[];
+    children: Layer[];
   }
   | TextLayer
   | PageLayer;
@@ -126,7 +126,7 @@ interface ComponentStore {
   addPageLayer: (pageId: string) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
-  updateLayer: (layerId: string, newProps: Record<string, any>, layerRest?: Omit<Layer, 'props' | 'children'>) => void;
+  updateLayer: (layerId: string, newProps: Record<string, any>, layerRest?: Partial<Omit<Layer, 'props'>>) => void;
   selectLayer: (layerId: string) => void;
   selectPage: (pageId: string) => void;
   reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => void;
@@ -234,9 +234,11 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
   })),
 
   duplicateLayer: (layerId: string) => set(produce((state: ComponentStore) => {
+    console.log("duplicateLayer", { layerId });
     let layerToDuplicate: Layer | undefined;
     let parentId: string | undefined;
     let parentPosition: number | undefined;
+
     // Find the layer to duplicate
     state.pages.forEach((page) =>
       visitLayer(page, null, (layer, parent) => {
@@ -269,7 +271,22 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
 
     const newLayer = duplicateWithNewIdsAndName(layerToDuplicate);
 
+    console.log("newLayer", { newLayer });
+
+    //if new layer is a page, add it as a new page
+    if(isPageLayer(newLayer)) {
+      return {
+        ...state,
+        pages: [...state.pages, newLayer],
+        selectedPageId: newLayer.id,
+      };
+    }
+
+    //else add it as a child of the parent
+
     const updatedPages = addLayer(state.pages, newLayer, parentId, parentPosition);
+
+    
 
     // Insert the duplicated layer
     return {
@@ -319,7 +336,7 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
     };
   })),
 
-  updateLayer: (layerId: string, newProps: Layer['props'], layerRest?: Omit<Layer, 'props' | 'children'>) => set(
+  updateLayer: (layerId: string, newProps: Layer['props'], layerRest?: Partial<Omit<Layer, 'props'>>) => set(
     produce((state: ComponentStore) => {
       const { selectedPageId, findLayersForPageId, pages } = get();
 

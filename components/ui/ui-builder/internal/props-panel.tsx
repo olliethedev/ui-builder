@@ -467,6 +467,7 @@ function ChildrenSearchableMultiSelect({
 
       {selectedLayer && (
         <DraggableList
+          containerId="draggable-list-props-panel"
           // className={`w-full grid grid-cols-1 grid-rows-${selectedLayer.children?.length || 0} gap-1`}
           onOrderChange={(newOrder) => {
             console.log("new order", newOrder);
