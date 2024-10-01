@@ -23,6 +23,15 @@ export const visitLayer = (layer: Layer, parentLayer: Layer | null, visitor: (la
     return updatedLayer;
 };
 
+export const countLayers = (layers: Layer[]): number => {
+    return layers.reduce((count, layer) => {
+        if (hasChildren(layer)) {
+            return count + 1 + countLayers(layer.children);
+        }
+        return count + 1;
+    }, 0);
+};
+
 export const addLayer = (layers: Layer[], newLayer: Layer, parentId?: string, parentPosition?: number): Layer[] => {
     const updatedPages = layers.map((page) =>
         visitLayer(page, null, (layer, parent) => {

@@ -10,8 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Transactions } from '@/components/ui/transactions';
 import { Flexbox } from '@/components/ui/ui-builder/flexbox';
 
-import { visitLayer, addLayer, hasChildren, isTextLayer, isPageLayer, findLayerRecursive, createId } from './layer-utils';
-import { patchSchema, getDefaultProps } from './schema-utils';
+import { visitLayer, addLayer, hasChildren, isTextLayer, isPageLayer, findLayerRecursive, createId, countLayers } from '@/components/ui/ui-builder/internal/store/layer-utils';
+import { patchSchema, getDefaultProps } from '@/components/ui/ui-builder/internal/store/schema-utils';
 // import { ComponentDefinitions } from '@/components/ui/generated-schemas';
 
 // Component registry with Zod schemas or add manually like:
@@ -441,4 +441,4 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
   }
 ))
 
-export { useComponentStore, componentRegistry, isTextLayer, isPageLayer };
+export { useComponentStore, componentRegistry, isTextLayer, isPageLayer, countLayers };

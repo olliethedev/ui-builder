@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Eye,
   FileUp,
@@ -9,12 +9,16 @@ import {
   SunIcon,
   MoonIcon,
   CheckIcon,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
+  DialogOverlay,
+  DialogPortal,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -22,9 +26,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Layer,
   useComponentStore,
-  isTextLayer,
-  componentRegistry,
-  isPageLayer,
   PageLayer,
 } from "@/components/ui/ui-builder/internal/store/component-store";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
@@ -56,6 +57,7 @@ import { PlusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { pageLayerToCode } from "@/components/ui/ui-builder/internal/templates";
 
+const Z_INDEX = 1000;
 
 export function NavBar() {
   const { selectedPageId, findLayerById } = useComponentStore();
@@ -120,7 +122,6 @@ export function NavBar() {
     };
   }, [canUndo, canRedo, undo, redo]);
 
-
   const codeBlocks = {
     React: pageLayerToCode(page),
     Serialized: JSON.stringify(
@@ -141,39 +142,48 @@ export function NavBar() {
   }, []);
 
   return (
-    <div className="flex items-center justify-between bg-background z-50 px-6 py-4 border-b gap-2">
-        <h1 className="md:block hidden text-2xl font-bold md:min-w-60 min-w-max">UI Builder</h1>
-        <PagesPopover />
-        <div className="flex space-x-2">
-          <Button
-            onClick={handleUndo}
-            variant="secondary"
-            size="icon"
-            disabled={!canUndo}
-            className="flex flex-col justify-center"
-          >
-            <span className="sr-only">Undo</span>
-            <Undo className="w-4 h-4" />
-            <CommandShortcut className="ml-0 text-[8px] leading-3">⌘Z</CommandShortcut>
-          </Button>
-          <Button
-            onClick={handleRedo}
-            variant="secondary"
-            size="icon"
-            disabled={!canRedo}
-            className="flex flex-col justify-center"
-          >
-            <span className="sr-only">Redo</span>
-            <Redo className="w-4 h-4" />
-            <CommandShortcut className="ml-0 text-[8px] leading-3">⌘+⇧+Z</CommandShortcut>
-          </Button>
-          <div className="h-10 flex w-px bg-border"></div>
-          <PreviewDialog page={page} />
-          <CodeDialog codeBlocks={codeBlocks} />
-          <div className="h-10 flex w-px bg-border"></div>
-          <ModeToggle />
-        </div>
+    <div
+      className="flex items-center justify-between bg-background px-6 py-4 border-b gap-2"
+      style={{ zIndex: Z_INDEX }}
+    >
+      <h1 className="md:block hidden text-2xl font-bold md:min-w-60 min-w-max">
+        UI Builder
+      </h1>
+      <PagesPopover />
+      <div className="flex space-x-2">
+        <Button
+          onClick={handleUndo}
+          variant="secondary"
+          size="icon"
+          disabled={!canUndo}
+          className="flex flex-col justify-center"
+        >
+          <span className="sr-only">Undo</span>
+          <Undo className="w-4 h-4" />
+          <CommandShortcut className="ml-0 text-[8px] leading-3">
+            ⌘Z
+          </CommandShortcut>
+        </Button>
+        <Button
+          onClick={handleRedo}
+          variant="secondary"
+          size="icon"
+          disabled={!canRedo}
+          className="flex flex-col justify-center"
+        >
+          <span className="sr-only">Redo</span>
+          <Redo className="w-4 h-4" />
+          <CommandShortcut className="ml-0 text-[8px] leading-3">
+            ⌘+⇧+Z
+          </CommandShortcut>
+        </Button>
+        <div className="h-10 flex w-px bg-border"></div>
+        <PreviewDialog page={page} />
+        <CodeDialog codeBlocks={codeBlocks} />
+        <div className="h-10 flex w-px bg-border"></div>
+        <ModeToggle />
       </div>
+    </div>
   );
 }
 
@@ -187,15 +197,15 @@ const PreviewDialog = ({ page }: { page: PageLayer }) => {
           <Eye className="w-4 h-4" />
         </Button>
       </DialogTrigger>
-      
-      <DialogContent className="max-w-[calc(100dvw)] max-h-[calc(100dvh)] overflow-auto p-0 gap-0">
-      <DialogHeader>
-        <DialogTitle className="py-3 bg-yellow-600 text-center">
-          <span className="text-lg font-semibold">Page Preview</span>
-        </DialogTitle>
-      </DialogHeader>
+
+      <DialogContentWithZIndex className="max-w-[calc(100dvw)] max-h-[calc(100dvh)] overflow-auto p-0 gap-0" style={{ zIndex: Z_INDEX+1 }}>
+        <DialogHeader>
+          <DialogTitle className="py-3 bg-yellow-600 text-center">
+            <span className="text-lg font-semibold">Page Preview</span>
+          </DialogTitle>
+        </DialogHeader>
         <LayerRenderer className="w-full h-full flex flex-col" page={page} />
-      </DialogContent>
+      </DialogContentWithZIndex>
     </Dialog>
   );
 };
@@ -215,7 +225,7 @@ const CodeDialog = ({
           <FileUp className="w-4 h-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[625px] max-h-[625px]">
+      <DialogContentWithZIndex className="sm:max-w-[625px] max-h-[625px]" style={{ zIndex: Z_INDEX+1 }}>
         <DialogHeader>
           <DialogTitle>Generated Code</DialogTitle>
         </DialogHeader>
@@ -234,7 +244,7 @@ const CodeDialog = ({
             </TabsContent>
           ))}
         </Tabs>
-      </DialogContent>
+      </DialogContentWithZIndex>
     </Dialog>
   );
 };
@@ -251,7 +261,7 @@ function ModeToggle() {
           <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" style={{ zIndex: Z_INDEX+1 }}>
         <DropdownMenuItem onClick={() => setTheme("light")}>
           Light
         </DropdownMenuItem>
@@ -327,7 +337,7 @@ function PagesPopover() {
             Page: {selectedPageData?.name}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
+        <PopoverContent className="w-[300px] p-0" style={{ zIndex: Z_INDEX+1 }}>
           <Command>
             <CommandInput
               placeholder="Select page or create new..."
@@ -367,3 +377,26 @@ function PagesPopover() {
     </div>
   );
 }
+
+const DialogContentWithZIndex = forwardRef<
+  React.ElementRef<typeof DialogContent>,
+  React.ComponentPropsWithoutRef<typeof DialogContent>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay style={{ zIndex: Z_INDEX+1 }} />
+    <DialogContent
+      ref={ref}
+      className={cn(
+        "fixed left-[50%] top-[50%] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+        <X className="h-4 w-4 rounded-full p-1" />
+        <span className="sr-only">Close</span>
+      </DialogClose>
+    </DialogContent>
+  </DialogPortal>
+))

@@ -12,8 +12,8 @@ import {
   ResizablePanel,
   ResizableHandle,
   ResizablePanelGroup,
-} from "../resizable";
-import { Button } from "../button";
+} from "@/components/ui/resizable";
+import { Button } from "@/components/ui/button";
 
 const ComponentEditor = () => {
   const mainPanels = [

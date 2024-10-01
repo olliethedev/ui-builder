@@ -1,104 +1,28 @@
-import React, { Suspense } from "react";
+import React  from "react";
 
 import {
-  componentRegistry,
-  isTextLayer,
-  Layer,
   PageLayer,
 } from "@/components/ui/ui-builder/internal/store/component-store";
-import { Markdown } from "@/components/ui/ui-builder/markdown";
-import { ErrorBoundary } from "react-error-boundary";
-import { baseColors } from "@/components/ui/ui-builder/internal/base-colors";
+import { EditorConfig, renderPage } from "@/components/ui/ui-builder/internal/render-utils";
 
 interface LayerRendererProps {
   className?: string;
   page: PageLayer;
+  editorConfig?: EditorConfig;
 }
 
 const LayerRenderer: React.FC<LayerRendererProps> = ({
   className,
   page,
+  editorConfig,
 }: LayerRendererProps) => {
-
-  const renderLayer = (layer: Layer) => {
-    if (isTextLayer(layer)) {
-      const TextComponent = layer.textType === "markdown" ? Markdown : "span";
-      return (
-        <ErrorBoundary fallbackRender={ErrorFallback}>
-          <Suspense fallback={<div>Loading...</div>}>
-            <TextComponent {...layer.props}>{layer.text}</TextComponent>
-          </Suspense>
-        </ErrorBoundary>
-      );
-    }
-
-    const { component: Component } =
-      componentRegistry[layer.type as keyof typeof componentRegistry];
-    if (!Component) return null;
-
-    const childProps = { ...layer.props };
-    if (layer.children && layer.children.length > 0) {
-      childProps.children = layer.children.map((child) => renderLayer(child));
-    }
-
-    return (
-      <ErrorBoundary fallbackRender={ErrorFallback}>
-        <Suspense fallback={<div>Loading...</div>}>
-          <Component {...(childProps as any)} />
-        </Suspense>
-      </ErrorBoundary>
-    );
-  };
-
-  const renderPage = (page: PageLayer) => {
-    const { mode, colorTheme, style, ...rest } = page.props;
-    console.log("page", { mode, colorTheme, style, ...rest });
-    const colorData = colorTheme
-      ? baseColors.find((color) => color.name === colorTheme)
-      : undefined;
-
-    let globalOverrides = colorData
-      ? {
-          backgroundColor:`hsl(${colorData.cssVars[mode as "light" | "dark"].background})`,
-          color:`hsl(${colorData.cssVars[mode as "light" | "dark"].foreground})`,
-          borderColor:`hsl(${colorData.cssVars[mode as "light" | "dark"].border})`,
-        }
-      : {};
-      console.log("globalOverrides", globalOverrides);
-    return (
-      <div
-        className="flex flex-col w-full overflow-y-visible relative"
-        style={{
-          ...style,
-          ...globalOverrides,
-        }}
-        {...rest}
-      >
-        {page.children.map(renderLayer)}
-      </div>
-    );
-  };
 
   return (
     <div className={className}>
-      {renderPage(page)}
+      {renderPage(page, editorConfig)}
     </div>
   );
 };
 
 export default LayerRenderer;
 
-function ErrorFallback({ error }: { error: Error }) {
-  // Call resetErrorBoundary() to reset the error boundary and retry the render.
-
-  return (
-    <div className="p-4 border border-red-500 bg-red-100 text-red-700 rounded flex-grow w-full">
-      <h3 className="font-bold mb-2">Component Error</h3>
-      <p>Error: {error?.message || "Unknown error"}</p>
-      <details className="mt-2">
-        <summary className="cursor-pointer">Stack trace</summary>
-        <pre className="mt-2 text-xs whitespace-pre-wrap">{error?.stack}</pre>
-      </details>
-    </div>
-  );
-}
