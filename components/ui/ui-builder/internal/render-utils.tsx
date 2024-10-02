@@ -22,7 +22,7 @@ export interface EditorConfig {
 }
 
 export const renderPage = (page: PageLayer, editorConfig?: EditorConfig) => {
-  const { mode, colorTheme, style, ...rest } = page.props;
+  const { mode, colorTheme, style, borderRadius, ...rest } = page.props;
 
   console.log("page", { mode, colorTheme, style, ...rest });
   const colorData = colorTheme

@@ -258,23 +258,25 @@ const useComponentStore = create(temporal<ComponentStore>((set, get) => ({
     }
 
     // Create a deep copy of the layer with new IDs
-    const duplicateWithNewIdsAndName = (layer: Layer): Layer => {
+    const duplicateWithNewIdsAndName = (layer: Layer, addCopySuffix: boolean = true): Layer => {
       const newLayer: Layer = { ...layer, id: createId() };
       if (layer.name) {
         newLayer.name = `${layer.name} (Copy)`;
       }
       if (hasChildren(newLayer) && hasChildren(layer)) {
-        newLayer.children = layer.children.map(duplicateWithNewIdsAndName);
+        newLayer.children = layer.children.map(child => duplicateWithNewIdsAndName(child, addCopySuffix));
       }
       return newLayer;
     };
 
-    const newLayer = duplicateWithNewIdsAndName(layerToDuplicate);
+    const isNewLayerAPage = isPageLayer(layerToDuplicate);
+
+    const newLayer = duplicateWithNewIdsAndName(layerToDuplicate, !isNewLayerAPage);
 
     console.log("newLayer", { newLayer });
 
     //if new layer is a page, add it as a new page
-    if(isPageLayer(newLayer)) {
+    if(isNewLayerAPage) {
       return {
         ...state,
         pages: [...state.pages, newLayer],

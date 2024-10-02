@@ -1,17 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Layer,
   useComponentStore,
-  isTextLayer,
 } from "@/components/ui/ui-builder/internal/store/component-store";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronRight, GripVertical } from "lucide-react";
-import {
-  hasChildren,
-  hasChildren as layerHasChildren,
-} from "./store/layer-utils";
-import { Button } from "@/components/ui/button";
+import { hasChildren as layerHasChildren } from "./store/layer-utils";
 import { useHeTree, Id } from "he-tree-react";
+import { TreeRowNode, TreeRowPlaceholder } from "./tree-row-node";
 
 interface LayersPanelProps {
   className?: string;
@@ -21,8 +16,6 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
   const {
     selectedPageId,
     findLayersForPageId,
-    selectLayer,
-    selectedLayerId,
     updateLayer,
   } = useComponentStore();
 
@@ -49,90 +42,24 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
         Omit<Layer, "props">
       >);
     },
-    // renderNode: ({ id, node, open, draggable }) => (
-    //   <div>
-    //     <Button className="size-6" variant="ghost" size="icon" draggable={draggable}>
-    //       <GripVertical className="size-4" />
-    //     </Button>
-    //     {hasChildren(node) && node.children.length > 0 && (
-    //       <Button
-    //         className="size-6"
-    //         variant="ghost"
-    //         size="icon"
-    //         onClick={() => handleOpen(id, !open)}
-    //       >
-    //         {open ? (
-    //           <ChevronDown className="w-4 h-4" />
-    //         ) : (
-    //           <ChevronRight className="w-4 h-4" />
-    //         )}
-    //       </Button>
-    //     )}
-    //     <Button
-    //       variant="ghost"
-    //       size="sm"
-    //       className={cn(
-    //         node.id === selectedLayerId
-    //           ? "text-primary"
-    //           : "text-muted-foreground"
-    //       )}
-    //       onClick={() => selectLayer(node.id)}
-    //     >
-    //       {node.name}
-    //     </Button>
-    //   </div>
-    // ),
     renderNodeBox: ({ stat, attrs, isPlaceholder }) => {
-      if (isPlaceholder) {
-        return (
-          <div {...attrs} key={attrs.key}>
-            <div className="w-40 h-2 border-b border-blue-500 border-dashed"></div>
-          </div>
-        );
-      } else {
-        const { node, draggable, open, id } = stat;
-        return (
-          <div {...attrs} key={attrs.key} className="min-w-40 flex items-center">
-            <Button
-              className="w-4 h-6 rounded-none cursor-move"
-              variant="ghost"
-              size="icon"
-              draggable={draggable}
-            >
-              <GripVertical className="size-4" />
-            </Button>
-            {hasChildren(node) && node.children.length > 0 && (
-              <Button
-                className="size-6"
-                variant="ghost"
-                size="icon"
-                onClick={() => handleOpen(id, !open)}
-              >
-                {open ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={cn(
-                node.id === selectedLayerId
-                  ? "text-primary"
-                  : "text-muted-foreground"
-              )}
-              onClick={() => selectLayer(node.id)}
-            >
-              {node.name}
-            </Button>
-          </div>
-        );
-      }
+      return isPlaceholder ? (
+        <TreeRowPlaceholder nodeAttributes={attrs} />
+      ) : (
+        <TreeRowNode
+          key={attrs.key}
+          nodeAttributes={attrs}
+          node={stat.node}
+          id={stat.id}
+          open={stat.open}
+          draggable={stat.draggable}
+          onToggle={handleOpen}
+          level={stat.level}
+        />
+      );
     },
     onDragOpen(stat) {
-      handleOpen(stat.id, true)
+      handleOpen(stat.id, true);
     },
     canDrop: (layer) => layerHasChildren(layer.node),
   });

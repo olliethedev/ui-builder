@@ -18,12 +18,12 @@ import {
 import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
 import { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
-import DraggableList from "@/components/ui/ui-builder/internal/draggable-list";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import ClassNameField from "@/components/ui/ui-builder/internal/classname-field";
 import { addDefaultValues } from "@/components/ui/ui-builder/internal/store/schema-utils";
+import { Badge } from "@/components/ui/badge";
 
 interface PropsPanelProps {
   className?: string;
@@ -36,13 +36,17 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
 
   return (
     <div className={className}>
-      <h2 className="text-xl font-semibold mb-4">
-        {selectedLayer && isTextLayer(selectedLayer)
-          ? "Text Properties"
-          : selectedLayer?.type
-          ? selectedLayer.type + " Properties"
-          : "Component Properties"}
-      </h2>
+      {selectedLayer && (
+        <>
+          <h2 className="text-xl font-semibold mb-2">
+            {nameForLayer(selectedLayer)} Properties
+          </h2>
+          <h3 className="text-base font-medium mb-4">
+            Type: {selectedLayer.type}
+          </h3>
+        </>
+      )}
+
       {!selectedLayer && <p>No component selected</p>}
       {selectedLayer && <PropsPanelForm selectedLayer={selectedLayer} />}
     </div>
@@ -59,10 +63,8 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
   const {
     removeLayer,
     duplicateLayer,
-    updateLayer: updateLayerProps,
-    reorderChildrenLayers,
+    updateLayer,
   } = useComponentStore();
-
 
   const handleDeleteLayer = useCallback(
     (layerId: string) => {
@@ -78,18 +80,16 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
   }, [selectedLayer?.id, duplicateLayer]);
 
   const handleUpdateLayerProps = useCallback(
-    (id: string, props: Record<string, any>, rest?: Omit<Layer, 'props' | 'children'>) => {
-      updateLayerProps(id, props, rest);
+    (
+      id: string,
+      props: Record<string, any>,
+      rest?: Omit<Layer, "props" | "children">
+    ) => {
+      updateLayer(id, props, rest);
     },
-    [selectedLayer?.id, updateLayerProps]
+    [selectedLayer?.id, updateLayer]
   );
 
-  const handleReorderChildrenLayers = useCallback(
-    (parentId: string, childIds: string[]) => {
-      reorderChildrenLayers(parentId, childIds);
-    },
-    [reorderChildrenLayers]
-  );
   if (isTextLayer(selectedLayer)) {
     return (
       <TextLayerForm
@@ -108,7 +108,6 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
       removeLayer={handleDeleteLayer}
       duplicateLayer={handleDuplicateLayer}
       updateLayerProps={handleUpdateLayerProps}
-      handleReorderChildrenLayers={handleReorderChildrenLayers}
     />
   );
 }
@@ -117,7 +116,11 @@ interface TextLayerFormProps {
   selectedLayer: TextLayer;
   removeLayer: (id: string) => void;
   duplicateLayer: (id: string) => void;
-  updateLayerProps: (id: string, props: Record<string, any>, rest?: Omit<Layer, 'props' | 'children'>) => void;
+  updateLayerProps: (
+    id: string,
+    props: Record<string, any>,
+    rest?: Omit<Layer, "props" | "children">
+  ) => void;
 }
 
 const TextLayerForm: React.FC<TextLayerFormProps> = ({
@@ -140,10 +143,10 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
       // Merge the changed fields into the existing props
       const mergedValues = { ...selectedLayer, ...data };
 
-      const {props, ...rest} = mergedValues;
+      const { props, ...rest } = mergedValues;
 
       // setValues(mergedValues);
-      console.log("calling updateLayerProps with", {props, rest});
+      console.log("calling updateLayerProps with", { props, rest });
       updateLayerProps(selectedLayer.id, props, rest);
     },
     [selectedLayer.id, selectedLayer, updateLayerProps]
@@ -202,7 +205,7 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
             field,
             fieldConfigItem,
             fieldProps,
-          }: AutoFormInputComponentProps) => (  
+          }: AutoFormInputComponentProps) => (
             <ClassNameField
               label={label}
               isRequired={isRequired}
@@ -243,7 +246,6 @@ interface ComponentPropsAutoFormProps {
   removeLayer: (id: string) => void;
   duplicateLayer: (id: string) => void;
   updateLayerProps: (id: string, props: Record<string, any>) => void;
-  handleReorderChildrenLayers: (parentId: string, childIds: string[]) => void;
 }
 
 const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
@@ -253,7 +255,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
       removeLayer,
       duplicateLayer,
       updateLayerProps,
-      handleReorderChildrenLayers,
     }: ComponentPropsAutoFormProps) => {
       console.log(
         "autoform rerender for",
@@ -322,7 +323,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
       console.log({ defualtFieldConfig });
       console.log({ initialValues: selectedLayer.props });
 
-
       return (
         <AutoForm
           key={selectedLayer.id}
@@ -345,7 +345,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
                       fieldConfigItem,
                       fieldProps,
                     }: AutoFormInputComponentProps) => (
-                      
                       <FormItem className="flex flex-col">
                         <FormLabel>
                           {label}
@@ -358,9 +357,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
                             field={field}
                             selectedLayer={selectedLayer}
                             removeLayer={removeLayer}
-                            handleReorderChildrenLayers={
-                              handleReorderChildrenLayers
-                            }
                           />
                         </FormControl>
                         {fieldConfigItem.description && (
@@ -369,7 +365,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
                           </FormDescription>
                         )}
                       </FormItem>
-                      
                     ),
                   },
                 }
@@ -427,19 +422,16 @@ interface ChildrenInputProps {
   field: any;
   selectedLayer: ComponentLayer;
   removeLayer: (id: string) => void;
-  handleReorderChildrenLayers: (parentId: string, childIds: string[]) => void;
 }
 
 function ChildrenSearchableMultiSelect({
   field,
   removeLayer,
-  handleReorderChildrenLayers,
 }: ChildrenInputProps) {
   console.log("ChildrenSearchableMultiSelect", "render");
 
   const { selectedLayerId, findLayerById } = useComponentStore();
   const selectedLayer = findLayerById(selectedLayerId);
-
 
   const handleRemove = React.useCallback(
     (childId: string) => {
@@ -451,10 +443,8 @@ function ChildrenSearchableMultiSelect({
   return (
     <div className="w-full space-y-4">
       {selectedLayer && (
-      <AddComponentsPopover
-        parentLayerId={selectedLayer?.id}
-      >
-        <Button
+        <AddComponentsPopover parentLayerId={selectedLayer?.id}>
+          <Button
             variant="outline"
             role="combobox"
             className="w-full justify-between"
@@ -462,44 +452,25 @@ function ChildrenSearchableMultiSelect({
             Add Component or Text
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
-      </AddComponentsPopover>
+        </AddComponentsPopover>
       )}
 
-      {selectedLayer && (
-        <DraggableList
-          containerId="draggable-list-props-panel"
-          // className={`w-full grid grid-cols-1 grid-rows-${selectedLayer.children?.length || 0} gap-1`}
-          onOrderChange={(newOrder) => {
-            console.log("new order", newOrder);
-            handleReorderChildrenLayers(
-              selectedLayer.id,
-              newOrder.map((item) => item.id)
-            );
-          }}
-          items={
-            isTextLayer(selectedLayer)
-              ? []
-              : selectedLayer.children?.map((child, index) => ({
-                  id: child.id,
-                  reactElement: (
-                    <div key={child.id} className="flex items-center space-x-2">
-                      <span className="truncate inline-block max-w-[150px]">
-                        {isTextLayer(child) ? `"${child.text}"` : child.type}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemove(child.id)}
-                      >
-                        <XIcon className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ),
-                })) || []
-          }
-        ></DraggableList>
+      {selectedLayer && !isTextLayer(selectedLayer) && (
+        <div className="w-full flex gap-2 flex-wrap">
+          {selectedLayer.children?.map((child) => (
+            <Badge key={child.id} className="flex items-center space-x-2 pl-2 pr-0 py-0" variant="secondary">
+              {nameForLayer(child)}
+              <Button className="p-0 size-6 rounded-full" variant="ghost" size="icon" onClick={() => handleRemove(child.id)}>
+                <XIcon className="w-4 h-4" />
+              </Button>
+            </Badge>
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
+const nameForLayer = (layer: Layer) => {
+  return layer.name || layer.type;
+};

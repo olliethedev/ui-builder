@@ -26,6 +26,7 @@ type AddComponentsPopoverProps = {
   children: ReactNode;
   addPosition?: number;
   parentLayerId: string;
+  onOpenChange?: (open: boolean) => void;
 };
 
 export function AddComponentsPopover({
@@ -33,6 +34,7 @@ export function AddComponentsPopover({
   children,
   addPosition,
   parentLayerId,
+  onOpenChange,
 }: AddComponentsPopoverProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -127,6 +129,7 @@ export function AddComponentsPopover({
         }
       }
       setOpen(false);
+      onOpenChange?.(false);
     },
     [handleAddComponentLayer, handleAddTextLayer, inputValue]
   );
@@ -134,7 +137,10 @@ export function AddComponentsPopover({
 
   return (
     <div className={cn("relative flex justify-center", className)}>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={(open) => {
+        setOpen(open)
+        onOpenChange?.(open)
+      }}>
         <PopoverTrigger asChild>
           {children}
         </PopoverTrigger>

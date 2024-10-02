@@ -7,16 +7,25 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CheckIcon, InfoIcon, MoonIcon, SunIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PageLayer, useComponentStore } from "@/components/ui/ui-builder/internal/store/component-store";
+import {
+  PageLayer,
+  useComponentStore,
+} from "@/components/ui/ui-builder/internal/store/component-store";
 import { Toggle } from "@/components/ui/toggle";
 import { themeToStyleVars } from "@/components/ui/ui-builder/theme-utils";
 
 export function ThemePanel() {
-    const {pages, selectedPageId, updateLayer: updateLayerProps} = useComponentStore();
-    const selectedPageData = useMemo(() => {
-        return pages.find((page) => page.id === selectedPageId);
-      }, [pages, selectedPageId]);
-  const [isCustomTheme, setIsCustomTheme] = useState(selectedPageData?.props.colorTheme !== undefined);
+  const {
+    pages,
+    selectedPageId,
+    updateLayer: updateLayerProps,
+  } = useComponentStore();
+  const selectedPageData = useMemo(() => {
+    return pages.find((page) => page.id === selectedPageId);
+  }, [pages, selectedPageId]);
+  const [isCustomTheme, setIsCustomTheme] = useState(
+    selectedPageData?.props.colorTheme !== undefined
+  );
   //if not isCustomTheme we delete the themeColors from the pageLayer
   useEffect(() => {
     if (!isCustomTheme) {
@@ -31,7 +40,7 @@ export function ThemePanel() {
   return (
     <div className="flex flex-col gap-4 mt-4">
       <Toggle
-      variant="outline"
+        variant="outline"
         onPressedChange={() => setIsCustomTheme(!isCustomTheme)}
         aria-label="Toggle italic"
       >
@@ -39,8 +48,8 @@ export function ThemePanel() {
       </Toggle>
       {!isCustomTheme && (
         <span className="flex items-center gap-2">
-        <InfoIcon className="size-4" /> Using Default Theme
-      </span>
+          <InfoIcon className="size-4" /> Using Default Theme
+        </span>
       )}
       {selectedPageData && (
         <ThemePicker isDisabled={!isCustomTheme} pageLayer={selectedPageData} />
@@ -49,41 +58,54 @@ export function ThemePanel() {
   );
 }
 
-function ThemePicker({ className, isDisabled, pageLayer }: { className?: string, isDisabled: boolean, pageLayer: PageLayer }) {
-  
-    const {updateLayer: updateLayerProps} = useComponentStore();
+function ThemePicker({
+  className,
+  isDisabled,
+  pageLayer,
+}: {
+  className?: string;
+  isDisabled: boolean;
+  pageLayer: PageLayer;
+}) {
+  const { updateLayer: updateLayerProps } = useComponentStore();
 
-  const [colorTheme, setColorTheme] = useState<BaseColor["name"]>(pageLayer.props?.colorTheme || "red");
-  const [borderRadius, setBorderRadius] = useState(pageLayer.props?.borderRadius || 0.3);
-  const [mode, setMode] = useState<"light" | "dark">(pageLayer.props?.mode || "light");
+  const [colorTheme, setColorTheme] = useState<BaseColor["name"]>(
+    pageLayer.props?.colorTheme || "red"
+  );
+  const [borderRadius, setBorderRadius] = useState(
+    pageLayer.props?.borderRadius || 0.3
+  );
+  const [mode, setMode] = useState<"light" | "dark">(
+    pageLayer.props?.mode || "light"
+  );
 
   useEffect(() => {
     if (isDisabled) return;
     console.log({ colorTheme, borderRadius, mode });
-    
+
     const colorData = baseColors.find((color) => color.name === colorTheme);
     if (colorData) {
-        const colorDataWithBorder = {
-            ...colorData,
-            cssVars: {
-                ...colorData.cssVars,
-                [mode]: {
-                    ...colorData.cssVars[mode],
-                    radius: `${borderRadius}rem`
-                }
-            }
-        } as const;
+      const colorDataWithBorder = {
+        ...colorData,
+        cssVars: {
+          ...colorData.cssVars,
+          [mode]: {
+            ...colorData.cssVars[mode],
+            radius: `${borderRadius}rem`,
+          },
+        },
+      } as const;
 
-        const themeStyle = themeToStyleVars(colorDataWithBorder.cssVars[mode] );
+      const themeStyle = themeToStyleVars(colorDataWithBorder.cssVars[mode]);
 
-        updateLayerProps(pageLayer.id, {
-            style: themeStyle,
-            mode,
-            colorTheme,
-            borderRadius,
-        });
+      updateLayerProps(pageLayer.id, {
+        style: themeStyle,
+        mode,
+        colorTheme,
+        borderRadius,
+      });
     }
-}, [colorTheme, borderRadius, mode, isDisabled]);
+  }, [colorTheme, borderRadius, mode, isDisabled]);
 
   const colorOptions = baseColors.map((color: BaseColor) => {
     return (
@@ -122,7 +144,7 @@ function ThemePicker({ className, isDisabled, pageLayer }: { className?: string,
           radius === borderRadius && "border-primary border-2"
         )}
         onClick={() => setBorderRadius(radius)}
-        >
+      >
         <div className="size-6 rounded-sm bg-secondary overflow-hidden">
           <div
             className="size-10 ml-2 mt-2 border-2 border-secondary-foreground"
@@ -142,15 +164,25 @@ function ThemePicker({ className, isDisabled, pageLayer }: { className?: string,
         size="sm"
         onClick={() => setMode(modeOption)}
         className={cn(mode === modeOption && "border-2 border-primary")}
-      >    
-      {modeOption === "light" ? <SunIcon className="mr-1 -translate-x-1" /> : <MoonIcon className="mr-1 -translate-x-1" />}
-      {modeOption}
+      >
+        {modeOption === "light" ? (
+          <SunIcon className="mr-1 -translate-x-1" />
+        ) : (
+          <MoonIcon className="mr-1 -translate-x-1" />
+        )}
+        {modeOption}
       </Button>
     );
   });
 
   return (
-    <div className={cn("flex flex-col gap-2", className, isDisabled && "opacity-30")}>
+    <div
+      className={cn(
+        "flex flex-col gap-2",
+        className,
+        isDisabled && "opacity-30"
+      )}
+    >
       <Label className="mt-2">Colors</Label>
       <div className="flex gap-2 flex-wrap">{colorOptions}</div>
       <Label className="mt-2">Border Radius</Label>
