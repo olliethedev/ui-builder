@@ -281,10 +281,10 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
           // Identify keys that have changed by comparing new data with existing props
           const changedFields = Object.keys(data).reduce(
             (acc, key) => {
-              const newValue = data[key];
-              const oldValue = selectedLayer.props[key];
+              const newValue = data[key as keyof typeof data];
+              const oldValue = selectedLayer.props[key as keyof typeof selectedLayer.props];
               if (JSON.stringify(newValue) !== JSON.stringify(oldValue)) {
-                acc[key] = newValue;
+                acc[key as keyof typeof data] = newValue;
               }
 
               return acc;

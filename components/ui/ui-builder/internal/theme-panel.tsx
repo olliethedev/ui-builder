@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   baseColors,
   BaseColor,
@@ -16,13 +16,11 @@ import { themeToStyleVars } from "@/components/ui/ui-builder/theme-utils";
 
 export function ThemePanel() {
   const {
-    pages,
     selectedPageId,
     updateLayer: updateLayerProps,
+    findLayerById,
   } = useComponentStore();
-  const selectedPageData = useMemo(() => {
-    return pages.find((page) => page.id === selectedPageId);
-  }, [pages, selectedPageId]);
+  const selectedPageData = findLayerById(selectedPageId) as PageLayer;
   const [isCustomTheme, setIsCustomTheme] = useState(
     selectedPageData?.props.colorTheme !== undefined
   );
@@ -36,7 +34,7 @@ export function ThemePanel() {
         borderRadius: undefined,
       });
     }
-  }, [isCustomTheme]);
+  }, [isCustomTheme, updateLayerProps, selectedPageId]);
   return (
     <div className="flex flex-col gap-4 mt-4">
       <Toggle
@@ -52,7 +50,7 @@ export function ThemePanel() {
         </span>
       )}
       {selectedPageData && (
-        <ThemePicker isDisabled={!isCustomTheme} pageLayer={selectedPageData} />
+        <ThemePicker key={selectedPageId} isDisabled={!isCustomTheme} pageLayer={selectedPageData} />
       )}
     </div>
   );
@@ -81,7 +79,6 @@ function ThemePicker({
 
   useEffect(() => {
     if (isDisabled) return;
-    console.log({ colorTheme, borderRadius, mode });
 
     const colorData = baseColors.find((color) => color.name === colorTheme);
     if (colorData) {
@@ -180,7 +177,7 @@ function ThemePicker({
       className={cn(
         "flex flex-col gap-2",
         className,
-        isDisabled && "opacity-30"
+        isDisabled && "opacity-30 pointer-events-none"
       )}
     >
       <Label className="mt-2">Colors</Label>
