@@ -1,5 +1,5 @@
 import { PageLayer, Layer, isPageLayer, isTextLayer, componentRegistry } from "@/lib/ui-builder/store/layer-store";
-import template from "lodash/template";
+import template from "lodash.template";
 import { hasChildren } from "@/lib/ui-builder/store/layer-utils";
 
 export const pageLayerToCode = (page: PageLayer) => {

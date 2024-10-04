@@ -19,7 +19,7 @@ import {
   PageLayer,
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
-import { useStore } from "@/lib/hooks/use-store";
+import { useStore } from "@/hooks/use-store";
 
 interface ComponentEditorProps {
   initialLayers?: PageLayer[];
@@ -108,7 +108,7 @@ function MainLayout() {
         {selectedPanel.content}
         <div className="absolute bottom-4 left-4 right-4 z-50">
           <div className="flex justify-center rounded-full bg-primary p-2 shadow-lg">
-            {mainPanels.map((panel, index) => (
+            {mainPanels.map((panel) => (
               <Button
                 key={panel.title}
                 variant={
