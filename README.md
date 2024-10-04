@@ -11,6 +11,12 @@ If you are using @shadcn/ui 2.0.0 or later, you can install the component direct
 npx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json
 ```
 
+Or you can start a new project with the UI Builder:
+
+```bash
+npx shadcn@latest init https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json
+```
+
 Add dev dependencies, since shadcn is not installing them correctly from the registry:
 
 ```bash
@@ -22,6 +28,11 @@ Fix zustand dependency to use latest stable version as opposed to RC:
 ```bash
 npm install zustand@4.5.5
 ```
+
+## Add your custom components to the registry
+
+Navigate to the [component-registry.ts](lib/ui-builder/store/component-registry.ts) file and add your component to the array.
+
 
 Next, generate the zod schemas that will be used by the UI Builder to render and configure the components.
 

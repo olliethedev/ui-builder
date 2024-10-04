@@ -6,16 +6,20 @@ import { docToInterface, PropInterfaceData } from './doc-to-interface';
 import { interfacesToSchema } from './interfaces-to-schema';
 
 
-// NOTE: for the script to find a component, it must take props
-
-// Define directories and paths
+// Path to be scanned for components
 const componentsDir = path.join(__dirname, '..', '..', '..', 'components');
+
+interface Config {
+  filesToProcess?: string[];
+  foldersToIgnore: string[];
+  filesToIgnore: string[];
+}
 
 /**
  * Recursively traverses the components directory to find and process .tsx files.
  * @param dir - The directory to traverse.
  */
-function generateDocs(dir: string) {
+function generateDocs(dir: string, config: Config) {
   const files = fs.readdirSync(dir);
   const interfaceDataArray: PropInterfaceData[] = [];
 
@@ -25,27 +29,40 @@ function generateDocs(dir: string) {
 
     if (stat.isDirectory()) {
       // Recursively process subdirectories
-      generateDocs(filePath);
+      generateDocs(filePath, config);
     } else if (file.endsWith('.tsx')) {
-      // Process only specific files or all .tsx files by removing the condition
-      const filesToProcess: string[] = [];
-      if (filesToProcess.length > 0 && !filesToProcess.includes(file)) {
+      const { filesToProcess, foldersToIgnore, filesToIgnore } = config;
+
+      if (filesToProcess && filesToProcess.length > 0 && !filesToProcess.includes(file)) {
+        return;
+      }
+
+      if (foldersToIgnore.some(folder => filePath.includes(folder))) {
+        return;
+      }
+
+      if (filesToIgnore.some(file => filePath.includes(file))) {
         return;
       }
 
       try {
 
-        console.log("Processing file:", file);
+        console.log("\x1b[32mProcessing file:", file, "\x1b[0m");
         // Parse the component file to extract prop types
         const docs = fileToDoc(filePath);
-        console.log(`Found ${ docs.length } components in ${ file }`);
+
+        if (docs.length === 0) {
+          console.log("\x1b[33mFound 0 components in " + file + "\x1b[0m");
+        } else {
+          console.log(`Found ${ docs.length } components in ${ file }`);
+        }
         if (docs.length === 0) {
           return;
         }
 
         for (const doc of docs) {
           const interfaceData = docToInterface(doc, componentsDir, dir);
-          console.log(`Interface data for ${ doc.displayName }:\n`, interfaceData);
+          // console.log(`Interface data for ${ doc.displayName }:\n`, interfaceData);
           interfaceDataArray.push(interfaceData);
         }
       } catch (error) {
@@ -63,10 +80,15 @@ function generateDocs(dir: string) {
     const schemaFilePath = path.join(...schemaPathParts);
 
     fs.writeFileSync(schemaFilePath, schemaFileContent);
-    console.log(`Generated zod schema file: ${ schemaFilePath }`);
+    console.log(`==========================================================
+\x1b[32m✔️ Generated component definitions file: ${ schemaFilePath }\x1b[0m
+==========================================================`);
   }
 }
 
 
 // Initiate the documentation and schema generation
-generateDocs(componentsDir);
+generateDocs(componentsDir, {
+  foldersToIgnore: ['/internal', '/auto-form'],
+  filesToIgnore: ['/ui-builder/multi-select.tsx'],
+});

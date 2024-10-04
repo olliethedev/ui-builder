@@ -40,7 +40,7 @@ export function docToInterface(doc: ComponentDocWithIsDefault, rootDir: string, 
         }
         // Validate the prop type
         else if (!isValidType(propType)) {
-            console.warn(`Invalid TypeScript type "${ propType }" for prop "${ propName }" in component "${ doc.displayName }". Defaulting to "any".`);
+            console.warn(`Unresolved complex type "${ propType }" for prop "${ propName }" in component "${ doc.displayName }". Defaulting to "any".`);
             propType = 'any';
         }
 
@@ -78,7 +78,7 @@ function isValidType(typeName: string): boolean {
     const diagnostics = sourceFile.getPreEmitDiagnostics();
 
     if (diagnostics.length > 0) {
-        console.warn(`Type "${ typeName }" is invalid:`, diagnostics.map(d => d.getMessageText()).join(", "));
+        // console.warn(`Type "${ typeName }" is invalid:`, diagnostics.map(d => d.getMessageText()).join(", "));
         return false;
     }
 
