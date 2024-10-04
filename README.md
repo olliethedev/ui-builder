@@ -8,7 +8,19 @@ Uses shadcn/ui for the UI components.
 If you are using @shadcn/ui 2.0.0 or later, you can install the component directly from the registry. 
 
 ```bash
-npx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/ui-builder.json https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/ui-builder-lib.json
+npx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json
+```
+
+Add dev dependencies, since shadcn is not installing them correctly from the registry:
+
+```bash
+npm install -D @types/lodash.template @tailwindcss/typography @types/react-syntax-highlighter react-docgen-typescript tailwindcss-animate ts-morph ts-to-zod
+```
+
+Fix zustand dependency to use latest stable version as opposed to RC:
+
+```bash
+npm install zustand@4.5.5
 ```
 
 Next, generate the zod schemas that will be used by the UI Builder to render and configure the components.
