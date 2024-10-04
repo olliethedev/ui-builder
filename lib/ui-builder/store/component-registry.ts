@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ComponentType as ReactComponentType } from 'react';
 import { z, ZodObject } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -5,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Flexbox } from '@/components/ui/ui-builder/flexbox';
 import { CodePanel } from '@/components/ui/ui-builder/code-panel';
 import { patchSchema } from '@/lib/ui-builder/store/schema-utils';
+
+// import { ComponentDefinitions } from '@/components/ui/generated-schemas';
 
 
 interface RegistryEntry<T extends ReactComponentType<any>> {

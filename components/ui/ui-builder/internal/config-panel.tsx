@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { useCallback } from "react";
 import { z } from "zod";
 import {
@@ -8,8 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
 import { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
-import ClassNameField from "./classname-field";
-import { addDefaultValues } from "../../../../lib/ui-builder/store/schema-utils";
+import ClassNameField from "@/components/ui/ui-builder/internal/classname-field";
+import { addDefaultValues } from "@/lib/ui-builder/store/schema-utils";
 
 export const ConfigPanel = () => {
   const {
@@ -36,7 +38,7 @@ export const ConfigPanel = () => {
     if (selectedLayer) {
       duplicateLayer(selectedLayer.id);
     }
-  }, [selectedLayer?.id, duplicateLayer]);
+  }, [selectedLayer, duplicateLayer]);
 
   const handleUpdateLayerProps = useCallback(
     (
@@ -46,7 +48,7 @@ export const ConfigPanel = () => {
     ) => {
       updateLayer(id, props, rest);
     },
-    [selectedLayer?.id, updateLayer]
+    [updateLayer]
   );
 
   return (
@@ -94,7 +96,7 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
 
       updateLayerProps(selectedLayer.id, props, rest);
     },
-    [selectedLayer.id, selectedLayer, updateLayerProps]
+    [selectedLayer, updateLayerProps]
   );
 
   return (
@@ -123,9 +125,6 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
           fieldType: ({
             label,
             isRequired,
-            field,
-            fieldConfigItem,
-            fieldProps,
           }: AutoFormInputComponentProps) => (
             <ClassNameField
               label={label}

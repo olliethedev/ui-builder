@@ -1,4 +1,5 @@
-import { z, ZodTypeAny, ZodUnion, ZodLiteral, ZodOptional, ZodNullable, ZodEnum, ZodObject, ZodRawShape, ZodNumber, ZodDate, ZodArray, ZodString, ZodTuple, ZodRecord, set } from 'zod';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { z, ZodTypeAny, ZodUnion, ZodLiteral, ZodOptional, ZodNullable, ZodEnum, ZodObject, ZodRawShape, ZodNumber, ZodDate, ZodArray, ZodTuple } from 'zod';
 import { generateMock } from '@anatine/zod-mock';
 
 export function getDefaultProps(schema: ZodObject<any>) {

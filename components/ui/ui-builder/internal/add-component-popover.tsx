@@ -131,7 +131,7 @@ export function AddComponentsPopover({
       setOpen(false);
       onOpenChange?.(false);
     },
-    [handleAddComponentLayer, handleAddTextLayer, inputValue]
+    [handleAddComponentLayer, handleAddTextLayer, inputValue, onOpenChange]
   );
 
 

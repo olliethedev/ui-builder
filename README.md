@@ -26,7 +26,7 @@ npm install zustand@4.5.5
 Next, generate the zod schemas that will be used by the UI Builder to render and configure the components.
 
 ```bash
-npx tsx lib/ui-builder/zod-gen.ts
+npx tsx lib/ui-builder/scripts/zod-gen.ts
 ```
 
 

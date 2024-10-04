@@ -24,8 +24,6 @@ export const LayerMenu: React.FC<MenuProps> = ({
   layerId,
   x,
   y,
-  width,
-  height,
   zIndex,
   handleDuplicateComponent,
   handleDeleteComponent,

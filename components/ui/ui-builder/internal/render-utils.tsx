@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { Suspense } from "react";
 import { baseColors } from "@/components/ui/ui-builder/internal/base-colors";
 import {
@@ -22,17 +23,15 @@ export interface EditorConfig {
 }
 
 export const renderPage = (page: PageLayer, editorConfig?: EditorConfig) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { mode, colorTheme, style, borderRadius, ...rest } = page.props;
 
   const colorData = colorTheme
     ? baseColors.find((color) => color.name === colorTheme)
     : undefined;
 
-  let globalOverrides = colorData
+  const globalOverrides = colorData
     ? {
-        // backgroundColor: `hsl(${
-        //   colorData.cssVars[mode as "light" | "dark"].background
-        // })`,
         color: `hsl(${colorData.cssVars[mode as "light" | "dark"].foreground})`,
         borderColor: `hsl(${
           colorData.cssVars[mode as "light" | "dark"].border

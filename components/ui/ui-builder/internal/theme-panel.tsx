@@ -46,7 +46,7 @@ export function ThemePanel() {
       </Toggle>
       {!isCustomTheme && (
         <span className="flex items-center gap-2">
-          <InfoIcon className="size-4" /> Using Your Project's Theme
+          <InfoIcon className="size-4" /> Using Your Project&apos;s Theme
         </span>
       )}
       {selectedPageData && (
@@ -102,7 +102,7 @@ function ThemePicker({
         borderRadius,
       });
     }
-  }, [colorTheme, borderRadius, mode, isDisabled]);
+  }, [pageLayer, updateLayerProps, colorTheme, borderRadius, mode, isDisabled]);
 
   const colorOptions = baseColors.map((color: BaseColor) => {
     return (

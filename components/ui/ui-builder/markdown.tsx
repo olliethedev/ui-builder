@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { FC, memo } from "react";
@@ -41,7 +42,7 @@ export function Markdown({ children, className }: MarkdownProps) {
             />
           );
         },
-        code({ node, className, children, ...props }) {
+        code({ className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || "");
 
           if (match) {

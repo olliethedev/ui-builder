@@ -22,13 +22,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useLayerStore,
   PageLayer,
 } from "@/lib/ui-builder/store/layer-store";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
-import { CodeBlock } from "@/components/ui/ui-builder/codeblock";
 import { useTheme } from "next-themes";
 import {
   DropdownMenu,
@@ -54,7 +52,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { PlusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { pageLayerToCode } from "@/components/ui/ui-builder/internal/templates";
 import { CodePanel } from "@/components/ui/ui-builder/code-panel";
 
 const Z_INDEX = 1000;
@@ -65,8 +62,6 @@ export function NavBar() {
     useLayerStore.temporal.getState();
 
   const page = findLayerById(selectedPageId) as PageLayer;
-
-  const layers = page?.children || [];
 
   const canUndo = !!pastStates.length;
   const canRedo = !!futureStates.length;
@@ -117,24 +112,16 @@ export function NavBar() {
     };
   }, [canUndo, canRedo, undo, redo]);
 
-  const codeBlocks = {
-    React: pageLayerToCode(page),
-    Serialized: JSON.stringify(
-      page,
-      (key, value) => (typeof value === "function" ? undefined : value),
-      2
-    ),
-  };
 
   // Empty click handler for Undo
   const handleUndo = useCallback(() => {
     undo();
-  }, []);
+  }, [undo]);
 
   // Empty click handler for Redo
   const handleRedo = useCallback(() => {
     redo();
-  }, []);
+  }, [redo]);
 
   return (
     <div
@@ -258,6 +245,7 @@ function PagesPopover() {
     useLayerStore();
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedPage, setSelectedPage] = useState<string | null>(
     selectedPageId
   );
@@ -377,3 +365,4 @@ const DialogContentWithZIndex = forwardRef<
     </DialogContent>
   </DialogPortal>
 ))
+DialogContentWithZIndex.displayName = "DialogContentWithZIndex";

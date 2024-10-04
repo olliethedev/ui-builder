@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { PageLayer, Layer, isPageLayer, isTextLayer, componentRegistry } from "@/lib/ui-builder/store/layer-store";
 import template from "lodash.template";
 import { hasChildren } from "@/lib/ui-builder/store/layer-utils";

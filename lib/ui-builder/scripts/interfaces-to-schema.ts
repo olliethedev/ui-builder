@@ -22,7 +22,8 @@ export function interfacesToSchema(interfaceData: PropInterfaceData[]): string {
     const interfaceCount = interfaceData.length;
 
     interfaceData.forEach((interfaceDataItem) => {
-        let { componentName, interfaceString, from, isDefault, filePath } = interfaceDataItem;
+        const { interfaceString, from, isDefault, filePath } = interfaceDataItem;
+        let { componentName } = interfaceDataItem;
 
         let isDuplicate = false;
         const originalName = componentName;

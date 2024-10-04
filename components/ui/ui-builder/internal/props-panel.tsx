@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useState } from "react";
 import { z } from "zod";
 import { X as XIcon, ChevronsUpDown } from "lucide-react";
@@ -77,7 +78,7 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
     if (selectedLayer) {
       duplicateLayer(selectedLayer.id);
     }
-  }, [selectedLayer?.id, duplicateLayer]);
+  }, [selectedLayer, duplicateLayer]);
 
   const handleUpdateLayer = useCallback(
     (
@@ -87,7 +88,7 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
     ) => {
       updateLayer(id, props, rest);
     },
-    [selectedLayer?.id, updateLayer]
+    [ updateLayer]
   );
 
   if (isTextLayer(selectedLayer)) {
@@ -146,7 +147,7 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
 
       updateLayer(selectedLayer.id, props, rest);
     },
-    [selectedLayer.id, selectedLayer, updateLayer]
+    [selectedLayer, updateLayer]
   );
 
   return (
@@ -200,8 +201,6 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
             label,
             isRequired,
             field,
-            fieldConfigItem,
-            fieldProps,
           }: AutoFormInputComponentProps) => (
             <ClassNameField
               label={label}
@@ -249,6 +248,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
       updateLayer,
     }: ComponentPropsAutoFormProps) => {
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [values, setValues] = useState<Partial<z.infer<typeof schema>>>(
         selectedLayer.props
       );
@@ -286,19 +286,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
             updateLayer(selectedLayer.id, mergedValues);
           }
         },
-        [selectedLayer.id, selectedLayer.props, updateLayer, setValues]
-      );
-
-      const defualtFieldConfig = Object.fromEntries(
-        Object.entries(selectedLayer.props).map(([key, value]) => [
-          key,
-          {
-            inputProps: {
-              value,
-              defaultValue: value,
-            },
-          },
-        ])
+        [selectedLayer, updateLayer]
       );
 
       return (
@@ -321,7 +309,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
                       isRequired,
                       field,
                       fieldConfigItem,
-                      fieldProps,
                     }: AutoFormInputComponentProps) => (
                       <FormItem className="flex flex-col">
                         <FormLabel>
@@ -354,8 +341,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
                       label,
                       isRequired,
                       field,
-                      fieldConfigItem,
-                      fieldProps,
                     }: AutoFormInputComponentProps) => (
                       <ClassNameField
                         label={label}
@@ -390,6 +375,8 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
     }
   );
 
+ComponentPropsAutoForm.displayName = "ComponentPropsAutoForm";
+
 interface ChildrenInputProps {
   field: any;
   selectedLayer: ComponentLayer;
@@ -397,7 +384,6 @@ interface ChildrenInputProps {
 }
 
 function ChildrenSearchableMultiSelect({
-  field,
   removeLayer,
 }: ChildrenInputProps) {
 

@@ -9,6 +9,7 @@
     "start": "next start",
     "test": "jest --watch",
     "test:ci": "jest --ci",
+    "lint": "next lint",
     "build-registry": "npx tsx scripts/build.ts",
     "host-registry": "npx http-server registry"
   },

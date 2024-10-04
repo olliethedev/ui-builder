@@ -34,7 +34,7 @@ export const countLayers = (layers: Layer[]): number => {
 
 export const addLayer = (layers: Layer[], newLayer: Layer, parentId?: string, parentPosition?: number): Layer[] => {
     const updatedPages = layers.map((page) =>
-        visitLayer(page, null, (layer, parent) => {
+        visitLayer(page, null, (layer) => {
             if (layer.id === parentId && hasChildren(layer)) {
                 let updatedChildren = layer.children ? [...layer.children] : [];
 

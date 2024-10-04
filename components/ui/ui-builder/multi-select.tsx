@@ -505,7 +505,9 @@ const MultipleSelector = React.forwardRef<MultipleSelectorRef, MultipleSelectorP
               }}
               onFocus={(event) => {
                 setOpen(true);
-                triggerSearchOnFocus && onSearch?.(debouncedSearchTerm);
+                if (triggerSearchOnFocus) {
+                  onSearch?.(debouncedSearchTerm);
+                }
                 inputProps?.onFocus?.(event);
               }}
               placeholder={hidePlaceholderWhenSelected && selected.length !== 0 ? '' : placeholder}

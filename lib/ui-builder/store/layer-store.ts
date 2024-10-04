@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { create, StateCreator } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { produce } from 'immer';
@@ -232,7 +233,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
 
       // Traverse and update the pages to remove the specified layer
       const updatedPages = pages.map((page) =>
-        visitLayer(page, null, (layer, parent) => {
+        visitLayer(page, null, (layer) => {
 
           if (hasChildren(layer)) {
 
@@ -284,6 +285,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
         const visitor = (layer: Layer): Layer => {
           if (layer.id === layerId) {
             if (isTextLayer(layer)) {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               const { props, ...rest } = newProps;
               return {
                 ...layer,
@@ -345,9 +347,9 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
 
 const useLayerStore = create(persist(temporal<LayerStore>(store,
   {
-    onSave: (pastState: LayerStore, currentState: LayerStore) => {
-      // console.log("Temporal Store onSave", { previousState: pastState, currentState });
-    },
+    // onSave: (pastState: LayerStore, currentState: LayerStore) => {
+    //   console.log("Temporal Store onSave", { previousState: pastState, currentState });
+    // },
     equality: (pastState, currentState) =>
       isDeepEqual(pastState, currentState),
   }
