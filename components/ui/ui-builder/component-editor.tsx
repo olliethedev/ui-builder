@@ -17,8 +17,8 @@ import { Button } from "@/components/ui/button";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
 import {
   PageLayer,
-  useComponentStore,
-} from "@/lib/ui-builder/store/component-store";
+  useLayerStore,
+} from "@/lib/ui-builder/store/layer-store";
 import { useStore } from "@/lib/hooks/use-store";
 
 interface ComponentEditorProps {
@@ -26,14 +26,14 @@ interface ComponentEditorProps {
 }
 
 const ComponentEditor = ({ initialLayers }: ComponentEditorProps) => {
-  const store = useStore(useComponentStore, (state) => state);
+  const store = useStore(useLayerStore, (state) => state);
   const [initialized, setInitialized] = useState(false);
   useEffect(() => {
     if (store) {
     if (initialLayers && !initialized) {
       store?.initialize(initialLayers);
       setInitialized(true);
-      const { clear } = useComponentStore.temporal.getState();
+      const { clear } = useLayerStore.temporal.getState();
       clear();
     } else {
       setInitialized(true);

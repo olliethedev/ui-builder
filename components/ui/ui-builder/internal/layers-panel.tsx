@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import {
   Layer,
-  useComponentStore,
-} from "@/lib/ui-builder/store/component-store";
+  useLayerStore,
+} from "@/lib/ui-builder/store/layer-store";
 import { cn } from "@/lib/utils";
 import { hasChildren as layerHasChildren } from "../../../../lib/ui-builder/store/layer-utils";
 import { useHeTree, Id } from "he-tree-react";
@@ -17,7 +17,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
     selectedPageId,
     findLayersForPageId,
     updateLayer,
-  } = useComponentStore();
+  } = useLayerStore();
 
   const layers = findLayersForPageId(selectedPageId);
 

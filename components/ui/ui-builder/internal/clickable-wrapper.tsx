@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Layer } from "@/lib/ui-builder/store/component-store";
+import { Layer } from "@/lib/ui-builder/store/layer-store";
 import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
 import { cn } from "@/lib/utils";
 

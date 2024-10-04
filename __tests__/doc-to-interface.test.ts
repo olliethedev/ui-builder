@@ -1,5 +1,5 @@
-import { docToInterface, PropInterfaceData } from '../lib/ui-builder/doc-to-interface';
-import { fileToDoc } from '../lib/ui-builder/file-to-doc';
+import { docToInterface, PropInterfaceData } from '../lib/ui-builder/scripts/doc-to-interface';
+import { fileToDoc } from '../lib/ui-builder/scripts/file-to-doc';
 import path from 'path';
 
 describe('docToInterface', () => {

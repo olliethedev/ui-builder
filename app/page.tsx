@@ -1,5 +1,5 @@
 import ComponentEditor from "@/components/ui/ui-builder/component-editor";
-import { PageLayer } from "@/lib/ui-builder/store/component-store";
+import { PageLayer } from "@/lib/ui-builder/store/layer-store";
 
 export const metadata = {
   title: "UI Builder",
@@ -23,7 +23,6 @@ const initialLayers: PageLayer[] = [{
         "align": "center",
         "wrap": "nowrap",
         "gap": "4",
-        "className": "bg-blue-50"
       },
       "children": [
         {
@@ -55,9 +54,7 @@ const initialLayers: PageLayer[] = [{
               "name": "Text",
               "text": "Transform your React app into a  no-code platform, leveraging your existing components.",
               "textType": "text",
-              "props": {
-                "className": "bg-blue-50"
-              }
+              "props": {}
             },
             {
               "id": "DFdtflv",

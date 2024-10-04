@@ -2,13 +2,13 @@ import React, { useCallback, useState } from "react";
 import { z } from "zod";
 import { X as XIcon, ChevronsUpDown } from "lucide-react";
 import {
-  useComponentStore,
+  useLayerStore,
   componentRegistry,
   ComponentLayer,
   isTextLayer,
   TextLayer,
   Layer,
-} from "@/lib/ui-builder/store/component-store";
+} from "@/lib/ui-builder/store/layer-store";
 import {
   FormControl,
   FormDescription,
@@ -30,7 +30,7 @@ interface PropsPanelProps {
 }
 
 const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
-  const { selectedLayerId, findLayerById } = useComponentStore();
+  const { selectedLayerId, findLayerById } = useLayerStore();
 
   const selectedLayer = findLayerById(selectedLayerId);
 
@@ -64,7 +64,7 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
     removeLayer,
     duplicateLayer,
     updateLayer,
-  } = useComponentStore();
+  } = useLayerStore();
 
   const handleDeleteLayer = useCallback(
     (layerId: string) => {
@@ -265,10 +265,10 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
           // Identify keys that have changed by comparing new data with existing props
           const changedFields = Object.keys(data).reduce(
             (acc, key) => {
-              const newValue = data[key as keyof typeof data];
-              const oldValue = selectedLayer.props[key as keyof typeof selectedLayer.props];
+              const newValue = data[key];
+              const oldValue = selectedLayer.props[key];
               if (JSON.stringify(newValue) !== JSON.stringify(oldValue)) {
-                acc[key as keyof typeof data] = newValue;
+                acc[key] = newValue;
               }
 
               return acc;
@@ -401,7 +401,7 @@ function ChildrenSearchableMultiSelect({
   removeLayer,
 }: ChildrenInputProps) {
 
-  const { selectedLayerId, findLayerById } = useComponentStore();
+  const { selectedLayerId, findLayerById } = useLayerStore();
   const selectedLayer = findLayerById(selectedLayerId);
 
   const handleRemove = React.useCallback(

@@ -1,4 +1,4 @@
-import { fileToDoc } from '../lib/ui-builder/file-to-doc';
+import { fileToDoc } from '../lib/ui-builder/scripts/file-to-doc';
 
 describe('fileToDoc', () => {
     it('should parse ReactClass component correctly', () => {

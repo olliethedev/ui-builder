@@ -1,141 +1,18 @@
-import { ComponentType as ReactComponentType } from 'react';
 import { create, StateCreator } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { produce } from 'immer';
 import { temporal } from 'zundo';
 import isDeepEqual from 'fast-deep-equal';
-import { z, ZodObject } from 'zod';
-
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Transactions } from '@/components/ui/transactions';
-import { Flexbox } from '@/components/ui/ui-builder/flexbox';
 
 import { visitLayer, addLayer, hasChildren, isTextLayer, isPageLayer, findLayerRecursive, createId, countLayers } from '@/lib/ui-builder/store/layer-utils';
-import { patchSchema, getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
-import ReactFunctionComplexTypes from '@/components/ui/ReactFunctionComplexTypes';
-import { CodePanel } from '@/components/ui/ui-builder/code-panel';
-// import { ComponentDefinitions } from '@/components/ui/generated-schemas';
+import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 
-export const DEFAULT_PAGE_PROPS = {
+import { componentRegistry } from '@/lib/ui-builder/store/component-registry';
+
+
+const DEFAULT_PAGE_PROPS = {
   className: "p-4 flex flex-col gap-2",
 };
-
-// Component registry with Zod schemas or add manually like:
-// Button: {
-//   component: Button,
-//   schema: z.object({
-//     children: z.array(z.object({
-//       type: z.enum(['Button']),
-//       props: z.object({
-//         children: z.string(),
-//         variant: z.string(),
-//         size: z.string(),
-//         disabled: z.boolean(),
-//       }),
-//     })),
-//   }),
-//   from: '@/components/ui/button'
-// }
-const componentRegistry = {
-  // ...ComponentDefinitions
-  Button: {
-    component: Button,
-    schema: patchSchema(z.object({
-      asChild: z.boolean().optional(),
-      children: z.any().optional(),
-      variant: z.union([z.literal("default"), z.literal("destructive"), z.literal("outline"), z.literal("secondary"), z.literal("ghost"), z.literal("link")]).optional().nullable(),
-      size: z.union([z.literal("default"), z.literal("sm"), z.literal("lg"), z.literal("icon")]).optional().nullable()
-
-    })),
-    from: '@/components/ui/button'
-  },
-  Badge: {
-    component: Badge,
-    schema: patchSchema(z.object({
-      children: z.any().optional(),
-      variant: z.enum(['default', 'secondary', 'destructive', 'outline']).default('default'),
-    })),
-    from: '@/components/ui/badge'
-  },
-  Transactions: {
-    component: Transactions,
-    schema: patchSchema(z.object({
-      data: z.array(z.object({
-        id: z.string(),
-        customer: z.string(),
-        email: z.string(),
-        amount: z.number()
-      }))
-    })),
-    from: '@/components/ui/transactions'
-  },
-  Flexbox: {
-    component: Flexbox,
-    schema: patchSchema(z.object({
-      children: z.any().optional(),
-      direction: z.union([z.literal("row"), z.literal("column"), z.literal("rowReverse"), z.literal("columnReverse")]).optional().nullable(),
-      justify: z.union([z.literal("start"), z.literal("end"), z.literal("center"), z.literal("between"), z.literal("around"), z.literal("evenly")]).optional().nullable(),
-      align: z.union([z.literal("start"), z.literal("end"), z.literal("center"), z.literal("baseline"), z.literal("stretch")]).optional().nullable(),
-      wrap: z.union([z.literal("wrap"), z.literal("nowrap"), z.literal("wrapReverse")]).optional().nullable(),
-      gap: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(4), z.literal(8)]).optional().nullable()
-    })),
-    from: '@/components/ui/ui-builder/flexbox'
-  },
-  ReactFunctionComplexTypes: {
-    component: ReactFunctionComplexTypes,
-    from: '@/components/ui/ReactFunctionComplexTypes',
-    schema: z.object({
-      stringProp: z.string(),
-      numberProp: z.number(),
-      booleanProp: z.boolean(),
-      bigintProp: z.bigint(),
-      optionalString: z.string().optional(),
-      optionalNumber: z.number().optional(),
-      optionalBoolean: z.boolean().optional(),
-      optionalBigint: z.bigint().optional(),
-      userArray: z.array(z.object({
-        id: z.number(),
-        name: z.string()
-      })),
-      productList: z.array(z.object({
-        code: z.string(),
-        price: z.number()
-      })),
-      address: z.object({
-        street: z.string(),
-        city: z.string(),
-        zipCode: z.string()
-      }),
-      colorOrNumber: z.string().and(z.object({
-        r: z.number(),
-        g: z.number(),
-        b: z.number()
-      })),
-      statusOrCode: z.union([z.number(), z.literal("active"), z.literal("inactive")]),
-      mixedTuple: z.tuple([z.string(), z.number(), z.boolean()]).and(z.object({
-        length: z.literal(3)
-      })),
-      userRole: z.union([z.literal("admin"), z.literal("user"), z.literal("guest")]),
-      children: z.any(),
-      className: z.string(),
-      style: z.any()
-    })
-  },
-  CodePanel: {
-    component: CodePanel,
-    schema: z.object({
-      className: z.string().optional(),
-    }),
-    from: '@/components/ui/ui-builder/code-panel'
-  }
-};
-
-export interface CustomComponentType<T = any> {
-  name: keyof typeof componentRegistry;
-  component: ReactComponentType<T>;
-  schema: ZodObject<any>;
-}
 
 export type LayerType = keyof typeof componentRegistry | '_text_';
 
@@ -169,7 +46,7 @@ export type PageLayer = {
   children: Layer[];
 }
 
-interface ComponentStore {
+interface LayerStore {
   pages: PageLayer[];
   selectedLayerId: string | null;
   selectedPageId: string;
@@ -182,20 +59,13 @@ interface ComponentStore {
   updateLayer: (layerId: string, newProps: Record<string, any>, layerRest?: Partial<Omit<Layer, 'props'>>) => void;
   selectLayer: (layerId: string) => void;
   selectPage: (pageId: string) => void;
-  reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => void;
   findLayerById: (layerId: string | null) => Layer | undefined;
   findLayersForPageId: (pageId: string) => Layer[];
 }
 
-const store: StateCreator<ComponentStore, [], []> = (set, get) => (
+const store: StateCreator<LayerStore, [], []> = (set, get) => (
   {
-
-    // components: Object.entries(componentRegistry).map(([name, { component, schema }]) => ({
-    //   name: name as keyof typeof componentRegistry,
-    //   component,
-    //   schema,
-    // })),
-
+    // Default to a single empty page
     pages: [
       {
         id: '1',
@@ -209,7 +79,7 @@ const store: StateCreator<ComponentStore, [], []> = (set, get) => (
     selectedLayerId: null,
     selectedPageId: '1',
     initialize: (pages: PageLayer[]) => {
-      set({ pages });
+      set({ pages, selectedPageId: pages[0].id });
       console.log("Store initialized with", { pages });
     },
     findLayerById: (layerId: string | null) => {
@@ -228,7 +98,7 @@ const store: StateCreator<ComponentStore, [], []> = (set, get) => (
       return page?.children || [];
     },
 
-    addComponentLayer: (layerType: keyof typeof componentRegistry, parentId: string, parentPosition?: number) => set(produce((state: ComponentStore) => {
+    addComponentLayer: (layerType: keyof typeof componentRegistry, parentId: string, parentPosition?: number) => set(produce((state: LayerStore) => {
       const defaultProps = getDefaultProps(componentRegistry[layerType].schema);
 
       const initialProps = Object.entries(defaultProps).reduce((acc, [key, propDef]) => {
@@ -254,7 +124,7 @@ const store: StateCreator<ComponentStore, [], []> = (set, get) => (
       };
     })),
 
-    addTextLayer: (text: string, textType: 'text' | 'markdown', parentId: string, parentPosition?: number) => set(produce((state: ComponentStore) => {
+    addTextLayer: (text: string, textType: 'text' | 'markdown', parentId: string, parentPosition?: number) => set(produce((state: LayerStore) => {
       const newLayer: TextLayer = {
         id: createId(),
         type: '_text_',
@@ -272,7 +142,7 @@ const store: StateCreator<ComponentStore, [], []> = (set, get) => (
       };
     })),
 
-    addPageLayer: (pageName: string) => set(produce((state: ComponentStore) => {
+    addPageLayer: (pageName: string) => set(produce((state: LayerStore) => {
       const newPage: PageLayer = {
         id: createId(),
         type: '_page_',
@@ -286,7 +156,7 @@ const store: StateCreator<ComponentStore, [], []> = (set, get) => (
       };
     })),
 
-    duplicateLayer: (layerId: string) => set(produce((state: ComponentStore) => {
+    duplicateLayer: (layerId: string) => set(produce((state: LayerStore) => {
       let layerToDuplicate: Layer | undefined;
       let parentId: string | undefined;
       let parentPosition: number | undefined;
@@ -313,7 +183,7 @@ const store: StateCreator<ComponentStore, [], []> = (set, get) => (
       const duplicateWithNewIdsAndName = (layer: Layer, addCopySuffix: boolean = true): Layer => {
         const newLayer: Layer = { ...layer, id: createId() };
         if (layer.name) {
-          newLayer.name = `${ layer.name } (Copy)`;
+          newLayer.name = `${ layer.name }${ addCopySuffix ? ' (Copy)' : ''}`;
         }
         if (hasChildren(newLayer) && hasChildren(layer)) {
           newLayer.children = layer.children.map(child => duplicateWithNewIdsAndName(child, addCopySuffix));
@@ -346,7 +216,7 @@ const store: StateCreator<ComponentStore, [], []> = (set, get) => (
       };
     })),
 
-    removeLayer: (layerId: string) => set(produce((state: ComponentStore) => {
+    removeLayer: (layerId: string) => set(produce((state: LayerStore) => {
       const { selectedLayerId, pages, findLayerById } = get();
 
       let newSelectedLayerId = selectedLayerId;
@@ -387,7 +257,7 @@ const store: StateCreator<ComponentStore, [], []> = (set, get) => (
     })),
 
     updateLayer: (layerId: string, newProps: Layer['props'], layerRest?: Partial<Omit<Layer, 'props'>>) => set(
-      produce((state: ComponentStore) => {
+      produce((state: LayerStore) => {
         const { selectedPageId, findLayersForPageId, pages } = get();
 
         if (!selectedPageId) {
@@ -449,7 +319,7 @@ const store: StateCreator<ComponentStore, [], []> = (set, get) => (
     ),
 
 
-    selectLayer: (layerId: string) => set(produce((state: ComponentStore) => {
+    selectLayer: (layerId: string) => set(produce((state: LayerStore) => {
       const { selectedPageId, findLayersForPageId } = get();
       if (!selectedPageId) return state;
       const layers = findLayersForPageId(selectedPageId);
@@ -463,58 +333,20 @@ const store: StateCreator<ComponentStore, [], []> = (set, get) => (
       return {};
     })),
 
-    selectPage: (pageId: string) => set(produce((state: ComponentStore) => {
+    selectPage: (pageId: string) => set(produce((state: LayerStore) => {
       const page = state.pages.find(page => page.id === pageId);
       if (!page) return state;
       return {
         selectedPageId: pageId
       };
     })),
-
-    reorderChildrenLayers: (parentId: string, orderedChildrenIds: string[]) => set(produce((state: ComponentStore) => {
-
-      const { pages } = get();
-
-      // Define the visitor function
-      const visitor = (layer: Layer, parent: Layer | null): Layer => {
-        if (layer.id === parentId && hasChildren(layer)) {
-          if (!layer.children) {
-            // If the parent layer has no children, return it unchanged
-            return layer;
-          }
-
-          // Reorder children based on orderedChildrenIds
-          const newChildren = orderedChildrenIds
-            .map(id => layer.children!.find(child => child.id === id))
-            .filter(child => child !== undefined) as Layer[];
-
-          return {
-            ...layer,
-            children: newChildren,
-          };
-        }
-
-        return layer;
-      };
-
-      // Apply the visitor to all layers
-      const updatedPages = pages.map(page => ({
-        ...page,
-        children: page.children.map(layer => visitLayer(layer, null, visitor)),
-      }));
-
-      return {
-        ...state,
-        pages: updatedPages,
-      };
-    })),
   }
 )
 
-const useComponentStore = create(persist(temporal<ComponentStore>(store,
+const useLayerStore = create(persist(temporal<LayerStore>(store,
   {
-    onSave: (pastState: ComponentStore, currentState: ComponentStore) => {
-      console.log("onSave", {previousState:pastState, currentState });
+    onSave: (pastState: LayerStore, currentState: LayerStore) => {
+      // console.log("Temporal Store onSave", { previousState: pastState, currentState });
     },
     equality: (pastState, currentState) =>
       isDeepEqual(pastState, currentState),
@@ -525,4 +357,4 @@ const useComponentStore = create(persist(temporal<ComponentStore>(store,
   storage: createJSONStorage(() => localStorage),
 }))
 
-export { useComponentStore, componentRegistry, isTextLayer, isPageLayer, countLayers };
+export { useLayerStore, componentRegistry, isTextLayer, isPageLayer, countLayers };

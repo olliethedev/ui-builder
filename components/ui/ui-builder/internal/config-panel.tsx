@@ -1,10 +1,10 @@
 import React, { useCallback } from "react";
 import { z } from "zod";
 import {
-  useComponentStore,
+  useLayerStore,
   PageLayer,
   Layer,
-} from "@/lib/ui-builder/store/component-store";
+} from "@/lib/ui-builder/store/layer-store";
 import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
 import { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
@@ -19,7 +19,7 @@ export const ConfigPanel = () => {
     duplicateLayer,
     updateLayer,
     pages,
-  } = useComponentStore();
+  } = useLayerStore();
 
   
 

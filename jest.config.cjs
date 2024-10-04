@@ -10,6 +10,15 @@ const customJestConfig = {
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   testEnvironment: "jsdom",
   testRegex: ".*\\.test\\.[jt]sx?$",
+  moduleNameMapper: {
+    "react-markdown": "<rootDir>/__tests__/__mocks__/react-markdown.js"
+  },
+  collectCoverage: true,
+  collectCoverageFrom: [
+    "components/ui/ui-builder/**/*.{js,jsx,ts,tsx}",
+    "lib/ui-builder/**/*.{js,jsx,ts,tsx}",
+    // Add more folders as needed
+  ],
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

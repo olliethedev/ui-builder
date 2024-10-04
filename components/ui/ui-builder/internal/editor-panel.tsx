@@ -3,8 +3,8 @@ import {
   countLayers,
   Layer,
   PageLayer,
-  useComponentStore,
-} from "@/lib/ui-builder/store/component-store";
+  useLayerStore,
+} from "@/lib/ui-builder/store/layer-store";
 import { DividerControl } from "@/components/ui/ui-builder/internal/divider-control";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
     duplicateLayer,
     removeLayer,
     selectedPageId,
-  } = useComponentStore();
+  } = useLayerStore();
   const selectedLayer = findLayerById(selectedLayerId) as Layer;
   const selectedPage = findLayerById(selectedPageId) as PageLayer;
 

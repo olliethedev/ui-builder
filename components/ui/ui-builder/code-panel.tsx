@@ -1,14 +1,14 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   PageLayer,
-  useComponentStore,
-} from "@/lib/ui-builder/store/component-store";
+  useLayerStore,
+} from "@/lib/ui-builder/store/layer-store";
 import { pageLayerToCode } from "@/components/ui/ui-builder/internal/templates";
 import { CodeBlock } from "@/components/ui/ui-builder/codeblock";
 import { cn } from "@/lib/utils";
 export function CodePanel({className}: {className?: string}) {
     
-  const { selectedPageId, findLayerById } = useComponentStore();
+  const { selectedPageId, findLayerById } = useLayerStore();
 
   const page = findLayerById(selectedPageId) as PageLayer;
   const codeBlocks = {
@@ -36,7 +36,7 @@ const CodeContent = ({
         <TabsTrigger value="serialized">Serialized</TabsTrigger>
       </TabsList>
       {Object.entries(codeBlocks).map(([lang, code]) => (
-        <TabsContent key={lang} value={lang} className="mt-4">
+        <TabsContent key={lang} value={lang}>
           <div className="relative">
             <div className="overflow-auto max-h-[400px] w-full">
               <CodeBlock language="tsx" value={code} />

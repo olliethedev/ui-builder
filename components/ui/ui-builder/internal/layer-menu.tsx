@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import {
   componentRegistry,
   isTextLayer,
-  useComponentStore,
-} from "@/lib/ui-builder/store/component-store";
+  useLayerStore,
+} from "@/lib/ui-builder/store/layer-store";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +32,7 @@ export const LayerMenu: React.FC<MenuProps> = ({
 }) => {
 
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const selectedLayer = useComponentStore((state) =>
+  const selectedLayer = useLayerStore((state) =>
     state.findLayerById(layerId)
   );
 

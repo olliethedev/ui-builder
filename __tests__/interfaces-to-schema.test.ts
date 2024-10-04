@@ -1,5 +1,5 @@
-import { interfacesToSchema } from '../lib/ui-builder/interfaces-to-schema';
-import { PropInterfaceData } from '../lib/ui-builder/doc-to-interface';
+import { interfacesToSchema } from '../lib/ui-builder/scripts/interfaces-to-schema';
+import { PropInterfaceData } from '../lib/ui-builder/scripts/doc-to-interface';
 import { normalizeSchema } from './test-utils';
 
 describe('interfacesToSchema', () => {

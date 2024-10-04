@@ -9,8 +9,8 @@ import { CheckIcon, InfoIcon, MoonIcon, SunIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   PageLayer,
-  useComponentStore,
-} from "@/lib/ui-builder/store/component-store";
+  useLayerStore,
+} from "@/lib/ui-builder/store/layer-store";
 import { Toggle } from "@/components/ui/toggle";
 import { themeToStyleVars } from "@/components/ui/ui-builder/theme-utils";
 
@@ -19,7 +19,7 @@ export function ThemePanel() {
     selectedPageId,
     updateLayer: updateLayerProps,
     findLayerById,
-  } = useComponentStore();
+  } = useLayerStore();
   const selectedPageData = findLayerById(selectedPageId) as PageLayer;
   const [isCustomTheme, setIsCustomTheme] = useState(
     selectedPageData?.props.colorTheme !== undefined
@@ -65,7 +65,7 @@ function ThemePicker({
   isDisabled: boolean;
   pageLayer: PageLayer;
 }) {
-  const { updateLayer: updateLayerProps } = useComponentStore();
+  const { updateLayer: updateLayerProps } = useLayerStore();
 
   const [colorTheme, setColorTheme] = useState<BaseColor["name"]>(
     pageLayer.props?.colorTheme || "red"

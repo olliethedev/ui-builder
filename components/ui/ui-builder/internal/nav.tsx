@@ -24,9 +24,9 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  useComponentStore,
+  useLayerStore,
   PageLayer,
-} from "@/lib/ui-builder/store/component-store";
+} from "@/lib/ui-builder/store/layer-store";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { CodeBlock } from "@/components/ui/ui-builder/codeblock";
 import { useTheme } from "next-themes";
@@ -60,9 +60,9 @@ import { CodePanel } from "@/components/ui/ui-builder/code-panel";
 const Z_INDEX = 1000;
 
 export function NavBar() {
-  const { selectedPageId, findLayerById } = useComponentStore();
+  const { selectedPageId, findLayerById } = useLayerStore();
   const { undo, redo, futureStates, pastStates } =
-    useComponentStore.temporal.getState();
+    useLayerStore.temporal.getState();
 
   const page = findLayerById(selectedPageId) as PageLayer;
 
@@ -255,7 +255,7 @@ function ModeToggle() {
 
 function PagesPopover() {
   const { pages, selectedPageId, addPageLayer, selectPage } =
-    useComponentStore();
+    useLayerStore();
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [selectedPage, setSelectedPage] = useState<string | null>(

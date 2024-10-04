@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { componentRegistry, useComponentStore } from "@/lib/ui-builder/store/component-store";
+import { componentRegistry, useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { cn } from "@/lib/utils";
 import { PlusIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -67,7 +67,7 @@ export function AddComponentsPopover({
   const {
     addComponentLayer,
     addTextLayer,
-  } = useComponentStore();
+  } = useLayerStore();
 
 
   const handleAddComponentLayer = useCallback(

@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hasChildren } from "@/lib/ui-builder/store/layer-utils";
-import { useComponentStore } from "@/lib/ui-builder/store/component-store";
-import { Layer } from "@/lib/ui-builder/store/component-store";
+import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { Layer } from "@/lib/ui-builder/store/layer-store";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +46,7 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
     removeLayer,
     duplicateLayer,
     updateLayer,
-  } = useComponentStore();
+  } = useLayerStore();
 
   const [isRenaming, setIsRenaming] = useState(false);
 

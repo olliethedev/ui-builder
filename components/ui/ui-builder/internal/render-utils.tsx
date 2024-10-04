@@ -4,10 +4,10 @@ import {
   isTextLayer,
   Layer,
   PageLayer,
-} from "@/lib/ui-builder/store/component-store";
+} from "@/lib/ui-builder/store/layer-store";
 import { Markdown } from "@/components/ui/ui-builder/markdown";
 import { ClickableWrapper } from "@/components/ui/ui-builder/internal/clickable-wrapper";
-import { componentRegistry } from "@/lib/ui-builder/store/component-store";
+import { componentRegistry } from "@/lib/ui-builder/store/layer-store";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallback";
@@ -39,9 +39,10 @@ export const renderPage = (page: PageLayer, editorConfig?: EditorConfig) => {
         })`,
       }
     : {};
-    
+
   return (
     <div
+      data-testid={page.id}
       className="flex flex-col w-full overflow-y-visible relative"
       style={{
         ...style,
@@ -54,14 +55,16 @@ export const renderPage = (page: PageLayer, editorConfig?: EditorConfig) => {
   );
 };
 
-const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
+export const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
   if (isTextLayer(layer)) {
     const TextComponent = layer.textType === "markdown" ? Markdown : "span";
 
     if (!editorConfig) {
       return (
-        <ErrorSuspenseWrapper id={layer.id}>
-          <TextComponent {...layer.props}>{layer.text}</TextComponent>
+        <ErrorSuspenseWrapper key={layer.id} id={layer.id}>
+          <TextComponent data-testid={layer.id} {...layer.props}>
+            {layer.text}
+          </TextComponent>
         </ErrorSuspenseWrapper>
       );
     } else {
@@ -85,7 +88,9 @@ const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
           onDeleteLayer={handleDeleteLayer}
         >
           <ErrorSuspenseWrapper id={layer.id}>
-            <TextComponent {...layer.props}>{layer.text}</TextComponent>
+            <TextComponent data-testid={layer.id} {...layer.props}>
+              {layer.text}
+            </TextComponent>
           </ErrorSuspenseWrapper>
         </ClickableWrapper>
       );
@@ -112,8 +117,8 @@ const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
 
   if (!editorConfig) {
     return (
-      <ErrorSuspenseWrapper id={layer.id}>
-        <Component {...(childProps as any)} />
+      <ErrorSuspenseWrapper key={layer.id} id={layer.id}>
+        <Component data-testid={layer.id} {...(childProps as any)} />
       </ErrorSuspenseWrapper>
     );
   } else {
@@ -137,7 +142,7 @@ const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
         onDeleteLayer={handleDeleteLayer}
       >
         <ErrorSuspenseWrapper id={layer.id}>
-          <Component {...(childProps as any)} />
+          <Component data-testid={layer.id} {...(childProps as any)} />
         </ErrorSuspenseWrapper>
       </ClickableWrapper>
     );
@@ -148,7 +153,7 @@ const ErrorSuspenseWrapper: React.FC<{
   id: string;
   children: React.ReactNode;
 }> = ({ id, children }) => (
-  <ErrorBoundary key={id} fallbackRender={ErrorFallback}>
+  <ErrorBoundary fallbackRender={ErrorFallback}>
     <Suspense key={id} fallback={<div>Loading...</div>}>
       {children}
     </Suspense>

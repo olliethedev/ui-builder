@@ -2,7 +2,7 @@ import React  from "react";
 
 import {
   PageLayer,
-} from "@/lib/ui-builder/store/component-store";
+} from "@/lib/ui-builder/store/layer-store";
 import { EditorConfig, renderPage } from "@/components/ui/ui-builder/internal/render-utils";
 
 interface LayerRendererProps {
