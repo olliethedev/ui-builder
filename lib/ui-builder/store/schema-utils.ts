@@ -25,8 +25,7 @@ export function patchSchema(schema: ZodObject<any>): ZodObject<any> {
     const schemaWithFixedEnums = transformUnionToEnum(schema);
     const schemaWithCoercedTypes = addCoerceToNumberAndDate(schemaWithFixedEnums);
     const schemaWithCommon = addCommon(schemaWithCoercedTypes);
-    //log the patched schema in a readable way
-    console.log({ patchSchema: schemaWithCommon.shape });
+
     return schemaWithCommon;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import LayersPanel from "@/components/ui/ui-builder/internal/layers-panel";
 import EditorPanel from "@/components/ui/ui-builder/internal/editor-panel";
 import PropsPanel from "@/components/ui/ui-builder/internal/props-panel";
@@ -15,12 +15,51 @@ import {
 } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
+import {
+  PageLayer,
+  useComponentStore,
+} from "@/lib/ui-builder/store/component-store";
+import { useStore } from "@/lib/hooks/use-store";
 
-const ComponentEditor = () => {
+interface ComponentEditorProps {
+  initialLayers?: PageLayer[];
+}
+
+const ComponentEditor = ({ initialLayers }: ComponentEditorProps) => {
+  const store = useStore(useComponentStore, (state) => state);
+  const [initialized, setInitialized] = useState(false);
+  useEffect(() => {
+    if (store) {
+    if (initialLayers && !initialized) {
+      store?.initialize(initialLayers);
+      setInitialized(true);
+      const { clear } = useComponentStore.temporal.getState();
+      clear();
+    } else {
+      setInitialized(true);
+    }
+  }
+  }, [initialLayers, store, initialized]);
+  const layout = !store || !initialized ? <LoadingSkeleton /> : <MainLayout />;
+  return (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      {layout}
+    </ThemeProvider>
+  );
+};
+
+function MainLayout() {
   const mainPanels = [
     {
       title: "Page Config",
-      content: <PageConfigPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />,
+      content: (
+        <PageConfigPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />
+      ),
       defaultSize: 25,
     },
     {
@@ -30,71 +69,64 @@ const ComponentEditor = () => {
     },
     {
       title: "Props",
-      content: <PropsPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />,
+      content: (
+        <PropsPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />
+      ),
       defaultSize: 25,
     },
   ];
 
   const [selectedPanel, setSelectedPanel] = useState(mainPanels[0]);
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
+    <div
+      data-testid="component-editor"
+      className="flex flex-col w-full flex-grow h-screen"
     >
-      <div
-        data-testid="component-editor"
-        className="flex flex-col w-full flex-grow h-screen"
-      >
-        <NavBar />
-        {/* Desktop Layout */}
-        <div className="hidden md:flex flex-1 overflow-hidden">
-          <ResizablePanelGroup
-            direction="horizontal"
-            className="flex overflow-hidden flex-1"
-          >
+      <NavBar />
+      {/* Desktop Layout */}
+      <div className="hidden md:flex flex-1 overflow-hidden">
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="flex overflow-hidden flex-1"
+        >
+          {mainPanels.map((panel, index) => (
+            <React.Fragment key={panel.title}>
+              {index > 0 && <ResizableHandle withHandle />}
+              <ResizablePanel
+                defaultSize={panel.defaultSize}
+                minSize={15}
+                className="min-h-full flex-1"
+              >
+                {panel.content}
+              </ResizablePanel>
+            </React.Fragment>
+          ))}
+        </ResizablePanelGroup>
+      </div>
+      {/* Mobile Layout */}
+      <div className="flex size-full flex-col md:hidden overflow-hidden ">
+        {selectedPanel.content}
+        <div className="absolute bottom-4 left-4 right-4 z-50">
+          <div className="flex justify-center rounded-full bg-primary p-2 shadow-lg">
             {mainPanels.map((panel, index) => (
-              <React.Fragment key={panel.title}>
-                {index > 0 && <ResizableHandle withHandle />}
-                <ResizablePanel
-                  defaultSize={panel.defaultSize}
-                  minSize={15}
-                  className="min-h-full flex-1"
-                >
-                  {panel.content}
-                </ResizablePanel>
-              </React.Fragment>
+              <Button
+                key={panel.title}
+                variant={
+                  selectedPanel.title !== panel.title ? "default" : "secondary"
+                }
+                size="sm"
+                className="flex-1"
+                onClick={() => setSelectedPanel(panel)}
+              >
+                {panel.title}
+              </Button>
             ))}
-          </ResizablePanelGroup>
-        </div>
-        {/* Mobile Layout */}
-        <div className="flex size-full flex-col md:hidden overflow-hidden ">
-          {selectedPanel.content}
-          <div className="absolute bottom-4 left-4 right-4 z-50">
-            <div className="flex justify-center rounded-full bg-primary p-2 shadow-lg">
-              {mainPanels.map((panel, index) => (
-                <Button
-                  key={panel.title}
-                  variant={
-                    selectedPanel.title !== panel.title
-                      ? "default"
-                      : "secondary"
-                  }
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => setSelectedPanel(panel)}
-                >
-                  {panel.title}
-                </Button>
-              ))}
-            </div>
           </div>
         </div>
       </div>
-    </ThemeProvider>
+    </div>
   );
-};
+}
 
 function PageConfigPanel({ className }: { className: string }) {
   return (
@@ -113,6 +145,19 @@ function PageConfigPanel({ className }: { className: string }) {
         </div>
       </TabsContent>
     </Tabs>
+  );
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="flex flex-col flex-1 gap-1 bg-secondary/90">
+      <div className="w-full h-16 animate-pulse bg-background rounded-md"></div>
+      <div className="flex flex-1 gap-1">
+        <div className="w-1/4 animate-pulse bg-background rounded-md"></div>
+        <div className="w-1/2 animate-pulse bg-muted-background/90 rounded-md"></div>
+        <div className="w-1/4 animate-pulse bg-background rounded-md"></div>
+      </div>
+    </div>
   );
 }
 

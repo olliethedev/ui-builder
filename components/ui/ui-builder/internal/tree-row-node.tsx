@@ -9,9 +9,9 @@ import {
   Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { hasChildren } from "@/components/ui/ui-builder/internal/store/layer-utils";
-import { useComponentStore } from "@/components/ui/ui-builder/internal/store/component-store";
-import { Layer } from "@/components/ui/ui-builder/internal/store/component-store";
+import { hasChildren } from "@/lib/ui-builder/store/layer-utils";
+import { useComponentStore } from "@/lib/ui-builder/store/component-store";
+import { Layer } from "@/lib/ui-builder/store/component-store";
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -1,5 +1,5 @@
 import { BaseColor } from "@/components/ui/ui-builder/internal/base-colors";
-import { PageLayer } from "@/components/ui/ui-builder/internal/store/component-store";
+import { PageLayer } from "@/lib/ui-builder/store/component-store";
 
 export function getPageStyles(page: PageLayer) {
   const themeColors = page?.props?.themeColors as BaseColor | undefined;

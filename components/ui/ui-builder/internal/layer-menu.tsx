@@ -5,7 +5,7 @@ import {
   componentRegistry,
   isTextLayer,
   useComponentStore,
-} from "@/components/ui/ui-builder/internal/store/component-store";
+} from "@/lib/ui-builder/store/component-store";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { cn } from "@/lib/utils";
 

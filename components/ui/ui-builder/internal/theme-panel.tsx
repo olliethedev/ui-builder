@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import {
   PageLayer,
   useComponentStore,
-} from "@/components/ui/ui-builder/internal/store/component-store";
+} from "@/lib/ui-builder/store/component-store";
 import { Toggle } from "@/components/ui/toggle";
 import { themeToStyleVars } from "@/components/ui/ui-builder/theme-utils";
 
@@ -46,7 +46,7 @@ export function ThemePanel() {
       </Toggle>
       {!isCustomTheme && (
         <span className="flex items-center gap-2">
-          <InfoIcon className="size-4" /> Using Default Theme
+          <InfoIcon className="size-4" /> Using Your Project's Theme
         </span>
       )}
       {selectedPageData && (

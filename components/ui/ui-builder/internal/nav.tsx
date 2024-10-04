@@ -26,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useComponentStore,
   PageLayer,
-} from "@/components/ui/ui-builder/internal/store/component-store";
+} from "@/lib/ui-builder/store/component-store";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { CodeBlock } from "@/components/ui/ui-builder/codeblock";
 import { useTheme } from "next-themes";
@@ -55,6 +55,7 @@ import { Input } from "@/components/ui/input";
 import { PlusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { pageLayerToCode } from "@/components/ui/ui-builder/internal/templates";
+import { CodePanel } from "@/components/ui/ui-builder/code-panel";
 
 const Z_INDEX = 1000;
 
@@ -66,11 +67,6 @@ export function NavBar() {
   const page = findLayerById(selectedPageId) as PageLayer;
 
   const layers = page?.children || [];
-  console.log({
-    layers,
-    futureStates: JSON.stringify(futureStates),
-    pastStates: JSON.stringify(pastStates),
-  });
 
   const canUndo = !!pastStates.length;
   const canRedo = !!futureStates.length;
@@ -178,7 +174,7 @@ export function NavBar() {
         </Button>
         <div className="h-10 flex w-px bg-border"></div>
         <PreviewDialog page={page} />
-        <CodeDialog codeBlocks={codeBlocks} />
+        <CodeDialog />
         <div className="h-10 flex w-px bg-border"></div>
         <ModeToggle />
       </div>
@@ -203,17 +199,13 @@ const PreviewDialog = ({ page }: { page: PageLayer }) => {
             <span className="text-lg font-semibold">Page Preview</span>
           </DialogTitle>
         </DialogHeader>
-        <LayerRenderer className="w-full h-full flex flex-col" page={page} />
+        <LayerRenderer className="w-full h-full flex flex-col overflow-x-hidden" page={page} />
       </DialogContentWithZIndex>
     </Dialog>
   );
 };
 
-const CodeDialog = ({
-  codeBlocks,
-}: {
-  codeBlocks: Record<"React" | "Serialized", string>;
-}) => {
+const CodeDialog = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -228,21 +220,7 @@ const CodeDialog = ({
         <DialogHeader>
           <DialogTitle>Generated Code</DialogTitle>
         </DialogHeader>
-        <Tabs defaultValue="react" className="w-full overflow-hidden">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="React">React</TabsTrigger>
-            <TabsTrigger value="Serialized">Serialized</TabsTrigger>
-          </TabsList>
-          {Object.entries(codeBlocks).map(([lang, code]) => (
-            <TabsContent key={lang} value={lang} className="mt-4">
-              <div className="relative">
-                <div className="overflow-auto max-h-[400px] w-full">
-                  <CodeBlock language="tsx" value={code} />
-                </div>
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
+        <CodePanel />
       </DialogContentWithZIndex>
     </Dialog>
   );

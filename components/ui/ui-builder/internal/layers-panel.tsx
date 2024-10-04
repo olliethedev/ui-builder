@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import {
   Layer,
   useComponentStore,
-} from "@/components/ui/ui-builder/internal/store/component-store";
+} from "@/lib/ui-builder/store/component-store";
 import { cn } from "@/lib/utils";
-import { hasChildren as layerHasChildren } from "./store/layer-utils";
+import { hasChildren as layerHasChildren } from "../../../../lib/ui-builder/store/layer-utils";
 import { useHeTree, Id } from "he-tree-react";
 import { TreeRowNode, TreeRowPlaceholder } from "./tree-row-node";
 

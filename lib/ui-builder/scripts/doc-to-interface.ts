@@ -22,10 +22,6 @@ export type PropInterfaceData = {
  * @returns The TypeScript interface as a string.
  */
 export function docToInterface(doc: ComponentDocWithIsDefault, rootDir: string, dirPart: string | undefined): PropInterfaceData {
-    //log all type names in doc
-    // Object.entries(doc.props).forEach(([propName, propData]) => {
-    //     console.log({ key: propName, type: propData.type.name, declarations: propData.declarations });
-    // });
 
     const path = dirPart ? dirPart.replace(rootDir, '') : '';
     let interfaceString = '';
@@ -34,13 +30,12 @@ export function docToInterface(doc: ComponentDocWithIsDefault, rootDir: string, 
     interfaceString += `export interface ${ doc.componentName }Props {\n`;
 
     Object.entries(doc.props).forEach(([propName, propData]) => {
-        // console.log({ propData });
+
         const optionalFlag = propData.required ? '' : '?';
         let propType = propData.type.name;
 
         // Check if the type is a function
         if (isFunctionType(propType)) {
-            console.log(`Type "${ propType }" identified as a function. Replacing with generic function type.`);
             propType = '(...args: any[]) => any';
         }
         // Validate the prop type
@@ -59,7 +54,7 @@ export function docToInterface(doc: ComponentDocWithIsDefault, rootDir: string, 
     // const relativePath = getRelativeImportPath(doc.filePath, rootDir, dirPart);
 
     const from = `@/components${ path }/${ getFilenameWithoutExtension(doc.filePath) }`;
-    // console.log({ from, dirPart });
+
     return {
         interfaceString,
         componentName,
@@ -125,7 +120,6 @@ function fixKey(key: string): string {
  * @returns The filename without the extension.
  */
 function getFilenameWithoutExtension(filepath: string): string {
-    // console.log(filepath);
     return path.basename(filepath, '.tsx');
 }
 

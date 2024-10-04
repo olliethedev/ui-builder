@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Layer } from "@/components/ui/ui-builder/internal/store/component-store";
+import { Layer } from "@/lib/ui-builder/store/component-store";
 import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
 import { cn } from "@/lib/utils";
 
@@ -136,7 +136,6 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
             isSelected ? "border-2 border-blue-500 hover:border-blue-500" : ""
           )}
           onWheel={(e) => {
-            console.log("wheel", e);
             const scrollParent = getScrollParent(e.target as HTMLElement);
             if (scrollParent) {
               scrollParent.scrollLeft += e.deltaX;

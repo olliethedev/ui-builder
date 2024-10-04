@@ -8,7 +8,7 @@ import {
   isTextLayer,
   TextLayer,
   Layer,
-} from "@/components/ui/ui-builder/internal/store/component-store";
+} from "@/lib/ui-builder/store/component-store";
 import {
   FormControl,
   FormDescription,
@@ -22,7 +22,7 @@ import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import ClassNameField from "@/components/ui/ui-builder/internal/classname-field";
-import { addDefaultValues } from "@/components/ui/ui-builder/internal/store/schema-utils";
+import { addDefaultValues } from "@/lib/ui-builder/store/schema-utils";
 import { Badge } from "@/components/ui/badge";
 
 interface PropsPanelProps {
@@ -79,7 +79,7 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
     }
   }, [selectedLayer?.id, duplicateLayer]);
 
-  const handleUpdateLayerProps = useCallback(
+  const handleUpdateLayer = useCallback(
     (
       id: string,
       props: Record<string, any>,
@@ -97,7 +97,7 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
         selectedLayer={selectedLayer}
         removeLayer={handleDeleteLayer}
         duplicateLayer={handleDuplicateLayer}
-        updateLayerProps={handleUpdateLayerProps}
+        updateLayer={handleUpdateLayer}
       />
     );
   }
@@ -107,7 +107,7 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
       selectedLayer={selectedLayer}
       removeLayer={handleDeleteLayer}
       duplicateLayer={handleDuplicateLayer}
-      updateLayerProps={handleUpdateLayerProps}
+      updateLayer={handleUpdateLayer}
     />
   );
 }
@@ -116,7 +116,7 @@ interface TextLayerFormProps {
   selectedLayer: TextLayer;
   removeLayer: (id: string) => void;
   duplicateLayer: (id: string) => void;
-  updateLayerProps: (
+  updateLayer: (
     id: string,
     props: Record<string, any>,
     rest?: Omit<Layer, "props" | "children">
@@ -127,7 +127,7 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
   selectedLayer,
   removeLayer,
   duplicateLayer,
-  updateLayerProps,
+  updateLayer,
 }) => {
   const schema = z.object({
     text: z.string(),
@@ -137,19 +137,16 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
 
   const handleSetValues = useCallback(
     (data: Partial<z.infer<typeof schema>>) => {
-      console.log("handleSetValues", { data });
-      console.log("old values", selectedLayer);
 
       // Merge the changed fields into the existing props
-      const mergedValues = { ...selectedLayer, ...data };
+      const {text, textType, className} = data;
+      const mergedValues = { ...selectedLayer, text, textType, props: { ...selectedLayer.props, className } };
 
       const { props, ...rest } = mergedValues;
 
-      // setValues(mergedValues);
-      console.log("calling updateLayerProps with", { props, rest });
-      updateLayerProps(selectedLayer.id, props, rest);
+      updateLayer(selectedLayer.id, props, rest);
     },
-    [selectedLayer.id, selectedLayer, updateLayerProps]
+    [selectedLayer.id, selectedLayer, updateLayer]
   );
 
   return (
@@ -210,12 +207,7 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
               label={label}
               isRequired={isRequired}
               className={selectedLayer.props.className}
-              onChange={(value) => {
-                console.log({ value });
-                updateLayerProps(selectedLayer.id, {
-                  className: value,
-                });
-              }}
+              onChange={field.onChange}
             />
           ),
         },
@@ -245,7 +237,7 @@ interface ComponentPropsAutoFormProps {
   selectedLayer: ComponentLayer;
   removeLayer: (id: string) => void;
   duplicateLayer: (id: string) => void;
-  updateLayerProps: (id: string, props: Record<string, any>) => void;
+  updateLayer: (id: string, props: Record<string, any>) => void;
 }
 
 const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
@@ -254,14 +246,8 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
       selectedLayer,
       removeLayer,
       duplicateLayer,
-      updateLayerProps,
+      updateLayer,
     }: ComponentPropsAutoFormProps) => {
-      console.log(
-        "autoform rerender for",
-        selectedLayer.id,
-        "with props",
-        selectedLayer.props
-      );
 
       const [values, setValues] = useState<Partial<z.infer<typeof schema>>>(
         selectedLayer.props
@@ -275,8 +261,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
 
       const handleSetValues = useCallback(
         (data: Partial<z.infer<typeof schema>>) => {
-          console.log("handleSetValues", { data });
-          console.log("old values", selectedLayer.props);
 
           // Identify keys that have changed by comparing new data with existing props
           const changedFields = Object.keys(data).reduce(
@@ -292,21 +276,17 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
             {} as Partial<z.infer<typeof schema>>
           );
 
-          console.log("changed fields", changedFields);
-
           const hasChanges = Object.keys(changedFields).length > 0;
 
           if (hasChanges) {
-            console.log("updating layer props with", changedFields);
-
             // Merge the changed fields into the existing props
             const mergedValues = { ...selectedLayer.props, ...changedFields };
 
             // setValues(mergedValues);
-            updateLayerProps(selectedLayer.id, mergedValues);
+            updateLayer(selectedLayer.id, mergedValues);
           }
         },
-        [selectedLayer.id, selectedLayer.props, updateLayerProps, setValues]
+        [selectedLayer.id, selectedLayer.props, updateLayer, setValues]
       );
 
       const defualtFieldConfig = Object.fromEntries(
@@ -320,8 +300,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
           },
         ])
       );
-      console.log({ defualtFieldConfig });
-      console.log({ initialValues: selectedLayer.props });
 
       return (
         <AutoForm
@@ -383,13 +361,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
                         label={label}
                         isRequired={isRequired}
                         className={selectedLayer.props.className}
-                        onChange={(value) => {
-                          console.log({ value });
-                          updateLayerProps(selectedLayer.id, {
-                            ...selectedLayer.props,
-                            className: value,
-                          });
-                        }}
+                        onChange={field.onChange}
                       />
                     ),
                   },
@@ -428,7 +400,6 @@ function ChildrenSearchableMultiSelect({
   field,
   removeLayer,
 }: ChildrenInputProps) {
-  console.log("ChildrenSearchableMultiSelect", "render");
 
   const { selectedLayerId, findLayerById } = useComponentStore();
   const selectedLayer = findLayerById(selectedLayerId);

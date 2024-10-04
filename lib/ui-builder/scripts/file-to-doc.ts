@@ -51,11 +51,9 @@ export function fileToDoc(filePath: string): ComponentDocWithIsDefault[] {
   const sourceFile = project.addSourceFileAtPath(filePath);
 
   const exportNames = getExportNames(sourceFile);
-  console.log({exportNames});
 
   return docs.map((doc) => {
     const exportInfo = exportNames.find((exp) => {
-        // console.log({docDisplayName: doc.displayName, expDisplayName: exp.displayName, expName: exp.name, expIsDefault: exp.isDefault});
         return exp.displayName === doc.displayName || exp.name.toLowerCase() === doc.displayName.toLowerCase();
     });
     const isDefault = exportInfo ? exportInfo.isDefault : false;

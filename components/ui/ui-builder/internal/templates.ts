@@ -1,9 +1,9 @@
 // templates.ts
 
-import { PageLayer, Layer, isPageLayer, isTextLayer, componentRegistry } from "@/components/ui/ui-builder/internal/store/component-store";
+import { PageLayer, Layer, isPageLayer, isTextLayer, componentRegistry } from "@/lib/ui-builder/store/component-store";
 
 import template from "lodash/template";
-import { hasChildren } from "./store/layer-utils";
+import { hasChildren } from "../../../../lib/ui-builder/store/layer-utils";
 
 export const pageLayerToCode = (page: PageLayer) => {
     const layers = page.children;

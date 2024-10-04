@@ -4,12 +4,12 @@ import {
   useComponentStore,
   PageLayer,
   Layer,
-} from "@/components/ui/ui-builder/internal/store/component-store";
+} from "@/lib/ui-builder/store/component-store";
 import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
 import { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
 import ClassNameField from "./classname-field";
-import { addDefaultValues } from "./store/schema-utils";
+import { addDefaultValues } from "../../../../lib/ui-builder/store/schema-utils";
 
 export const ConfigPanel = () => {
   const {
@@ -20,6 +20,8 @@ export const ConfigPanel = () => {
     updateLayer,
     pages,
   } = useComponentStore();
+
+  
 
   const selectedLayer = findLayerById(selectedPageId) as PageLayer;
 
@@ -84,17 +86,12 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
 
   const handleSetValues = useCallback(
     (data: Partial<z.infer<typeof schema>>) => {
-      console.log("handleSetValues", { data });
-      console.log("old values", selectedLayer);
-
       const { name, className } = data;
 
       // Merge the changed fields into the existing layer
       const mergedValues = { ...selectedLayer, name, props: { className } };
-
       const { props, ...rest } = mergedValues;
 
-      console.log("calling updateLayerProps with", { props, rest });
       updateLayerProps(selectedLayer.id, props, rest);
     },
     [selectedLayer.id, selectedLayer, updateLayerProps]
@@ -135,7 +132,6 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
               isRequired={isRequired}
               className={selectedLayer.props.className}
               onChange={(value) => {
-                console.log({ value });
                 updateLayerProps(selectedLayer.id, {
                   className: value,
                 });

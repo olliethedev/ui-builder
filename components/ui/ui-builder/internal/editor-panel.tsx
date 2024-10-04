@@ -4,7 +4,7 @@ import {
   Layer,
   PageLayer,
   useComponentStore,
-} from "@/components/ui/ui-builder/internal/store/component-store";
+} from "@/lib/ui-builder/store/component-store";
 import { DividerControl } from "@/components/ui/ui-builder/internal/divider-control";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { cn } from "@/lib/utils";
@@ -22,16 +22,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
     removeLayer,
     selectedPageId,
   } = useComponentStore();
-
-  console.log("EditorPanel", { selectedLayerId });
   const selectedLayer = findLayerById(selectedLayerId) as Layer;
   const selectedPage = findLayerById(selectedPageId) as PageLayer;
-  console.log("selected", { selectedLayer, selectedPage });
 
   const layers = selectedPage.children;
 
   const onSelectElement = (layerId: string) => {
-    console.log("onSelectElement", layerId);
     selectLayer(layerId);
   };
 

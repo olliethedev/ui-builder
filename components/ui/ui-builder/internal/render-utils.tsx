@@ -4,10 +4,10 @@ import {
   isTextLayer,
   Layer,
   PageLayer,
-} from "@/components/ui/ui-builder/internal/store/component-store";
+} from "@/lib/ui-builder/store/component-store";
 import { Markdown } from "@/components/ui/ui-builder/markdown";
 import { ClickableWrapper } from "@/components/ui/ui-builder/internal/clickable-wrapper";
-import { componentRegistry } from "@/components/ui/ui-builder/internal/store/component-store";
+import { componentRegistry } from "@/lib/ui-builder/store/component-store";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallback";
@@ -24,7 +24,6 @@ export interface EditorConfig {
 export const renderPage = (page: PageLayer, editorConfig?: EditorConfig) => {
   const { mode, colorTheme, style, borderRadius, ...rest } = page.props;
 
-  console.log("page", { mode, colorTheme, style, ...rest });
   const colorData = colorTheme
     ? baseColors.find((color) => color.name === colorTheme)
     : undefined;
@@ -40,7 +39,7 @@ export const renderPage = (page: PageLayer, editorConfig?: EditorConfig) => {
         })`,
       }
     : {};
-  console.log("globalOverrides", globalOverrides);
+    
   return (
     <div
       className="flex flex-col w-full overflow-y-visible relative"
@@ -58,7 +57,7 @@ export const renderPage = (page: PageLayer, editorConfig?: EditorConfig) => {
 const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
   if (isTextLayer(layer)) {
     const TextComponent = layer.textType === "markdown" ? Markdown : "span";
-    console.log("text layer", layer);
+
     if (!editorConfig) {
       return (
         <ErrorSuspenseWrapper id={layer.id}>
