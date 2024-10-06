@@ -102,7 +102,6 @@ async function buildRegistry() {
 function getDependencies(): string[] {
     // Consolidate dependencies or define as needed
     return [
-        "@anatine/zod-mock",
         "react-error-boundary",
         "react-hook-form",
         "zod",
