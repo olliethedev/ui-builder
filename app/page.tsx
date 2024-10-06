@@ -1,4 +1,4 @@
-import ComponentEditor from "@/components/ui/ui-builder/component-editor";
+import UIBuilder from "@/components/ui/ui-builder";
 
 export const metadata = {
   title: "UI Builder",
@@ -8,7 +8,7 @@ export const metadata = {
 export default function Page() {
   return (
     <main data-testid="main-page" className="flex flex-col h-screen">
-      <ComponentEditor />
+      <UIBuilder />
     </main>
   );
 }

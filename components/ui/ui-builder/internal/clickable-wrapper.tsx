@@ -147,7 +147,10 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
             height: Math.max(boundingRect.height, MIN_SIZE),
             zIndex: zIndex,
           }}
-        />
+        >
+          {/* {small label with layer type floating above the bounding box} */}
+          {isSelected && <span className="absolute top-[-16px] left-[-2px] text-xs text-white bg-blue-500 px-[1px]">{layer.type.replaceAll("_","")}</span>}
+        </div>
       )}
     </>
   );

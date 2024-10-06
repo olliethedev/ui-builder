@@ -44,7 +44,7 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
             {nameForLayer(selectedLayer)} Properties
           </h2>
           <h3 className="text-base font-medium mb-4">
-            Type: {selectedLayer.type}
+            Type: {selectedLayer.type.replaceAll("_","")}
           </h3>
         </>
       )}
@@ -171,14 +171,14 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
         text: {
           inputProps: {
             value: selectedLayer.text,
-            defaultValue: selectedLayer.text,
+            // defaultValue: selectedLayer.text,
           },
           fieldType: "textarea",
         },
         textType: {
           inputProps: {
             value: selectedLayer.textType,
-            defaultValue: selectedLayer.textType,
+            // defaultValue: selectedLayer.textType,
           },
           description: (
             <>
@@ -451,5 +451,5 @@ function ChildrenSearchableMultiSelect({
 }
 
 const nameForLayer = (layer: Layer) => {
-  return layer.name || layer.type;
+  return layer.name || layer.type.replaceAll("_","");
 };

@@ -117,7 +117,7 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
         name: {
           inputProps: {
             value: selectedLayer.name,
-            defaultValue: selectedLayer.name,
+            // defaultValue: selectedLayer.name,
           },
           description: "The name of the page.",
         },

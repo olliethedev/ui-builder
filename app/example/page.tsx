@@ -1,4 +1,4 @@
-import ComponentEditor from "@/components/ui/ui-builder/component-editor";
+import UIBuilder from "@/components/ui/ui-builder";
 import { PageLayer } from "@/lib/ui-builder/store/layer-store";
 
 export const metadata = {
@@ -194,7 +194,7 @@ const initialLayers: PageLayer[] = [{
 export default function Page() {
   return (
     <main data-testid="main-page" className="flex flex-col h-screen">
-      <ComponentEditor initialLayers={initialLayers} />
+      <UIBuilder initialLayers={initialLayers} />
     </main>
   );
 }

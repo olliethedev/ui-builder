@@ -15,32 +15,38 @@ import {
 } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
-import {
-  PageLayer,
-  useLayerStore,
-} from "@/lib/ui-builder/store/layer-store";
+import { PageLayer, useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useStore } from "@/hooks/use-store";
 
-interface ComponentEditorProps {
+interface UIBuilderProps {
   initialLayers?: PageLayer[];
+  onChange?: (pages: PageLayer[]) => void;
 }
 
-const ComponentEditor = ({ initialLayers }: ComponentEditorProps) => {
+const UIBuilder = ({ initialLayers, onChange }: UIBuilderProps) => {
   const store = useStore(useLayerStore, (state) => state);
   const [initialized, setInitialized] = useState(false);
   useEffect(() => {
     if (store) {
-    if (initialLayers && !initialized) {
-      store?.initialize(initialLayers);
-      setInitialized(true);
-      const { clear } = useLayerStore.temporal.getState();
-      clear();
-    } else {
-      setInitialized(true);
+      if (initialLayers && !initialized) {
+        store?.initialize(initialLayers);
+        setInitialized(true);
+        const { clear } = useLayerStore.temporal.getState();
+        clear();
+      } else {
+        setInitialized(true);
+      }
     }
-  }
   }, [initialLayers, store, initialized]);
+
+  useEffect(() => {
+    if (onChange && store) {
+      onChange(store.pages);
+    }
+  }, [store, onChange]);
+
   const layout = !store || !initialized ? <LoadingSkeleton /> : <MainLayout />;
+
   return (
     <ThemeProvider
       attribute="class"
@@ -161,4 +167,4 @@ function LoadingSkeleton() {
   );
 }
 
-export default ComponentEditor;
+export default UIBuilder;
