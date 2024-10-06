@@ -73,7 +73,7 @@ describe('LayerStore', () => {
       const newLayer = result.current.pages[0].children[0];
       expect(newLayer.type).toBe('Button');
       expect(newLayer.name).toBe('Button');
-      expect(newLayer.props).toEqual({ label: 'tergo' });
+      expect(newLayer.props).toEqual({ label: 'ollie' });
     });
 
     it('should add a component layer at a specific position', () => {

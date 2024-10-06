@@ -71,7 +71,7 @@ export function NavBar() {
     const handleKeyDown = (event: KeyboardEvent) => {
       const isMac = navigator.userAgent.toUpperCase().indexOf("MAC") >= 0;
       const modifierKey = isMac ? event.metaKey : event.ctrlKey;
-      const key = event.key.toLowerCase();
+      const key = event.key?.toLowerCase();
 
       const isUndo = modifierKey && !event.shiftKey && key === "z";
       const isRedo = modifierKey && event.shiftKey && key === "z";

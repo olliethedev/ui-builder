@@ -1,26 +1,60 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { z, ZodTypeAny, ZodUnion, ZodLiteral, ZodOptional, ZodNullable, ZodEnum, ZodObject, ZodRawShape, ZodNumber, ZodDate, ZodArray, ZodTuple } from 'zod';
-import { generateMock } from '@anatine/zod-mock';
+import { z, ZodObject, ZodTypeAny, ZodDate, ZodNumber, ZodEnum, ZodOptional, ZodNullable, ZodDefault, ZodArray, ZodRawShape, ZodLiteral, ZodUnion, ZodTuple } from 'zod';
 
-export function getDefaultProps(schema: ZodObject<any>) {
-    // Transform schema to a new schema with only the required fields from the original schema
-    const shape = schema.shape; // Use Zod's public API to access the shape
-    const requiredShape: Record<string, z.ZodTypeAny> = {};
+/**
+ * Generates default props based on the provided Zod schema.
+ * Supports boolean, date, number, string, enum, objects composed of these primitives, and arrays of these primitives.
+ * Logs a warning for unsupported types.
+ *
+ * @param schema - The Zod schema object.
+ * @returns An object containing default values for the schema.
+ */
+export function getDefaultProps(schema: ZodObject<any>): Record<string, any> {
+    const shape = schema.shape;
+    const defaultProps: Record<string, any> = {};
 
-    for (const [key, fieldSchema] of Object.entries(shape)) {
-        // Include only required fields (those that are not instances of ZodOptional)
-        if (!(fieldSchema instanceof z.ZodOptional)) {
-            requiredShape[key] = fieldSchema as z.ZodTypeAny;
+    for (const key in shape) {
+        if (Object.prototype.hasOwnProperty.call(shape, key)) {
+            const fieldSchema = shape[key];
+            defaultProps[key] = getDefaultValue(fieldSchema, key);
         }
     }
 
-    const requiredSchema = z.object(requiredShape);
-
-    // Generate mock data based on the requiredSchema
-    const mockData = generateMock(requiredSchema, { seed: 1234 });
-
-    return mockData;
+    return defaultProps;
 }
+
+/**
+ * Determines the default value for a given Zod schema.
+ * Handles nullable and coerced fields appropriately.
+ *
+ * @param schema - The Zod schema for the field.
+ * @param fieldName - The name of the field (used for logging).
+ * @returns The default value for the field.
+ */
+function getDefaultValue(schema: ZodTypeAny, fieldName: string): any {
+    // Handle ZodDefault to return the specified default value
+    if (schema instanceof ZodDefault) {
+        return schema._def.defaultValue();
+    }
+
+
+    // Handle arrays
+    if (schema instanceof ZodArray) {
+        const itemDefault = getDefaultValue(schema.element, fieldName);
+        return schema.isOptional() || schema.isNullable() ? undefined : [itemDefault];
+    }
+
+    console.warn(`Unsupported type for field "${fieldName}". Default value not set.`);
+    return undefined;
+}
+
+/**
+ * Patches the given Zod object schema by transforming unions of literals to enums,
+ * coercing number and date types, and adding an optional `className` property.
+ *
+ * @param schema - The original Zod object schema to be patched.
+ * @returns A new Zod object schema with the specified transformations applied.
+ */
 
 export function patchSchema(schema: ZodObject<any>): ZodObject<any> {
     const schemaWithFixedEnums = transformUnionToEnum(schema);

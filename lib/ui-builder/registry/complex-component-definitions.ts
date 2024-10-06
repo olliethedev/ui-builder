@@ -5,13 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Flexbox } from '@/components/ui/ui-builder/flexbox';
 import { Grid } from '@/components/ui/ui-builder/grid';
 import { CodePanel } from '@/components/ui/ui-builder/code-panel';
-import { patchSchema } from '@/lib/ui-builder/store/schema-utils';
 import { Icon, iconNames } from "@/components/ui/ui-builder/icon";
 
 export const complexComponentDefinitions: ComponentRegistry = {
     Button: {
         component: Button,
-        schema: patchSchema(z.object({
+        schema: z.object({
+            className: z.string().optional(),
             asChild: z.boolean().optional(),
             children: z.any().optional(),
             variant: z.enum([
@@ -21,35 +21,41 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 "secondary",
                 "ghost",
                 "link"
-            ]).optional().nullable(),
+            ]).default("default"),
             size: z.enum([
                 "default",
                 "sm",
                 "lg",
                 "icon"
-            ]).optional().nullable()
+            ]).default("default"),
 
-        })),
+        }),
         from: '@/components/ui/button'
     },
     Badge: {
         component: Badge,
-        schema: patchSchema(z.object({
+        schema: z.object({
+            className: z.string().optional(),
             children: z.any().optional(),
-            variant: z.enum(['default', 'secondary', 'destructive', 'outline']).default('default'),
-        })),
+            variant: z.enum([
+                'default',
+                'secondary',
+                'destructive',
+                'outline']).default('default'),
+        }),
         from: '@/components/ui/badge'
     },
     Flexbox: {
         component: Flexbox,
-        schema: patchSchema(z.object({
+        schema: z.object({
+            className: z.string().optional(),
             children: z.any().optional(),
             direction: z.enum([
                 "row",
                 "column",
                 "rowReverse",
                 "columnReverse"
-            ]).optional().default("row").nullable(),
+            ]).default("row"),
             justify: z.enum([
                 "start",
                 "end",
@@ -57,32 +63,32 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 "between",
                 "around",
                 "evenly"
-            ]).optional().default("start").nullable(),
+            ]).default("start"),
             align: z.enum([
                 "start",
                 "end",
                 "center",
                 "baseline",
                 "stretch"
-            ]).optional().default("center").nullable(),
+            ]).default("start"),
             wrap: z.enum([
                 "wrap",
                 "nowrap",
                 "wrapReverse"
-            ]).optional().default("nowrap").nullable(),
+            ]).default("nowrap"),
             gap: z.enum([
                 "0",
                 "1",
                 "2",
                 "4",
                 "8"
-            ]).optional().default("0").nullable()
-        })),
+            ]).default("1")
+        }),
         from: '@/components/ui/ui-builder/flexbox'
     },
     Grid: {
         component: Grid,
-        schema: patchSchema(z.object({
+        schema: z.object({
             children: z.any().optional(),
             className: z.string().optional(),
             columns: z.enum([
@@ -95,13 +101,13 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 "6",
                 "7",
                 "8"
-            ]).optional().default("1").nullable(),
+            ]).default("1"),
             autoRows: z.enum([
                 "none",
                 "min",
                 "max",
                 "fr",
-            ]).optional().default("none").nullable(),
+            ]).default("none"),
             justify: z.enum([
                 "start",
                 "end",
@@ -109,14 +115,14 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 "between",
                 "around",
                 "evenly",
-            ]).optional().default("start").nullable(),
+            ]).default("start"),
             align: z.enum([
                 "start",
                 "end",
                 "center",
                 "baseline",
                 "stretch",
-            ]).optional().default("start").nullable(),
+            ]).default("start"),
             templateRows: z.enum([
                 "none",
                 "1",
@@ -125,15 +131,15 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 "4",
                 "5",
                 "6",
-            ]).optional().default("none").nullable(),
+            ]).default("none"),
             gap: z.enum([
                 "0",
                 "1",
                 "2",
                 "4",
                 "8",
-            ]).optional().default("0").nullable(),
-        })),
+            ]).default("0"),
+        }),
         from: '@/components/ui/ui-builder/grid'
     },
     CodePanel: {
@@ -145,37 +151,37 @@ export const complexComponentDefinitions: ComponentRegistry = {
     },
     Icon: {
         component: Icon,
-        schema: patchSchema(z.object({
+        schema: z.object({
             iconName: z.enum([
                 ...(iconNames)
-            ]),
-            size: z.union([
-                z.literal("small"),
-                z.literal("medium"),
-                z.literal("large")
-            ]).optional().nullable(),
-            color: z.union([
-                z.literal("accent"),
-                z.literal("accentForeground"),
-                z.literal("primary"),
-                z.literal("primaryForeground"),
-                z.literal("secondary"),
-                z.literal("secondaryForeground"),
-                z.literal("destructive"),
-                z.literal("destructiveForeground"),
-                z.literal("muted"),
-                z.literal("mutedForeground"),
-                z.literal("background"),
-                z.literal("foreground")
-            ]).optional().nullable(),
-            rotate: z.union([
-                z.literal("none"),
-                z.literal("90"),
-                z.literal("180"),
-                z.literal("270")
-            ]).optional().nullable(),
+            ]).default("Image"),
+            size: z.enum([
+                "small",
+                "medium",
+                "large"
+            ]).default("medium"),
+            color: z.enum([
+                "accent",
+                "accentForeground",
+                "primary",
+                "primaryForeground",
+                "secondary",
+                "secondaryForeground",
+                "destructive",
+                "destructiveForeground",
+                "muted",
+                "mutedForeground",
+                "background",
+                "foreground"
+            ]).optional(),
+            rotate: z.enum([
+                "none",
+                "90",
+                "180",
+                "270"
+            ]).default("none"),
             className: z.string().optional(),
-        })),
+        }),
         from: '@/components/ui/ui-builder/icon'
     },
 };
