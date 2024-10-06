@@ -8,7 +8,7 @@ import isDeepEqual from 'fast-deep-equal';
 import { visitLayer, addLayer, hasChildren, isTextLayer, isPageLayer, findLayerRecursive, createId, countLayers } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 
-import { componentRegistry } from '@/lib/ui-builder/store/component-registry';
+import { componentRegistry } from '@/lib/ui-builder/registry/component-registry';
 
 
 const DEFAULT_PAGE_PROPS = {

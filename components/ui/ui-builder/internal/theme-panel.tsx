@@ -12,7 +12,7 @@ import {
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
 import { Toggle } from "@/components/ui/toggle";
-import { themeToStyleVars } from "@/components/ui/ui-builder/theme-utils";
+import { themeToStyleVars } from "@/components/ui/ui-builder/internal/render-utils";
 
 export function ThemePanel() {
   const {
@@ -102,7 +102,7 @@ function ThemePicker({
         borderRadius,
       });
     }
-  }, [pageLayer, updateLayerProps, colorTheme, borderRadius, mode, isDisabled]);
+  }, [pageLayer.id, updateLayerProps, colorTheme, borderRadius, mode, isDisabled]);
 
   const colorOptions = baseColors.map((color: BaseColor) => {
     return (

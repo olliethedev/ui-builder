@@ -31,7 +31,7 @@ npm install zustand@4.5.5
 
 ## Add your custom components to the registry
 
-Navigate to the [component-registry.ts](lib/ui-builder/store/component-registry.ts) file and add your component to the array.
+Navigate to the [component-registry.ts](lib/ui-builder/registry/component-registry.ts) file and add your component to the array.
 
 
 Next, generate the zod schemas that will be used by the UI Builder to render and configure the components.

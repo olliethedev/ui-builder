@@ -19,7 +19,7 @@ export const pageLayerToCode = (page: PageLayer) => {
       }
     } else if (hasChildren(layer) && !isPageLayer(layer)) {
       const componentDefinition = componentRegistry[layer.type];
-      if (layer.type && componentDefinition) {
+      if (layer.type && componentDefinition && componentDefinition.from) {
         imports.add(
           `import { ${ layer.type } } from "${ componentDefinition.from }";`
         );

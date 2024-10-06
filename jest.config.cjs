@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const nextJest = require("next/jest");
 
 const createJestConfig = nextJest({
@@ -11,6 +12,7 @@ const customJestConfig = {
   testEnvironment: "jsdom",
   testRegex: ".*\\.test\\.[jt]sx?$",
   moduleNameMapper: {
+    "^@/(.*)$": "<rootDir>/$1",
     "react-markdown": "<rootDir>/__tests__/__mocks__/react-markdown.js"
   },
   collectCoverage: true,

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { Suspense } from "react";
-import { baseColors } from "@/components/ui/ui-builder/internal/base-colors";
+import { baseColors, BaseColor } from "@/components/ui/ui-builder/internal/base-colors";
+
 import {
   isTextLayer,
   Layer,
@@ -12,6 +13,8 @@ import { componentRegistry } from "@/lib/ui-builder/store/layer-store";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallback";
+import { isPrimitiveComponent } from "@/lib/ui-builder/registry/registry-utils";
+
 
 export interface EditorConfig {
   zIndex: number;
@@ -96,11 +99,21 @@ export const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
     }
   }
 
-  const { component: Component } =
+  const componentDefinition =
     componentRegistry[layer.type as keyof typeof componentRegistry];
+
+  let Component: React.ElementType | undefined = componentDefinition.component;
+
+  if (isPrimitiveComponent(componentDefinition)) {
+    // Set Component to the HTML tag name (e.g., 'a', 'img')
+    Component = layer.type as keyof JSX.IntrinsicElements;
+
+  }
+
+  // If Component is still undefined, return null to avoid rendering issues
   if (!Component) return null;
 
-  const childProps = { ...layer.props };
+  const childProps: Record<string, any> = { ...layer.props };
   if (layer.children && layer.children.length > 0) {
     childProps.children = layer.children.map((child) => {
       if (editorConfig) {
@@ -158,3 +171,20 @@ const ErrorSuspenseWrapper: React.FC<{
     </Suspense>
   </ErrorBoundary>
 );
+
+export function themeToStyleVars(
+  colors: BaseColor["cssVars"]["dark"] | BaseColor["cssVars"]["light"] | undefined,
+) {
+  if (!colors) {
+    return undefined;
+  }
+  const styleVariables = Object.entries(colors).reduce(
+    (acc, [key, value]) => {
+      acc[`--${key}`] = value;
+      return acc;
+    },
+    {} as { [key: string]: string }
+  );
+  return styleVariables;
+}
+

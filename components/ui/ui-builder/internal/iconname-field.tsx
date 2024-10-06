@@ -8,30 +8,31 @@ import {
 import MultipleSelector, {
   Option,
 } from "@/components/ui/ui-builder/multi-select";
-import { TAILWIND_CLASSES_WITH_BREAKPOINTS } from "@/components/ui/ui-builder/internal/tailwind-classes";
+import { iconNames } from "@/components/ui/ui-builder/icon";
 
-interface ClassNameFieldProps {
-  className: string;
-  onChange: (newClassName: string) => void;
+interface IconNameFieldProps{
+
   description?: React.ReactNode;
   label?: string;
   isRequired?: boolean;
+  value: string;
+  onChange: (value: string) => void;
 }
 
-const ClassNameField: React.FC<ClassNameFieldProps> = ({
-  className,
+const IconNameField: React.FC<IconNameFieldProps> = ({
+  value,
   onChange,
   description,
   label,
   isRequired,
 }) => {
-  const searchClasses = async (value: string): Promise<Option[]> => {
+  const searchNames = async (value: string): Promise<Option[]> => {
     return new Promise((resolve) => {
-      const res = TAILWIND_CLASSES_WITH_BREAKPOINTS.filter((option) => option.includes(value));
+      const res = iconNames.filter((option) => option.toLowerCase().includes(value.toLowerCase()));
       resolve(
-        res.map((cls) => ({
-          value: cls,
-          label: cls,
+        res.map((name) => ({
+          value: name,
+          label: name,
         }))
       );
     });
@@ -39,8 +40,9 @@ const ClassNameField: React.FC<ClassNameFieldProps> = ({
 
   const handleChange = useCallback(
     (values: Option[]) => {
-      const newClassName = values.map((v) => v.value).join(" ");
-      onChange(newClassName);
+      if (values.length > 0) {
+        onChange(values[0].value);
+      }
     },
     [onChange]
   );
@@ -53,18 +55,12 @@ const ClassNameField: React.FC<ClassNameFieldProps> = ({
       </FormLabel>
       <FormControl>
         <MultipleSelector
+          value={[{value: value, label: value}]}
+          maxSelected={1}
           defaultOptions={[]}
-          value={
-            className?.split(" ")
-              .filter((cls) => cls.trim() !== "")
-              .map((cls: string) => ({
-                value: cls,
-                label: cls,
-              })) || []
-          }
+          
           onChange={handleChange}
-          placeholder="Type class name..."
-          creatable
+          placeholder="Type icon name..."
           emptyIndicator={
             <p className="text-center text-lg leading-10 text-gray-600 dark:text-gray-400">
               No results found.
@@ -75,7 +71,7 @@ const ClassNameField: React.FC<ClassNameFieldProps> = ({
               Loading...
             </p>
           }
-          onSearch={searchClasses}
+          onSearch={searchNames}
         />
       </FormControl>
       {description && <FormDescription>{description}</FormDescription>}
@@ -83,4 +79,4 @@ const ClassNameField: React.FC<ClassNameFieldProps> = ({
   );
 };
 
-export default ClassNameField;
+export default IconNameField;

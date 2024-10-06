@@ -3,26 +3,27 @@ import { useLayerStore } from '../lib/ui-builder/store/layer-store';
 import { Layer, PageLayer, TextLayer } from '../lib/ui-builder/store/layer-store';
 
 // Mock componentRegistry
-jest.mock('../lib/ui-builder/store/component-registry', () => {
+jest.mock('../lib/ui-builder/registry/component-registry', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { z } = require('zod'); // Require zod within the mock factory
   
     return {
       componentRegistry: {
-        button: {
+        Button: {
           schema: z.object({
             label: z.string().default('ollie'),
           }),
           from: '@/components/ui/button',
           component: () => null, // Mock component; replace with actual mocks if needed
         },
-        input: {
+        Input: {
           schema: z.object({
             placeholder: z.string(),
           }),
           from: '@/components/ui/input',
           component: () => null,
         },
-        textarea: {
+        Textarea: {
           schema: z.object({
             placeholder: z.string(),
           }),
@@ -65,13 +66,13 @@ describe('LayerStore', () => {
       const { result } = renderHook(() => useLayerStore());
 
       act(() => {
-        result.current.addComponentLayer('button', '1');
+        result.current.addComponentLayer('Button', '1');
       });
 
       expect(result.current.pages[0].children).toHaveLength(1);
       const newLayer = result.current.pages[0].children[0];
-      expect(newLayer.type).toBe('button');
-      expect(newLayer.name).toBe('button');
+      expect(newLayer.type).toBe('Button');
+      expect(newLayer.name).toBe('Button');
       expect(newLayer.props).toEqual({ label: 'tergo' });
     });
 
@@ -80,17 +81,17 @@ describe('LayerStore', () => {
 
       // Add first layer
       act(() => {
-        result.current.addComponentLayer('button', '1');
+        result.current.addComponentLayer('Button', '1');
       });
 
       // Add second layer at position 0
       act(() => {
-        result.current.addComponentLayer('input', '1', 0);
+        result.current.addComponentLayer('Input', '1', 0);
       });
 
       expect(result.current.pages[0].children).toHaveLength(2);
-      expect(result.current.pages[0].children[0].type).toBe('input');
-      expect(result.current.pages[0].children[1].type).toBe('button');
+      expect(result.current.pages[0].children[0].type).toBe('Input');
+      expect(result.current.pages[0].children[1].type).toBe('Button');
     });
   });
 
@@ -144,7 +145,7 @@ describe('LayerStore', () => {
 
       // Add a button layer
       act(() => {
-        result.current.addComponentLayer('button', '1');
+        result.current.addComponentLayer('Button', '1');
       });
 
       const originalLayer = result.current.pages[0].children[0];
@@ -157,7 +158,7 @@ describe('LayerStore', () => {
 
       expect(result.current.pages[0].children).toHaveLength(2);
       const duplicatedLayer = result.current.pages[0].children[1];
-      expect(duplicatedLayer.type).toBe('button');
+      expect(duplicatedLayer.type).toBe('Button');
       expect(duplicatedLayer.name).toBe(`${originalLayer.name} (Copy)`);
       expect(duplicatedLayer.props).toEqual(originalLayer.props);
       expect(duplicatedLayer.id).not.toBe(originalId);
@@ -206,7 +207,7 @@ describe('LayerStore', () => {
       const { result } = renderHook(() => useLayerStore());
 
       act(() => {
-        result.current.addComponentLayer('button', '1');
+        result.current.addComponentLayer('Button', '1');
       });
 
       const originalLayer = result.current.pages[0].children[0];
@@ -218,7 +219,7 @@ describe('LayerStore', () => {
 
       expect(result.current.pages[0].children).toHaveLength(2);
       const duplicatedLayer = result.current.pages[0].children[1];
-      expect(duplicatedLayer.type).toBe('button');
+      expect(duplicatedLayer.type).toBe('Button');
       expect(duplicatedLayer.name).toBe(`${originalLayer.name} (Copy)`);
       expect(duplicatedLayer.props).toEqual(originalLayer.props);
       expect(duplicatedLayer.id).not.toBe(originalId);
@@ -244,7 +245,7 @@ describe('LayerStore', () => {
 
       // Add a button layer
       act(() => {
-        result.current.addComponentLayer('button', '1');
+        result.current.addComponentLayer('Button', '1');
       });
 
       const layerId = result.current.pages[0].children[0].id;
@@ -300,7 +301,7 @@ describe('LayerStore', () => {
 
       // Add a button layer
       act(() => {
-        result.current.addComponentLayer('button', '1');
+        result.current.addComponentLayer('Button', '1');
       });
 
       const layerId = result.current.pages[0].children[0].id;
@@ -327,7 +328,7 @@ describe('LayerStore', () => {
 
       // Add a button layer
       act(() => {
-        result.current.addComponentLayer('button', '1');
+        result.current.addComponentLayer('Button', '1');
       });
 
       const layerId = result.current.pages[0].children[0].id;
@@ -389,7 +390,7 @@ describe('LayerStore', () => {
 
       // Add a layer
       act(() => {
-        result.current.addComponentLayer('button', '1');
+        result.current.addComponentLayer('Button', '1');
       });
 
       const layerId = result.current.pages[0].children[0].id;
@@ -449,7 +450,7 @@ describe('LayerStore', () => {
 
       // Add a button layer
       act(() => {
-        result.current.addComponentLayer('button', '1');
+        result.current.addComponentLayer('Button', '1');
       });
 
       const layerId = result.current.pages[0].children[0].id;
@@ -457,7 +458,7 @@ describe('LayerStore', () => {
       const layer = result.current.findLayerById(layerId);
       expect(layer).toBeDefined();
       expect(layer?.id).toBe(layerId);
-      expect(layer?.type).toBe('button');
+      expect(layer?.type).toBe('Button');
     });
 
     it('should return undefined for non-existent ID', () => {
@@ -482,13 +483,13 @@ describe('LayerStore', () => {
 
       // Add two layers to page 1
       act(() => {
-        result.current.addComponentLayer('button', '1');
+        result.current.addComponentLayer('Button', '1');
         result.current.addTextLayer('Text Layer', 'text', '1');
       });
 
       const layers = result.current.findLayersForPageId('1');
       expect(layers).toHaveLength(2);
-      expect(layers[0].type).toBe('button');
+      expect(layers[0].type).toBe('Button');
       expect(layers[1].type).toBe('_text_');
     });
 

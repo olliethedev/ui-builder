@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { pageLayerToCode, generateLayerCode, generatePropsString } from "../components/ui/ui-builder/internal/templates";
 import { PageLayer, TextLayer, ComponentLayer } from "../lib/ui-builder/store/layer-store";
@@ -5,7 +6,8 @@ import template from "lodash/template";
 import { normalizeSchema } from "./test-utils";
 
 // Mock the componentRegistry with Zod schemas
-jest.mock("../lib/ui-builder/store/component-registry", () => {
+jest.mock("../lib/ui-builder/registry/component-registry", () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { z } = require('zod'); 
   return {
     componentRegistry: {

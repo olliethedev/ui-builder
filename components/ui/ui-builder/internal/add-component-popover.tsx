@@ -52,9 +52,9 @@ export function AddComponentsPopover({
 
   const groupedOptions = componentOptions.reduce(
     (acc, option) => {
-      const fromRoot = option.from.split('/').slice(0,-1).join('/'); // removes file name from path
+      const fromRoot = option.from?.split('/').slice(0,-1).join('/'); // removes file name from path
       
-      const group = fromRoot || "Other";
+      const group = fromRoot || "other";
       if (!acc[group]) {
         acc[group] = [];
       }

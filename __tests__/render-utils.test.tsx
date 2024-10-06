@@ -6,7 +6,6 @@ import {
 } from "../components/ui/ui-builder/internal/render-utils";
 import {
   PageLayer,
-  Layer,
   TextLayer,
   ComponentLayer,
 } from "../lib/ui-builder/store/layer-store";
@@ -22,23 +21,32 @@ jest.mock("../components/ui/ui-builder/internal/clickable-wrapper", () => ({
     <div data-testid="clickable-wrapper">{children}</div>
   ),
 }));
-jest.mock("../lib/ui-builder/store/component-registry", () => {
+jest.mock("../lib/ui-builder/registry/component-registry", () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const z = require("zod");
   return {
     componentRegistry: {
-      button: {
+      //Complex Components
+      Button: {
         schema: z.object({
           label: z.string(),
         }),
         from: "../components/ui/button",
         component: () => <button data-testid="button">Button</button>,
       },
-      input: {
+      Input: {
         schema: z.object({
           label: z.string(),
         }),
         from: "../components/ui/input",
         component: () => <input data-testid="input" />,
+      },
+      //Primitive Components
+      div: {
+        schema: z.object({
+          label: z.string(),
+        }),
+        from: undefined,
       },
       // Add other mocked components as needed
     },
@@ -74,7 +82,7 @@ describe("render-utils", () => {
   };
   const componentLayer: ComponentLayer = {
     id: "layer-1",
-    type: "button",
+    type: "Button",
     name: "Test Button",
     props: { className: "button-class" },
     children: [],
@@ -97,10 +105,17 @@ describe("render-utils", () => {
   };
   const componentLayerWithChildren: ComponentLayer = {
     id: "layer-4",
-    type: "input",
+    type: "Input",
     name: "Test Input",
     props: { className: "input-class" },
     children: [textLayer],
+  };
+  const primitiveComponentLayer: ComponentLayer = {
+    id: "layer-5",
+    type: "div",
+    name: "Test Div",
+    props: { className: "div-class" },
+    children: [],
   };
   describe("renderPage", () => {
     it("renders a page with correct styles and children", () => {
@@ -287,6 +302,10 @@ describe("render-utils", () => {
       render(renderLayer(componentLayerWithChildren));
       expect(screen.getByTestId("error-boundary")).toBeInTheDocument();
       expect(screen.getByTestId("input")).toBeInTheDocument();
+    });
+    it("renders a primitive component layer", () => {
+      render(renderLayer(primitiveComponentLayer));
+      expect(screen.getByTestId("layer-5")).toBeInTheDocument();
     });
     it("renders a component layer with editorConfig and children", () => {
       const editorConfig = {

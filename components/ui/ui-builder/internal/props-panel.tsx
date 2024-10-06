@@ -25,6 +25,7 @@ import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-co
 import ClassNameField from "@/components/ui/ui-builder/internal/classname-field";
 import { addDefaultValues } from "@/lib/ui-builder/store/schema-utils";
 import { Badge } from "@/components/ui/badge";
+import IconNameField from "@/components/ui/ui-builder/internal/iconname-field";
 
 interface PropsPanelProps {
   className?: string;
@@ -258,6 +259,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
 
       const hasChildrenInSchema = schema.shape.children !== undefined;
       const hasClassNameInSchema = schema.shape.className !== undefined;
+      const hasIconNameInSchema = schema.shape.iconName !== undefined;
 
       const handleSetValues = useCallback(
         (data: Partial<z.infer<typeof schema>>) => {
@@ -352,6 +354,24 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
                   },
                 }
               : undefined),
+            ...(hasIconNameInSchema
+              ? {
+                  iconName: {
+                    fieldType: ({
+                      label,
+                      isRequired,
+                      field,
+                    }: AutoFormInputComponentProps) => (
+                      <IconNameField
+                        label={label}
+                        isRequired={isRequired}
+                        value={selectedLayer.props.iconName}
+                        onChange={field.onChange}
+                      />
+                    )
+                  }
+                }
+              : undefined),
           }}
         >
           <Button
@@ -387,7 +407,7 @@ function ChildrenSearchableMultiSelect({
   removeLayer,
 }: ChildrenInputProps) {
 
-  const { selectedLayerId, findLayerById } = useLayerStore();
+  const { selectedLayerId, findLayerById, selectLayer } = useLayerStore();
   const selectedLayer = findLayerById(selectedLayerId);
 
   const handleRemove = React.useCallback(
@@ -416,7 +436,9 @@ function ChildrenSearchableMultiSelect({
         <div className="w-full flex gap-2 flex-wrap">
           {selectedLayer.children?.map((child) => (
             <Badge key={child.id} className="flex items-center space-x-2 pl-2 pr-0 py-0" variant="secondary">
-              {nameForLayer(child)}
+              <Button className="p-0 h-5" variant="link" size="sm" onClick={() => selectLayer(child.id)}>
+                {nameForLayer(child)}
+              </Button>
               <Button className="p-0 size-6 rounded-full" variant="ghost" size="icon" onClick={() => handleRemove(child.id)}>
                 <XIcon className="w-4 h-4" />
               </Button>

@@ -3,6 +3,8 @@ import { Layer } from "@/lib/ui-builder/store/layer-store";
 import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
 import { cn } from "@/lib/utils";
 
+const MIN_SIZE = 2;
+
 interface ClickableWrapperProps {
   layer: Layer;
   isSelected: boolean;
@@ -72,6 +74,9 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   useEffect(() => {
     //since we are using resizable panel, we need to track parent size changes
     if (!wrapperRef.current) return;
+
+    const panelContainer = document.getElementById('editor-panel-container');
+    if (!panelContainer) return;
   
     const updateBoundingRect = () => {
       const element = wrapperRef.current?.firstElementChild as HTMLElement | null;
@@ -81,22 +86,11 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
       }
     };
   
-    // Traverse up the DOM tree to attach ResizeObservers to all ancestor elements. 
-    const parents: HTMLElement[] = [];
-    let parent = wrapperRef.current.parentElement;
-    while (parent) {
-      parents.push(parent);
-      parent = parent.parentElement;
-    }
-  
-    const resizeObservers = parents.map((parent) => {
-      const observer = new ResizeObserver(updateBoundingRect);
-      observer.observe(parent);
-      return observer;
-    });
+    const resizeObserver = new ResizeObserver(updateBoundingRect);
+    resizeObserver.observe(panelContainer);
   
     return () => {
-      resizeObservers.forEach((observer) => observer.disconnect());
+      resizeObserver.disconnect()
     };
   }, [isSelected, layer.id, children]);
 
@@ -143,10 +137,14 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
             }
           }}
           style={{
-            top: boundingRect.top,
-            left: boundingRect.left,
-            width: boundingRect.width,
-            height: boundingRect.height,
+            top: boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
+                  ? boundingRect.top - MIN_SIZE
+                  : boundingRect.top,
+                left: boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
+                  ? boundingRect.left - MIN_SIZE
+                  : boundingRect.left,
+            width: Math.max(boundingRect.width, MIN_SIZE),
+            height: Math.max(boundingRect.height, MIN_SIZE),
             zIndex: zIndex,
           }}
         />
