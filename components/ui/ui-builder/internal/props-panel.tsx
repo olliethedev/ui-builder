@@ -191,7 +191,7 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
             </>
           ),
         },
-        ...classNameFieldOverrides(selectedLayer),
+        className:classNameFieldOverrides(selectedLayer),
       }}
     >
       <Button
