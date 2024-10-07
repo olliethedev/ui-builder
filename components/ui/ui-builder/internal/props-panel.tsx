@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useState } from "react";
 import { z } from "zod";
-import { X as XIcon, ChevronsUpDown } from "lucide-react";
 import {
   useLayerStore,
   componentRegistry,
@@ -10,22 +9,12 @@ import {
   TextLayer,
   Layer,
 } from "@/lib/ui-builder/store/layer-store";
-import {
-  FormControl,
-  FormDescription,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
-import { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
-import Link from "next/link";
 import { Label } from "@/components/ui/label";
-import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
-import ClassNameField from "@/components/ui/ui-builder/internal/classname-field";
 import { addDefaultValues } from "@/lib/ui-builder/store/schema-utils";
-import { Badge } from "@/components/ui/badge";
-import IconNameField from "@/components/ui/ui-builder/internal/iconname-field";
+import { generateFieldOverrides } from "@/lib/ui-builder/registry/component-registry";
+import { classNameFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 interface PropsPanelProps {
   className?: string;
@@ -44,12 +33,17 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
             {nameForLayer(selectedLayer)} Properties
           </h2>
           <h3 className="text-base font-medium mb-4">
-            Type: {selectedLayer.type.replaceAll("_","")}
+            Type: {selectedLayer.type.replaceAll("_", "")}
           </h3>
         </>
       )}
 
-      {!selectedLayer && <p>No component selected</p>}
+      {!selectedLayer && (
+        <>
+          <h2 className="text-xl font-semibold mb-2">Component Properties</h2>
+          <p>No component selected</p>
+        </>
+      )}
       {selectedLayer && <PropsPanelForm selectedLayer={selectedLayer} />}
     </div>
   );
@@ -62,11 +56,7 @@ interface PropsPanelFormProps {
 }
 
 function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
-  const {
-    removeLayer,
-    duplicateLayer,
-    updateLayer,
-  } = useLayerStore();
+  const { removeLayer, duplicateLayer, updateLayer } = useLayerStore();
 
   const handleDeleteLayer = useCallback(
     (layerId: string) => {
@@ -89,7 +79,7 @@ function PropsPanelForm({ selectedLayer }: PropsPanelFormProps) {
     ) => {
       updateLayer(id, props, rest);
     },
-    [ updateLayer]
+    [updateLayer]
   );
 
   if (isTextLayer(selectedLayer)) {
@@ -139,10 +129,14 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
 
   const handleSetValues = useCallback(
     (data: Partial<z.infer<typeof schema>>) => {
-
       // Merge the changed fields into the existing props
-      const {text, textType, className} = data;
-      const mergedValues = { ...selectedLayer, text, textType, props: { ...selectedLayer.props, className } };
+      const { text, textType, className } = data;
+      const mergedValues = {
+        ...selectedLayer,
+        text,
+        textType,
+        props: { ...selectedLayer.props, className },
+      };
 
       const { props, ...rest } = mergedValues;
 
@@ -184,33 +178,20 @@ const TextLayerForm: React.FC<TextLayerFormProps> = ({
             <>
               <Label>
                 What Is{" "}
-                <Link
+                <a
                   href="https://www.markdownguide.org/basic-syntax/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="link underline"
+                  className="hover:underline text-accent-foreground"
                 >
                   Markdown
-                </Link>
+                </a>
                 ?
               </Label>
             </>
           ),
         },
-        className: {
-          fieldType: ({
-            label,
-            isRequired,
-            field,
-          }: AutoFormInputComponentProps) => (
-            <ClassNameField
-              label={label}
-              isRequired={isRequired}
-              className={selectedLayer.props.className}
-              onChange={field.onChange}
-            />
-          ),
-        },
+        ...classNameFieldOverrides(selectedLayer),
       }}
     >
       <Button
@@ -248,7 +229,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
       duplicateLayer,
       updateLayer,
     }: ComponentPropsAutoFormProps) => {
-
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [values, setValues] = useState<Partial<z.infer<typeof schema>>>(
         selectedLayer.props
@@ -257,13 +237,10 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
       const { schema } =
         componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
 
-      const hasChildrenInSchema = schema.shape.children !== undefined;
-      const hasClassNameInSchema = schema.shape.className !== undefined;
-      const hasIconNameInSchema = schema.shape.iconName !== undefined;
+      const fieldOverrides = generateFieldOverrides(selectedLayer);
 
       const handleSetValues = useCallback(
         (data: Partial<z.infer<typeof schema>>) => {
-
           // Identify keys that have changed by comparing new data with existing props
           const changedFields = Object.keys(data).reduce(
             (acc, key) => {
@@ -302,76 +279,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
             console.log({ onSubmit: data });
           }}
           fieldConfig={{
-            // ...defualtFieldConfig,
-            ...(hasChildrenInSchema
-              ? {
-                  children: {
-                    fieldType: ({
-                      label,
-                      isRequired,
-                      field,
-                      fieldConfigItem,
-                    }: AutoFormInputComponentProps) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>
-                          {label}
-                          {isRequired && (
-                            <span className="text-destructive"> *</span>
-                          )}
-                        </FormLabel>
-                        <FormControl>
-                          <ChildrenSearchableMultiSelect
-                            field={field}
-                            selectedLayer={selectedLayer}
-                            removeLayer={removeLayer}
-                          />
-                        </FormControl>
-                        {fieldConfigItem.description && (
-                          <FormDescription>
-                            {fieldConfigItem.description}
-                          </FormDescription>
-                        )}
-                      </FormItem>
-                    ),
-                  },
-                }
-              : undefined),
-            ...(hasClassNameInSchema
-              ? {
-                  className: {
-                    fieldType: ({
-                      label,
-                      isRequired,
-                      field,
-                    }: AutoFormInputComponentProps) => (
-                      <ClassNameField
-                        label={label}
-                        isRequired={isRequired}
-                        className={selectedLayer.props.className}
-                        onChange={field.onChange}
-                      />
-                    ),
-                  },
-                }
-              : undefined),
-            ...(hasIconNameInSchema
-              ? {
-                  iconName: {
-                    fieldType: ({
-                      label,
-                      isRequired,
-                      field,
-                    }: AutoFormInputComponentProps) => (
-                      <IconNameField
-                        label={label}
-                        isRequired={isRequired}
-                        value={selectedLayer.props.iconName}
-                        onChange={field.onChange}
-                      />
-                    )
-                  }
-                }
-              : undefined),
+            ...fieldOverrides,
           }}
         >
           <Button
@@ -397,59 +305,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> =
 
 ComponentPropsAutoForm.displayName = "ComponentPropsAutoForm";
 
-interface ChildrenInputProps {
-  field: any;
-  selectedLayer: ComponentLayer;
-  removeLayer: (id: string) => void;
-}
-
-function ChildrenSearchableMultiSelect({
-  removeLayer,
-}: ChildrenInputProps) {
-
-  const { selectedLayerId, findLayerById, selectLayer } = useLayerStore();
-  const selectedLayer = findLayerById(selectedLayerId);
-
-  const handleRemove = React.useCallback(
-    (childId: string) => {
-      removeLayer(childId);
-    },
-    [removeLayer]
-  );
-
-  return (
-    <div className="w-full space-y-4">
-      {selectedLayer && (
-        <AddComponentsPopover parentLayerId={selectedLayer?.id}>
-          <Button
-            variant="outline"
-            role="combobox"
-            className="w-full justify-between"
-          >
-            Add Component or Text
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </AddComponentsPopover>
-      )}
-
-      {selectedLayer && !isTextLayer(selectedLayer) && (
-        <div className="w-full flex gap-2 flex-wrap">
-          {selectedLayer.children?.map((child) => (
-            <Badge key={child.id} className="flex items-center space-x-2 pl-2 pr-0 py-0" variant="secondary">
-              <Button className="p-0 h-5" variant="link" size="sm" onClick={() => selectLayer(child.id)}>
-                {nameForLayer(child)}
-              </Button>
-              <Button className="p-0 size-6 rounded-full" variant="ghost" size="icon" onClick={() => handleRemove(child.id)}>
-                <XIcon className="w-4 h-4" />
-              </Button>
-            </Badge>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 const nameForLayer = (layer: Layer) => {
-  return layer.name || layer.type.replaceAll("_","");
+  return layer.name || layer.type.replaceAll("_", "");
 };

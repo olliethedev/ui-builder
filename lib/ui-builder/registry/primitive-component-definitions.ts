@@ -1,5 +1,6 @@
 import { ComponentRegistry } from "@/lib/ui-builder/registry/component-registry";
 import { z } from 'zod';
+import { childrenFieldOverrides, classNameFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 export const primitiveComponentDefinitions: ComponentRegistry = {
   'a': {
@@ -12,6 +13,10 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
         children: z.any().optional(),
         className: z.string().optional(),
     }),
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
   },
   'img': {
     schema: z.object({
@@ -21,12 +26,19 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
         height: z.coerce.number().optional(),
         className: z.string().optional(),
     }),
+    fieldOverrides: {
+        className:(layer)=> classNameFieldOverrides(layer)
+    }
   },
   'div': {
     schema: z.object({
         children: z.any().optional(),
         className: z.string().optional(),
     }),
+    fieldOverrides: {
+        className:(layer)=> classNameFieldOverrides(layer),
+        children: (layer)=> childrenFieldOverrides(layer)
+    }
   },
   'iframe': {
     schema: z.object({
@@ -40,5 +52,8 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
         allow: z.string().optional(),
         referrerPolicy: z.enum(['no-referrer', 'no-referrer-when-downgrade', 'origin', 'origin-when-cross-origin', 'same-origin', 'strict-origin', 'strict-origin-when-cross-origin', 'unsafe-url']).optional(),
     }),
+    fieldOverrides: {
+        className:(layer)=> classNameFieldOverrides(layer)
+    }
   },
 };

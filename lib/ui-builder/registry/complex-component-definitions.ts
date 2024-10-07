@@ -8,6 +8,7 @@ import { CodePanel } from '@/components/ui/ui-builder/code-panel';
 import { Icon, iconNames } from "@/components/ui/ui-builder/icon";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { classNameFieldOverrides, childrenFieldOverrides, iconNameFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 export const complexComponentDefinitions: ComponentRegistry = {
     Button: {
@@ -39,6 +40,10 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 props: {},
             },
         ],
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
     Badge: {
         component: Badge,
@@ -60,6 +65,10 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 props: {},
             },
         ],
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
     Flexbox: {
         component: Flexbox,
@@ -79,6 +88,10 @@ export const complexComponentDefinitions: ComponentRegistry = {
             gap: z.enum(["0", "1", "2", "4", "8"]).default("1"),
         }),
         from: "@/components/ui/ui-builder/flexbox",
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
     Grid: {
         component: Grid,
@@ -101,6 +114,10 @@ export const complexComponentDefinitions: ComponentRegistry = {
             gap: z.enum(["0", "1", "2", "4", "8"]).default("0"),
         }),
         from: "@/components/ui/ui-builder/grid",
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
     CodePanel: {
         component: CodePanel,
@@ -108,6 +125,9 @@ export const complexComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/ui-builder/code-panel",
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer)
+        }
     },
     Icon: {
         component: Icon,
@@ -134,6 +154,10 @@ export const complexComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/ui-builder/icon",
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            iconName: (layer)=> iconNameFieldOverrides(layer)
+        }
     },
 
     //Accordion
@@ -232,6 +256,10 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 ],
             },
         ],
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
     AccordionItem: {
         component: AccordionItem,
@@ -274,7 +302,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
                     },
                 ],
             },
-        ]
+        ],
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
     AccordionTrigger: {
         component: AccordionTrigger,
@@ -283,6 +315,10 @@ export const complexComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/accordion",
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
     AccordionContent: {
         component: AccordionContent,
@@ -291,6 +327,10 @@ export const complexComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/accordion",
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
 
     //Card
@@ -374,7 +414,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
                     },
                 ],
             },
-        ]
+        ],
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
     CardHeader: {
         component: CardHeader,
@@ -382,7 +426,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
         }),
-        from: '@/components/ui/card'
+        from: '@/components/ui/card',
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
     CardFooter: {
         component: CardFooter,
@@ -390,7 +438,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
         }),
-        from: '@/components/ui/card'
+        from: '@/components/ui/card',
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
     CardTitle: {
         component: CardTitle,
@@ -398,7 +450,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
         }),
-        from: '@/components/ui/card'
+        from: '@/components/ui/card',
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
     CardDescription: {
         component: CardDescription,
@@ -406,7 +462,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
         }),
-        from: '@/components/ui/card'
+        from: '@/components/ui/card',
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
     CardContent: {
         component: CardContent,
@@ -414,6 +474,10 @@ export const complexComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
         }),
-        from: '@/components/ui/card'
+        from: '@/components/ui/card',
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenFieldOverrides(layer)
+        }
     },
 };
