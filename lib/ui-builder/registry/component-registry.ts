@@ -3,6 +3,7 @@ import { ComponentType as ReactComponentType } from 'react';
 import { ZodObject } from 'zod';
 import { primitiveComponentDefinitions } from '@/lib/ui-builder/registry/primitive-component-definitions';
 import { complexComponentDefinitions } from '@/lib/ui-builder/registry/complex-component-definitions';
+import { ComponentLayer,  TextLayer } from '@/lib/ui-builder/store/layer-store';
 
 // import { OtherComponentDefinitions } from '@/components/ui/generated-schemas';
 
@@ -11,6 +12,7 @@ export interface RegistryEntry<T extends ReactComponentType<any>> {
   component?: T;
   schema: ZodObject<any>;
   from?: string;
+  defaultChildren?: (ComponentLayer | TextLayer)[];
 }
 
 export type ComponentRegistry = Record<string, RegistryEntry<ReactComponentType<any>>>;

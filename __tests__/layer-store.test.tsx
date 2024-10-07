@@ -18,14 +18,14 @@ jest.mock('../lib/ui-builder/registry/component-registry', () => {
         },
         Input: {
           schema: z.object({
-            placeholder: z.string(),
+            placeholder: z.string().default('input'),
           }),
           from: '@/components/ui/input',
           component: () => null,
         },
         Textarea: {
           schema: z.object({
-            placeholder: z.string(),
+            placeholder: z.string().default('textarea'),
           }),
           from: '@/components/ui/textarea',
           component: () => null,

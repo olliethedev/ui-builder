@@ -37,14 +37,9 @@ function getDefaultValue(schema: ZodTypeAny, fieldName: string): any {
         return schema._def.defaultValue();
     }
 
-
-    // Handle arrays
-    if (schema instanceof ZodArray) {
-        const itemDefault = getDefaultValue(schema.element, fieldName);
-        return schema.isOptional() || schema.isNullable() ? undefined : [itemDefault];
+    if (!schema.isOptional()){
+        console.warn(`No default value set for required field "${fieldName}".`);
     }
-
-    console.warn(`Unsupported type for field "${fieldName}". Default value not set.`);
     return undefined;
 }
 

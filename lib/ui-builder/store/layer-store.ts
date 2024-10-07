@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import { temporal } from 'zundo';
 import isDeepEqual from 'fast-deep-equal';
 
-import { visitLayer, addLayer, hasChildren, isTextLayer, isPageLayer, findLayerRecursive, createId, countLayers } from '@/lib/ui-builder/store/layer-utils';
+import { visitLayer, addLayer, hasChildren, isTextLayer, isPageLayer, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 
 import { componentRegistry } from '@/lib/ui-builder/registry/component-registry';
@@ -101,6 +101,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
 
     addComponentLayer: (layerType: keyof typeof componentRegistry, parentId: string, parentPosition?: number) => set(produce((state: LayerStore) => {
       const defaultProps = getDefaultProps(componentRegistry[layerType].schema);
+      const defaultChildren = componentRegistry[layerType].defaultChildren?.map(child => duplicateWithNewIdsAndName(child, false)) || [];
 
       const initialProps = Object.entries(defaultProps).reduce((acc, [key, propDef]) => {
         if (key !== "children") {
@@ -114,7 +115,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
         type: layerType,
         name: layerType,
         props: initialProps,
-        children: [],
+        children: defaultChildren,
       };
 
       // Traverse and update the pages to add the new layer
@@ -179,18 +180,6 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
         console.warn(`Layer with ID ${ layerId } not found.`);
         return;
       }
-
-      // Create a deep copy of the layer with new IDs
-      const duplicateWithNewIdsAndName = (layer: Layer, addCopySuffix: boolean = true): Layer => {
-        const newLayer: Layer = { ...layer, id: createId() };
-        if (layer.name) {
-          newLayer.name = `${ layer.name }${ addCopySuffix ? ' (Copy)' : ''}`;
-        }
-        if (hasChildren(newLayer) && hasChildren(layer)) {
-          newLayer.children = layer.children.map(child => duplicateWithNewIdsAndName(child, addCopySuffix));
-        }
-        return newLayer;
-      };
 
       const isNewLayerAPage = isPageLayer(layerToDuplicate);
 

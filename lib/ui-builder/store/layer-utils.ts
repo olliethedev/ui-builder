@@ -95,6 +95,17 @@ export const findLayerRecursive = (layers: Layer[], layerId: string): Layer | un
     return undefined;
 };
 
+export const duplicateWithNewIdsAndName = (layer: Layer, addCopySuffix: boolean = true): Layer => {
+    const newLayer: Layer = { ...layer, id: createId() };
+    if (layer.name) {
+      newLayer.name = `${ layer.name }${ addCopySuffix ? ' (Copy)' : ''}`;
+    }
+    if (hasChildren(newLayer) && hasChildren(layer)) {
+      newLayer.children = layer.children.map(child => duplicateWithNewIdsAndName(child, addCopySuffix));
+    }
+    return newLayer;
+  };
+
 
 export function createId(): string {
     const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';

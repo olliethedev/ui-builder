@@ -157,6 +157,35 @@ describe('getDefaultProps', () => {
     });
   });
 
+  it('should not handle required object fields', () => {
+    const schema = z.object({
+      user: z.object({
+        isAdmin: z.boolean().optional(),
+        profile: z.object({
+          age: z.number().optional(),
+          email: z.string().default('user@example.com'),
+        }).optional(),
+      }).default({
+        isAdmin: false,
+        profile: {
+          age: 20,
+          email: 'user@example.com',
+        },
+      })
+    });
+
+    const defaults = getDefaultProps(schema);
+    expect(defaults).toEqual({
+      user: {
+        isAdmin: false,
+        profile: {
+          age: 20,
+          email: 'user@example.com',
+        },
+      },
+    });
+  });
+
   it('should not handle nested optional fields', () => {
     const schema = z.object({
       user: z.object({
@@ -197,5 +226,24 @@ describe('getDefaultProps', () => {
       isActive: false,
       createdAt: new Date('2023-01-01T00:00:00Z'),
     });
+  });
+  it('should log a warning if no default value is set for a required field', () => {
+    const schema = z.object({
+      requiredField: z.string(),
+    });
+
+    console.warn = jest.fn();
+
+    const defaults = getDefaultProps(schema);
+    expect(defaults).toEqual({});
+    expect(console.warn).toHaveBeenCalledWith('No default value set for required field "requiredField".');
+  });
+  it('should correctly handle nullable fields', () => {
+    const schema = z.object({
+      nullableField: z.string().nullable().default("some default value"),
+    });
+
+    const defaults = getDefaultProps(schema);
+    expect(defaults).toEqual({ nullableField: "some default value" });
   });
 });
