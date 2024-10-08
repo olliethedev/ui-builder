@@ -15,8 +15,6 @@ const DEFAULT_PAGE_PROPS = {
   className: "p-4 flex flex-col gap-2",
 };
 
-export type LayerType = keyof typeof componentRegistry | '_text_';
-
 export type Layer =
   | {
     id: string;
