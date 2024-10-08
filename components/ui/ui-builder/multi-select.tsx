@@ -8,6 +8,7 @@ import { forwardRef, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Command, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/use-debounce';
 
 export interface Option {
   value: string;
@@ -86,19 +87,6 @@ export interface MultipleSelectorRef {
   reset: () => void;
 }
 
-export function useDebounce<T>(value: T, delay?: number): T {
-  const [debouncedValue, setDebouncedValue] = React.useState<T>(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay || 500);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
 
 function transToGroupOption(options: Option[], groupBy?: string) {
   if (options.length === 0) {

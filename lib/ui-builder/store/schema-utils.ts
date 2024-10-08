@@ -16,7 +16,10 @@ export function getDefaultProps(schema: ZodObject<any>): Record<string, any> {
     for (const key in shape) {
         if (Object.prototype.hasOwnProperty.call(shape, key)) {
             const fieldSchema = shape[key];
-            defaultProps[key] = getDefaultValue(fieldSchema, key);
+            const value = getDefaultValue(fieldSchema, key);
+            if(value !== undefined){
+                defaultProps[key] = value;
+            }
         }
     }
 
