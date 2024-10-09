@@ -5,13 +5,13 @@ import { childrenFieldOverrides, classNameFieldOverrides } from "@/lib/ui-builde
 export const primitiveComponentDefinitions: ComponentRegistry = {
   'a': {
     schema: z.object({
+        className: z.string().optional(),
+        children: z.any().optional(),
         href: z.string().optional(),
         target: z.enum(['_blank', '_self', '_parent', '_top']).optional().default('_self'),
         rel: z.enum(['noopener', 'noreferrer', 'nofollow']).optional(),
         title: z.string().optional(),
         download: z.boolean().optional().default(false),
-        children: z.any().optional(),
-        className: z.string().optional(),
     }),
         fieldOverrides: {
             className:(layer)=> classNameFieldOverrides(layer),
@@ -20,11 +20,11 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
   },
   'img': {
     schema: z.object({
+        className: z.string().optional(),
         src: z.string().default("https://placehold.co/200"),
         alt: z.string().optional(),
         width: z.coerce.number().optional(),
         height: z.coerce.number().optional(),
-        className: z.string().optional(),
     }),
     fieldOverrides: {
         className:(layer)=> classNameFieldOverrides(layer)
@@ -32,8 +32,8 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
   },
   'div': {
     schema: z.object({
-        children: z.any().optional(),
         className: z.string().optional(),
+        children: z.any().optional(),
     }),
     fieldOverrides: {
         className:(layer)=> classNameFieldOverrides(layer),
@@ -42,11 +42,11 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
   },
   'iframe': {
     schema: z.object({
+        className: z.string().optional(),
         src: z.string().default("https://www.youtube.com/embed/dQw4w9WgXcQ?si=oc74qTYUBuCsOJwL"),
         title: z.string().optional(),
         width: z.coerce.number().optional(),
         height: z.coerce.number().optional(),
-        className: z.string().optional(),
         frameBorder: z.number().optional(),
         allowFullScreen: z.boolean().optional(),
         allow: z.string().optional(),

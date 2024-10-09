@@ -15,8 +15,8 @@ export const complexComponentDefinitions: ComponentRegistry = {
         component: Button,
         schema: z.object({
             className: z.string().optional(),
-            asChild: z.boolean().optional(),
             children: z.any().optional(),
+            asChild: z.boolean().optional(),
             variant: z
                 .enum([
                     "default",
@@ -96,8 +96,8 @@ export const complexComponentDefinitions: ComponentRegistry = {
     Grid: {
         component: Grid,
         schema: z.object({
-            children: z.any().optional(),
             className: z.string().optional(),
+            children: z.any().optional(),
             columns: z
                 .enum(["auto", "1", "2", "3", "4", "5", "6", "7", "8"])
                 .default("1"),
@@ -132,6 +132,7 @@ export const complexComponentDefinitions: ComponentRegistry = {
     Icon: {
         component: Icon,
         schema: z.object({
+            className: z.string().optional(),
             iconName: z.enum([...iconNames]).default("Image"),
             size: z.enum(["small", "medium", "large"]).default("medium"),
             color: z
@@ -151,7 +152,6 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 ])
                 .optional(),
             rotate: z.enum(["none", "90", "180", "270"]).default("none"),
-            className: z.string().optional(),
         }),
         from: "@/components/ui/ui-builder/icon",
         fieldOverrides: {
@@ -164,10 +164,10 @@ export const complexComponentDefinitions: ComponentRegistry = {
     Accordion: {
         component: Accordion,
         schema: z.object({
-            type: z.enum(["single", "multiple"]).default("single"),
-            collapsible: z.boolean().optional(),
             className: z.string().optional(),
             children: z.any().optional(),
+            type: z.enum(["single", "multiple"]).default("single"),
+            collapsible: z.boolean().optional(),
         }),
         from: "@/components/ui/accordion",
         defaultChildren: [
@@ -264,9 +264,9 @@ export const complexComponentDefinitions: ComponentRegistry = {
     AccordionItem: {
         component: AccordionItem,
         schema: z.object({
-            value: z.string(),
             className: z.string().optional(),
             children: z.any().optional(),
+            value: z.string(),
         }),
         from: "@/components/ui/accordion",
         defaultChildren: [

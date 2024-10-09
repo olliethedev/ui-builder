@@ -16,7 +16,7 @@ export function Markdown({ children, className }: MarkdownProps) {
   return (
     <MemoizedReactMarkdown
       className={cn(
-        "prose break-words prose-headings:text-secondary-foreground prose-blockquote:text-secondary-foreground prose-strong:text-secondary-foreground prose-p:leading-relaxed prose-pre:p-0 prose-pre:m-1 prose-p:text-base prose-p:font-normal prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:py-0 prose-li:my-0 max-w-none text-secondary-foreground",
+        "prose break-words prose-headings:text-secondary-foreground prose-blockquote:text-secondary-foreground prose-strong:text-secondary-foreground prose-p:leading-relaxed prose-pre:p-0 prose-pre:m-1 prose-p:text-base prose-p:font-normal prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:py-0 prose-li:my-0 max-w-none text-secondary-foreground prose-code:prose-headings:bg-secondary",
         className
       )}
       remarkPlugins={[remarkGfm, remarkMath]}

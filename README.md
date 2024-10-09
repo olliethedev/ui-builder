@@ -1,6 +1,6 @@
 # UI Builder
 
-UI Builder is a React component that allows you to create and edit user interfaces through a visual no-code editor. It comes with a handful of core components and integrates easily with existing [shadcn/ui](https://ui.shadcn.com/) projects but can be extended to use your own custom components. 
+UI Builder is a React component that allows you to create and edit user interfaces through a visual no-code editor. It comes with a handful of core components and integrates easily with existing [shadcn/ui](https://ui.shadcn.com/) projects and can be extended to use your own custom components. 
 
 You can use UI Builder to design and build UIs quickly. It's a great tool for creating landing pages, forms, dashboards, or anything else you can imagine. It can be used internally within your organization as a storybook alternative or a prototyping tool or as part of a product that provides users a no-code way to build their own applications, like Shopify, Builder.io, Framer, etc.
 
@@ -17,13 +17,13 @@ If you are using the latest shadcn/ui in your project, you can install the compo
 npx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json
 ```
 
-Note: You need to use [style variables](https://ui.shadcn.com/docs/theming) to have page theming working correctly.
-
 Or you can start a new project with the UI Builder:
 
 ```bash
 npx shadcn@latest init https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json
 ```
+
+Note: You need to use [style variables](https://ui.shadcn.com/docs/theming) to have page theming working correctly.
 
 If you are not using shadcn/ui, you can install the component simply by copying the files in this repo into your project.
 
@@ -79,7 +79,7 @@ To generate the zod schemas that will be used by the UI Builder to render and co
 npx tsx lib/ui-builder/scripts/zod-gen.ts
 ```
 
-This will generate the component definitions at the root of every folder in your /components/ui directory. Note: The generated files will need to be refactored in some cases. See Auto-Form limitations below.
+This will generate the component definitions at the root of every folder in your /components directory. Note: The generated files will need to be refactored in some cases. See Auto-Form limitations below.
 
 ## Auto-Form
 
@@ -87,9 +87,9 @@ This project leverages [Auto-Form](https://github.com/vantezzen/auto-form) to dy
 
 - boolean
 - date
-- enum
 - number
 - string
+- enum of supported zod types
 - object with properties of the supported zod types
 - array of objects with properties of the supported zod types
 
@@ -184,7 +184,6 @@ interface LayerStore {
 
 ```
 
-- `LayerType`: Enumerates the types of layers, including registered components and text layers.
 - `Layer`: A union type representing any possible layer, encompassing component, text, or page layers.
 - `ComponentLayer`: Represents layers that are components, excluding text layers.
 - `TextLayer`: Represents layers containing text content. Text layers dont have children.
@@ -290,7 +289,7 @@ npm run host-registry
 Use the local registry in a local project:
 
 ```bash
-npx shadcn@latest add http://127.0.0.1:8080/ui-builder.json http://127.0.0.1:8080/ui-builder-lib.json
+npx shadcn@latest add http://127.0.0.1:8080/block-registry.json
 ```
 
 ## Running Tests
@@ -304,9 +303,10 @@ npm run test
 - [ ] Increase test coverage
 - [ ] Improve performance
 - [ ] Rework text layers to be more consistent with component layers
-- [ ] Add form components
-- [ ] Add children (component or even page) by reference (as opposed to duplicating)
-- [ ] Add more examples
+- [ ] Add form component definitions since we already depend on most shadcn/ui form components
+- [ ] Add option to add children component layers by reference to existing layers (this would be like figma component instances)
+- [ ] Add event handlers to component layers (onClick, onSubmit, etc)
+- [ ] Add data sources to component layers (ex, getUser() sets prop user)
 
 ## License
 
