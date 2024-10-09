@@ -33,7 +33,7 @@ const registryConfigs: RegistryConfig[] = [
     {
         type: "registry:example",
         path: "./app/example/page.tsx",
-        targetFunction: (path: string) => path.replace("app/example", "/app"),
+        targetFunction: (path: string) => path.replace("app/example", "/app/ui-builder"),
     },
     {
         type: "registry:ui",
