@@ -28,17 +28,20 @@ Note: You need to use [style variables](https://ui.shadcn.com/docs/theming) to h
 If you are not using shadcn/ui, you can install the component simply by copying the files in this repo into your project.
 
 ### Fixing Dependencies after shadcn `init` or `add`
-Add dev dependencies, since there currently seems to be an issue with shadcn/ui not installing them from the registry:
-
-```bash
-npm install -D @types/lodash.template @tailwindcss/typography @types/react-syntax-highlighter react-docgen-typescript tailwindcss-animate ts-morph ts-to-zod
-```
 
 Fix zustand dependency to use latest stable version as opposed to default RC release that gets installed:
 
 ```bash
 npm install zustand@4.5.5
 ```
+
+Add dev dependencies, since there currently seems to be an issue with shadcn/ui not installing them from the registry:
+
+```bash
+npm install -D @types/lodash.template @tailwindcss/typography @types/react-syntax-highlighter react-docgen-typescript tailwindcss-animate ts-morph ts-to-zod
+```
+
+
 
 And that's it! You have a UI Builder that you can use to build your UI.
 
