@@ -2,7 +2,7 @@
   "name": "unified-registry",
   "type": "registry:block",
   "registryDependencies": [
-    "https://raw.githubusercontent.com/vantezzen/auto-form/main/registry/auto-form.json",
+    "https://raw.githubusercontent.com/vantezzen/autoform/refs/heads/pure-shadcn/registry/auto-form.json",
     "badge",
     "command",
     "dropdown-menu",
@@ -13,7 +13,7 @@
     "react-error-boundary",
     "react-hook-form",
     "zod",
-    "zustand",
+    "zustand@4.5.5",
     "zundo",
     "immer",
     "fast-deep-equal",
@@ -46,10 +46,10 @@
             "DEFAULT": {
               "css": {
                 "code::before": {
-                  "content": "'\"\"'"
+                  "content": "''"
                 },
                 "code::after": {
-                  "content": "'\"\"'"
+                  "content": "''"
                 },
                 "code": {
                   "background": "#f3f3f3",

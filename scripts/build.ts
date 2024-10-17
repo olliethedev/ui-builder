@@ -58,10 +58,10 @@ async function buildRegistry() {
                             DEFAULT: {
                                 css: {
                                     'code::before': {
-                                        content: `'""'`,
+                                        content: `''`,
                                     },
                                     'code::after': {
-                                        content: `'""'`,
+                                        content: `''`,
                                     },
                                     code: {
                                         background: '#f3f3f3',
@@ -105,7 +105,7 @@ function getDependencies(): string[] {
         "react-error-boundary",
         "react-hook-form",
         "zod",
-        "zustand",
+        "zustand@4.5.5",
         "zundo",
         "immer",
         "fast-deep-equal",
@@ -132,7 +132,7 @@ function getDevDependencies(): string[] {
 }
 
 function getRegistryDependencies(): string[] {
-    return ["https://raw.githubusercontent.com/vantezzen/auto-form/main/registry/auto-form.json",
+    return ["https://raw.githubusercontent.com/vantezzen/autoform/refs/heads/pure-shadcn/registry/auto-form.json",
         "badge",
         "command",
         "dropdown-menu",
