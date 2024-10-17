@@ -29,12 +29,6 @@ If you are not using shadcn/ui, you can install the component simply by copying 
 
 ### Fixing Dependencies after shadcn `init` or `add`
 
-Fix zustand dependency to use latest stable version as opposed to default RC release that gets installed:
-
-```bash
-npm install zustand@4.5.5
-```
-
 Add dev dependencies, since there currently seems to be an issue with shadcn/ui not installing them from the registry:
 
 ```bash
