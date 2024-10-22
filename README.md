@@ -35,8 +35,6 @@ Add dev dependencies, since there currently seems to be an issue with shadcn/ui 
 npm install -D @types/lodash.template @tailwindcss/typography @types/react-syntax-highlighter react-docgen-typescript tailwindcss-animate ts-morph ts-to-zod
 ```
 
-
-
 And that's it! You have a UI Builder that you can use to build your UI.
 
 ## Usage
@@ -82,11 +80,10 @@ const initialLayers: PageLayer[] = [
         children: [
             {
                 id: "UzZY6Dp",
-                type: "_text_",
-                name: "Text",
-                text: "Github",
-                textType: "text",
+                type: "span",
+                name: "span",
                 props: {},
+                children: "Hello World",
             },
             {
                 id: "hn3PF6A",
@@ -218,7 +215,7 @@ Note: This project is an work in progress and the API will change.
 
 ### Layers
 
-- **Layers** are the fundamental units representing components, text, or pages within the UI structure.
+- **Layers** are the fundamental units representing components or pages within the UI structure.
 - They form a hierarchical tree, allowing for complex and nested UI layouts.
 - Each layer possesses properties and can contain child layers, enabling modular and scalable UI designs.
 
@@ -287,8 +284,8 @@ interface LayerStore {
 
 ```
 
-- `Layer`: A union type representing any possible layer, encompassing component, text, or page layers.
-- `ComponentLayer`: Represents layers that are components, excluding text layers.
+- `Layer`: A union type representing any possible layer, encompassing component or page layers.
+- `ComponentLayer`: Represents layers that are components.
 - `PageLayer`: Represents layers that serve as pages containing other layers.
 - `LayerStore`: Defines the structure of the state, including pages, selected layer/page IDs, and various actions to manipulate layers.
 
@@ -302,7 +299,7 @@ export interface RegistryEntry<T extends ReactComponentType<any>> {
   component?: T;
   schema: ZodObject<any>;
   from?: string;
-  defaultChildren?: (ComponentLayer | TextLayer)[];
+  defaultChildren?: (ComponentLayer)[];
   fieldOverrides?: Record<string, FieldConfigFunction>;
 }
 
@@ -311,7 +308,7 @@ export type ComponentRegistry = Record<
   RegistryEntry<ReactComponentType<any>>
 >;
 
-export type FieldConfigFunction = (layer: ComponentLayer | TextLayer) => FieldConfigItem;
+export type FieldConfigFunction = (layer: ComponentLayer) => FieldConfigItem;
 
 export const componentRegistry: ComponentRegistry = {
   // ...YourOtherProjectComponentDefinitions
@@ -319,7 +316,7 @@ export const componentRegistry: ComponentRegistry = {
   ...primitiveComponentDefinitions,
 } as const;
 
-export const generateFieldOverrides = (layer: ComponentLayer | TextLayer): Record<string, FieldConfigItem> => {...}
+export const generateFieldOverrides = (layer: ComponentLayer): Record<string, FieldConfigItem> => {...}
 
 ```
 
@@ -379,7 +376,7 @@ export const componentRegistry: ComponentRegistry = {
 
 ### Button Component:
 - `Schema`: Defines props like className, variant, and size with default values.
-- `Default Children`: A text layer with default text "Button".
+- `Default Children`: A span layer with default text "Button".
 - `Field Overrides`: Customizes form fields for className and children properties.
 
 ## Development
@@ -412,7 +409,6 @@ npm run test
 
 - [ ] Increase test coverage
 - [ ] Improve performance
-- [ ] Rework text layers to be more consistent with component layers
 - [ ] Add form component definitions since we already depend on most shadcn/ui form components
 - [ ] Add option to add children component layers by reference to existing layers (this would be like figma component instances)
 - [ ] Add event handlers to component layers (onClick, onSubmit, etc)
