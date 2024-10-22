@@ -3,11 +3,11 @@ import { ChevronRight, Plus, Trash, Copy } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
   componentRegistry,
-  isTextLayer,
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { cn } from "@/lib/utils";
+import { hasChildren } from "@/lib/ui-builder/store/layer-utils";
 
 interface MenuProps {
   layerId: string;
@@ -37,7 +37,7 @@ export const LayerMenu: React.FC<MenuProps> = ({
   //const hasChildrenInSchema = schema.shape.children !== undefined;
   const hasChildrenInSchema =
     selectedLayer &&
-    !isTextLayer(selectedLayer) &&
+    hasChildren(selectedLayer) &&
     componentRegistry[selectedLayer.type as keyof typeof componentRegistry]
       .schema.shape.children !== undefined;
   return (

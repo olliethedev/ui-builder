@@ -250,25 +250,15 @@ The `layer-store.ts` module defines the essential types used to manage UI layers
 ```ts
 
 export type Layer =
-  | {
-      id: string;
-      name?: string;
-      type: keyof typeof componentRegistry;
-      props: Record<string, any>;
-      children: Layer[];
-    }
-  | TextLayer
+  | ComponentLayer
   | PageLayer;
 
-export type ComponentLayer = Exclude<Layer, TextLayer>;
-
-export type TextLayer = {
+export type ComponentLayer = {
   id: string;
   name?: string;
-  type: '_text_';
+  type: keyof typeof componentRegistry;
   props: Record<string, any>;
-  text: string;
-  textType: 'text' | 'markdown';
+  children: Layer[] | string;
 };
 
 export type PageLayer = {
@@ -277,7 +267,7 @@ export type PageLayer = {
   type: '_page_';
   props: Record<string, any>;
   children: Layer[];
-};
+}
 
 interface LayerStore {
   pages: PageLayer[];
@@ -285,7 +275,6 @@ interface LayerStore {
   selectedPageId: string;
   initialize: (pages: PageLayer[]) => void;
   addComponentLayer: (layerType: keyof typeof componentRegistry, parentId: string, parentPosition?: number) => void;
-  addTextLayer: (text: string, textType: 'text' | 'markdown', parentId: string, parentPosition?: number) => void;
   addPageLayer: (pageId: string) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
@@ -300,7 +289,6 @@ interface LayerStore {
 
 - `Layer`: A union type representing any possible layer, encompassing component, text, or page layers.
 - `ComponentLayer`: Represents layers that are components, excluding text layers.
-- `TextLayer`: Represents layers containing text content. Text layers dont have children.
 - `PageLayer`: Represents layers that serve as pages containing other layers.
 - `LayerStore`: Defines the structure of the state, including pages, selected layer/page IDs, and various actions to manipulate layers.
 
@@ -355,28 +343,36 @@ export const componentRegistry: ComponentRegistry = {
   Button: {
     component: Button,
     schema: z.object({
-      className: z.string().optional(),
-      asChild: z.boolean().optional(),
-      children: z.any().optional(),
-      variant: z.enum(["default", "destructive", "outline", "secondary", "ghost", "link"]).default("default"),
-      size: z.enum(["default", "sm", "lg", "icon"]).default("default"),
+        className: z.string().optional(),
+        children: z.any().optional(),
+        asChild: z.boolean().optional(),
+        variant: z
+            .enum([
+                "default",
+                "destructive",
+                "outline",
+                "secondary",
+                "ghost",
+                "link",
+            ])
+            .default("default"),
+        size: z.enum(["default", "sm", "lg", "icon"]).default("default"),
     }),
     from: "@/components/ui/button",
     defaultChildren: [
-      {
-        id: "button-text",
-        type: "_text_",
-        name: "Text",
-        text: "Button",
-        textType: "text",
-        props: {},
-      },
+        {
+            id: "button-text",
+            type: "span",
+            name: "span",
+            props: {},
+            children: "Button",
+        } satisfies ComponentLayer,
     ],
     fieldOverrides: {
-      className: (layer) => classNameFieldOverrides(layer),
-      children: (layer) => childrenFieldOverrides(layer),
-    },
-  },
+        className:(layer)=> classNameFieldOverrides(layer),
+        children: (layer)=> childrenFieldOverrides(layer)
+    }
+  }
   // ... Other component definitions
 };
 ```

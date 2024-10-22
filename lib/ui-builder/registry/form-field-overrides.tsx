@@ -10,11 +10,12 @@ import {
   AutoFormInputComponentProps,
   FieldConfigItem,
 } from "@/components/ui/auto-form/types";
-import { ComponentLayer, TextLayer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
 import IconNameField from "@/components/ui/ui-builder/internal/iconname-field";
+import { ChildrenTextArea } from "@/components/ui/ui-builder/internal/children-textarea";
 
 export const classNameFieldOverrides = (
-  layer: ComponentLayer | TextLayer
+  layer: ComponentLayer 
 ): FieldConfigItem => {
   return {
     fieldType: ({ label, isRequired, field }: AutoFormInputComponentProps) => (
@@ -29,7 +30,7 @@ export const classNameFieldOverrides = (
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const childrenFieldOverrides = (layer: ComponentLayer | TextLayer): FieldConfigItem => {
+export const childrenFieldOverrides = (layer: ComponentLayer): FieldConfigItem => {
   return {
     fieldType: ({
       label,
@@ -53,7 +54,7 @@ export const childrenFieldOverrides = (layer: ComponentLayer | TextLayer): Field
 };
 
 export const iconNameFieldOverrides = (
-  layer: ComponentLayer | TextLayer
+  layer: ComponentLayer
 ): FieldConfigItem => {
   return {
     fieldType: ({ label, isRequired, field }: AutoFormInputComponentProps) => (
@@ -63,6 +64,29 @@ export const iconNameFieldOverrides = (
         value={layer.props.iconName}
         onChange={field.onChange}
       />
+    ),
+  };
+};
+
+export const childrenAsTextareaFieldOverrides = (layer: ComponentLayer): FieldConfigItem => {
+  return {
+    fieldType: ({
+      label,
+      isRequired,
+      fieldConfigItem,
+    }: AutoFormInputComponentProps) => (
+      <FormItem className="flex flex-col">
+        <FormLabel>
+          {label}
+          {isRequired && <span className="text-destructive"> *</span>}
+        </FormLabel>
+        <FormControl>
+          <ChildrenTextArea layer={layer} />
+        </FormControl>
+        {fieldConfigItem.description && (
+          <FormDescription>{fieldConfigItem.description}</FormDescription>
+        )}
+      </FormItem>
     ),
   };
 };

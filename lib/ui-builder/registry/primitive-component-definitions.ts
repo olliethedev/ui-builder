@@ -1,6 +1,6 @@
 import { ComponentRegistry } from "@/lib/ui-builder/registry/component-registry";
 import { z } from 'zod';
-import { childrenFieldOverrides, classNameFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { childrenAsTextareaFieldOverrides, childrenFieldOverrides, classNameFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 export const primitiveComponentDefinitions: ComponentRegistry = {
   'a': {
@@ -55,5 +55,16 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     fieldOverrides: {
         className:(layer)=> classNameFieldOverrides(layer)
     }
+  },
+  'span': {
+    schema: z.object({
+        className: z.string().optional(),
+        children: z.any().optional(),
+    }),
+    fieldOverrides: {
+        className:(layer)=> classNameFieldOverrides(layer),
+        children: (layer)=> childrenAsTextareaFieldOverrides(layer)
+    },
+    defaultChildren: "Hello World"
   },
 };

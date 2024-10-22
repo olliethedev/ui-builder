@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { pageLayerToCode, generateLayerCode, generatePropsString } from "../components/ui/ui-builder/internal/templates";
-import { PageLayer, TextLayer, ComponentLayer } from "../lib/ui-builder/store/layer-store";
+import { PageLayer, ComponentLayer } from "../lib/ui-builder/store/layer-store";
 import template from "lodash/template";
 import { normalizeSchema } from "./test-utils";
 
@@ -30,7 +30,18 @@ jest.mock("../lib/ui-builder/registry/component-registry", () => {
         from: "../components/ui/Container",
         component: () => null, // Mock component
       },
-      // Add other components with their respective schemas
+      Header: {
+        schema: z.object({
+          title: z.string(),
+        }),
+        from: "../components/ui/Header",
+      },
+      Footer: {
+        schema: z.object({
+          year: z.number(),
+        }),
+        from: "../components/ui/Footer",
+      },
     },
   };
 });
@@ -46,6 +57,7 @@ jest.mock("lodash/template", () => {
 });
 
 describe("templates.ts", () => {
+
   describe("generatePropsString", () => {
     it("should return an empty string when no props are provided", () => {
       const props = {};
@@ -72,32 +84,31 @@ describe("templates.ts", () => {
       };
       expect(generatePropsString(props)).toBe(' visible={true}');
     });
+
+    it("should handle boolean and null values correctly", () => {
+      const props = {
+        isActive: false,
+        data: null,
+      };
+      expect(generatePropsString(props)).toBe(' isActive={false} data={null}');
+    });
+
+    it("should handle nested objects and arrays", () => {
+      const props = {
+        config: {
+          theme: "dark",
+          layout: {
+            header: true,
+            footer: false
+          }
+        },
+        items: [1, 2, 3],
+      };
+      expect(normalizeSchema(generatePropsString(props))).toBe(normalizeSchema(' config={{\"theme\":\"dark\",\"layout\":{\"header\":true,\"footer\":false}}} items={[1,2,3]}'));
+    });
   });
 
   describe("generateLayerCode", () => {
-    it("should generate code for a text layer with span", () => {
-      const layer: TextLayer = {
-        id: "text1",
-        type: "_text_",
-        props: { id: "text1", className: "text-class" },
-        text: "Hello World",
-        textType: "text",
-      };
-      const expected = `  <span id="text1" className="text-class">{"Hello World"}</span>`;
-      expect(generateLayerCode(layer, 1)).toBe(expected);
-    });
-
-    it("should generate code for a text layer with Markdown", () => {
-      const layer: TextLayer = {
-        id: "markdown1",
-        type: "_text_",
-        props: { id: "markdown1" },
-        text: "# Title",
-        textType: "markdown",
-      };
-      const expected = `  <Markdown id="markdown1">{"# Title"}</Markdown>`;
-      expect(generateLayerCode(layer, 1)).toBe(expected);
-    });
 
     it("should generate self-closing tag for layers without children", () => {
       const layer: ComponentLayer = {
@@ -128,17 +139,52 @@ describe("templates.ts", () => {
           },
           {
             id: "text1",
-            type: "_text_",
+            type: "span",
             props: { className: "text-inside" },
-            text: "Click me",
-            textType: "text",
+            children: "Click me",
           },
         ],
       };
       const expected = `  <Container id="container1">
         <Button className="button-class" />
-        <span className="text-inside">{"Click me"}</span>
+        <span className="text-inside"> {"Click me"} </span>
       </Container>`;
+      expect(normalizeSchema(generateLayerCode(layer, 1))).toBe(normalizeSchema(expected));
+    });
+
+    it("should handle layers with complex children structures", () => {
+      const layer: ComponentLayer = {
+        id: "layout1",
+        type: "Layout",
+        props: { layoutType: "grid" },
+        children: [
+          {
+            id: "header1",
+            type: "Header",
+            props: { title: "Welcome" },
+            children: [],
+          },
+          {
+            id: "content1",
+            type: "Content",
+            props: {},
+            children: [
+              {
+                id: "button1",
+                type: "Button",
+                props: { className: "button-class" },
+                children: [],
+              },
+            ],
+          },
+        ],
+      };
+      const expected = `  <Layout layoutType="grid">
+        <Header title="Welcome" />
+        <Content>
+          <Button className="button-class" />
+        </Content>
+      </Layout>`;
       expect(normalizeSchema(generateLayerCode(layer, 1))).toBe(normalizeSchema(expected));
     });
   });
@@ -153,7 +199,7 @@ const Page = () => {
     <div<%= pageProps %>>
 <%= children %>
   </div>
-  );
+    );
 };
 
 export default Page;
@@ -182,11 +228,11 @@ const Page = () => {
   return (
     <div>
   </div>
-  );
+    );
 };
 
 export default Page;
-`;
+      `;
       expect(normalizeSchema(pageLayerToCode(page))).toBe(normalizeSchema(expected));
     });
 
@@ -198,10 +244,9 @@ export default Page;
         children: [
           {
             id: "markdown1",
-            type: "_text_",
+            type: "span",
             props: { id: "md1" },
-            text: "# Hello",
-            textType: "markdown",
+            children: "# Hello",
           },
           {
             id: "button1",
@@ -213,9 +258,8 @@ export default Page;
           },
         ],
       };
-      const expectedImports = `import { Markdown } from "@/components/ui/ui-builder/markdown";
-import { Button } from "../components/ui/Button";`;
-      const expectedChildren = `    <Markdown id="md1">{"# Hello"}</Markdown>
+      const expectedImports = `import { Button } from "../components/ui/Button";`;
+      const expectedChildren = `    <span id="md1"> {"# Hello"} </span>
     <Button className="button-class" />`;
       const expected = `
 import React from "react";
@@ -226,11 +270,11 @@ const Page = () => {
     <div id="page1">
 ${expectedChildren}
   </div>
-  );
+    );
 };
 
 export default Page;
-`;
+      `;
       expect(normalizeSchema(pageLayerToCode(page))).toBe(normalizeSchema(expected));
     });
 
@@ -248,38 +292,34 @@ export default Page;
               {
                 id: "button1",
                 type: "Button",
-                    props: { 
-                        className: "button-class"
-                    },
+                props: { 
+                    className: "button-class"
+                },
                 children: [],
               },
               {
                 id: "text1",
-                type: "_text_",
+                type: "span",
                 props: { className: "text-inside" },
-                text: "Click me",
-                textType: "text",
+                children: "Click me",
               },
             ],
           },
           {
             id: "markdown1",
-            type: "_text_",
+            type: "span",
             props: { id: "md2" },
-            text: "## Subtitle",
-            textType: "markdown",
+            children: "## Subtitle",
           },
         ],
       };
       const expectedImports = `import { Container } from "../components/ui/Container";
-import { Button } from "../components/ui/Button";
-import { Markdown } from "@/components/ui/ui-builder/markdown";`;
-
+import { Button } from "../components/ui/Button";`;
       const expectedChildren = `    <Container id="container1">
       <Button className="button-class" />
-      <span className="text-inside">{"Click me"}</span>
+      <span className="text-inside"> {"Click me"} </span>
     </Container>
-    <Markdown id="md2">{"## Subtitle"}</Markdown>`;
+    <span id="md2"> {"## Subtitle"} </span>`;
       const expected = `
 import React from "react";
 ${expectedImports}
@@ -289,11 +329,11 @@ const Page = () => {
     <div className="main-page">
 ${expectedChildren}
   </div>
-  );
+    );
 };
 
 export default Page;
-`;
+      `;
       expect(normalizeSchema(pageLayerToCode(page))).toBe(normalizeSchema(expected));
     });
 
@@ -324,11 +364,83 @@ const Page = () => {
     <div>
 ${expectedChildren}
   </div>
-  );
+    );
 };
 
 export default Page;
-`;
+      `;
+      expect(normalizeSchema(pageLayerToCode(page))).toBe(normalizeSchema(expected));
+    });
+
+    it("should generate code with no additional imports when not required", () => {
+      const page: PageLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "text1",
+            type: "span",
+            props: { className: "simple-text" },
+            children: "Just text",
+          },
+        ],
+      };
+      const expectedChildren = `    <span className="simple-text"> {"Just text"} </span>`;
+      const expected = `
+import React from "react";
+
+const Page = () => {
+  return (
+    <div>
+${expectedChildren}
+  </div>
+    );
+};
+
+export default Page;
+      `;
+      expect(normalizeSchema(pageLayerToCode(page))).toBe(normalizeSchema(expected));
+    });
+
+    it("should handle pages with no props and multiple children", () => {
+      const page: PageLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "header1",
+            type: "Header",
+            props: { title: "Home" },
+            children: [],
+          },
+          {
+            id: "footer1",
+            type: "Footer",
+            props: { year: 2023 },
+            children: [],
+          },
+        ],
+      };
+      const expectedImports = `import { Header } from "../components/ui/Header";
+import { Footer } from "../components/ui/Footer";`;
+      const expectedChildren = `    <Header title="Home" />
+    <Footer year={2023} />`;
+      const expected = `
+import React from "react";
+${expectedImports}
+
+const Page = () => {
+  return (
+    <div>
+${expectedChildren}
+  </div>
+    );
+};
+
+export default Page;
+      `;
       expect(normalizeSchema(pageLayerToCode(page))).toBe(normalizeSchema(expected));
     });
   });

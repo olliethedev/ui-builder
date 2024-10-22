@@ -10,39 +10,174 @@ const initialLayers: PageLayer[] = [{
   "type": "_page_",
   "name": "Page 1",
   "props": {
-    "className": "p-4 flex flex-col gap-6 bg-background",
+    "className": "flex flex-col gap-6 bg-background px-4",
     "style": {
-      "--background": "20 14.3% 4.1%",
-      "--foreground": "0 0% 95%",
-      "--popover": "0 0% 9%",
-      "--popover-foreground": "0 0% 95%",
-      "--card": "24 9.8% 10%",
-      "--card-foreground": "0 0% 95%",
-      "--primary": "142.1 70.6% 45.3%",
-      "--primary-foreground": "144.9 80.4% 10%",
-      "--secondary": "240 3.7% 15.9%",
-      "--secondary-foreground": "0 0% 98%",
-      "--muted": "0 0% 15%",
-      "--muted-foreground": "240 5% 64.9%",
-      "--accent": "12 6.5% 15.1%",
-      "--accent-foreground": "0 0% 98%",
-      "--destructive": "0 62.8% 30.6%",
-      "--destructive-foreground": "0 85.7% 97.3%",
-      "--border": "240 3.7% 15.9%",
-      "--input": "240 3.7% 15.9%",
-      "--ring": "142.4 71.8% 29.2%",
-      "--chart-1": "220 70% 50%",
-      "--chart-2": "160 60% 45%",
-      "--chart-3": "30 80% 55%",
-      "--chart-4": "280 65% 60%",
-      "--chart-5": "340 75% 55%",
-      "--radius": "0.5rem"
+      "--background": "0 0% 100%",
+      "--foreground": "240 10% 3.9%",
+      "--card": "0 0% 100%",
+      "--card-foreground": "240 10% 3.9%",
+      "--popover": "0 0% 100%",
+      "--popover-foreground": "240 10% 3.9%",
+      "--primary": "142.1 76.2% 36.3%",
+      "--primary-foreground": "355.7 100% 97.3%",
+      "--secondary": "240 4.8% 95.9%",
+      "--secondary-foreground": "240 5.9% 10%",
+      "--muted": "240 4.8% 95.9%",
+      "--muted-foreground": "240 3.8% 46.1%",
+      "--accent": "240 4.8% 95.9%",
+      "--accent-foreground": "240 5.9% 10%",
+      "--destructive": "0 84.2% 60.2%",
+      "--destructive-foreground": "0 0% 98%",
+      "--border": "240 5.9% 90%",
+      "--input": "240 5.9% 90%",
+      "--ring": "142.1 76.2% 36.3%",
+      "--chart-1": "12 76% 61%",
+      "--chart-2": "173 58% 39%",
+      "--chart-3": "197 37% 24%",
+      "--chart-4": "43 74% 66%",
+      "--chart-5": "27 87% 67%",
+      "--radius": "1rem"
     },
-    "mode": "dark",
+    "mode": "light",
     "colorTheme": "green",
-    "borderRadius": 0.5
+    "borderRadius": 1
   },
   "children": [
+    {
+      "id": "s33J1LG",
+      "type": "Flexbox",
+      "name": "Flexbox",
+      "props": {
+        "direction": "row",
+        "justify": "between",
+        "align": "center",
+        "wrap": "nowrap",
+        "gap": "1",
+        "className": "p-2 bg-secondary mx-[-4]"
+      },
+      "children": [
+        {
+          "id": "t0GYQCv",
+          "type": "Flexbox",
+          "name": "Flexbox",
+          "props": {
+            "direction": "row",
+            "justify": "start",
+            "align": "center",
+            "wrap": "nowrap",
+            "gap": "1"
+          },
+          "children": [
+            {
+              "id": "jECYqpe",
+              "type": "Icon",
+              "name": "Icon",
+              "props": {
+                "iconName": "Apple",
+                "size": "medium",
+                "rotate": "none"
+              },
+              "children": []
+            },
+            {
+              "type": "span",
+              "children": "My App",
+              "id": "GQhTbms",
+              "name": "Text",
+              "props": {
+                "className": "text-lg font-bold"
+              }
+            }
+          ]
+        },
+        {
+          "id": "Bxk8iHx",
+          "type": "Flexbox",
+          "name": "Flexbox",
+          "props": {
+            "direction": "row",
+            "justify": "start",
+            "align": "start",
+            "wrap": "nowrap",
+            "gap": "1"
+          },
+          "children": [
+            {
+              "id": "C1MWIzn",
+              "type": "Button",
+              "name": "Button",
+              "props": {
+                "variant": "ghost",
+                "size": "sm"
+              },
+              "children": [
+                {
+                  "type": "span",
+                  "children": "Blog",
+                  "id": "r6P4MVM",
+                  "name": "Text",
+                  "props": {}
+                }
+              ]
+            },
+            {
+              "id": "iqEFiRf",
+              "type": "Button",
+              "name": "Button (Copy)",
+              "props": {
+                "variant": "ghost",
+                "size": "sm"
+              },
+              "children": [
+                {
+                  "type": "span",
+                  "children": "Docs",
+                  "id": "nL2DZYh",
+                  "name": "Text (Copy)",
+                  "props": {}
+                }
+              ]
+            },
+            {
+              "id": "DN4Qe7w",
+              "type": "Button",
+              "name": "Button (Copy)",
+              "props": {
+                "variant": "ghost",
+                "size": "sm"
+              },
+              "children": [
+                {
+                  "type": "span",
+                  "children": "Pricing",
+                  "id": "LVCWnzE",
+                  "name": "Text (Copy)",
+                  "props": {}
+                }
+              ]
+            },
+            {
+              "id": "1t8p1rH",
+              "type": "Button",
+              "name": "Button",
+              "props": {
+                "variant": "default",
+                "size": "sm"
+              },
+              "children": [
+                {
+                  "type": "span",
+                  "children": "Login",
+                  "id": "7SyQ9es",
+                  "name": "Text",
+                  "props": {}
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
     {
       "id": "xjNasvW",
       "type": "Flexbox",
@@ -70,21 +205,19 @@ const initialLayers: PageLayer[] = [{
           },
           "children": [
             {
+              "type": "span",
+              "children": "No-Code UI Builder for React Developers",
               "id": "1MnLSMe",
-              "type": "_text_",
               "name": "Text",
-              "text": "No-Code UI Builder for React Developers",
-              "textType": "text",
               "props": {
                 "className": "text-4xl"
               }
             },
             {
+              "type": "span",
+              "children": "Unlock the power of rapid UI development with UI Builder, a versatile React component that transforms the way you create and edit user interfaces. ",
               "id": "pHWrfaU",
-              "type": "_text_",
               "name": "Text",
-              "text": "Unlock the power of rapid UI development with UI Builder, a versatile React component that transforms the way you create and edit user interfaces. ",
-              "textType": "text",
               "props": {}
             },
             {
@@ -108,11 +241,10 @@ const initialLayers: PageLayer[] = [{
                   },
                   "children": [
                     {
+                      "type": "span",
+                      "children": "ReactJS",
                       "id": "gVc72e9",
-                      "type": "_text_",
                       "name": "Text",
-                      "text": "ReactJS",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -126,11 +258,10 @@ const initialLayers: PageLayer[] = [{
                   },
                   "children": [
                     {
+                      "type": "span",
+                      "children": "ShadCN",
                       "id": "J5t39kD",
-                      "type": "_text_",
                       "name": "Text (Copy)",
-                      "text": "ShadCN",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -144,11 +275,10 @@ const initialLayers: PageLayer[] = [{
                   },
                   "children": [
                     {
+                      "type": "span",
+                      "children": "No-Code",
                       "id": "zX3TdJH",
-                      "type": "_text_",
                       "name": "Text (Copy)",
-                      "text": "No-Code",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -162,11 +292,10 @@ const initialLayers: PageLayer[] = [{
                   },
                   "children": [
                     {
+                      "type": "span",
+                      "children": "TailwindCSS",
                       "id": "OEc3rzX",
-                      "type": "_text_",
                       "name": "Text (Copy) (Copy)",
-                      "text": "TailwindCSS",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -193,15 +322,14 @@ const initialLayers: PageLayer[] = [{
                   "props": {
                     "variant": "default",
                     "size": "default",
-                    "className": "w-full items-center gap-2 max-w-sm"
+                    "className": "w-full"
                   },
                   "children": [
                     {
+                      "type": "span",
+                      "children": "Github",
                       "id": "UzZY6Dp",
-                      "type": "_text_",
                       "name": "Text",
-                      "text": "Github",
-                      "textType": "text",
                       "props": {}
                     },
                     {
@@ -220,31 +348,29 @@ const initialLayers: PageLayer[] = [{
                   ]
                 },
                 {
-                  "id": "p0CFgTZ",
+                  "id": "cbDAzBm",
                   "type": "Button",
                   "name": "Button",
                   "props": {
                     "variant": "secondary",
                     "size": "default",
-                    "className": "w-full items-center gap-2 max-w-sm"
+                    "className": "w-full gap-2"
                   },
                   "children": [
                     {
-                      "id": "JtlnNhR",
-                      "type": "_text_",
+                      "type": "span",
+                      "children": "Button",
+                      "id": "LN1AilM",
                       "name": "Text",
-                      "text": "Twitter",
-                      "textType": "text",
                       "props": {}
                     },
                     {
-                      "id": "XH7tEQA",
+                      "id": "nDjBEgP",
                       "type": "Icon",
                       "name": "Icon",
                       "props": {
-                        "iconName": "Twitter",
+                        "iconName": "Image",
                         "size": "medium",
-                        "color": "primary",
                         "rotate": "none"
                       },
                       "children": []
@@ -313,11 +439,10 @@ const initialLayers: PageLayer[] = [{
                   "props": {},
                   "children": [
                     {
+                      "type": "span",
+                      "children": "Visual No-Code Editing",
                       "id": "rzcq6ef",
-                      "type": "_text_",
                       "name": "Text",
-                      "text": "Visual No-Code Editing",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -331,11 +456,10 @@ const initialLayers: PageLayer[] = [{
               "props": {},
               "children": [
                 {
+                  "type": "span",
+                  "children": "Build stunning interfaces through an intuitive, customizable editor that's as powerful as it is easy to use.",
                   "id": "AlVfPFt",
-                  "type": "_text_",
                   "name": "Text",
-                  "text": "Build stunning interfaces through an intuitive, customizable editor that's as powerful as it is easy to use.",
-                  "textType": "text",
                   "props": {}
                 }
               ]
@@ -361,11 +485,10 @@ const initialLayers: PageLayer[] = [{
                   "props": {},
                   "children": [
                     {
+                      "type": "span",
+                      "children": "Seamless Integration",
                       "id": "YKTsHPO",
-                      "type": "_text_",
                       "name": "Text",
-                      "text": "Seamless Integration",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -379,11 +502,10 @@ const initialLayers: PageLayer[] = [{
               "props": {},
               "children": [
                 {
+                  "type": "span",
+                  "children": "Effortlessly integrate with your existing shadcn/ui or plain React projects for a smooth, uninterrupted workflow.",
                   "id": "w5Ybun2",
-                  "type": "_text_",
                   "name": "Text",
-                  "text": "Effortlessly integrate with your existing shadcn/ui or plain React projects for a smooth, uninterrupted workflow.",
-                  "textType": "text",
                   "props": {}
                 }
               ]
@@ -409,11 +531,10 @@ const initialLayers: PageLayer[] = [{
                   "props": {},
                   "children": [
                     {
+                      "type": "span",
+                      "children": "Bring Your Own Components",
                       "id": "hhXcyXG",
-                      "type": "_text_",
                       "name": "Text",
-                      "text": "Bring Your Own Components",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -427,11 +548,10 @@ const initialLayers: PageLayer[] = [{
               "props": {},
               "children": [
                 {
+                  "type": "span",
+                  "children": "Start with a rich library of core components and expand it with your own custom elements to suit any project.",
                   "id": "cLxoysn",
-                  "type": "_text_",
                   "name": "Text",
-                  "text": "Start with a rich library of core components and expand it with your own custom elements to suit any project.",
-                  "textType": "text",
                   "props": {}
                 }
               ]
@@ -459,11 +579,10 @@ const initialLayers: PageLayer[] = [{
                   "props": {},
                   "children": [
                     {
+                      "type": "span",
+                      "children": "Versatile Use Cases",
                       "id": "9hnCP0J",
-                      "type": "_text_",
                       "name": "Text",
-                      "text": "Versatile Use Cases",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -477,11 +596,10 @@ const initialLayers: PageLayer[] = [{
               "props": {},
               "children": [
                 {
+                  "type": "span",
+                  "children": "From landing pages and forms to dashboards and complex applications—the possibilities are endless.",
                   "id": "ezuzF5t",
-                  "type": "_text_",
                   "name": "Text",
-                  "text": "From landing pages and forms to dashboards and complex applications—the possibilities are endless.",
-                  "textType": "text",
                   "props": {}
                 }
               ]
@@ -504,21 +622,19 @@ const initialLayers: PageLayer[] = [{
       },
       "children": [
         {
+          "type": "span",
+          "children": "Easy Setup",
           "id": "9IRAR5g",
-          "type": "_text_",
           "name": "Text",
-          "text": "Easy Setup",
-          "textType": "text",
           "props": {
             "className": "text-4xl"
           }
         },
         {
+          "type": "Markdown",
+          "children": "\nIf you are using the latest shadcn/ui in your project, you can install the component directly from the registry. \n\n```bash\nnpx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json\n```\n\nOr you can start a new project with the UI Builder:\n\n```bash\nnpx shadcn@latest init https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json\n```\n\nNote: You need to use [style variables](https://ui.shadcn.com/docs/theming) to have page theming working correctly.\n\nIf you are not using shadcn/ui, you can install the component simply by copying the files in this repo into your project.\n\n### Fixing Dependencies after shadcn `init` or `add`\nAdd dev dependencies, since there currently seems to be an issue with shadcn/ui not installing them from the registry:\n\n```bash\nnpm install -D @types/lodash.template @tailwindcss/typography @types/react-syntax-highlighter react-docgen-typescript tailwindcss-animate ts-morph ts-to-zod\n```\n\nFix zustand dependency to use latest stable version as opposed to default RC release that gets installed:\n\n```bash\nnpm install zustand@4.5.5\n```\n\nAnd that's it! You have a UI Builder that you can use to build your UI.\n\n## Usage\n\n```tsx\nimport UIBuilder from \"@/components/ui/ui-builder\";\n\nexport function MyApp() {\n  return <UIBuilder initialLayers={initialPages} onChange={handleChange} />;\n}\n```\n\n- `initialLayers`: Optional prop to set up initial pages and layers. Useful for setting the initial state of the builder, from a database for example.\n- `onChange`: Optional callback triggered when the editor state changes, providing the updated pages. Can be used to persist the state to a database.\n\n\nYou can also render the page without editor functionality by using the LayerRenderer component:\n\n```tsx\nimport LayerRenderer from \"@/components/ui/ui-builder/layer-renderer\";\n\nexport function MyPage() {\n  return <LayerRenderer page={page} />;\n}\n```\n\nThis is useful when you want to render the finished page in a non-editable fashion.",
           "id": "s81GWGE",
-          "type": "_text_",
           "name": "Text",
-          "text": "If you are using the latest shadcn/ui in your project, you can install the component directly from the registry. \n\n```bash\nnpx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json\n```\n\nOr you can start a new project with the UI Builder:\n\n```bash\nnpx shadcn@latest init https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json\n```\n\nNote: You need to use [style variables](https://ui.shadcn.com/docs/theming) to have page theming working correctly.\n\nIf you are not using shadcn/ui, you can install the component simply by copying the files in this repo into your project.\n\n### Fixing Dependencies after shadcn `init` or `add`\nAdd dev dependencies, since there currently seems to be an issue with shadcn/ui not installing them from the registry:\n\n```bash\nnpm install -D @types/lodash.template @tailwindcss/typography @types/react-syntax-highlighter react-docgen-typescript tailwindcss-animate ts-morph ts-to-zod\n```\n\nFix zustand dependency to use latest stable version as opposed to default RC release that gets installed:\n\n```bash\nnpm install zustand@4.5.5\n```\n\nAnd that's it! You have a UI Builder that you can use to build your UI.\n\n## Usage\n\n```tsx\nimport UIBuilder from \"@/components/ui/ui-builder\";\n\nexport function MyApp() {\n  return <UIBuilder initialLayers={initialPages} onChange={handleChange} />;\n}\n```\n\n- `initialLayers`: Optional prop to set up initial pages and layers. Useful for setting the initial state of the builder, from a database for example.\n- `onChange`: Optional callback triggered when the editor state changes, providing the updated pages. Can be used to persist the state to a database.\n\n\nYou can also render the page without editor functionality by using the LayerRenderer component:\n\n```tsx\nimport LayerRenderer from \"@/components/ui/ui-builder/layer-renderer\";\n\nexport function MyPage() {\n  return <LayerRenderer page={page} />;\n}\n```\n\nThis is useful when you want to render the finished page in a non-editable fashion.",
-          "textType": "markdown",
           "props": {
             "className": "overflow-hidden w-full"
           }
@@ -539,21 +655,19 @@ const initialLayers: PageLayer[] = [{
       },
       "children": [
         {
+          "type": "span",
+          "children": "Dynamic Components",
           "id": "tvjHJKv",
-          "type": "_text_",
           "name": "Text",
-          "text": "Dynamic Components",
-          "textType": "text",
           "props": {
             "className": "text-4xl"
           }
         },
         {
+          "type": "span",
+          "children": "As you edit this page you can see your changes in an advanced component below. You can even add your own components that show information based on the the logged in user's details.",
           "id": "RmwFD7i",
-          "type": "_text_",
           "name": "Text",
-          "text": "As you edit this page you can see your changes in an advanced component below. You can even add your own components that show information based on the the logged in user's details.",
-          "textType": "text",
           "props": {}
         },
         {
@@ -581,21 +695,19 @@ const initialLayers: PageLayer[] = [{
       },
       "children": [
         {
+          "type": "span",
+          "children": "FAQ",
           "id": "N1BAGTW",
-          "type": "_text_",
           "name": "Text",
-          "text": "FAQ",
-          "textType": "text",
           "props": {
             "className": "text-4xl"
           }
         },
         {
+          "type": "span",
+          "children": "You can add shadcn/ui components easily like the Accordion component below",
           "id": "4RlLwTl",
-          "type": "_text_",
           "name": "Text",
-          "text": "You can add shadcn/ui components easily like the Accordion component below",
-          "textType": "text",
           "props": {}
         },
         {
@@ -622,11 +734,10 @@ const initialLayers: PageLayer[] = [{
                   "props": {},
                   "children": [
                     {
+                      "type": "span",
+                      "children": "How to Rick Roll?",
                       "id": "M8CDLIO",
-                      "type": "_text_",
                       "name": "Text",
-                      "text": "How to Rick Roll?",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -638,11 +749,10 @@ const initialLayers: PageLayer[] = [{
                   "props": {},
                   "children": [
                     {
+                      "type": "span",
+                      "children": "Like this:",
                       "id": "EsYrxof",
-                      "type": "_text_",
                       "name": "Text",
-                      "text": "Like this:",
-                      "textType": "text",
                       "props": {}
                     },
                     {
@@ -680,11 +790,10 @@ const initialLayers: PageLayer[] = [{
                   "props": {},
                   "children": [
                     {
+                      "type": "span",
+                      "children": "Who is Satoshi Nakamoto?",
                       "id": "I82mrZM",
-                      "type": "_text_",
                       "name": "Text (Copy)",
-                      "text": "Who is Satoshi Nakamoto?",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -696,11 +805,10 @@ const initialLayers: PageLayer[] = [{
                   "props": {},
                   "children": [
                     {
+                      "type": "span",
+                      "children": "You are 😏",
                       "id": "GozYa7b",
-                      "type": "_text_",
                       "name": "Text (Copy)",
-                      "text": "You are 😏",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -722,11 +830,10 @@ const initialLayers: PageLayer[] = [{
                   "props": {},
                   "children": [
                     {
+                      "type": "span",
+                      "children": "When is Christmas?",
                       "id": "ZWlPqif",
-                      "type": "_text_",
                       "name": "Text (Copy) (Copy)",
-                      "text": "When is Christmas?",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -738,11 +845,10 @@ const initialLayers: PageLayer[] = [{
                   "props": {},
                   "children": [
                     {
+                      "type": "span",
+                      "children": "Oct 9th 🎄",
                       "id": "f15Zx6U",
-                      "type": "_text_",
                       "name": "Text",
-                      "text": "Oct 9th 🎄",
-                      "textType": "text",
                       "props": {}
                     }
                   ]
@@ -790,11 +896,10 @@ const initialLayers: PageLayer[] = [{
               "children": []
             },
             {
+              "type": "span",
+              "children": "UI Builder",
               "id": "jsKaL7D",
-              "type": "_text_",
               "name": "Text",
-              "text": "UI Builder",
-              "textType": "text",
               "props": {
                 "className": "text-secondary-foreground font-semibold"
               }
@@ -824,11 +929,10 @@ const initialLayers: PageLayer[] = [{
               },
               "children": [
                 {
+                  "type": "span",
+                  "children": "Github",
                   "id": "c5DVqC7",
-                  "type": "_text_",
                   "name": "Text",
-                  "text": "Github",
-                  "textType": "text",
                   "props": {
                     "className": "text-secondary-foreground"
                   }
@@ -846,11 +950,10 @@ const initialLayers: PageLayer[] = [{
               },
               "children": [
                 {
+                  "type": "span",
+                  "children": "Twitter",
                   "id": "kb14O10",
-                  "type": "_text_",
                   "name": "Text (Copy)",
-                  "text": "Twitter",
-                  "textType": "text",
                   "props": {
                     "className": "text-secondary-foreground"
                   }
@@ -868,11 +971,10 @@ const initialLayers: PageLayer[] = [{
               },
               "children": [
                 {
+                  "type": "span",
+                  "children": "Blog",
                   "id": "RyujBtx",
-                  "type": "_text_",
                   "name": "Text (Copy)",
-                  "text": "Blog",
-                  "textType": "text",
                   "props": {
                     "className": "text-secondary-foreground"
                   }
@@ -890,11 +992,10 @@ const initialLayers: PageLayer[] = [{
               },
               "children": [
                 {
+                  "type": "span",
+                  "children": "Terms",
                   "id": "JOuOO03",
-                  "type": "_text_",
                   "name": "Text (Copy)",
-                  "text": "Terms",
-                  "textType": "text",
                   "props": {
                     "className": "text-secondary-foreground"
                   }

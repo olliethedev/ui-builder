@@ -3,17 +3,16 @@ import React, { Suspense } from "react";
 import { baseColors, BaseColor } from "@/components/ui/ui-builder/internal/base-colors";
 
 import {
-  isTextLayer,
   Layer,
   PageLayer,
 } from "@/lib/ui-builder/store/layer-store";
-import { Markdown } from "@/components/ui/ui-builder/markdown";
 import { ClickableWrapper } from "@/components/ui/ui-builder/internal/clickable-wrapper";
 import { componentRegistry } from "@/lib/ui-builder/store/layer-store";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallback";
 import { isPrimitiveComponent } from "@/lib/ui-builder/registry/registry-utils";
+import { hasChildren } from "@/lib/ui-builder/store/layer-utils";
 
 
 export interface EditorConfig {
@@ -58,49 +57,13 @@ export const renderPage = (page: PageLayer, editorConfig?: EditorConfig) => {
 };
 
 export const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
-  if (isTextLayer(layer)) {
-    const TextComponent = layer.textType === "markdown" ? Markdown : "span";
-
-    if (!editorConfig) {
-      return (
-        <ErrorSuspenseWrapper key={layer.id} id={layer.id}>
-          <TextComponent data-testid={layer.id} {...layer.props}>
-            {layer.text}
-          </TextComponent>
-        </ErrorSuspenseWrapper>
-      );
-    } else {
-      const {
-        zIndex,
-        totalLayers,
-        selectedLayer,
-        onSelectElement,
-        handleDuplicateLayer,
-        handleDeleteLayer,
-      } = editorConfig;
-      return (
-        <ClickableWrapper
-          key={layer.id}
-          layer={layer}
-          zIndex={zIndex}
-          totalLayers={totalLayers}
-          isSelected={layer.id === selectedLayer?.id}
-          onSelectElement={onSelectElement}
-          onDuplicateLayer={handleDuplicateLayer}
-          onDeleteLayer={handleDeleteLayer}
-        >
-          <ErrorSuspenseWrapper id={layer.id}>
-            <TextComponent data-testid={layer.id} {...layer.props}>
-              {layer.text}
-            </TextComponent>
-          </ErrorSuspenseWrapper>
-        </ClickableWrapper>
-      );
-    }
-  }
 
   const componentDefinition =
     componentRegistry[layer.type as keyof typeof componentRegistry];
+
+  if (!componentDefinition) {
+    return null;
+  }
 
   let Component: React.ElementType | undefined = componentDefinition.component;
 
@@ -114,7 +77,7 @@ export const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
   if (!Component) return null;
 
   const childProps: Record<string, any> = { ...layer.props };
-  if (layer.children && layer.children.length > 0) {
+  if (hasChildren(layer) && layer.children.length > 0) {
     childProps.children = layer.children.map((child) => {
       if (editorConfig) {
         return renderLayer(child, {
@@ -125,6 +88,8 @@ export const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
         return renderLayer(child);
       }
     });
+  } else if (typeof layer.children === 'string') {
+    childProps.children = layer.children;
   }
 
   if (!editorConfig) {

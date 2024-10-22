@@ -4,12 +4,12 @@ import React from "react";
 import { X as XIcon, ChevronsUpDown } from "lucide-react";
 import {
   useLayerStore,
-  isTextLayer,
   Layer,
 } from "@/lib/ui-builder/store/layer-store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
+import { hasChildren } from "@/lib/ui-builder/store/layer-utils";
 
   
 export function ChildrenSearchableSelect() {
@@ -39,7 +39,7 @@ export function ChildrenSearchableSelect() {
           </AddComponentsPopover>
         )}
   
-        {selectedLayer && !isTextLayer(selectedLayer) && (
+        {selectedLayer && hasChildren(selectedLayer)  && (
           <div className="w-full flex gap-2 flex-wrap">
             {selectedLayer.children?.map((child) => (
               <Badge key={child.id} className="flex items-center space-x-2 pl-2 pr-0 py-0" variant="secondary">

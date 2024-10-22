@@ -1,4 +1,4 @@
-import { ComponentLayer, Layer, PageLayer, TextLayer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer, Layer, PageLayer } from "@/lib/ui-builder/store/layer-store";
 
 /**
  * Recursively visits each layer in the layer tree and applies the provided visitor function to each layer.
@@ -67,17 +67,30 @@ export const addLayer = (layers: Layer[], newLayer: Layer, parentId?: string, pa
     return updatedPages;
 }
 
-export const findParentLayerRecursive = (layers: Layer[], layerId: string): Layer | null => {
-    for (const layer of layers) {
-        if (!isTextLayer(layer) && layer.children && layer.children.some(child => child.id === layerId)) {
-            return layer;
+export const findAllParentLayersRecursive = (layers: Layer[], layerId: string): Layer[] => {
+    const parents: Layer[] = [];
+
+    const findParents = (layers: Layer[], targetId: string): boolean => {
+        for (const layer of layers) {
+            if (hasChildren(layer)) {
+                if (layer.children.some(child => child.id === targetId)) {
+                    parents.push(layer);
+                    // Continue searching upwards
+                    findParents(layers, layer.id);
+                    return true;
+                }
+
+                if (findParents(layer.children, targetId)) {
+                    parents.push(layer);
+                    return true;
+                }
+            }
         }
-        if (!isTextLayer(layer) && layer.children) {
-            const parent = findParentLayerRecursive(layer.children, layerId);
-            if (parent) return parent;
-        }
-    }
-    return null;
+        return false;
+    };
+
+    findParents(layers, layerId);
+    return parents;
 };
 
 export const findLayerRecursive = (layers: Layer[], layerId: string): Layer | undefined => {
@@ -85,7 +98,7 @@ export const findLayerRecursive = (layers: Layer[], layerId: string): Layer | un
         if (layer.id === layerId) {
             return layer;
         }
-        if (!isTextLayer(layer) && layer.children) {
+        if (hasChildren(layer)) {
             const foundInChildren = findLayerRecursive(layer.children, layerId);
             if (foundInChildren) {
                 return foundInChildren;
@@ -122,12 +135,8 @@ export function createId(): string {
 }
 
 export const hasChildren = (layer: Layer): layer is ComponentLayer & { children: Layer[] } => {
-    return 'children' in layer && Array.isArray(layer.children);
+    return 'children' in layer && Array.isArray(layer.children) && typeof layer.children !== 'string';
 };
-
-export function isTextLayer(layer: Layer): layer is TextLayer {
-    return layer.type === '_text_';
-}
 
 export function isPageLayer(layer: Layer): layer is PageLayer {
     return layer.type === '_page_';

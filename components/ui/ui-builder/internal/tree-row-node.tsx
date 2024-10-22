@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import isDeepEqual from 'fast-deep-equal';
 import { NodeAttrs } from "he-tree-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +11,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hasChildren } from "@/lib/ui-builder/store/layer-utils";
-import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { Layer } from "@/lib/ui-builder/store/layer-store";
 import {
   DropdownMenu,
@@ -29,9 +29,17 @@ interface TreeRowNodeProps {
   draggable: boolean;
   onToggle: (id: number | string, open: boolean) => void;
   nodeAttributes: NodeAttrs;
+  selectedLayerId: string | null;
+  selectLayer: (id: string) => void;
+  removeLayer: (id: string) => void;
+  duplicateLayer: (id: string) => void;
+  updateLayer: (id: string, update: Partial<Layer>, options?: {
+    name?: string;
+    children?: Layer[];
+  }) => void;
 }
 
-export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
+export const TreeRowNode: React.FC<TreeRowNodeProps> = React.memo(({
   node,
   id,
   level,
@@ -39,14 +47,13 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
   draggable,
   onToggle,
   nodeAttributes,
+  selectedLayerId,
+  selectLayer,
+  removeLayer,
+  duplicateLayer,
+  updateLayer,
 }) => {
-  const {
-    selectedLayerId,
-    selectLayer,
-    removeLayer,
-    duplicateLayer,
-    updateLayer,
-  } = useLayerStore();
+
 
   const [isRenaming, setIsRenaming] = useState(false);
 
@@ -188,7 +195,11 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
       </DropdownMenu>
     </div>
   );
-};
+}, (prevProps, nextProps) => {
+  return isDeepEqual(prevProps.node, nextProps.node);
+});
+
+TreeRowNode.displayName = "TreeRowNode";
 
 export const TreeRowPlaceholder: React.FC<
   Pick<TreeRowNodeProps, "nodeAttributes">
