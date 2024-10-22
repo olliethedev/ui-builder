@@ -379,6 +379,11 @@ export const componentRegistry: ComponentRegistry = {
 - `Default Children`: A span layer with default text "Button".
 - `Field Overrides`: Customizes form fields for className and children properties.
 
+## Changelog
+
+### v0.0.2
+- Removed _text_ layer type in favor of using span and Markdown components. You should migrate any layers stored in the database to use the new components. You can use the [migrateV1ToV2](lib/ui-builder/store/layer-utils.ts) function in layer-utils.ts to help with the migration.
+
 ## Development
 
 Build component registry after updating lib or ui:
@@ -408,6 +413,7 @@ npm run test
 ## Roadmap
 
 - [ ] Increase test coverage
+- [ ] Refactor page layers to be more consistent with component layers
 - [ ] Improve performance
 - [ ] Add form component definitions since we already depend on most shadcn/ui form components
 - [ ] Add option to add children component layers by reference to existing layers (this would be like figma component instances)

@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import { temporal } from 'zundo';
 import isDeepEqual from 'fast-deep-equal';
 
-import { visitLayer, addLayer, hasChildren, isPageLayer, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive } from '@/lib/ui-builder/store/layer-utils';
+import { visitLayer, addLayer, hasChildren, isPageLayer, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2 } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 
 import { componentRegistry } from '@/lib/ui-builder/registry/component-registry';
@@ -35,7 +35,7 @@ export type PageLayer = {
   children: Layer[];
 }
 
-interface LayerStore {
+export interface LayerStore {
   pages: PageLayer[];
   selectedLayerId: string | null;
   selectedPageId: string;
@@ -304,47 +304,9 @@ const useLayerStore = create(persist(temporal<LayerStore>(store,
   version: 2,
   storage: createJSONStorage(() => localStorage),
   migrate: (persistedState: unknown, version: number) => {
-    /* istanbul ignore if */
+    /* istanbul ignore if*/
     if (version === 1) {
-      type TextLayer = {
-        id: string;
-        name?: string;
-        type: '_text_';
-        props: Record<string, any>;
-        text: string;
-        textType: 'text' | 'markdown';
-      };
-
-      console.log("Migrating store", { persistedState, version });
-
-      const migratedState = persistedState as LayerStore;
-
-      // Utilize visitLayer to transform all layers recursively
-      const transformLayer = (layer: Layer): Layer => {
-        if (layer.type === "_text_") {
-          const textLayer = layer as unknown as TextLayer;
-          const transformedTextLayer: ComponentLayer = {
-            type: textLayer.textType === "markdown" ? "Markdown" : "span",
-            children: textLayer.text,
-            id: textLayer.id,
-            name: textLayer.name,
-            props: textLayer.props,
-          };
-          console.log("Transformed text layer", transformedTextLayer);
-          return transformedTextLayer;
-        }
-
-        return layer;
-      };
-
-      const migratedPages = migratedState.pages.map((page: PageLayer) => {
-        return visitLayer(page, null, transformLayer) as PageLayer;
-      }) satisfies PageLayer[];
-
-      return {
-        ...migratedState,
-        pages: migratedPages,
-      } satisfies LayerStore;
+      return migrateV1ToV2(persistedState as LayerStore);
     }
     return persistedState;
   }

@@ -1,4 +1,4 @@
-import { ComponentLayer, Layer, PageLayer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer, Layer, LayerStore, PageLayer } from "@/lib/ui-builder/store/layer-store";
 
 /**
  * Recursively visits each layer in the layer tree and applies the provided visitor function to each layer.
@@ -140,5 +140,48 @@ export const hasChildren = (layer: Layer): layer is ComponentLayer & { children:
 
 export function isPageLayer(layer: Layer): layer is PageLayer {
     return layer.type === '_page_';
+}
+
+export function migrateV1ToV2(persistedState: unknown): LayerStore {
+    type TextLayer = {
+        id: string;
+        name?: string;
+        type: '_text_';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        props: Record<string, any>;
+        text: string;
+        textType: 'text' | 'markdown';
+      };
+
+      console.log("Migrating store", { persistedState, version: 1 });
+
+      const migratedState = persistedState as LayerStore;
+
+      // Utilize visitLayer to transform all layers recursively
+      const transformLayer = (layer: Layer): Layer => {
+        if (layer.type === "_text_") {
+          const textLayer = layer as unknown as TextLayer;
+          const transformedTextLayer: ComponentLayer = {
+            type: textLayer.textType === "markdown" ? "Markdown" : "span",
+            children: textLayer.text,
+            id: textLayer.id,
+            name: textLayer.name,
+            props: textLayer.props,
+          };
+          console.log("Transformed text layer", transformedTextLayer);
+          return transformedTextLayer;
+        }
+
+        return layer;
+      };
+
+      const migratedPages = migratedState.pages.map((page: PageLayer) => {
+        return visitLayer(page, null, transformLayer) as PageLayer;
+      }) satisfies PageLayer[];
+
+      return {
+        ...migratedState,
+        pages: migratedPages,
+      } satisfies LayerStore;
 }
 

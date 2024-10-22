@@ -8,7 +8,8 @@ import {
   createId,
   hasChildren,
   isPageLayer,
-  duplicateWithNewIdsAndName
+  duplicateWithNewIdsAndName,
+  migrateV1ToV2
 } from "../lib/ui-builder/store/layer-utils";
 import {
   Layer,
@@ -608,6 +609,207 @@ describe("Layer Utils", () => {
           expect(child.props).toEqual((originalLayer.children![index] as ComponentLayer).props);
         });
       }
+    });
+  });
+
+  describe("migrateV1ToV2", () => {
+    it("should migrate _text_ layers to span layers", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "_page_",
+            name: "Page 1",
+            props: {},
+            children: [
+              {
+                id: "layer1",
+                type: "_text_",
+                name: "Text Layer",
+                props: { someProp: "value" },
+                text: "Sample text",
+                textType: "text",
+              },
+              {
+                id: "layer2",
+                type: "button",
+                name: "Button Layer",
+                props: {},
+                children: [],
+              },
+            ],
+          },
+        ],
+      };
+
+      const migratedState = migrateV1ToV2(persistedState);
+
+      expect(migratedState.pages).toHaveLength(1);
+      const migratedPage = migratedState.pages[0];
+
+      expect(migratedPage.children).toHaveLength(2);
+      const migratedTextLayer = migratedPage.children.find((layer: Layer) => layer.id === "layer1");
+      expect(migratedTextLayer).toBeDefined();
+      expect(migratedTextLayer?.type).toBe("span");
+      expect(migratedTextLayer?.children).toBe("Sample text");
+      expect(migratedTextLayer?.props).toEqual({ someProp: "value" });
+    });
+
+    it("should migrate _text_ layers to Markdown layers when textType is 'markdown'", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "_page_",
+            name: "Page 1",
+            props: {},
+            children: [
+              {
+                id: "layer1",
+                type: "_text_",
+                name: "Markdown Layer",
+                props: { someProp: "value" },
+                text: "# Heading",
+                textType: "markdown",
+              },
+            ],
+          },
+        ],
+      };
+
+      const migratedState = migrateV1ToV2(persistedState);
+
+      const migratedTextLayer = migratedState.pages[0].children.find((layer: Layer) => layer.id === "layer1");
+      expect(migratedTextLayer).toBeDefined();
+      expect(migratedTextLayer?.type).toBe("Markdown");
+      expect(migratedTextLayer?.children).toBe("# Heading");
+    });
+
+    it("should handle layers without a name", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "_page_",
+            name: "Page 1",
+            props: {},
+            children: [
+              {
+                id: "layer1",
+                type: "_text_",
+                props: { someProp: "value" },
+                text: "No name layer",
+                textType: "text",
+              },
+            ],
+          },
+        ],
+      };
+
+      const migratedState = migrateV1ToV2(persistedState);
+
+      const migratedTextLayer = migratedState.pages[0].children.find((layer: Layer) => layer.id === "layer1");
+      expect(migratedTextLayer).toBeDefined();
+      expect(migratedTextLayer?.type).toBe("span");
+      expect(migratedTextLayer?.children).toBe("No name layer");
+      expect(migratedTextLayer?.name).toBeUndefined();
+    });
+
+    it("should preserve non-_text_ layers", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "_page_",
+            name: "Page 1",
+            props: {},
+            children: [
+              {
+                id: "layer1",
+                type: "button",
+                name: "Button Layer",
+                props: { label: "Click Me" },
+                children: [],
+              },
+            ],
+          },
+        ],
+      };
+
+      const migratedState = migrateV1ToV2(persistedState);
+
+      const migratedButtonLayer = migratedState.pages[0].children.find((layer: Layer) => layer.id === "layer1");
+      expect(migratedButtonLayer).toBeDefined();
+      expect(migratedButtonLayer?.type).toBe("button");
+      expect(migratedButtonLayer?.name).toBe("Button Layer");
+      expect(migratedButtonLayer?.props).toEqual({ label: "Click Me" });
+    });
+
+    it("should migrate nested _text_ layers correctly", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "_page_",
+            name: "Page 1",
+            props: {},
+            children: [
+              {
+                id: "layer1",
+                type: "container",
+                name: "Container Layer",
+                props: {},
+                children: [
+                  {
+                    id: "layer1-1",
+                    type: "_text_",
+                    name: "Nested Text Layer",
+                    props: {},
+                    text: "Nested text",
+                    textType: "text",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const migratedState = migrateV1ToV2(persistedState);
+
+      const migratedNestedTextLayer = (migratedState.pages[0].children[0].children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1-1");
+      expect(migratedNestedTextLayer).toBeDefined();
+      expect(migratedNestedTextLayer?.type).toBe("span");
+      expect(migratedNestedTextLayer?.children).toBe("Nested text");
+      expect(migratedNestedTextLayer?.props).toEqual({});
+    });
+
+    it("should not modify the original persisted state", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "_page_",
+            name: "Page 1",
+            props: {},
+            children: [
+              {
+                id: "layer1",
+                type: "_text_",
+                name: "Text Layer",
+                props: { someProp: "value" },
+                text: "Sample text",
+                textType: "text",
+              },
+            ],
+          },
+        ],
+      };
+
+      const persistedStateCopy = JSON.parse(JSON.stringify(persistedState));
+      migrateV1ToV2(persistedState);
+
+      expect(persistedState).toEqual(persistedStateCopy);
     });
   });
 });
