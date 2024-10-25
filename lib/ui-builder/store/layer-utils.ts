@@ -13,7 +13,7 @@ export const visitLayer = (layer: Layer, parentLayer: Layer | null, visitor: (la
     const updatedLayer = visitor(layer, parentLayer);
 
     // Recursively traverse and update children if they exist
-    if (hasChildren(updatedLayer)) {
+    if (hasLayerChildren(updatedLayer)) {
         const updatedChildren = updatedLayer.children.map((child) =>
             visitLayer(child, updatedLayer, visitor)
         );
@@ -25,7 +25,7 @@ export const visitLayer = (layer: Layer, parentLayer: Layer | null, visitor: (la
 
 export const countLayers = (layers: Layer[]): number => {
     return layers.reduce((count, layer) => {
-        if (hasChildren(layer)) {
+        if (hasLayerChildren(layer)) {
             return count + 1 + countLayers(layer.children);
         }
         return count + 1;
@@ -35,7 +35,7 @@ export const countLayers = (layers: Layer[]): number => {
 export const addLayer = (layers: Layer[], newLayer: Layer, parentId?: string, parentPosition?: number): Layer[] => {
     const updatedPages = layers.map((page) =>
         visitLayer(page, null, (layer) => {
-            if (layer.id === parentId && hasChildren(layer)) {
+            if (layer.id === parentId && hasLayerChildren(layer)) {
                 let updatedChildren = layer.children ? [...layer.children] : [];
 
                 if (parentPosition !== undefined) {
@@ -72,7 +72,7 @@ export const findAllParentLayersRecursive = (layers: Layer[], layerId: string): 
 
     const findParents = (layers: Layer[], targetId: string): boolean => {
         for (const layer of layers) {
-            if (hasChildren(layer)) {
+            if (hasLayerChildren(layer)) {
                 if (layer.children.some(child => child.id === targetId)) {
                     parents.push(layer);
                     // Continue searching upwards
@@ -98,7 +98,7 @@ export const findLayerRecursive = (layers: Layer[], layerId: string): Layer | un
         if (layer.id === layerId) {
             return layer;
         }
-        if (hasChildren(layer)) {
+        if (hasLayerChildren(layer)) {
             const foundInChildren = findLayerRecursive(layer.children, layerId);
             if (foundInChildren) {
                 return foundInChildren;
@@ -113,7 +113,7 @@ export const duplicateWithNewIdsAndName = (layer: Layer, addCopySuffix: boolean 
     if (layer.name) {
       newLayer.name = `${ layer.name }${ addCopySuffix ? ' (Copy)' : ''}`;
     }
-    if (hasChildren(newLayer) && hasChildren(layer)) {
+    if (hasLayerChildren(newLayer) && hasLayerChildren(layer)) {
       newLayer.children = layer.children.map(child => duplicateWithNewIdsAndName(child, addCopySuffix));
     }
     return newLayer;
@@ -134,8 +134,8 @@ export function createId(): string {
     return result;
 }
 
-export const hasChildren = (layer: Layer): layer is ComponentLayer & { children: Layer[] } => {
-    return 'children' in layer && Array.isArray(layer.children) && typeof layer.children !== 'string';
+export const hasLayerChildren = (layer: Layer): layer is ComponentLayer & { children: Layer[] } => {
+    return Array.isArray(layer.children) && typeof layer.children !== 'string';
 };
 
 export function isPageLayer(layer: Layer): layer is PageLayer {

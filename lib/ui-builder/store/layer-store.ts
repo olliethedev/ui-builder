@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import { temporal } from 'zundo';
 import isDeepEqual from 'fast-deep-equal';
 
-import { visitLayer, addLayer, hasChildren, isPageLayer, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2 } from '@/lib/ui-builder/store/layer-utils';
+import { visitLayer, addLayer, hasLayerChildren, isPageLayer, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2 } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 
 import { componentRegistry } from '@/lib/ui-builder/registry/component-registry';
@@ -139,7 +139,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
           if (layer.id === layerId) {
             layerToDuplicate = layer;
             parentId = parent?.id;
-            if (parent && hasChildren(parent)) {
+            if (parent && hasLayerChildren(parent)) {
               parentPosition = parent.children.indexOf(layer) + 1;
             }
           }
@@ -192,7 +192,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       const updatedPages = pages.map((page) =>
         visitLayer(page, null, (layer) => {
 
-          if (hasChildren(layer)) {
+          if (hasLayerChildren(layer)) {
 
             // Remove the layer by filtering it out from the children
             const updatedChildren = layer.children.filter((child) => child.id !== layerId);

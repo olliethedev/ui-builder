@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PageLayer, Layer, isPageLayer, componentRegistry } from "@/lib/ui-builder/store/layer-store";
 import template from "lodash.template";
-import { hasChildren } from "@/lib/ui-builder/store/layer-utils";
+import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
 
 export const pageLayerToCode = (page: PageLayer) => {
   const layers = page.children;
@@ -11,7 +11,7 @@ export const pageLayerToCode = (page: PageLayer) => {
   const imports = new Set<string>();
 
   const collectImports = (layer: Layer) => {
-    if (hasChildren(layer) && !isPageLayer(layer)) {
+    if (hasLayerChildren(layer) && !isPageLayer(layer)) {
       const componentDefinition = componentRegistry[layer.type];
       if (layer.type && componentDefinition && componentDefinition.from) {
         imports.add(
@@ -48,7 +48,7 @@ export const generateLayerCode = (layer: Layer, indent = 0): string => {
   const indentation = "  ".repeat(indent);
 
   let childrenCode = "";
-  if (hasChildren(layer) && layer.children.length > 0) {
+  if (hasLayerChildren(layer) && layer.children.length > 0) {
     childrenCode = layer.children
       .map((child) => generateLayerCode(child, indent + 1))
       .join("\n");

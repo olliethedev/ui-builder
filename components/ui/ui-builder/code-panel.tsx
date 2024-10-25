@@ -6,6 +6,9 @@ import {
 import { pageLayerToCode } from "@/components/ui/ui-builder/internal/templates";
 import { CodeBlock } from "@/components/ui/ui-builder/codeblock";
 import { cn } from "@/lib/utils";
+
+
+//todo: improve performance of this component
 export function CodePanel({className}: {className?: string}) {
     
   const { selectedPageId, findLayerById } = useLayerStore();

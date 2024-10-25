@@ -1,7 +1,12 @@
 "use client";
 import { Form } from "@/components/ui/form";
 import React from "react";
-import { DefaultValues, FormState, useForm } from "react-hook-form";
+import {
+  DefaultValues,
+  FormState,
+  useForm,
+  UseFormReturn,
+} from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -11,9 +16,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import AutoFormObject from "./fields/object";
 import { Dependency, FieldConfig } from "./types";
 import {
-  ZodObjectOrWrapped,
   getDefaultValues,
   getObjectFormSchema,
+  ZodObjectOrWrapped,
 } from "./utils";
 
 export function AutoFormSubmit({
@@ -45,9 +50,18 @@ function AutoForm<SchemaType extends ZodObjectOrWrapped>({
 }: {
   formSchema: SchemaType;
   values?: Partial<z.infer<SchemaType>>;
-  onValuesChange?: (values: Partial<z.infer<SchemaType>>) => void;
-  onParsedValuesChange?: (values: Partial<z.infer<SchemaType>>) => void;
-  onSubmit?: (values: z.infer<SchemaType>) => void;
+  onValuesChange?: (
+    values: Partial<z.infer<SchemaType>>,
+    form: UseFormReturn<z.infer<SchemaType>>
+  ) => void;
+  onParsedValuesChange?: (
+    values: Partial<z.infer<SchemaType>>,
+    form: UseFormReturn<z.infer<SchemaType>>
+  ) => void;
+  onSubmit?: (
+    values: z.infer<SchemaType>,
+    form: UseFormReturn<z.infer<SchemaType>>
+  ) => void;
   fieldConfig?: FieldConfig<z.infer<SchemaType>>;
   children?:
     | React.ReactNode
@@ -68,21 +82,21 @@ function AutoForm<SchemaType extends ZodObjectOrWrapped>({
   function onSubmit(values: z.infer<typeof formSchema>) {
     const parsedValues = formSchema.safeParse(values);
     if (parsedValues.success) {
-      onSubmitProp?.(parsedValues.data);
+      onSubmitProp?.(parsedValues.data, form);
     }
   }
 
-  const values = form.watch();
-  // valuesString is needed because form.watch() returns a new object every time
-  const valuesString = JSON.stringify(values);
-
   React.useEffect(() => {
-    onValuesChangeProp?.(values);
-    const parsedValues = formSchema.safeParse(values);
-    if (parsedValues.success) {
-      onParsedValuesChange?.(parsedValues.data);
-    }
-  }, [valuesString]);
+    const subscription = form.watch((values) => {
+      onValuesChangeProp?.(values, form);
+      const parsedValues = formSchema.safeParse(values);
+      if (parsedValues.success) {
+        onParsedValuesChange?.(parsedValues.data, form);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, formSchema, onValuesChangeProp, onParsedValuesChange]);
 
   const renderChildren =
     typeof children === "function"

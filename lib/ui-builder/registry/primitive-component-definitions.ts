@@ -65,6 +65,6 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
         className:(layer)=> classNameFieldOverrides(layer),
         children: (layer)=> childrenAsTextareaFieldOverrides(layer)
     },
-    defaultChildren: "Hello World"
+    defaultChildren: "Text"
   },
 };

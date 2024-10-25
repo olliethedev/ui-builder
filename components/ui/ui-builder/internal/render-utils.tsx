@@ -1,45 +1,52 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { Suspense } from "react";
-import { baseColors, BaseColor } from "@/components/ui/ui-builder/internal/base-colors";
-
+import React, { memo, Profiler, Suspense, useRef } from "react";
+import isDeepEqual from "fast-deep-equal";
 import {
-  Layer,
-  PageLayer,
-} from "@/lib/ui-builder/store/layer-store";
+  baseColors,
+  BaseColor,
+} from "@/components/ui/ui-builder/internal/base-colors";
+
+import { Layer, PageLayer } from "@/lib/ui-builder/store/layer-store";
 import { ClickableWrapper } from "@/components/ui/ui-builder/internal/clickable-wrapper";
 import { componentRegistry } from "@/lib/ui-builder/store/layer-store";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallback";
 import { isPrimitiveComponent } from "@/lib/ui-builder/registry/registry-utils";
-import { hasChildren } from "@/lib/ui-builder/store/layer-utils";
-
+import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
 
 export interface EditorConfig {
   zIndex: number;
   totalLayers: number;
   selectedLayer: Layer;
+  parentUpdated?: boolean;
   onSelectElement: (layerId: string) => void;
   handleDuplicateLayer: () => void;
   handleDeleteLayer: () => void;
 }
 
-export const renderPage = (page: PageLayer, editorConfig?: EditorConfig) => {
+export const RenderPage: React.FC<{
+  page: PageLayer;
+  editorConfig?: EditorConfig;
+}> = memo(({ page, editorConfig }) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { mode, colorTheme, style, borderRadius, ...rest } = page.props;
 
-  const colorData = colorTheme
-    ? baseColors.find((color) => color.name === colorTheme)
-    : undefined;
+  const prevPage = useRef(page);
 
-  const globalOverrides = colorData
-    ? {
-        color: `hsl(${colorData.cssVars[mode as "light" | "dark"].foreground})`,
-        borderColor: `hsl(${
-          colorData.cssVars[mode as "light" | "dark"].border
-        })`,
-      }
-    : {};
+  const colorData = React.useMemo(() => {
+    return colorTheme
+      ? baseColors.find((color) => color.name === colorTheme)
+      : undefined;
+  }, [colorTheme]);
+
+  const globalOverrides = React.useMemo(() => {
+    if (!colorData) return {};
+    return {
+      color: `hsl(${colorData.cssVars[mode as "light" | "dark"].foreground})`,
+      borderColor: `hsl(${colorData.cssVars[mode as "light" | "dark"].border})`,
+    };
+  }, [colorData, mode]);
 
   return (
     <div
@@ -51,94 +58,131 @@ export const renderPage = (page: PageLayer, editorConfig?: EditorConfig) => {
       }}
       {...rest}
     >
-      {page.children.map((child) => renderLayer(child, editorConfig))}
+      {page.children.map((child) => (
+        <RenderLayer key={child.id} layer={child} editorConfig={editorConfig ? { ...editorConfig, parentUpdated: !isDeepEqual(prevPage.current, page) } : undefined} />
+      ))}
     </div>
   );
-};
+});
 
-export const renderLayer = (layer: Layer, editorConfig?: EditorConfig) => {
+RenderPage.displayName = "RenderPage";
 
-  const componentDefinition =
-    componentRegistry[layer.type as keyof typeof componentRegistry];
+export const RenderLayer: React.FC<{
+  layer: Layer;
+  editorConfig?: EditorConfig;
+}> = memo(
+  ({ layer, editorConfig }) => {
+    const componentDefinition =
+      componentRegistry[layer.type as keyof typeof componentRegistry];
 
-  if (!componentDefinition) {
-    return null;
-  }
+    const prevLayer = useRef(layer);
 
-  let Component: React.ElementType | undefined = componentDefinition.component;
+    if (!componentDefinition) {
+      return null;
+    }
 
-  if (isPrimitiveComponent(componentDefinition)) {
-    // Set Component to the HTML tag name (e.g., 'a', 'img')
-    Component = layer.type as keyof JSX.IntrinsicElements;
+    let Component: React.ElementType | undefined =
+      componentDefinition.component;
+    let isPrimitive = false;
+    if (isPrimitiveComponent(componentDefinition)) {
+      Component = layer.type as keyof JSX.IntrinsicElements;
+      isPrimitive = true;
+    }
 
-  }
+    if (!Component) return null;
 
-  // If Component is still undefined, return null to avoid rendering issues
-  if (!Component) return null;
+    const childProps: Record<string, any> = { ...layer.props };
+    if (hasLayerChildren(layer) && layer.children.length > 0) {
+      childProps.children = layer.children.map((child) => (
+        <RenderLayer
+          key={child.id}
+          layer={child}
+          editorConfig={
+            editorConfig
+              ? { ...editorConfig, zIndex: editorConfig.zIndex + 1, parentUpdated: editorConfig.parentUpdated || !isDeepEqual(prevLayer.current, layer) }
+              : undefined
+          }
+        />
+      ));
+    } else if (typeof layer.children === "string") {
+      childProps.children = layer.children;
+    }
 
-  const childProps: Record<string, any> = { ...layer.props };
-  if (hasChildren(layer) && layer.children.length > 0) {
-    childProps.children = layer.children.map((child) => {
-      if (editorConfig) {
-        return renderLayer(child, {
-          ...editorConfig,
-          zIndex: editorConfig.zIndex + 1,
-        });
-      } else {
-        return renderLayer(child);
-      }
-    });
-  } else if (typeof layer.children === 'string') {
-    childProps.children = layer.children;
-  }
-
-  if (!editorConfig) {
-    return (
+    const WrappedComponent = isPrimitive ? (
+      <Component id={layer.id} data-testid={layer.id} {...childProps} />
+    ) : (
       <ErrorSuspenseWrapper key={layer.id} id={layer.id}>
-        <Component data-testid={layer.id} {...(childProps as any)} />
+        <Component data-testid={layer.id} {...childProps} />
       </ErrorSuspenseWrapper>
     );
-  } else {
-    const {
-      zIndex,
-      totalLayers,
-      selectedLayer,
-      onSelectElement,
-      handleDuplicateLayer,
-      handleDeleteLayer,
-    } = editorConfig;
-    return (
-      <ClickableWrapper
-        key={layer.id}
-        layer={layer}
-        zIndex={zIndex}
-        totalLayers={totalLayers}
-        isSelected={layer.id === selectedLayer?.id}
-        onSelectElement={onSelectElement}
-        onDuplicateLayer={handleDuplicateLayer}
-        onDeleteLayer={handleDeleteLayer}
-      >
-        <ErrorSuspenseWrapper id={layer.id}>
-          <Component data-testid={layer.id} {...(childProps as any)} />
-        </ErrorSuspenseWrapper>
-      </ClickableWrapper>
+
+    if (!editorConfig) {
+      return WrappedComponent;
+    } else {
+      const {
+        zIndex,
+        totalLayers,
+        selectedLayer,
+        onSelectElement,
+        handleDuplicateLayer,
+        handleDeleteLayer,
+      } = editorConfig;
+
+      return (
+        <Profiler
+          id={layer.type}
+          onRender={(id, phase, actualDuration) => {
+            if (actualDuration > 10) {
+              // make red
+              console.log(`%c${id} ${phase} ${actualDuration}`, "color: red");
+            }
+          }}
+        >
+          <ClickableWrapper
+            key={layer.id}
+            layer={layer}
+            zIndex={zIndex}
+            totalLayers={totalLayers}
+            isSelected={layer.id === selectedLayer?.id}
+            onSelectElement={onSelectElement}
+            onDuplicateLayer={handleDuplicateLayer}
+            onDeleteLayer={handleDeleteLayer}
+          >
+            {WrappedComponent}
+          </ClickableWrapper>
+        </Profiler>
+      );
+    }
+  },
+  (prevProps, nextProps) => {
+    if(nextProps.editorConfig?.parentUpdated) {
+      return false;
+    }
+    const editorConfigEqual = isDeepEqual(
+      prevProps.editorConfig?.selectedLayer?.id,
+      nextProps.editorConfig?.selectedLayer?.id
     );
+    const layerEqual = isDeepEqual(prevProps.layer, nextProps.layer);
+    return editorConfigEqual && layerEqual;
   }
-};
+);
+
+RenderLayer.displayName = "RenderLayer";
 
 const ErrorSuspenseWrapper: React.FC<{
   id: string;
   children: React.ReactNode;
-}> = ({ id, children }) => (
+}> = ({ children }) => (
   <ErrorBoundary fallbackRender={ErrorFallback}>
-    <Suspense key={id} fallback={<div>Loading...</div>}>
-      {children}
-    </Suspense>
+    <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
   </ErrorBoundary>
 );
 
 export function themeToStyleVars(
-  colors: BaseColor["cssVars"]["dark"] | BaseColor["cssVars"]["light"] | undefined,
+  colors:
+    | BaseColor["cssVars"]["dark"]
+    | BaseColor["cssVars"]["light"]
+    | undefined
 ) {
   if (!colors) {
     return undefined;
@@ -152,4 +196,3 @@ export function themeToStyleVars(
   );
   return styleVariables;
 }
-

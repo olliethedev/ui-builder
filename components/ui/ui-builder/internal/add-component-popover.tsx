@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback } from "react";
+import React, { ReactNode } from "react";
 
 import {
   Command,
@@ -24,6 +24,7 @@ type AddComponentsPopoverProps = {
   addPosition?: number;
   parentLayerId: string;
   onOpenChange?: (open: boolean) => void;
+  onChange?: ({ layerType, parentLayerId, addPosition }: { layerType: string, parentLayerId: string, addPosition?: number }) => void;
 };
 
 export function AddComponentsPopover({
@@ -32,6 +33,7 @@ export function AddComponentsPopover({
   addPosition,
   parentLayerId,
   onOpenChange,
+  onChange,
 }: AddComponentsPopoverProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -61,29 +63,21 @@ export function AddComponentsPopover({
 
   const {
     addComponentLayer,
-  } = useLayerStore( );
-
-
-  const handleAddComponentLayer = useCallback(
-    (componentName: keyof typeof componentRegistry) => {
-      addComponentLayer(componentName, parentLayerId, addPosition);
-    },
-    [parentLayerId, addComponentLayer, addPosition]
-  );
-
-
+  } = useLayerStore((state) => ({
+    addComponentLayer: state.addComponentLayer,
+  }));
 
   const handleSelect = React.useCallback(
     (currentValue: string) => {
-      if (componentRegistry[currentValue as keyof typeof componentRegistry]) {
-        handleAddComponentLayer(
-          currentValue as keyof typeof componentRegistry
-        );
+      if (onChange) {
+        onChange({ layerType: currentValue, parentLayerId, addPosition })
+      } else if (componentRegistry[currentValue as keyof typeof componentRegistry]) {
+        addComponentLayer(currentValue as keyof typeof componentRegistry, parentLayerId, addPosition)
       }
       setOpen(false);
       onOpenChange?.(false);
     },
-    [handleAddComponentLayer, onOpenChange]
+    [addComponentLayer, parentLayerId, addPosition, setOpen, onOpenChange, onChange]
   );
 
 
@@ -99,7 +93,7 @@ export function AddComponentsPopover({
         <PopoverContent className="w-[300px] p-0">
           <Command>
             <CommandInput
-              placeholder="Add component or text..."
+              placeholder="Add component"
               value={inputValue}
               onValueChange={setInputValue}
             />

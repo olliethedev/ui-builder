@@ -6,7 +6,7 @@ import {
   findLayerRecursive,
   findAllParentLayersRecursive,
   createId,
-  hasChildren,
+  hasLayerChildren,
   isPageLayer,
   duplicateWithNewIdsAndName,
   migrateV1ToV2
@@ -235,7 +235,7 @@ describe("Layer Utils", () => {
     });
   });
 
-  describe("hasChildren", () => {
+  describe("hasLayerChildren", () => {
     it("should return true if the layer has children", () => {
       const layer: ComponentLayer = {
         id: "component1",
@@ -252,7 +252,7 @@ describe("Layer Utils", () => {
           },
         ],
       };
-      expect(hasChildren(layer)).toBe(true);
+      expect(hasLayerChildren(layer)).toBe(true);
     });
   });
 

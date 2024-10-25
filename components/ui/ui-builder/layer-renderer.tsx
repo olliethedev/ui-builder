@@ -1,9 +1,9 @@
-import React  from "react";
+import React, { Profiler } from "react";
 
 import {
   PageLayer,
 } from "@/lib/ui-builder/store/layer-store";
-import { EditorConfig, renderPage } from "@/components/ui/ui-builder/internal/render-utils";
+import { EditorConfig, RenderPage } from "@/components/ui/ui-builder/internal/render-utils";
 
 interface LayerRendererProps {
   className?: string;
@@ -18,9 +18,15 @@ const LayerRenderer: React.FC<LayerRendererProps> = ({
 }: LayerRendererProps) => {
 
   return (
-    <div className={className}>
-      {renderPage(page, editorConfig)}
-    </div>
+    <Profiler id="LayerRenderer" onRender={(id, phase, actualDuration) => {
+      if(actualDuration > 30){
+        console.log(`%c${id} ${phase} ${actualDuration}`, "color: red");
+      }
+    }}>
+      <div className={className}>
+        <RenderPage page={page} editorConfig={editorConfig} />
+      </div>
+    </Profiler>
   );
 };
 
