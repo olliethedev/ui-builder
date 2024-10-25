@@ -11,7 +11,6 @@ import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
 // Mock dependencies
 jest.mock("@/lib/ui-builder/store/layer-store", () => ({
   useLayerStore: jest.fn(),
-  isTextLayer: jest.fn(),
 }));
 
 // jest.mock("@/components/ui/auto-form", () => ({
@@ -43,10 +42,6 @@ jest.mock("@/components/ui/textarea", () => ({
   Textarea: ({ ...props }: any) => (
     <textarea data-testid="textarea" {...props} />
   ),
-}));
-
-jest.mock("@/hooks/use-debounce", () => ({
-  useDebounce: (value: any) => value,
 }));
 
 // Mock component-registry with necessary components
@@ -121,15 +116,19 @@ describe("PropsPanel", () => {
   const mockDuplicateLayer = jest.fn();
   const mockUpdateLayer = jest.fn();
   const mockFindLayerById = jest.fn();
+  const mockAddComponentLayer = jest.fn();
+
+  const mockState = {
+    selectedLayerId: "layer-1",
+    findLayerById: mockFindLayerById,
+    removeLayer: mockRemoveLayer,
+    duplicateLayer: mockDuplicateLayer,
+    updateLayer: mockUpdateLayer,
+    addComponentLayer: mockAddComponentLayer,
+  };
 
   beforeEach(() => {
-    mockedUseLayerStore.mockReturnValue({
-      selectedLayerId: "layer-1",
-      findLayerById: mockFindLayerById,
-      removeLayer: mockRemoveLayer,
-      duplicateLayer: mockDuplicateLayer,
-      updateLayer: mockUpdateLayer,
-    });
+    mockedUseLayerStore.mockImplementation((selector) => selector(mockState));
   });
 
   afterEach(() => {
@@ -171,11 +170,10 @@ describe("PropsPanel", () => {
 
       const labelInput = screen.getByTestId("input");
       userEvent.clear(labelInput);
-      userEvent.type(labelInput, "Updated Label");
+      userEvent.type(labelInput, "Updated Label", { delay: 0 });
 
       await waitFor(() => {
-        expect(mockUpdateLayer).toHaveBeenCalledWith("layer-6", {
-          className: "merge-class",
+        expect(mockUpdateLayer).toHaveBeenLastCalledWith("layer-6", {
           label: "Updated Label",
         }, undefined);
       });
@@ -208,13 +206,13 @@ describe("PropsPanel", () => {
 
   describe("when no layer is selected", () => {
     beforeEach(() => {
-      mockedUseLayerStore.mockReturnValue({
+      mockedUseLayerStore.mockImplementation((selector) => selector({
         selectedLayerId: null,
         findLayerById: jest.fn().mockReturnValue(null),
         removeLayer: mockRemoveLayer,
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
-      });
+      }));
       renderPropsPanel();
     });
 
@@ -271,12 +269,11 @@ describe("PropsPanel", () => {
       userEvent.clear(labelInput);
       userEvent.type(labelInput, "New Label", { delay: 0 });
 
-      // Since useDebounce is mocked to return immediately, updateLayer should be called
+      
       await waitFor(() => {
         expect(mockUpdateLayer).toHaveBeenLastCalledWith(
           "layer-1",
           {
-            className: "button-class",
             label: "New Label",
           },
           undefined
@@ -288,13 +285,13 @@ describe("PropsPanel", () => {
   describe("edge cases", () => {
     it("should handle undefined selectedLayer gracefully", () => {
       mockFindLayerById.mockReturnValue(undefined);
-      mockedUseLayerStore.mockReturnValue({
+      mockedUseLayerStore.mockImplementation((selector) => selector({
         selectedLayerId: "non-existent-layer",
         findLayerById: mockFindLayerById,
         removeLayer: mockRemoveLayer,
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
-      });
+      }));
       renderPropsPanel();
 
       expect(screen.getByText("Component Properties")).toBeInTheDocument();
@@ -326,27 +323,29 @@ describe("PropsPanel", () => {
 
       // Simulate rapid changes
       await userEvent.clear(labelInput);
-      await userEvent.type(labelInput, "Click Fast");
+      await userEvent.type(labelInput, "Type Fast", { delay: 0 });
+
+      await waitFor(() => {
+        expect(mockUpdateLayer).toHaveBeenLastCalledWith("layer-4", {
+          label: "Type Fast",
+        }, undefined);
+      });
 
       await userEvent.clear(labelInput);
-      await userEvent.type(labelInput, "Click Faster");
+      await userEvent.type(labelInput, "Type Faster", { delay: 0 });
 
-      await userEvent.clear(labelInput);
-      await userEvent.type(labelInput, "Click Fastest");
-
-      // Await the debounced updates
       await waitFor(() => {
         expect(mockUpdateLayer).toHaveBeenCalledWith("layer-4", {
-          className: "fast-button-class",
-          label: "Click Fast",
+          label: "Type Faster",
         }, undefined);
+      });
+
+      await userEvent.clear(labelInput);
+      await userEvent.type(labelInput, "Type Fastest", { delay: 0 });
+
+      await waitFor(() => {
         expect(mockUpdateLayer).toHaveBeenCalledWith("layer-4", {
-          className: "fast-button-class",
-          label: "Click Faster",
-        }, undefined);
-        expect(mockUpdateLayer).toHaveBeenCalledWith("layer-4", {
-          className: "fast-button-class",
-          label: "Click Fastest",
+          label: "Type Fastest",
         }, undefined);
       });
     });

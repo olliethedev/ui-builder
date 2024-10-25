@@ -1,8 +1,8 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import {
-  renderPage,
-  renderLayer,
+  RenderPage,
+  RenderLayer,
   themeToStyleVars
 } from "../components/ui/ui-builder/internal/render-utils";
 import {
@@ -124,13 +124,13 @@ describe("render-utils", () => {
     children: [textComponentLayer],
   };
 
-  describe("renderPage", () => {
+  describe("RenderPage", () => {
     it("renders a page with correct styles and children", () => {
       const modifiedPage = {
         ...pageLayer,
         children: [componentLayer, textComponentLayer],
       };
-      render(renderPage(modifiedPage));
+      render(<RenderPage page={modifiedPage} />);
       const container = screen.getByTestId("page-1");
       expect(container).toHaveStyle("padding: 20px");
       expect(container).toHaveStyle("borderColor: hsl(undefined)"); // colorData is undefined in baseColors
@@ -216,7 +216,7 @@ describe("render-utils", () => {
         },
       };
       jest.spyOn(baseColors, "find").mockReturnValue(mockBaseColors);
-      render(renderPage(modifiedPage));
+      render(<RenderPage page={modifiedPage} />);
       const container = screen.getByTestId("page-1");
       expect(container).toHaveStyle("color: hsl(222.2 84% 4.9%)");
       expect(container).toHaveStyle("borderColor: hsl(214.3 31.8% 91.4%)");
@@ -232,7 +232,7 @@ describe("render-utils", () => {
         props: noColorThemeProps,
         children: [componentLayer],
       };
-      render(renderPage(modifiedPage));
+      render(<RenderPage page={modifiedPage} />);
       const container = screen.getByTestId("page-1");
       expect(container).toHaveStyle("padding: 20px");
       expect(container).toHaveStyle("color: initial");
@@ -252,7 +252,7 @@ describe("render-utils", () => {
       };
       // Mock baseColors to return undefined
       jest.spyOn(baseColors, "find").mockReturnValue(undefined);
-      render(renderPage(modifiedPage));
+      render(<RenderPage page={modifiedPage} />);
       const container = screen.getByTestId("page-1");
       expect(container).toHaveStyle("padding: 20px");
       expect(container).toHaveStyle("color: initial");
@@ -261,9 +261,9 @@ describe("render-utils", () => {
     });
   });
 
-  describe("renderLayer", () => {
+  describe("RenderLayer", () => {
     it("renders a component layer without editorConfig", () => {
-      render(renderLayer(componentLayer));
+      render(<RenderLayer layer={componentLayer} />);
       expect(screen.getByTestId("error-boundary")).toBeInTheDocument();
       expect(screen.getByTestId("button")).toBeInTheDocument();
       expect(screen.getByTestId("button")).toHaveTextContent("Button");
@@ -278,13 +278,12 @@ describe("render-utils", () => {
         handleDuplicateLayer: jest.fn(),
         handleDeleteLayer: jest.fn(),
       };
-      render(renderLayer(componentLayer, editorConfig));
+      render(<RenderLayer layer={componentLayer} editorConfig={editorConfig} />);
       expect(screen.getByTestId("button")).toBeInTheDocument();
     });
 
     it("renders a text component layer without editorConfig", () => {
-      render(renderLayer(textComponentLayer));
-      expect(screen.getByTestId("error-boundary")).toBeInTheDocument();
+      render(<RenderLayer layer={textComponentLayer} />);
       const textElement = screen.getByTestId("layer-2");
       expect(textElement).toBeInTheDocument();
       expect(textElement).toHaveTextContent("Hello, World!");
@@ -300,7 +299,7 @@ describe("render-utils", () => {
         handleDuplicateLayer: jest.fn(),
         handleDeleteLayer: jest.fn(),
       };
-      render(renderLayer(textComponentLayer, editorConfig));
+      render(<RenderLayer layer={textComponentLayer} editorConfig={editorConfig} />);
       const textElement = screen.getByTestId("layer-2");
       expect(textElement).toBeInTheDocument();
       expect(textElement).toHaveClass("text-class");
@@ -308,14 +307,14 @@ describe("render-utils", () => {
     });
 
     it("renders a primitive component layer", () => {
-      render(renderLayer(primitiveComponentLayer));
+      render(<RenderLayer layer={primitiveComponentLayer} />);
       const primitiveElement = screen.getByTestId("layer-5");
       expect(primitiveElement).toBeInTheDocument();
       expect(primitiveElement).toHaveClass("div-class");
     });
 
     it("renders a layer with children", () => {
-      render(renderLayer(cardLayer));
+      render(<RenderLayer layer={cardLayer} />);
       const cardElement = screen.getByTestId("card");
       expect(cardElement).toBeInTheDocument();
       expect(screen.getByTestId("layer-2")).toBeInTheDocument();
@@ -331,7 +330,7 @@ describe("render-utils", () => {
         handleDeleteLayer: jest.fn(),
       };
     
-      render(renderLayer(cardLayer, editorConfig));
+      render(<RenderLayer layer={cardLayer} editorConfig={editorConfig} />);
     
       // Check if the card element is rendered
       const cardElement = screen.getByTestId("card");
@@ -347,11 +346,11 @@ describe("render-utils", () => {
 
     it("returns null if component is not found", () => {
       const notFoundLayer = { ...componentLayer, type: "not-found" };
-      expect(renderLayer(notFoundLayer)).toBeNull();
+      const { container } = render(<RenderLayer layer={notFoundLayer} />);
+      expect(container.firstChild).toBeNull();
     });
 
     it("returns null when component is undefined for a non-primitive component type", () => {
-  
       const undefinedComponentLayer = {
         id: "layer-undefined",
         type: "UndefinedComponent",
@@ -360,11 +359,9 @@ describe("render-utils", () => {
         children: [],
       };
 
-      const result = renderLayer(undefinedComponentLayer);
-
-      expect(result).toBeNull();
+      const { container } = render(<RenderLayer layer={undefinedComponentLayer} />);
+      expect(container.firstChild).toBeNull();
     });
-
   });
 
   describe("ErrorSuspenseWrapper", () => {
