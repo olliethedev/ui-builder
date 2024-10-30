@@ -642,46 +642,6 @@ const initialLayers: PageLayer[] = [{
       ]
     },
     {
-      "id": "9khI7RN",
-      "type": "Flexbox",
-      "name": "Flexbox",
-      "props": {
-        "direction": "column",
-        "justify": "start",
-        "align": "start",
-        "wrap": "nowrap",
-        "gap": "4",
-        "className": "max-w-4xl w-full mx-auto"
-      },
-      "children": [
-        {
-          "type": "span",
-          "children": "Dynamic Components",
-          "id": "tvjHJKv",
-          "name": "Text",
-          "props": {
-            "className": "text-4xl"
-          }
-        },
-        {
-          "type": "span",
-          "children": "As you edit this page you can see your changes in an advanced component below. You can even add your own components that show information based on the the logged in user's details.",
-          "id": "RmwFD7i",
-          "name": "Text",
-          "props": {}
-        },
-        {
-          "id": "rvEtSBH",
-          "type": "CodePanel",
-          "name": "PageSourceCode",
-          "props": {
-            "className": ""
-          },
-          "children": []
-        }
-      ]
-    },
-    {
       "id": "V1vySrN",
       "type": "Flexbox",
       "name": "Flexbox",
