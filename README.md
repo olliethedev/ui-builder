@@ -106,7 +106,7 @@ const initialLayers: PageLayer[] = [
 
 const App = () => {
   const handleLayersChange = (updatedLayers: PageLayer[]) => {
-    // Here you can save the updated layers to the database
+    // Here you can send the updated layers to the backend
     console.log(updatedLayers);
   };
 
