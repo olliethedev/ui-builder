@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { memo, Profiler, Suspense, useRef } from "react";
+import React, { memo, Suspense, useRef } from "react";
 import isDeepEqual from "fast-deep-equal";
 import {
   baseColors,
@@ -14,6 +14,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallback";
 import { isPrimitiveComponent } from "@/lib/ui-builder/registry/registry-utils";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
+import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
 
 export interface EditorConfig {
   zIndex: number;
@@ -129,14 +130,9 @@ export const RenderLayer: React.FC<{
       } = editorConfig;
 
       return (
-        <Profiler
+        <DevProfiler
           id={layer.type}
-          onRender={(id, phase, actualDuration) => {
-            if (actualDuration > 10) {
-              // make red
-              console.log(`%c${id} ${phase} ${actualDuration}`, "color: red");
-            }
-          }}
+          threshold={10}
         >
           <ClickableWrapper
             key={layer.id}
@@ -150,7 +146,7 @@ export const RenderLayer: React.FC<{
           >
             {WrappedComponent}
           </ClickableWrapper>
-        </Profiler>
+        </DevProfiler>
       );
     }
   },

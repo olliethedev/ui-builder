@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { Profiler, useCallback, useLayoutEffect, useRef, useState } from "react";
+import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
 import isDeepEqual from "fast-deep-equal";
 import { Layer, useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import {
   TreeRowNode,
   TreeRowPlaceholder,
 } from "@/components/ui/ui-builder/internal/tree-row-node";
+import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
 
 interface LayersPanelProps {
   className?: string;
@@ -155,20 +156,13 @@ const LayersTree: React.FC<LayersTreeProps> = React.memo(
     }, []);
 
     return (
-      <Profiler
-        id="LayersPanel"
-        onRender={(id, phase, actualDuration) => {
-          if (actualDuration > 20) {
-            console.log(`%c${id} ${phase} ${actualDuration}`, "color: red");
-          }
-        }}
-      >
+      <DevProfiler id="LayersPanel" threshold={30}>
         <div
           className={cn(className, "flex flex-col size-full overflow-x-auto")}
         >
           {renderTree()}
         </div>
-      </Profiler>
+      </DevProfiler>
     );
   },
   (prevProps, nextProps) => {
