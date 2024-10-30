@@ -106,9 +106,6 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
         className: selectedLayer.props.className,
       })}
       onValuesChange={handleSetValues}
-      onSubmit={(data) => {
-        console.log({ onSubmit: data });
-      }}
       values={{
         name: selectedLayer.name,
         className: selectedLayer.props.className,

@@ -5,10 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Flexbox } from '@/components/ui/ui-builder/flexbox';
 import { Grid } from '@/components/ui/ui-builder/grid';
 import { CodePanel } from '@/components/ui/ui-builder/code-panel';
+import { Markdown } from "@/components/ui/ui-builder/markdown";
 import { Icon, iconNames } from "@/components/ui/ui-builder/icon";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { classNameFieldOverrides, childrenFieldOverrides, iconNameFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { classNameFieldOverrides, childrenFieldOverrides, iconNameFieldOverrides, childrenAsTextareaFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
 
 export const complexComponentDefinitions: ComponentRegistry = {
     Button: {
@@ -33,12 +35,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
         defaultChildren: [
             {
                 id: "button-text",
-                type: "_text_",
-                name: "Text",
-                text: "Button",
-                textType: "text",
+                type: "span",
+                name: "span",
                 props: {},
-            },
+                children: "Button",
+            } satisfies ComponentLayer,
         ],
         fieldOverrides: {
             className:(layer)=> classNameFieldOverrides(layer),
@@ -58,12 +59,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
         defaultChildren: [
             {
                 id: "badge-text",
-                type: "_text_",
-                name: "Text",
-                text: "Badge",
-                textType: "text",
+                type: "span",
+                name: "span",
                 props: {},
-            },
+                children: "Badge",
+            } satisfies ComponentLayer,
         ],
         fieldOverrides: {
             className:(layer)=> classNameFieldOverrides(layer),
@@ -129,6 +129,18 @@ export const complexComponentDefinitions: ComponentRegistry = {
             className:(layer)=> classNameFieldOverrides(layer)
         }
     },
+    Markdown: {
+        component: Markdown,
+        schema: z.object({
+            className: z.string().optional(),
+            children: z.any().optional(),
+        }),
+        from: "@/components/ui/ui-builder/markdown",
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenAsTextareaFieldOverrides(layer)
+        }
+    },
     Icon: {
         component: Icon,
         schema: z.object({
@@ -187,12 +199,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
                         children: [
                             {
                                 id: "WEz8Yku",
-                                type: "_text_",
-                                name: "Text",
-                                text: "Accordion Item #1",
-                                textType: "text",
+                                type: "span",
+                                name: "span",
                                 props: {},
-                            },
+                                children: "Accordion Item #1",
+                            } satisfies ComponentLayer,
                         ],
                     },
                     {
@@ -203,12 +214,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
                         children: [
                             {
                                 id: "acc-content-1-text-1",
-                                type: "_text_",
-                                name: "Text",
-                                text: "Accordion Content Text",
-                                textType: "text",
+                                type: "span",
+                                name: "span",
                                 props: {},
-                            },
+                                children: "Accordion Content Text",
+                            } satisfies ComponentLayer,
                         ],
                     },
                 ],
@@ -229,12 +239,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
                         children: [
                             {
                                 id: "acc-trigger-2-text-1",
-                                type: "_text_",
-                                name: "Text (Copy)",
-                                text: "Accordion Item #2",
-                                textType: "text",
+                                type: "span",
+                                name: "span",
                                 props: {},
-                            },
+                                children: "Accordion Item #2",
+                            } satisfies ComponentLayer,
                         ],
                     },
                     {
@@ -245,12 +254,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
                         children: [
                             {
                                 id: "acc-content-2-text-1",
-                                type: "_text_",
-                                name: "Text (Copy)",
-                                text: "Accordion Content Text",
-                                textType: "text",
+                                type: "span",
+                                name: "span",
                                 props: {},
-                            },
+                                children: "Accordion Content Text",
+                            } satisfies ComponentLayer,
                         ],
                     },
                 ],
@@ -278,12 +286,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 children: [
                     {
                         id: "WEz8Yku",
-                        type: "_text_",
-                        name: "Text",
-                        text: "Accordion Item #1",
-                        textType: "text",
+                        type: "span",
+                        name: "span",
                         props: {},
-                    },
+                        children: "Accordion Item #1",
+                    } satisfies ComponentLayer,
                 ],
             },
             {
@@ -294,12 +301,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 children: [
                     {
                         id: "acc-content-1-text-1",
-                        type: "_text_",
-                        name: "Text",
-                        text: "Accordion Content Text",
-                        textType: "text",
+                        type: "span",
+                        name: "span",
                         props: {},
-                    },
+                        children: "Accordion Content Text",
+                    } satisfies ComponentLayer,
                 ],
             },
         ],
@@ -356,12 +362,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
                         children: [
                             {
                                 id: "card-title-text",
-                                type: "_text_",
-                                name: "Text",
-                                text: "Card Title",
-                                textType: "text",
+                                type: "span",
+                                name: "span",
                                 props: {},
-                            },
+                                children: "Card Title",
+                            } satisfies ComponentLayer,
                         ],
                     },
                     {
@@ -372,12 +377,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
                         children: [
                             {
                                 id: "card-description-text",
-                                type: "_text_",
-                                name: "Text",
-                                text: "Card Description",
-                                textType: "text",
+                                type: "span",
+                                name: "span",
                                 props: {},
-                            },
+                                children: "Card Description",
+                            } satisfies ComponentLayer,
                         ],
                     },
                 ],
@@ -390,12 +394,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 children: [
                     {
                         id: "card-content-paragraph",
-                        type: "_text_",
-                        name: "Text",
-                        text: "Card Content",
-                        textType: "text",
+                        type: "span",
+                        name: "span",
                         props: {},
-                    },
+                        children: "Card Content",
+                    } satisfies ComponentLayer,
                 ],
             },
             {
@@ -406,12 +409,11 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 children: [
                     {
                         id: "card-footer-paragraph",
-                        type: "_text_",
-                        name: "Text",
-                        text: "Card Footer",
-                        textType: "text",
+                        type: "span",
+                        name: "span",
                         props: {},
-                    },
+                        children: "Card Footer",
+                    } satisfies ComponentLayer,
                 ],
             },
         ],

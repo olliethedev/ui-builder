@@ -1,9 +1,10 @@
-import React  from "react";
+import React from "react";
 
 import {
   PageLayer,
 } from "@/lib/ui-builder/store/layer-store";
-import { EditorConfig, renderPage } from "@/components/ui/ui-builder/internal/render-utils";
+import { EditorConfig, RenderPage } from "@/components/ui/ui-builder/internal/render-utils";
+import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
 
 interface LayerRendererProps {
   className?: string;
@@ -18,9 +19,11 @@ const LayerRenderer: React.FC<LayerRendererProps> = ({
 }: LayerRendererProps) => {
 
   return (
-    <div className={className}>
-      {renderPage(page, editorConfig)}
-    </div>
+    <DevProfiler id="LayerRenderer" threshold={30}>
+      <div className={className}>
+        <RenderPage page={page} editorConfig={editorConfig} />
+      </div>
+    </DevProfiler>
   );
 };
 

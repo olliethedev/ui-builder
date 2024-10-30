@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback } from "react";
+import React, { ReactNode } from "react";
 
 import {
   Command,
@@ -17,9 +17,6 @@ import {
 } from "@/components/ui/popover";
 import { componentRegistry, useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { cn } from "@/lib/utils";
-import { PlusIcon } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 type AddComponentsPopoverProps = {
   className?: string;
@@ -27,6 +24,7 @@ type AddComponentsPopoverProps = {
   addPosition?: number;
   parentLayerId: string;
   onOpenChange?: (open: boolean) => void;
+  onChange?: ({ layerType, parentLayerId, addPosition }: { layerType: string, parentLayerId: string, addPosition?: number }) => void;
 };
 
 export function AddComponentsPopover({
@@ -35,10 +33,9 @@ export function AddComponentsPopover({
   addPosition,
   parentLayerId,
   onOpenChange,
+  onChange,
 }: AddComponentsPopoverProps) {
   const [open, setOpen] = React.useState(false);
-
-  const [textInputValue, setTextInputValue] = React.useState("");
 
   const [inputValue, setInputValue] = React.useState("")
   
@@ -66,72 +63,21 @@ export function AddComponentsPopover({
 
   const {
     addComponentLayer,
-    addTextLayer,
-  } = useLayerStore();
-
-
-  const handleAddComponentLayer = useCallback(
-    (componentName: keyof typeof componentRegistry) => {
-      addComponentLayer(componentName, parentLayerId, addPosition);
-    },
-    [parentLayerId, addComponentLayer, addPosition]
-  );
-
-  const handleAddTextLayer = useCallback(
-    (text: string, textType: "text" | "markdown") => {
-      addTextLayer(text, textType, parentLayerId, addPosition);
-    },
-    [parentLayerId, addTextLayer, addPosition]
-  );
-
-  const textInputForm = (
-    <form
-      className="w-full"
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleAddTextLayer(textInputValue, "text");
-        setTextInputValue("");
-      }}
-    >
-      <div className="w-full flex items-center space-x-2">
-        <Input
-          className="w-full flex-grow"
-          placeholder="Enter text..."
-          value={textInputValue}
-          onChange={(e) => setTextInputValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleAddTextLayer(textInputValue, "text");
-              setTextInputValue("");
-            }
-          }}
-        />
-        <Button type="submit" variant="secondary">
-          {" "}
-          <PlusIcon className="w-4 h-4" />
-        </Button>
-      </div>
-    </form>
-  );
+  } = useLayerStore((state) => ({
+    addComponentLayer: state.addComponentLayer,
+  }));
 
   const handleSelect = React.useCallback(
     (currentValue: string) => {
-      if (currentValue === "text" && inputValue.trim()) {
-        handleAddTextLayer(inputValue.trim(), "text");
-        setInputValue("");
-      } else {
-        // Check if the currentValue is a valid component name
-        if (componentRegistry[currentValue as keyof typeof componentRegistry]) {
-          handleAddComponentLayer(
-            currentValue as keyof typeof componentRegistry
-          );
-        }
+      if (onChange) {
+        onChange({ layerType: currentValue, parentLayerId, addPosition })
+      } else if (componentRegistry[currentValue as keyof typeof componentRegistry]) {
+        addComponentLayer(currentValue as keyof typeof componentRegistry, parentLayerId, addPosition)
       }
       setOpen(false);
       onOpenChange?.(false);
     },
-    [handleAddComponentLayer, handleAddTextLayer, inputValue, onOpenChange]
+    [addComponentLayer, parentLayerId, addPosition, setOpen, onOpenChange, onChange]
   );
 
 
@@ -147,18 +93,14 @@ export function AddComponentsPopover({
         <PopoverContent className="w-[300px] p-0">
           <Command>
             <CommandInput
-              placeholder="Add component or text..."
+              placeholder="Add component"
               value={inputValue}
               onValueChange={setInputValue}
             />
             <CommandList>
               <CommandEmpty>
                 No components found
-                {textInputForm}
               </CommandEmpty>
-              <CommandGroup heading="Text">
-                <CommandItem>{textInputForm}</CommandItem>
-              </CommandGroup>
               <CommandSeparator />
               {Object.entries(groupedOptions).map(([group, components]) => (
                 <CommandGroup key={group} heading={group}>

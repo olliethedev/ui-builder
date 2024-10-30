@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import LayersPanel from "@/components/ui/ui-builder/internal/layers-panel";
 import EditorPanel from "@/components/ui/ui-builder/internal/editor-panel";
 import PropsPanel from "@/components/ui/ui-builder/internal/props-panel";
@@ -60,7 +60,8 @@ const UIBuilder = ({ initialLayers, onChange }: UIBuilderProps) => {
 };
 
 function MainLayout() {
-  const mainPanels = [
+  const mainPanels = useMemo(
+    () =>  [
     {
       title: "Page Config",
       content: (
@@ -79,8 +80,10 @@ function MainLayout() {
         <PropsPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />
       ),
       defaultSize: 25,
-    },
-  ];
+      },
+    ],
+    []
+  );
 
   const [selectedPanel, setSelectedPanel] = useState(mainPanels[0]);
   return (

@@ -9,8 +9,7 @@ import {
   Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { hasChildren } from "@/lib/ui-builder/store/layer-utils";
-import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
 import { Layer } from "@/lib/ui-builder/store/layer-store";
 import {
   DropdownMenu,
@@ -29,6 +28,14 @@ interface TreeRowNodeProps {
   draggable: boolean;
   onToggle: (id: number | string, open: boolean) => void;
   nodeAttributes: NodeAttrs;
+  selectedLayerId: string | null;
+  selectLayer: (id: string) => void;
+  removeLayer: (id: string) => void;
+  duplicateLayer: (id: string) => void;
+  updateLayer: (id: string, update: Partial<Layer>, options?: {
+    name?: string;
+    children?: Layer[];
+  }) => void;
 }
 
 export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
@@ -39,14 +46,13 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
   draggable,
   onToggle,
   nodeAttributes,
+  selectedLayerId,
+  selectLayer,
+  removeLayer,
+  duplicateLayer,
+  updateLayer,
 }) => {
-  const {
-    selectedLayerId,
-    selectLayer,
-    removeLayer,
-    duplicateLayer,
-    updateLayer,
-  } = useLayerStore();
+
 
   const [isRenaming, setIsRenaming] = useState(false);
 
@@ -86,6 +92,10 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
 
   const { key, ...rest } = nodeAttributes;
 
+  if (!node) {
+    return null;
+  }
+
   return (
     <div key={key} {...rest} className="w-fit flex items-center group relative">
       <div
@@ -106,7 +116,7 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
       >
         <GripVertical className="size-4" />
       </Button>
-      {hasChildren(node) && node.children.length > 0 ? (
+      {hasLayerChildren(node) && node.children.length > 0 ? (
         <Button
           className="size-4 rounded-none"
           variant="link"
@@ -144,7 +154,7 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
           {node.name}
         </Button>
       )}
-      {hasChildren(node) && (
+      {hasLayerChildren(node) && (
         <AddComponentsPopover
           parentLayerId={node.id}
           onOpenChange={setPopoverOrMenuOpen}
@@ -189,6 +199,8 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
     </div>
   );
 };
+
+TreeRowNode.displayName = "TreeRowNode";
 
 export const TreeRowPlaceholder: React.FC<
   Pick<TreeRowNodeProps, "nodeAttributes">

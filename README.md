@@ -35,8 +35,6 @@ Add dev dependencies, since there currently seems to be an issue with shadcn/ui 
 npm install -D @types/lodash.template @tailwindcss/typography @types/react-syntax-highlighter react-docgen-typescript tailwindcss-animate ts-morph ts-to-zod
 ```
 
-
-
 And that's it! You have a UI Builder that you can use to build your UI.
 
 ## Usage
@@ -82,11 +80,10 @@ const initialLayers: PageLayer[] = [
         children: [
             {
                 id: "UzZY6Dp",
-                type: "_text_",
-                name: "Text",
-                text: "Github",
-                textType: "text",
+                type: "span",
+                name: "span",
                 props: {},
+                children: "Hello World",
             },
             {
                 id: "hn3PF6A",
@@ -109,7 +106,7 @@ const initialLayers: PageLayer[] = [
 
 const App = () => {
   const handleLayersChange = (updatedLayers: PageLayer[]) => {
-    // Here you can save the updated layers to the database
+    // Here you can send the updated layers to the backend
     console.log(updatedLayers);
   };
 
@@ -218,7 +215,7 @@ Note: This project is an work in progress and the API will change.
 
 ### Layers
 
-- **Layers** are the fundamental units representing components, text, or pages within the UI structure.
+- **Layers** are the fundamental units representing components or pages within the UI structure.
 - They form a hierarchical tree, allowing for complex and nested UI layouts.
 - Each layer possesses properties and can contain child layers, enabling modular and scalable UI designs.
 
@@ -250,25 +247,15 @@ The `layer-store.ts` module defines the essential types used to manage UI layers
 ```ts
 
 export type Layer =
-  | {
-      id: string;
-      name?: string;
-      type: keyof typeof componentRegistry;
-      props: Record<string, any>;
-      children: Layer[];
-    }
-  | TextLayer
+  | ComponentLayer
   | PageLayer;
 
-export type ComponentLayer = Exclude<Layer, TextLayer>;
-
-export type TextLayer = {
+export type ComponentLayer = {
   id: string;
   name?: string;
-  type: '_text_';
+  type: keyof typeof componentRegistry;
   props: Record<string, any>;
-  text: string;
-  textType: 'text' | 'markdown';
+  children: Layer[] | string;
 };
 
 export type PageLayer = {
@@ -277,7 +264,7 @@ export type PageLayer = {
   type: '_page_';
   props: Record<string, any>;
   children: Layer[];
-};
+}
 
 interface LayerStore {
   pages: PageLayer[];
@@ -285,7 +272,6 @@ interface LayerStore {
   selectedPageId: string;
   initialize: (pages: PageLayer[]) => void;
   addComponentLayer: (layerType: keyof typeof componentRegistry, parentId: string, parentPosition?: number) => void;
-  addTextLayer: (text: string, textType: 'text' | 'markdown', parentId: string, parentPosition?: number) => void;
   addPageLayer: (pageId: string) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
@@ -298,9 +284,8 @@ interface LayerStore {
 
 ```
 
-- `Layer`: A union type representing any possible layer, encompassing component, text, or page layers.
-- `ComponentLayer`: Represents layers that are components, excluding text layers.
-- `TextLayer`: Represents layers containing text content. Text layers dont have children.
+- `Layer`: A union type representing any possible layer, encompassing component or page layers.
+- `ComponentLayer`: Represents layers that are components.
 - `PageLayer`: Represents layers that serve as pages containing other layers.
 - `LayerStore`: Defines the structure of the state, including pages, selected layer/page IDs, and various actions to manipulate layers.
 
@@ -314,7 +299,7 @@ export interface RegistryEntry<T extends ReactComponentType<any>> {
   component?: T;
   schema: ZodObject<any>;
   from?: string;
-  defaultChildren?: (ComponentLayer | TextLayer)[];
+  defaultChildren?: (ComponentLayer)[];
   fieldOverrides?: Record<string, FieldConfigFunction>;
 }
 
@@ -323,7 +308,7 @@ export type ComponentRegistry = Record<
   RegistryEntry<ReactComponentType<any>>
 >;
 
-export type FieldConfigFunction = (layer: ComponentLayer | TextLayer) => FieldConfigItem;
+export type FieldConfigFunction = (layer: ComponentLayer) => FieldConfigItem;
 
 export const componentRegistry: ComponentRegistry = {
   // ...YourOtherProjectComponentDefinitions
@@ -331,7 +316,7 @@ export const componentRegistry: ComponentRegistry = {
   ...primitiveComponentDefinitions,
 } as const;
 
-export const generateFieldOverrides = (layer: ComponentLayer | TextLayer): Record<string, FieldConfigItem> => {...}
+export const generateFieldOverrides = (layer: ComponentLayer): Record<string, FieldConfigItem> => {...}
 
 ```
 
@@ -355,36 +340,49 @@ export const componentRegistry: ComponentRegistry = {
   Button: {
     component: Button,
     schema: z.object({
-      className: z.string().optional(),
-      asChild: z.boolean().optional(),
-      children: z.any().optional(),
-      variant: z.enum(["default", "destructive", "outline", "secondary", "ghost", "link"]).default("default"),
-      size: z.enum(["default", "sm", "lg", "icon"]).default("default"),
+        className: z.string().optional(),
+        children: z.any().optional(),
+        asChild: z.boolean().optional(),
+        variant: z
+            .enum([
+                "default",
+                "destructive",
+                "outline",
+                "secondary",
+                "ghost",
+                "link",
+            ])
+            .default("default"),
+        size: z.enum(["default", "sm", "lg", "icon"]).default("default"),
     }),
     from: "@/components/ui/button",
     defaultChildren: [
-      {
-        id: "button-text",
-        type: "_text_",
-        name: "Text",
-        text: "Button",
-        textType: "text",
-        props: {},
-      },
+        {
+            id: "button-text",
+            type: "span",
+            name: "span",
+            props: {},
+            children: "Button",
+        } satisfies ComponentLayer,
     ],
     fieldOverrides: {
-      className: (layer) => classNameFieldOverrides(layer),
-      children: (layer) => childrenFieldOverrides(layer),
-    },
-  },
+        className:(layer)=> classNameFieldOverrides(layer),
+        children: (layer)=> childrenFieldOverrides(layer)
+    }
+  }
   // ... Other component definitions
 };
 ```
 
 ### Button Component:
 - `Schema`: Defines props like className, variant, and size with default values.
-- `Default Children`: A text layer with default text "Button".
+- `Default Children`: A span layer with default text "Button".
 - `Field Overrides`: Customizes form fields for className and children properties.
+
+## Changelog
+
+### v0.0.2
+- Removed _text_ layer type in favor of using span and Markdown components. You should migrate any layers stored in the database to use the new components. You can use the [migrateV1ToV2](lib/ui-builder/store/layer-utils.ts) function in layer-utils.ts to help with the migration.
 
 ## Development
 
@@ -415,8 +413,8 @@ npm run test
 ## Roadmap
 
 - [ ] Increase test coverage
+- [ ] Refactor page layers to be more consistent with component layers
 - [ ] Improve performance
-- [ ] Rework text layers to be more consistent with component layers
 - [ ] Add form component definitions since we already depend on most shadcn/ui form components
 - [ ] Add option to add children component layers by reference to existing layers (this would be like figma component instances)
 - [ ] Add event handlers to component layers (onClick, onSubmit, etc)

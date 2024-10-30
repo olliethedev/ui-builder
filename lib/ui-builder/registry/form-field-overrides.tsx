@@ -10,31 +10,35 @@ import {
   AutoFormInputComponentProps,
   FieldConfigItem,
 } from "@/components/ui/auto-form/types";
-import { ComponentLayer, TextLayer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
 import IconNameField from "@/components/ui/ui-builder/internal/iconname-field";
+import { Textarea } from "@/components/ui/textarea";
 
 export const classNameFieldOverrides = (
-  layer: ComponentLayer | TextLayer
+  layer: ComponentLayer 
 ): FieldConfigItem => {
   return {
-    fieldType: ({ label, isRequired, field }: AutoFormInputComponentProps) => (
+    fieldType: ({ label, isRequired, field, fieldProps }: AutoFormInputComponentProps) => (
       <ClassNameField
         label={label}
         isRequired={isRequired}
-        className={layer.props.className}
+        className={field.value}
         onChange={field.onChange}
+        {...fieldProps}
       />
     ),
   };
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const childrenFieldOverrides = (layer: ComponentLayer | TextLayer): FieldConfigItem => {
+export const childrenFieldOverrides = (layer: ComponentLayer): FieldConfigItem => {
   return {
     fieldType: ({
       label,
       isRequired,
       fieldConfigItem,
+      field,
+      fieldProps,
     }: AutoFormInputComponentProps) => (
       <FormItem className="flex flex-col">
         <FormLabel>
@@ -42,7 +46,7 @@ export const childrenFieldOverrides = (layer: ComponentLayer | TextLayer): Field
           {isRequired && <span className="text-destructive"> *</span>}
         </FormLabel>
         <FormControl>
-          <ChildrenSearchableSelect />
+          <ChildrenSearchableSelect layer={layer} onChange={field.onChange} {...fieldProps} />
         </FormControl>
         {fieldConfigItem.description && (
           <FormDescription>{fieldConfigItem.description}</FormDescription>
@@ -53,16 +57,47 @@ export const childrenFieldOverrides = (layer: ComponentLayer | TextLayer): Field
 };
 
 export const iconNameFieldOverrides = (
-  layer: ComponentLayer | TextLayer
+  layer: ComponentLayer
 ): FieldConfigItem => {
   return {
-    fieldType: ({ label, isRequired, field }: AutoFormInputComponentProps) => (
+    fieldType: ({ label, isRequired, field, fieldProps }: AutoFormInputComponentProps) => (
       <IconNameField
         label={label}
         isRequired={isRequired}
         value={layer.props.iconName}
         onChange={field.onChange}
+        {...fieldProps}
       />
+    ),
+  };
+};
+
+export const childrenAsTextareaFieldOverrides = (layer: ComponentLayer): FieldConfigItem => {
+  return {
+    fieldType: ({
+      label,
+      isRequired,
+      fieldConfigItem,
+      field,
+      fieldProps,
+    }: AutoFormInputComponentProps) => (
+      <FormItem className="flex flex-col">
+        <FormLabel>
+          {label}
+          {isRequired && <span className="text-destructive"> *</span>}
+        </FormLabel>
+        <FormControl>
+          {/* <ChildrenTextArea layer={layer} /> */}
+          <Textarea
+            value={layer.children as string}
+            onChange={field.onChange}
+            {...fieldProps}
+        />
+        </FormControl>
+        {fieldConfigItem.description && (
+          <FormDescription>{fieldConfigItem.description}</FormDescription>
+        )}
+      </FormItem>
     ),
   };
 };

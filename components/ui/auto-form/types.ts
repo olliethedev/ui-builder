@@ -4,9 +4,10 @@ import { INPUT_COMPONENTS } from "./config";
 
 export type FieldConfigItem = {
   description?: React.ReactNode;
-  inputProps?: React.InputHTMLAttributes<HTMLInputElement> & {
-    showLabel?: boolean;
-  };
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement> &
+    React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+      showLabel?: boolean;
+    };
   label?: string;
   fieldType?:
     | keyof typeof INPUT_COMPONENTS
@@ -15,6 +16,8 @@ export type FieldConfigItem = {
   renderParent?: (props: {
     children: React.ReactNode;
   }) => React.ReactElement | null;
+
+  order?: number;
 };
 
 export type FieldConfig<SchemaType extends z.infer<z.ZodObject<any, any>>> = {

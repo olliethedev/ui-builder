@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PageLayer, Layer, isPageLayer, isTextLayer, componentRegistry } from "@/lib/ui-builder/store/layer-store";
+import { PageLayer, Layer, isPageLayer, componentRegistry } from "@/lib/ui-builder/store/layer-store";
 import template from "lodash.template";
-import { hasChildren } from "@/lib/ui-builder/store/layer-utils";
+import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
 
 export const pageLayerToCode = (page: PageLayer) => {
   const layers = page.children;
@@ -11,13 +11,7 @@ export const pageLayerToCode = (page: PageLayer) => {
   const imports = new Set<string>();
 
   const collectImports = (layer: Layer) => {
-    if (isTextLayer(layer)) {
-      if (layer.textType === "markdown") {
-        imports.add(
-          `import { Markdown } from "@/components/ui/ui-builder/markdown";`
-        );
-      }
-    } else if (hasChildren(layer) && !isPageLayer(layer)) {
+    if (hasLayerChildren(layer) && !isPageLayer(layer)) {
       const componentDefinition = componentRegistry[layer.type];
       if (layer.type && componentDefinition && componentDefinition.from) {
         imports.add(
@@ -50,37 +44,26 @@ export const pageLayerToCode = (page: PageLayer) => {
 };
 
 export const generateLayerCode = (layer: Layer, indent = 0): string => {
-  if (isTextLayer(layer)) {
-    if (layer.textType === "markdown") {
-      const indentation = "  ".repeat(indent);
-      // Wrap markdown with Markdown component
-      return `${ indentation }<Markdown${ generatePropsString(
-        layer.props
-      ) }>{${ JSON.stringify(layer.text) }}</Markdown>`;
-    }
-    const indentation = "  ".repeat(indent);
-    return `${ indentation }<span${ generatePropsString(
-      layer.props
-    ) }>{${ JSON.stringify(layer.text) }}</span>`;
-  }
-
-  const { type, children } = layer;
 
   const indentation = "  ".repeat(indent);
 
   let childrenCode = "";
-  if (children && children.length > 0) {
-    childrenCode = children
+  if (hasLayerChildren(layer) && layer.children.length > 0) {
+    childrenCode = layer.children
       .map((child) => generateLayerCode(child, indent + 1))
       .join("\n");
   }
+  //else if children is a string, then we need render children as a text node
+  else if (typeof layer.children === "string") {
+    childrenCode = `{"${ layer.children }"}`;
+  }
 
   if (childrenCode) {
-    return `${ indentation }<${ type }${ generatePropsString(
+    return `${ indentation }<${ layer.type }${ generatePropsString(
       layer.props
-    ) }>\n${ childrenCode }\n${ indentation }</${ type }>`;
+    ) }>\n${ childrenCode }\n${ indentation }</${ layer.type }>`;
   } else {
-    return `${ indentation }<${ type }${ generatePropsString(layer.props) } />`;
+    return `${ indentation }<${ layer.type }${ generatePropsString(layer.props) } />`;
   }
 };
 
