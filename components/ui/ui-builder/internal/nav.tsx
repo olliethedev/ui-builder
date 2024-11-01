@@ -50,13 +50,19 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, Monitor, Tablet, Smartphone, Maximize } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CodePanel } from "@/components/ui/ui-builder/code-panel";
+import { EditorStore, useEditorStore } from "@/lib/ui-builder/store/editor-store";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 const Z_INDEX = 1000;
 
-export function NavBar() {
+interface NavBarProps {   
+  useCanvas?: boolean;
+}
+
+export function NavBar({ useCanvas }: NavBarProps) {
   const { selectedPageId, findLayerById } = useLayerStore();
   const { undo, redo, futureStates, pastStates } =
     useLayerStore.temporal.getState();
@@ -133,6 +139,8 @@ export function NavBar() {
       </h1>
       <PagesPopover />
       <div className="flex space-x-2">
+      { useCanvas && <PreviewModeToggle />}
+      <div className="h-10 flex w-px bg-border"></div>
         <Button
           onClick={handleUndo}
           variant="secondary"
@@ -366,3 +374,32 @@ const DialogContentWithZIndex = forwardRef<
   </DialogPortal>
 ))
 DialogContentWithZIndex.displayName = "DialogContentWithZIndex";
+
+const PreviewModeToggle = () => {
+  const { previewMode, setPreviewMode } = useEditorStore();
+  const [mode, setMode] = useState(previewMode);
+  const handleModeChange = useCallback((value: EditorStore['previewMode'] | "") => {
+    //if not empty string, set mode and preview mode
+    if (value) {
+      setMode(value);
+      setPreviewMode(value);
+    }
+  }, [setPreviewMode]);
+  
+    return (
+      <ToggleGroup type="single" value={mode} onValueChange={handleModeChange}>
+        <ToggleGroupItem value="mobile" aria-label="Toggle phone">
+          <Smartphone className="h-4 w-4" />
+        </ToggleGroupItem>
+        <ToggleGroupItem value="tablet" aria-label="Toggle tablet">
+          <Tablet className="h-4 w-4" />
+        </ToggleGroupItem>
+        <ToggleGroupItem value="desktop" aria-label="Toggle desktop">
+          <Monitor className="h-4 w-4" />
+        </ToggleGroupItem>
+        <ToggleGroupItem value="responsive" aria-label="Toggle responsive">
+          <Maximize className="h-4 w-4" />
+        </ToggleGroupItem>
+      </ToggleGroup>
+    )
+}

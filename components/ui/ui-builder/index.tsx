@@ -17,17 +17,20 @@ import { Button } from "@/components/ui/button";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
 import { PageLayer, useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useStore } from "@/hooks/use-store";
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 
 interface UIBuilderProps {
   initialLayers?: PageLayer[];
   onChange?: (pages: PageLayer[]) => void;
+  useCanvas?: boolean;
 }
 
-const UIBuilder = ({ initialLayers, onChange }: UIBuilderProps) => {
+const UIBuilder = ({ initialLayers, onChange, useCanvas }: UIBuilderProps) => {
   const store = useStore(useLayerStore, (state) => state);
+  const editorStore = useStore(useEditorStore, (state) => state);
   const [initialized, setInitialized] = useState(false);
   useEffect(() => {
-    if (store) {
+    if (store && editorStore) {
       if (initialLayers && !initialized) {
         store?.initialize(initialLayers);
         setInitialized(true);
@@ -37,7 +40,7 @@ const UIBuilder = ({ initialLayers, onChange }: UIBuilderProps) => {
         setInitialized(true);
       }
     }
-  }, [initialLayers, store, initialized]);
+  }, [initialLayers, store, initialized, editorStore]);
 
   useEffect(() => {
     if (onChange && store) {
@@ -45,7 +48,7 @@ const UIBuilder = ({ initialLayers, onChange }: UIBuilderProps) => {
     }
   }, [store, onChange]);
 
-  const layout = !store || !initialized ? <LoadingSkeleton /> : <MainLayout />;
+  const layout = !store || !initialized ? <LoadingSkeleton /> : <MainLayout useCanvas={useCanvas} />;
 
   return (
     <ThemeProvider
@@ -59,7 +62,7 @@ const UIBuilder = ({ initialLayers, onChange }: UIBuilderProps) => {
   );
 };
 
-function MainLayout() {
+function MainLayout({ useCanvas }: { useCanvas?: boolean }) {
   const mainPanels = useMemo(
     () =>  [
     {
@@ -71,7 +74,7 @@ function MainLayout() {
     },
     {
       title: "UI Editor",
-      content: <EditorPanel className="pb-20 md:pb-0 overflow-y-auto" />,
+      content: <EditorPanel className="pb-20 md:pb-0 overflow-y-auto" useCanvas={useCanvas} />,
       defaultSize: 50,
     },
     {
@@ -82,16 +85,16 @@ function MainLayout() {
       defaultSize: 25,
       },
     ],
-    []
+    [useCanvas]
   );
 
-  const [selectedPanel, setSelectedPanel] = useState(mainPanels[0]);
+  const [selectedPanel, setSelectedPanel] = useState(mainPanels[1]);
   return (
     <div
       data-testid="component-editor"
       className="flex flex-col w-full flex-grow h-screen"
     >
-      <NavBar />
+      <NavBar useCanvas={useCanvas} />
       {/* Desktop Layout */}
       <div className="hidden md:flex flex-1 overflow-hidden">
         <ResizablePanelGroup

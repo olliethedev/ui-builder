@@ -24,6 +24,7 @@ export interface EditorConfig {
   onSelectElement: (layerId: string) => void;
   handleDuplicateLayer: () => void;
   handleDeleteLayer: () => void;
+  usingCanvas?: boolean;
 }
 
 export const RenderPage: React.FC<{
@@ -127,6 +128,7 @@ export const RenderLayer: React.FC<{
         onSelectElement,
         handleDuplicateLayer,
         handleDeleteLayer,
+        usingCanvas,
       } = editorConfig;
 
       return (
@@ -143,6 +145,7 @@ export const RenderLayer: React.FC<{
             onSelectElement={onSelectElement}
             onDuplicateLayer={handleDuplicateLayer}
             onDeleteLayer={handleDeleteLayer}
+            listenToScrollParent={!usingCanvas}
           >
             {WrappedComponent}
           </ClickableWrapper>

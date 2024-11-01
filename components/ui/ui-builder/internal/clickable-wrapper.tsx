@@ -14,6 +14,7 @@ interface ClickableWrapperProps {
   children: React.ReactNode;
   onDuplicateLayer: () => void;
   onDeleteLayer: () => void;
+  listenToScrollParent: boolean;
 }
 
 /**
@@ -28,8 +29,13 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   children,
   onDuplicateLayer,
   onDeleteLayer,
+  listenToScrollParent,
 }) => {
   const [boundingRect, setBoundingRect] = useState<DOMRect | null>(null);
+  const [touchPosition, setTouchPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const wrapperRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
@@ -52,12 +58,15 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
       resizeObserver = new ResizeObserver(updateBoundingRect);
       resizeObserver.observe(element);
     }
-
-    const scrollParent = getScrollParent(element);
-    if (scrollParent) {
-      scrollParent.addEventListener("scroll", updateBoundingRect);
-    }
     window.addEventListener("resize", updateBoundingRect);
+
+    let scrollParent: HTMLElement | null = null;
+    if (listenToScrollParent) {
+      scrollParent = getScrollParent(element);
+      if (scrollParent) {
+        scrollParent.addEventListener("scroll", updateBoundingRect);
+      }
+    }
 
     return () => {
       if (resizeObserver) {
@@ -69,28 +78,29 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
       }
       window.removeEventListener("resize", updateBoundingRect);
     };
-  }, [isSelected, layer.id, children]);
+  }, [isSelected, layer.id, children, listenToScrollParent]);
 
   useEffect(() => {
     //since we are using resizable panel, we need to track parent size changes
     if (!wrapperRef.current) return;
 
-    const panelContainer = document.getElementById('editor-panel-container');
+    const panelContainer = document.getElementById("editor-panel-container");
     if (!panelContainer) return;
-  
+
     const updateBoundingRect = () => {
-      const element = wrapperRef.current?.firstElementChild as HTMLElement | null;
+      const element = wrapperRef.current
+        ?.firstElementChild as HTMLElement | null;
       if (element) {
         const rect = element.getBoundingClientRect();
         setBoundingRect(rect);
       }
     };
-  
+
     const resizeObserver = new ResizeObserver(updateBoundingRect);
     resizeObserver.observe(panelContainer);
-  
+
     return () => {
-      resizeObserver.disconnect()
+      resizeObserver.disconnect();
     };
   }, [isSelected, layer.id, children]);
 
@@ -136,20 +146,50 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
               scrollParent.scrollTop += e.deltaY;
             }
           }}
+          onTouchStart={(e) => {
+            setTouchPosition({
+              x: e.touches[0].clientX,
+              y: e.touches[0].clientY,
+            });
+          }}
+          onTouchMove={(e) => {
+            if (touchPosition) {
+              const deltaX = touchPosition.x - e.touches[0].clientX;
+              const deltaY = touchPosition.y - e.touches[0].clientY;
+              const scrollParent = getScrollParent(e.target as HTMLElement);
+              if (scrollParent) {
+                scrollParent.scrollLeft += deltaX;
+                scrollParent.scrollTop += deltaY;
+              }
+              setTouchPosition({
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY,
+              });
+            }
+          }}
+          onTouchEnd={() => {
+            setTouchPosition(null);
+          }}
           style={{
-            top: boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
-                  ? boundingRect.top - MIN_SIZE
-                  : boundingRect.top,
-                left: boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
-                  ? boundingRect.left - MIN_SIZE
-                  : boundingRect.left,
+            top:
+              boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
+                ? boundingRect.top - MIN_SIZE
+                : boundingRect.top,
+            left:
+              boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
+                ? boundingRect.left - MIN_SIZE
+                : boundingRect.left,
             width: Math.max(boundingRect.width, MIN_SIZE),
             height: Math.max(boundingRect.height, MIN_SIZE),
             zIndex: zIndex,
           }}
         >
           {/* {small label with layer type floating above the bounding box} */}
-          {isSelected && <span className="absolute top-[-16px] left-[-2px] text-xs text-white bg-blue-500 px-[1px]">{layer.type.replaceAll("_","")}</span>}
+          {isSelected && (
+            <span className="absolute top-[-16px] left-[-2px] text-xs text-white bg-blue-500 px-[1px]">
+              {layer.type.replaceAll("_", "")}
+            </span>
+          )}
         </div>
       )}
     </>
