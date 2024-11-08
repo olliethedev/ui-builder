@@ -146,6 +146,7 @@ export const RenderLayer: React.FC<{
             onDuplicateLayer={handleDuplicateLayer}
             onDeleteLayer={handleDeleteLayer}
             listenToScrollParent={!usingCanvas}
+            observeMutations={usingCanvas === true}
           >
             {WrappedComponent}
           </ClickableWrapper>

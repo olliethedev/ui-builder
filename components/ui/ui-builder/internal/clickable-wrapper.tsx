@@ -15,6 +15,7 @@ interface ClickableWrapperProps {
   onDuplicateLayer: () => void;
   onDeleteLayer: () => void;
   listenToScrollParent: boolean;
+  observeMutations: boolean;
 }
 
 /**
@@ -30,6 +31,7 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   onDuplicateLayer,
   onDeleteLayer,
   listenToScrollParent,
+  observeMutations,
 }) => {
   const [boundingRect, setBoundingRect] = useState<DOMRect | null>(null);
   const [touchPosition, setTouchPosition] = useState<{
@@ -38,6 +40,8 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   } | null>(null);
   const wrapperRef = useRef<HTMLSpanElement | null>(null);
 
+
+  // listen to resize and position changes
   useEffect(() => {
     // update bounding rect on page resize and scroll
     const element = wrapperRef.current?.firstElementChild as HTMLElement | null;
@@ -58,7 +62,16 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
       resizeObserver = new ResizeObserver(updateBoundingRect);
       resizeObserver.observe(element);
     }
-    window.addEventListener("resize", updateBoundingRect);
+
+    let mutationObserver: MutationObserver | null = null;
+    if ("MutationObserver" in window && observeMutations) {
+      mutationObserver = new MutationObserver(updateBoundingRect);
+      mutationObserver.observe(document.body, {
+        attributeFilter: ["style", "class"],
+        attributes: true,
+        subtree: true,
+      });
+    }
 
     let scrollParent: HTMLElement | null = null;
     if (listenToScrollParent) {
@@ -76,10 +89,34 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
       if (scrollParent) {
         scrollParent.removeEventListener("scroll", updateBoundingRect);
       }
-      window.removeEventListener("resize", updateBoundingRect);
+      if (mutationObserver) {
+        mutationObserver.disconnect();
+      }
     };
   }, [isSelected, layer.id, children, listenToScrollParent]);
 
+
+  // listen to window resize
+  useEffect(() => {
+    const element = wrapperRef.current?.firstElementChild as HTMLElement | null;
+    if (!element) {
+      setBoundingRect(null);
+      return;
+    }
+
+    const updateBoundingRect = () => {
+      setBoundingRect(element.getBoundingClientRect());
+    };
+
+    window.addEventListener("resize", updateBoundingRect);
+    return () => {
+      
+      window.removeEventListener("resize", updateBoundingRect);
+    };
+  }, []);
+
+
+  // listen to panel size changes
   useEffect(() => {
     //since we are using resizable panel, we need to track parent size changes
     if (!wrapperRef.current) return;

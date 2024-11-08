@@ -156,7 +156,7 @@ const LayersTree: React.FC<LayersTreeProps> = React.memo(
     }, []);
 
     return (
-      <DevProfiler id="LayersPanel" threshold={30}>
+      <DevProfiler id="LayersPanel" threshold={40}>
         <div
           className={cn(className, "flex flex-col size-full overflow-x-auto")}
         >
