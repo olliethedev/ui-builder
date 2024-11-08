@@ -7,7 +7,7 @@ import {
 } from "@/lib/ui-builder/store/layer-store";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { cn } from "@/lib/utils";
-import { IframeWrapper } from "./iframe-wrapper";
+import { IframeWrapper } from "@/components/ui/ui-builder/internal/iframe-wrapper";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { InteractiveCanvas } from "@/components/ui/ui-builder/internal/interactive-canvas";
 
@@ -60,11 +60,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
   const renderer = (
     <div
       id="editor-panel-container"
-      className="will-change-auto overflow-visible"
+      className="overflow-visible pt-3 pb-10"
     >
-      <div className="h-3 w-full" />
       <LayerRenderer page={selectedPage} editorConfig={editorConfig} />
-      <div className="h-6 w-full" />
     </div>
   );
 
@@ -72,17 +70,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
     <div
       id="editor-panel-container"
       className={cn(
-        "flex flex-col relative size-full bg-fixed bg-[radial-gradient(hsl(var(--border))_1px,hsl(var(--primary)/0.05)_1px)] [background-size:16px_16px] ",
+        "flex flex-col relative size-full bg-fixed bg-[radial-gradient(hsl(var(--border))_1px,hsl(var(--primary)/0.05)_1px)] [background-size:16px_16px] will-change-auto",
         className
       )}
     >
       {useCanvas ? (
-        <InteractiveCanvas frameId="editor-panel-frame">
+        <InteractiveCanvas
+          frameId="editor-panel-frame"
+        >
           <IframeWrapper
             key={previewMode}
             frameId="editor-panel-frame"
+            resizable={previewMode === "responsive"}
             className={cn(
-              `mx-auto`,
+              `block`,
               {
                 responsive: "w-full",
                 mobile: "w-[390px]",

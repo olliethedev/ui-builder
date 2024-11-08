@@ -1,10 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import {
-  createUseGesture,
-  usePinch,
-  dragAction,
-  wheelAction,
-} from "@use-gesture/react";
+import { createUseGesture, pinchAction, wheelAction } from "@use-gesture/react";
 import { Button } from "@/components/ui/button";
 import { MinusIcon, PlusIcon } from "lucide-react";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
@@ -18,28 +13,48 @@ interface InteractiveCanvasProps {
   frameId?: string;
 }
 
-export function InteractiveCanvas({ children, frameId }: InteractiveCanvasProps) {
+export function InteractiveCanvas({
+  children,
+  frameId,
+}: InteractiveCanvasProps) {
   const windowFrame = frameId
-    ? ((document.getElementById(frameId) as HTMLIFrameElement)?.contentDocument)
+    ? (document.getElementById(frameId) as HTMLIFrameElement)?.contentDocument
     : window;
 
   const [scale, setScale] = useState(0.98);
   const [translation, setTranslation] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const previewMode = useEditorStore((state) => state.previewMode);
 
-  const previewMode = useEditorStore((state) => state.previewMode); 
+  const zoom = useCallback(
+    (scaleDelta: number) => {
+      setScale((prevScale) => {
+        const newScale = clamp(prevScale + scaleDelta, MIN_SCALE, MAX_SCALE);
+  
+        return newScale;
+      });
+    },
+    []
+  );
 
   useEffect(() => {
+    const handleGesture = (e: Event) => {
+      e.preventDefault();
+    };
+
+    document.addEventListener("gesturechange", handleGesture);
+    document.addEventListener("gestureend", handleGesture);
+    document.addEventListener("gesturestart", handleGesture);
+    return () => {
+      document.removeEventListener("gesturechange", handleGesture);
+      document.removeEventListener("gestureend", handleGesture);
+      document.removeEventListener("gesturestart", handleGesture);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Reset scale and translation on preview mode change to center the contents
     switch (previewMode) {
-      case "mobile":
-        setScale(0.98);
-        setTranslation({ x: 0, y: 0 });
-        break;
-      case "tablet":
-        setScale(0.98);
-        setTranslation({ x: 0, y: 0 });
-        break;
       case "desktop":
         setScale(0.86);
         setTranslation({ x: 0, y: 0 });
@@ -50,121 +65,77 @@ export function InteractiveCanvas({ children, frameId }: InteractiveCanvasProps)
     }
   }, [previewMode]);
 
-  useEffect(() => {
-    document.addEventListener("gesturechange", (e) => {
-      e.preventDefault();
-    });
-    document.addEventListener("gestureend", (e) => {
-      e.preventDefault();
-    });
-    document.addEventListener("gesturestart", (e) => {
-      e.preventDefault();
-    });
-    return () => {
-      document.removeEventListener("gesturechange", (e) => {
-        e.preventDefault();
-      });
-      document.removeEventListener("gestureend", (e) => {
-        e.preventDefault();
-      });
-      document.removeEventListener("gesturestart", (e) => {
-        e.preventDefault();
-      });
-    };
-  }, []);
+  const useGestureHook = createUseGesture([wheelAction, pinchAction]);
 
-
-  const useGesture = createUseGesture([dragAction, wheelAction]);
-
-    const bind =
-  useGesture(
+  const bind = useGestureHook(
     {
-      onDragStart: () => {
-        setIsDragging(true);
-      },
-      onDrag: ({ event, delta: [dx, dy] }) => {
-        event.preventDefault();
-        setTranslation((prev) => ({
-          x: prev.x + dx,
-          y: prev.y + dy,
-        }));
-      },
-      onDragEnd: () => {
-        setIsDragging(false);
-      },
-      onWheel: ({ event, delta: [dx, dy] }) => {
-        if (event.metaKey || event.ctrlKey) {
-          setScale((prev) => clamp(prev - dy / 100, MIN_SCALE, MAX_SCALE));
-        } else {
-          setTranslation((prev) => ({
-            x: clamp(prev.x - dx, -MAX_TRANSLATION, MAX_TRANSLATION),
-            y: clamp(prev.y - dy, -MAX_TRANSLATION, MAX_TRANSLATION),
-          }));
-        }
+        onWheel: ({ event, delta, }) => {
+            // Normalize deltaY for different deltaModes
+            let deltaY = delta[1];
+            if (event.deltaMode === 1) {
+              // Delta is in lines; convert to pixels
+              deltaY *= 16; // Approximate line height in pixels
+            } else if (event.deltaMode === 2) {
+              // Delta is in pages; convert to pixels
+              deltaY *= window.innerHeight;
+            }
+          
+            if (event.metaKey || event.ctrlKey) {
+              // Zoom based on normalized deltaY
+              zoom(-deltaY / 500);
+            } else {
+              // Handle panning
+              setTranslation((prev) => ({
+                x: clamp(prev.x - delta[0], -MAX_TRANSLATION, MAX_TRANSLATION),
+                y: clamp(prev.y - deltaY, -MAX_TRANSLATION, MAX_TRANSLATION),
+              }));
+            }
+          },
+      onPinch: ({ delta: [d] }) => {
+        zoom(d / 200);
       },
     },
     {
-      window: windowFrame ? windowFrame : window,
-      drag: {
-        from: () => [translation.x, translation.y],
-        filterTaps: true,
-        preventScroll: true,
-        target: containerRef,
-        eventOptions: { passive: false, capture: true },
-        preventDefault: true,
-        bounds: {
-          left: -MAX_TRANSLATION,
-          right: MAX_TRANSLATION,
-          top: -MAX_TRANSLATION,
-          bottom: MAX_TRANSLATION * 2,
-        },
-      },
+      window: windowFrame || window,
+
       wheel: {
         target: containerRef,
         eventOptions: { passive: false, capture: true },
+        window: windowFrame || window,
       },
-      eventOptions: { passive: false, capture: true },
-    }
-  );
-
-  usePinch(({ delta: [d] }) => {
-      setScale((prev) => clamp(prev + d / 50, MIN_SCALE, MAX_SCALE));
-    },
-    {
-        scaleBounds: { min: 0.1, max: 5 },
+      pinch: {
         rubberband: true,
         target: containerRef,
         eventOptions: { passive: false, capture: true },
-        window: windowFrame ? windowFrame : window,
+        window: windowFrame || window,
+      },
+      eventOptions: { passive: false, capture: true },
     }
   );
 
   const transformStyle = useCallback(() => {
     return {
       transform: `translate(${translation.x}px, ${translation.y}px) scale(${scale})`,
-      transformOrigin: `center top`,
-      touchAction: "none",
+      transformOrigin: 'top center', 
     };
   }, [translation.x, translation.y, scale]);
+
+  const handleZoomIn = () => {
+    zoom(0.05);
+  };
+  
+  const handleZoomOut = () => {
+    zoom(-0.05);
+  };
 
   return (
     <div
       ref={containerRef}
-        {...bind()}
-      style={{
-        width: "100%",
-        height: "100%",
-        overflow: "hidden",
-        position: "relative",
-        touchAction: "none",
-        cursor: isDragging ? "grabbing" : "default",
-      }}
+      {...bind()}
+      className="w-full h-full overflow-hidden relative touch-none cursor-default transition-transform duration-100 ease-in-out"
     >
-      <div style={transformStyle()}>{children}</div>
-      <ZoomControls
-        onZoomIn={() => setScale(scale + 0.1)}
-        onZoomOut={() => setScale(scale - 0.1)}
-      />
+      <div className="touch-none" style={transformStyle()}>{children}</div>
+      <ZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
     </div>
   );
 }
@@ -173,6 +144,7 @@ interface ZoomControlsProps {
   onZoomIn: () => void;
   onZoomOut: () => void;
 }
+
 const ZoomControls = ({ onZoomIn, onZoomOut }: ZoomControlsProps) => {
   return (
     <div className="absolute bottom-2 right-2">

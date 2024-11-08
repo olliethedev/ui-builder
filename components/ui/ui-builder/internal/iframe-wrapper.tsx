@@ -1,17 +1,66 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
+import { Grip } from "lucide-react";
+import { useDrag } from "@use-gesture/react";
+import { cn } from "@/lib/utils";
 
 interface IframeWrapperProps extends React.HTMLAttributes<HTMLIFrameElement> {
   children: React.ReactNode;
   frameId?: string;
+  resizable: boolean;
 }
 
 export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
-  ({ children, frameId, ...props }) => {
+  ({ children, frameId, resizable, style, ...props }) => {
     const iframeRef = useRef<HTMLIFrameElement>(null);
-    const [iframeRoot, setIframeRoot] = useState<HTMLElement | null>(null);
+    const mountNodeRef = useRef<HTMLElement | null>(null); // Ref to store the mount node
+    const [iframeSize, setIframeSize] = useState<{ width: number } | null>(
+      null
+    );
+    const [isMounted, setIsMounted] = useState<boolean>(false); // State to track mount node readiness
 
-    useEffect(() => {
+    // Ref to store the initial size at the start of dragging
+    const initialSizeRef = useRef<{ width: number }>({ width: 0 });
+
+    const updateIframeHeight = () => {
+      if (!iframeRef.current || !mountNodeRef.current) return;
+      const newHeight = mountNodeRef.current.scrollHeight;
+      iframeRef.current.style.height = `${newHeight}px`;
+    };
+
+    // Handle resizing using useDrag
+    const bindResizer = useDrag(
+      ({ down, movement: [mx], first }) => {
+        if (first) {
+          // Capture the initial size when drag starts
+          initialSizeRef.current = {
+            width: iframeRef.current?.offsetWidth || 0,
+          };
+        }
+
+        if (down) {
+          // Calculate new size based on initial size and movement
+          setIframeSize({
+            width: initialSizeRef.current.width + mx,
+          });
+        }
+      },
+      {
+        axis: "x",
+        from: () => [0, 0],
+        filterTaps: true,
+      }
+    );
+
+    useLayoutEffect(() => {
+        if (resizable && iframeRef.current) {
+          setIframeSize({
+            width: iframeRef.current.parentElement?.offsetWidth || 600, // Fallback to 600px or any default width
+          });
+        }
+      }, [resizable]);
+
+    useLayoutEffect(() => {
       const iframe = iframeRef.current;
       if (!iframe) return;
 
@@ -20,95 +69,72 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
           iframe.contentDocument || iframe.contentWindow?.document;
         if (!iframeDoc) return;
 
-        // Create a div inside the iframe for mounting React components
-        const mountNode = iframeDoc.createElement("div");
-        iframeDoc.body.appendChild(mountNode);
+        if (!mountNodeRef.current) {
+          // Create a div inside the iframe for mounting React components only once
+          const mountNode = iframeDoc.createElement("div");
+          mountNode.id = "iframe-mount-node";
+          iframeDoc.body.appendChild(mountNode);
+          mountNodeRef.current = mountNode;
 
-        iframeDoc.body.style.backgroundColor = "transparent";
+          iframeDoc.body.style.backgroundColor = "transparent";
 
-        // Function to inject stylesheets into the iframe
-        const injectStylesheets = () => {
-          // Select all linked stylesheets in the parent document
-          const links = Array.from(
-            document.querySelectorAll('link[rel="stylesheet"]')
-          );
-          // Select all style tags in the parent document
-          const styles = Array.from(document.querySelectorAll("style"));
+          // Function to inject stylesheets into the iframe
+          const injectStylesheets = () => {
+            // Select all linked stylesheets in the parent document
+            const links = Array.from(
+              document.querySelectorAll('link[rel="stylesheet"]')
+            );
+            // Select all style tags in the parent document
+            const styles = Array.from(document.querySelectorAll("style"));
 
-          // Inject linked stylesheets
-          links.forEach((link) => {
-            const clonedLink = iframeDoc.createElement("link");
-            clonedLink.rel = "stylesheet";
-            clonedLink.href = (link as HTMLLinkElement).href;
-            iframeDoc.head.appendChild(clonedLink);
-          });
+            // Inject linked stylesheets
+            links.forEach((link) => {
+              const clonedLink = iframeDoc.createElement("link");
+              clonedLink.rel = "stylesheet";
+              clonedLink.href = (link as HTMLLinkElement).href;
+              iframeDoc.head.appendChild(clonedLink);
+            });
 
-          // Inject inline styles
-          styles.forEach((style) => {
-            const clonedStyle = iframeDoc.createElement("style");
-            clonedStyle.textContent = style.textContent || "";
-            iframeDoc.head.appendChild(clonedStyle);
-          });
-        };
-
-        // Inject styles on initial load
-        injectStylesheets();
-
-        const updateIframeHeight = () => {
-            const newHeight =
-              iframeDoc.documentElement.scrollHeight || iframeDoc.body.scrollHeight;
-            iframe.style.height = `${newHeight}px`;
+            // Inject inline styles
+            styles.forEach((style) => {
+              const clonedStyle = iframeDoc.createElement("style");
+              clonedStyle.textContent = style.textContent || "";
+              iframeDoc.head.appendChild(clonedStyle);
+            });
           };
 
-        // Initial height setting
-        updateIframeHeight();
+          // Inject styles on initial load
+          injectStylesheets();
 
-        const resizeObserver = new ResizeObserver(() => {
-          updateIframeHeight();
-        });
+          const resizeObserver = new ResizeObserver(() => {
+            updateIframeHeight();
+          });
 
-        resizeObserver.observe(iframeDoc.documentElement);
+          // Observe the mount node for size changes
+          resizeObserver.observe(mountNodeRef.current);
 
-        const iframeResizeObserver = new ResizeObserver(() => {
-          updateIframeHeight();
-        });
-        iframeResizeObserver.observe(iframe);
-        setIframeRoot(mountNode);
+          const mutationObserver = new MutationObserver(() => {
+            updateIframeHeight();
+          });
 
-        // Optional: Observe for dynamic additions to the parent stylesheets
-        //   const observer = new MutationObserver((mutations) => {
-        //     mutations.forEach((mutation) => {
-        //       if (mutation.type === 'childList') {
-        //         mutation.addedNodes.forEach((node) => {
-        //           if (node.nodeType === Node.ELEMENT_NODE) {
-        //             const element = node as HTMLElement;
-        //             if (element.tagName === 'LINK' && element.rel === 'stylesheet') {
-        //               const clonedLink = iframeDoc.createElement('link');
-        //               clonedLink.rel = 'stylesheet';
-        //               clonedLink.href = (element as HTMLLinkElement).href;
-        //               iframeDoc.head.appendChild(clonedLink);
-        //             } else if (element.tagName === 'STYLE') {
-        //               const clonedStyle = iframeDoc.createElement('style');
-        //               clonedStyle.textContent = element.textContent || '';
-        //               iframeDoc.head.appendChild(clonedStyle);
-        //             }
-        //           }
-        //         });
-        //       }
-        //     });
-        //   });
+          // Observe the mount node for changes
+          mutationObserver.observe(mountNodeRef.current, {
+            childList: true,
+            subtree: true,
+          });
 
-        //   // Start observing the parent document for stylesheet changes
-        //   observer.observe(document.head, { childList: true });
+          // Initial height update
+          setTimeout(updateIframeHeight, 0);
 
-        setIframeRoot(mountNode);
+          // Set the mount node as ready
+          setIsMounted(true);
 
-        // Cleanup observer on unmount
-        return () => {
-          // observer.disconnect();
-          resizeObserver.disconnect();
-          iframeResizeObserver.disconnect();
-        };
+          // Cleanup observer on unmount
+          return () => {
+            resizeObserver.disconnect();
+            mutationObserver.disconnect();
+          };
+        }
       };
 
       // Attach the load event listener
@@ -123,14 +149,74 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
       return () => {
         iframe.removeEventListener("load", handleLoad);
       };
-    }, []);
+    }, [children]);
 
     return (
-      <iframe id={frameId} ref={iframeRef} {...props}>
-        {iframeRoot && ReactDOM.createPortal(children, iframeRoot)}
-      </iframe>
+      <div className="relative block">
+        {resizable && (
+          <Resizer {...bindResizer()} className="absolute top-0 right-[-7px]" style={{
+            left: iframeSize?.width ? `${iframeSize.width}px` : undefined
+          }}>
+            <Grip className="w-4 h-4" />
+          </Resizer>
+        )}
+        <iframe
+          title="Page Editor"
+          id={frameId}
+          ref={iframeRef}
+          {...props}
+          style={{
+            width: resizable
+              ? iframeSize
+                ? `${iframeSize.width}px`
+                : "100%"
+              : undefined,
+            ...style,
+          }}
+        />
+        {isMounted &&
+          mountNodeRef.current &&
+          ReactDOM.createPortal(children, mountNodeRef.current)}
+        {resizable && (
+          <Resizer
+            {...bindResizer()}
+            className="absolute bottom-7 right-[-7px] "
+            style={{
+              left: iframeSize?.width ? `${iframeSize.width}px` : undefined
+            }}
+          >
+            <Grip className="w-4 h-4" />
+          </Resizer>
+        )}
+      </div>
     );
   }
 );
 
 IframeWrapper.displayName = "IframeWrapper";
+
+const Resizer = ({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => {
+  return (
+    <div
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+      onTouchStart={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }}
+      className={cn(
+        "w-4 h-4 cursor-ew-resize bg-transparent hover:bg-muted-foreground rounded-tr-md touch-none",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
