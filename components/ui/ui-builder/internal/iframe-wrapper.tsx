@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
-import { Grip } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import { useDrag } from "@use-gesture/react";
 import { cn } from "@/lib/utils";
 
@@ -157,7 +157,7 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
           <Resizer {...bindResizer()} className="absolute top-0 right-[-7px]" style={{
             left: iframeSize?.width ? `${iframeSize.width}px` : undefined
           }}>
-            <Grip className="w-4 h-4" />
+            <GripVertical className="w-4 h-4" />
           </Resizer>
         )}
         <iframe
@@ -185,7 +185,7 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
               left: iframeSize?.width ? `${iframeSize.width}px` : undefined
             }}
           >
-            <Grip className="w-4 h-4" />
+            <GripVertical className="w-4 h-4" />
           </Resizer>
         )}
       </div>
@@ -211,7 +211,7 @@ const Resizer = ({
         e.preventDefault();
       }}
       className={cn(
-        "w-4 h-4 cursor-ew-resize bg-transparent hover:bg-muted-foreground rounded-tr-md touch-none",
+        "flex items-center justify-center w-4 h-4 cursor-ew-resize rounded-sm border bg-border hover:bg-muted touch-none",
         className
       )}
       {...props}
