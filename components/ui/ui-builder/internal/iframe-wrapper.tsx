@@ -171,6 +171,8 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
                 ? `${iframeSize.width}px`
                 : "100%"
               : undefined,
+            opacity: isMounted ? 1 : 0,
+            transition: "opacity 0.5s ease-in",
             ...style,
           }}
         />

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { createUseGesture, pinchAction, wheelAction } from "@use-gesture/react";
 import { Button } from "@/components/ui/button";
-import { MinusIcon, PlusIcon } from "lucide-react";
+import { ZoomIn, ZoomOut } from "lucide-react";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 
 const MAX_TRANSLATION = 6000;
@@ -11,11 +11,15 @@ const MAX_SCALE = 5;
 interface InteractiveCanvasProps {
   children: React.ReactNode;
   frameId?: string;
+  disableWheel: boolean;
+  disablePinch: boolean;
 }
 
 export function InteractiveCanvas({
   children,
   frameId,
+  disableWheel,
+  disablePinch,
 }: InteractiveCanvasProps) {
   const windowFrame = frameId
     ? (document.getElementById(frameId) as HTMLIFrameElement)?.contentDocument
@@ -102,12 +106,14 @@ export function InteractiveCanvas({
         target: containerRef,
         eventOptions: { passive: false, capture: true },
         window: windowFrame || window,
+        enabled: !disableWheel,
       },
       pinch: {
         rubberband: true,
         target: containerRef,
         eventOptions: { passive: false, capture: true },
         window: windowFrame || window,
+        enabled: !disablePinch,
       },
       eventOptions: { passive: false, capture: true },
     }
@@ -147,22 +153,22 @@ interface ZoomControlsProps {
 
 const ZoomControls = ({ onZoomIn, onZoomOut }: ZoomControlsProps) => {
   return (
-    <div className="absolute bottom-2 right-2">
+    <div className="absolute bottom-4 md:right-2 right-4">
       <Button
         variant="secondary"
         size="icon"
-        className="rounded-l-full rounded-r-none shadow"
+        className="rounded-l-full rounded-r-none shadow md:p-4 p-6"
         onClick={onZoomIn}
       >
-        <PlusIcon />
+        <ZoomIn />
       </Button>
       <Button
         variant="secondary"
         size="icon"
-        className="rounded-l-none rounded-r-full shadow"
+        className="rounded-l-none rounded-r-full shadow md:p-4 p-6"
         onClick={onZoomOut}
       >
-        <MinusIcon />
+        <ZoomOut />
       </Button>
     </div>
   );

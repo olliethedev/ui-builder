@@ -68,7 +68,7 @@ function MainLayout({ useCanvas }: { useCanvas?: boolean }) {
     {
       title: "Page Config",
       content: (
-        <PageConfigPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />
+        <PageConfigPanel className="pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />
       ),
       defaultSize: 25,
     },
@@ -143,7 +143,7 @@ function MainLayout({ useCanvas }: { useCanvas?: boolean }) {
 function PageConfigPanel({ className }: { className: string }) {
   return (
     <Tabs defaultValue="layers" className={className}>
-      <TabsList className="grid w-full grid-cols-2">
+      <TabsList className="grid grid-cols-2 mx-4">
         <TabsTrigger value="layers">Layers</TabsTrigger>
         <TabsTrigger value="appearance">Appearance</TabsTrigger>
       </TabsList>

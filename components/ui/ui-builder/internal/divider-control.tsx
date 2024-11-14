@@ -28,7 +28,7 @@ export function DividerControl({
       >
         <Button
           variant="outline"
-          className="group flex items-center rounded-full bg-secondary h-min p-2 text-sm font-semibold text-secondar-foreground shadow-sm ring-1 ring-inset ring-secondary transition-all duration-200 ease-in-out"
+          className="group flex items-center rounded-full bg-secondary h-min p-2 text-sm font-semibold text-secondar-foreground shadow-sm ring-1 ring-inset ring-secondary transition-all duration-200 ease-in-out gap-0"
         >
           <PlusCircle className="h-5 w-5 text-secondary-foreground" />
           <span className="sr-only">Add component</span>

@@ -7,12 +7,16 @@ import {
   findAllParentLayersRecursive,
   hasLayerChildren,
 } from "@/lib/ui-builder/store/layer-utils";
+import { Plus } from "lucide-react";
 import { useHeTree, Id } from "he-tree-react";
 import {
   TreeRowNode,
   TreeRowPlaceholder,
 } from "@/components/ui/ui-builder/internal/tree-row-node";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
+import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
+import { buttonVariants } from "@/components/ui/button";
+import { DividerControl } from "@/components/ui/ui-builder/internal/divider-control";
 
 interface LayersPanelProps {
   className?: string;
@@ -158,9 +162,44 @@ const LayersTree: React.FC<LayersTreeProps> = React.memo(
     return (
       <DevProfiler id="LayersPanel" threshold={40}>
         <div
-          className={cn(className, "flex flex-col size-full overflow-x-auto")}
+          className={cn(
+            className,
+            "flex flex-col size-full overflow-x-auto pl-4"
+          )}
         >
-          {renderTree()}
+          {layers.length > 0 ? (
+            <>
+              <DividerControl
+                className="border-l border-dashed border-primary"
+                addPosition={0}
+                parentLayerId={selectedPageId}
+              />
+              {renderTree()}
+              <div className="relative">
+                <div className="w-[1px] h-4 absolute left-0 bottom-0 border-l border-dashed border-primary bg-background" />
+              </div>
+              <DividerControl
+                className="border-l border-dashed border-primary"
+                parentLayerId={selectedPageId}
+              />
+            </>
+          ) : (
+            <AddComponentsPopover
+              parentLayerId={selectedPageId}
+              className="w-full mt-4"
+            >
+              <div
+                className={cn(
+                  buttonVariants({ variant: "default", size: "sm" }),
+                  "cursor-pointer w-full"
+                )}
+              >
+                <span className="sr-only">Add Component</span>
+                <Plus className="h-5 w-5" />
+                <span>Add Component</span>
+              </div>
+            </AddComponentsPopover>
+          )}
         </div>
       </DevProfiler>
     );

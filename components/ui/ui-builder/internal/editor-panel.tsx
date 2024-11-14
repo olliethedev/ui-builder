@@ -1,4 +1,5 @@
 import React from "react";
+import { Plus } from "lucide-react";
 import {
   countLayers,
   Layer,
@@ -10,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { IframeWrapper } from "@/components/ui/ui-builder/internal/iframe-wrapper";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { InteractiveCanvas } from "@/components/ui/ui-builder/internal/interactive-canvas";
+import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
+import { Button } from "@/components/ui/button";
 
 interface EditorPanelProps {
   className?: string;
@@ -58,10 +61,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
   };
 
   const renderer = (
-    <div
-      id="editor-panel-container"
-      className="overflow-visible pt-3 pb-10"
-    >
+    <div id="editor-panel-container" className="overflow-visible pt-3 pb-10">
       <LayerRenderer page={selectedPage} editorConfig={editorConfig} />
     </div>
   );
@@ -77,11 +77,13 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
       {useCanvas ? (
         <InteractiveCanvas
           frameId="editor-panel-frame"
+          disableWheel={layers.length === 0}
+          disablePinch={layers.length === 0}
         >
           <IframeWrapper
             key={previewMode}
             frameId="editor-panel-frame"
-            resizable={previewMode === "responsive"}
+            resizable={previewMode === "responsive" && layers.length > 0}
             className={cn(
               `block`,
               {
@@ -98,6 +100,17 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
       ) : (
         renderer
       )}
+      <AddComponentsPopover
+        parentLayerId={selectedPageId}
+      >
+        <Button
+          variant="secondary"
+          size="icon"
+          className="absolute bottom-4 md:left-2 left-4 flex items-center rounded-full bg-secondary md:p-4 p-6 shadow"
+        >
+          <Plus className="h-5 w-5 text-secondary-foreground" />
+        </Button>
+      </AddComponentsPopover>
     </div>
   );
 };
