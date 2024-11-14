@@ -60,6 +60,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
     usingCanvas: useCanvas,
   };
 
+  const isMobileScreen = window.innerWidth < 768;
+
   const renderer = (
     <div id="editor-panel-container" className="overflow-visible pt-3 pb-10">
       <LayerRenderer page={selectedPage} editorConfig={editorConfig} />
@@ -79,6 +81,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
           frameId="editor-panel-frame"
           disableWheel={layers.length === 0}
           disablePinch={layers.length === 0}
+          disableDrag={!isMobileScreen}
         >
           <IframeWrapper
             key={previewMode}
