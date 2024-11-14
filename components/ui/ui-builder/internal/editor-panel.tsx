@@ -109,7 +109,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
         <Button
           variant="secondary"
           size="icon"
-          className="absolute bottom-4 md:left-2 left-4 flex items-center rounded-full bg-secondary md:p-4 p-6 shadow"
+          className="absolute bottom-2 md:left-2 left-4 flex items-center rounded-full bg-secondary md:p-4 p-6 shadow"
         >
           <Plus className="h-5 w-5 text-secondary-foreground" />
         </Button>

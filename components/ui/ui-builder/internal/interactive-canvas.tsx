@@ -174,7 +174,7 @@ interface ZoomControlsProps {
 
 const ZoomControls = ({ onZoomIn, onZoomOut }: ZoomControlsProps) => {
   return (
-    <div className="absolute bottom-4 md:right-2 right-4">
+    <div className="absolute bottom-2 md:right-2 right-4">
       <Button
         variant="secondary"
         size="icon"

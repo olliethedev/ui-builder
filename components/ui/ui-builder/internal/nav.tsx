@@ -15,6 +15,7 @@ import {
   Tablet,
   Smartphone,
   Maximize,
+  MoreVertical, // Ensure this import is present
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Popover,
@@ -85,6 +87,10 @@ export function NavBar({ useCanvas }: NavBarProps) {
   const canUndo = !!pastStates.length;
   const canRedo = !!futureStates.length;
 
+  // **Lifted State for Modals**
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
   const handleUndo = useCallback(() => {
     undo();
   }, [undo]);
@@ -133,104 +139,253 @@ export function NavBar({ useCanvas }: NavBarProps) {
 
   return (
     <div
-      className="flex items-center justify-between bg-background px-2 md:px-6 py-4 border-b gap-2"
+      className="flex items-center justify-between bg-background px-2 md:px-6 py-4 border-b"
       style={{ zIndex: Z_INDEX }}
     >
       <TooltipProvider>
         <div className="flex items-center gap-2">
-          <h1 className="md:block hidden text-2xl font-bold">UI Builder</h1>
-          <div className="h-10 flex w-px bg-border"></div>
+          <h1 className="block text-lg md:text-2xl font-bold whitespace-nowrap">
+            UI Builder
+          </h1>
+          <div className="flex h-10 w-px bg-border"></div>
           <PagesPopover />
           {useCanvas && <PreviewModeToggle />}
         </div>
 
-        <div className="flex space-x-2">
-          <div className="h-10 flex w-px bg-border"></div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handleUndo}
-                variant="secondary"
-                size="icon"
-                disabled={!canUndo}
-                className="flex flex-col justify-center"
-              >
-                <span className="sr-only">Undo</span>
-                <Undo className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="flex items-center gap-2">
-              Undo
-              <CommandShortcut className="ml-0 text-sm leading-3">
-                ⌘Z
-              </CommandShortcut>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={handleRedo}
-                variant="secondary"
-                size="icon"
-                disabled={!canRedo}
-                className="flex flex-col justify-center"
-              >
-                <span className="sr-only">Redo</span>
-                <Redo className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="flex items-center gap-2">
-              Redo
-              <CommandShortcut className="ml-0 text-sm leading-3">
-                ⌘+⇧+Z
-              </CommandShortcut>
-            </TooltipContent>
-          </Tooltip>
-          <div className="h-10 flex w-px bg-border"></div>
-          <PreviewDialog page={page} />
-          <CodeDialog />
-          <div className="h-10 flex w-px bg-border"></div>
+        <div className="w-full flex items-center justify-end gap-2">
+          {/* Action Buttons for Larger Screens */}
+          <div className="hidden md:flex space-x-2">
+            <ActionButtons
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
+              onOpenPreview={() => setIsPreviewModalOpen(true)}
+              onOpenExport={() => setIsExportModalOpen(true)}
+            />
+            <div className="h-10 flex w-px bg-border"></div>
+          </div>
+
           <ModeToggle />
+
+          {/* Dropdown for Smaller Screens */}
+          <div className="flex md:hidden space-x-2">
+            <div className="h-10 flex w-px bg-border"></div>
+            <ResponsiveDropdown
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
+              onOpenPreview={() => setIsPreviewModalOpen(true)}
+              onOpenExport={() => setIsExportModalOpen(true)}
+            />
+          </div>
         </div>
+
+        {/* **Dialogs Controlled by NavBar State** */}
+        <PreviewDialog
+          isOpen={isPreviewModalOpen}
+          onOpenChange={setIsPreviewModalOpen}
+          page={page}
+        />
+        <CodeDialog
+          isOpen={isExportModalOpen}
+          onOpenChange={setIsExportModalOpen}
+        />
       </TooltipProvider>
     </div>
   );
 }
 
-const PreviewDialog = ({ page }: { page: PageLayer }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+/**
+ * Reusable Action Buttons Component
+ */
+interface ActionButtonsProps {
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
+  onOpenPreview: () => void;
+  onOpenExport: () => void;
+}
 
-  const openPreview = useCallback(() => {
-    setIsModalOpen(true);
-  }, []);
+const ActionButtons: React.FC<ActionButtonsProps> = ({
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
+  onOpenPreview,
+  onOpenExport,
+}) => {
+  return (
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={onUndo}
+            variant="secondary"
+            size="icon"
+            disabled={!canUndo}
+            className="flex flex-col justify-center"
+          >
+            <span className="sr-only">Undo</span>
+            <Undo className="w-4 h-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="flex items-center gap-2">
+          Undo
+          <CommandShortcut className="ml-0 text-sm leading-3">
+            ⌘Z
+          </CommandShortcut>
+        </TooltipContent>
+      </Tooltip>
 
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={onRedo}
+            variant="secondary"
+            size="icon"
+            disabled={!canRedo}
+            className="flex flex-col justify-center"
+          >
+            <span className="sr-only">Redo</span>
+            <Redo className="w-4 h-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="flex items-center gap-2">
+          Redo
+          <CommandShortcut className="ml-0 text-sm leading-3">
+            ⌘+⇧+Z
+          </CommandShortcut>
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={onOpenPreview}
+            variant="secondary"
+            size="icon"
+            className="flex flex-col justify-center"
+          >
+            <span className="sr-only">Preview</span>
+            <Eye className="w-4 h-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="flex items-center gap-2">
+          Preview
+          <CommandShortcut className="ml-0 text-sm leading-3">
+            ⌘+⇧+P
+          </CommandShortcut>
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={onOpenExport}
+            variant="secondary"
+            size="icon"
+            className="flex flex-col justify-center"
+          >
+            <span className="sr-only">Export</span>
+            <FileUp className="w-4 h-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="flex items-center gap-2">
+          Export Code
+          <CommandShortcut className="ml-0 text-sm leading-3">
+            ⌘+⇧+E
+          </CommandShortcut>
+        </TooltipContent>
+      </Tooltip>
+    </>
+  );
+};
+
+/**
+ * Dropdown containing Action Buttons for Smaller Screens
+ */
+interface ResponsiveDropdownProps {
+  canUndo: boolean;
+  canRedo: boolean;
+  onUndo: () => void;
+  onRedo: () => void;
+  onOpenPreview: () => void;
+  onOpenExport: () => void;
+}
+
+const ResponsiveDropdown: React.FC<ResponsiveDropdownProps> = ({
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
+  onOpenPreview,
+  onOpenExport,
+}) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon">
+          <span className="sr-only">Actions</span>
+          <MoreVertical className="w-4 h-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" style={{ zIndex: Z_INDEX + 1 }}>
+        <DropdownMenuItem className="gap-2" onClick={onUndo} disabled={!canUndo}>
+          <Undo className="w-4 h-4" />
+          Undo
+          <span className="ml-auto text-xs text-muted-foreground">⌘Z</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="gap-2" onClick={onRedo} disabled={!canRedo}>
+          <Redo className="w-4 h-4" />
+          Redo
+          <span className="ml-auto text-xs text-muted-foreground">⌘+⇧+Z</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="gap-2" onClick={onOpenPreview}>
+          <Eye className="w-4 h-4" />
+          Preview
+          <span className="ml-auto text-xs text-muted-foreground">⌘+⇧+P</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="gap-2" onClick={onOpenExport}>
+          <FileUp className="w-4 h-4" />
+          Export
+          <span className="ml-auto text-xs text-muted-foreground">⌘+⇧+E</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+/**
+ * Preview Dialog Component
+ */
+interface PreviewDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  page: PageLayer;
+}
+
+const PreviewDialog: React.FC<PreviewDialogProps> = ({
+  isOpen,
+  onOpenChange,
+  page,
+}) => {
   useKeyboardShortcuts([
     {
       keys: { metaKey: true, shiftKey: true },
       key: "p",
-      handler: openPreview,
+      handler: () => {
+        onOpenChange(true);
+      },
     },
   ]);
 
   return (
-    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-      <DialogTrigger>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="secondary" size="icon">
-              <span className="sr-only">Preview</span>
-              <Eye className="w-4 h-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className="flex items-center gap-2">
-            Preview
-            <CommandShortcut className="ml-0 text-sm leading-3">
-              ⌘+⇧+P
-            </CommandShortcut>
-          </TooltipContent>
-        </Tooltip>
-      </DialogTrigger>
-
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogTrigger />
       <DialogContentWithZIndex
         className="max-w-[calc(100dvw)] max-h-[calc(100dvh)] overflow-auto p-0 gap-0"
         style={{ zIndex: Z_INDEX + 1 }}
@@ -249,39 +404,28 @@ const PreviewDialog = ({ page }: { page: PageLayer }) => {
   );
 };
 
-const CodeDialog = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+/**
+ * Code Dialog Component
+ */
+interface CodeDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}
 
-  const openExport = useCallback(() => {
-    setIsModalOpen(true);
-  }, []);
-
+const CodeDialog: React.FC<CodeDialogProps> = ({ isOpen, onOpenChange }) => {
   useKeyboardShortcuts([
     {
       keys: { metaKey: true, shiftKey: true },
       key: "e",
-      handler: openExport,
+      handler: () => {
+        onOpenChange(true);
+      },
     },
   ]);
 
   return (
-    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-      <DialogTrigger>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="secondary" size="icon">
-              <span className="sr-only">Export</span>
-              <FileUp className="w-4 h-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className="flex items-center gap-2">
-            Export Code
-            <CommandShortcut className="ml-0 text-sm leading-3">
-              ⌘+⇧+E
-            </CommandShortcut>
-          </TooltipContent>
-        </Tooltip>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogTrigger />
       <DialogContentWithZIndex
         className="sm:max-w-[625px] max-h-[625px]"
         style={{ zIndex: Z_INDEX + 1 }}
@@ -374,7 +518,6 @@ function PagesPopover() {
           }}
         />
         <Button type="submit" variant="secondary">
-          {" "}
           <PlusIcon className="w-4 h-4" />
         </Button>
       </div>

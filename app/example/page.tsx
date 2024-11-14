@@ -980,7 +980,7 @@ const initialLayers: PageLayer[] = [{
 
 export default function Page() {
   return (
-    <main className="flex flex-col h-screen">
+    <main className="flex flex-col h-dvh">
       <UIBuilder initialLayers={initialLayers} />
     </main>
   );
