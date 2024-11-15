@@ -25,7 +25,7 @@ interface UIBuilderProps {
   useCanvas?: boolean;
 }
 
-const UIBuilder = ({ initialLayers, onChange, useCanvas }: UIBuilderProps) => {
+const UIBuilder = ({ initialLayers, onChange, useCanvas = true }: UIBuilderProps) => {
   const store = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
   const [initialized, setInitialized] = useState(false);
@@ -52,6 +52,7 @@ const UIBuilder = ({ initialLayers, onChange, useCanvas }: UIBuilderProps) => {
 
   return (
     <ThemeProvider
+      data-testid="theme-provider"
       attribute="class"
       defaultTheme="system"
       enableSystem
@@ -62,7 +63,7 @@ const UIBuilder = ({ initialLayers, onChange, useCanvas }: UIBuilderProps) => {
   );
 };
 
-function MainLayout({ useCanvas }: { useCanvas?: boolean }) {
+function MainLayout({ useCanvas }: { useCanvas: boolean }) {
   const mainPanels = useMemo(
     () =>  [
     {
@@ -140,9 +141,9 @@ function MainLayout({ useCanvas }: { useCanvas?: boolean }) {
   );
 }
 
-function PageConfigPanel({ className }: { className: string }) {
+export function PageConfigPanel({ className }: { className: string }) {
   return (
-    <Tabs defaultValue="layers" className={className}>
+    <Tabs data-testid="page-config-panel" defaultValue="layers" className={className}>
       <TabsList className="grid grid-cols-2 mx-4">
         <TabsTrigger value="layers">Layers</TabsTrigger>
         <TabsTrigger value="appearance">Appearance</TabsTrigger>
@@ -160,9 +161,9 @@ function PageConfigPanel({ className }: { className: string }) {
   );
 }
 
-function LoadingSkeleton() {
+export function LoadingSkeleton() {
   return (
-    <div className="flex flex-col flex-1 gap-1 bg-secondary/90">
+    <div data-testid="loading-skeleton" className="flex flex-col flex-1 gap-1 bg-secondary/90">
       <div className="w-full h-16 animate-pulse bg-background rounded-md"></div>
       <div className="flex flex-1 gap-1">
         <div className="w-1/4 animate-pulse bg-background rounded-md"></div>

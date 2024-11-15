@@ -8,7 +8,7 @@ export const metadata = {
 export default function Page() {
   return (
     <main data-testid="main-page" className="flex flex-col h-dvh">
-      <UIBuilder useCanvas={true} />
+      <UIBuilder />
     </main>
   );
 }

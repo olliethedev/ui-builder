@@ -123,6 +123,7 @@ export default App;
 
 - `initialLayers`: Optional prop to set up initial pages and layers. Useful for setting the initial state of the builder, from a database for example.
 - `onChange`: Optional callback triggered when the editor state changes, providing the updated pages. Can be used to persist the state to a database.
+- `useCanvas`: Optional prop to disable the interactive canvas. Defaults to true.
 
 
 You can also render the page layer without editor functionality by using the LayerRenderer component:
