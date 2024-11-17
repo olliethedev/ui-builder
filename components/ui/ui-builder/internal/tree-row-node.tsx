@@ -32,10 +32,14 @@ interface TreeRowNodeProps {
   selectLayer: (id: string) => void;
   removeLayer: (id: string) => void;
   duplicateLayer: (id: string) => void;
-  updateLayer: (id: string, update: Partial<Layer>, options?: {
-    name?: string;
-    children?: Layer[];
-  }) => void;
+  updateLayer: (
+    id: string,
+    update: Partial<Layer>,
+    options?: {
+      name?: string;
+      children?: Layer[];
+    }
+  ) => void;
 }
 
 export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
@@ -52,8 +56,6 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
   duplicateLayer,
   updateLayer,
 }) => {
-
-
   const [isRenaming, setIsRenaming] = useState(false);
 
   const [popoverOrMenuOpen, setPopoverOrMenuOpen] = useState(false);
@@ -98,42 +100,25 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
 
   return (
     <div key={key} {...rest} className="w-fit flex items-center group relative">
-      <div
-        className={`z-[-1] pointer-events-none absolute bottom-[20px] h-full border-b border-l border-border border-dashed bg-background`}
-        style={{
-          width: "20px",
-          left: (level - 1) * 20,
-        }}
-      />
-      <Button
-        className={cn(
-          "size-4 cursor-move opacity-0 group-hover:opacity-100 transition-opacity duration-200 ease-in-out",
-          popoverOrMenuOpen ? "opacity-100" : "opacity-0"
-        )}
-        variant="link"
-        size="icon"
-        draggable={draggable}
-      >
-        <GripVertical className="size-4" />
-      </Button>
+      <RowOffset level={level} />
+
       {hasLayerChildren(node) && node.children.length > 0 ? (
         <Button
-          className="size-4 rounded-none"
-          variant="link"
-          size="icon"
+          className="w-4 ml-3 p-0"
+          variant="ghost"
+          size="sm"
           onClick={handleOpen}
         >
           {open ? (
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown className="size-4 bg-secondary rounded-full" />
           ) : (
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="size-4 bg-secondary rounded-full" />
           )}
         </Button>
       ) : (
-        <div
-          className="size-4 rounded-none opacity-0"
-        />
+        <div className="size-4 rounded-none opacity-0 ml-3" />
       )}
+
       {isRenaming ? (
         <NameEdit
           initialName={node.name ?? ""}
@@ -144,13 +129,22 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
         <Button
           variant="ghost"
           size="sm"
-          className={cn(
+          className={cn("pl-0 gap-0",
             node.id === selectedLayerId
               ? "text-primary"
               : "text-muted-foreground"
           )}
           onClick={handleSelect}
         >
+          <div
+            className={cn(
+              "w-4 h-full flex items-center justify-center cursor-move opacity-0 rounded group-hover:opacity-100 hover:bg-muted-foreground hover:text-muted transition-opacity duration-200 ease-in-out",
+              popoverOrMenuOpen ? "opacity-100" : "opacity-0"
+            )}
+            draggable={draggable}
+          >
+            <GripVertical className="size-4" />
+          </div>
           {node.name}
         </Button>
       )}
@@ -200,6 +194,27 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
   );
 };
 
+const RowOffset = ({ level }: { level: number }) => {
+  return (
+    <div
+      className="z-[-1] left-0 pointer-events-none absolute flex flex-row bottom-[20px] h-full"
+      style={{
+        width: level * 20,
+      }}
+    >
+      {Array.from({ length: level }).map((_, index) => (
+        <div
+          key={index}
+          className={cn(
+            "w-5 h-full border-l border-dashed border-primary bg-background",
+            index === level - 1 && "border-b "
+          )}
+        />
+      ))}
+    </div>
+  );
+};
+
 TreeRowNode.displayName = "TreeRowNode";
 
 export const TreeRowPlaceholder: React.FC<
@@ -207,12 +222,8 @@ export const TreeRowPlaceholder: React.FC<
 > = ({ nodeAttributes }) => {
   const { key, ...rest } = nodeAttributes;
   return (
-    <div
-      key={key}
-      {...rest}
-      className="w-40 h-2"
-    >
-        <div className="size-full border-b-2 border-blue-500 border-dashed" />
+    <div key={key} {...rest} className="w-40 h-2">
+      <div className="size-full border-b-2 border-blue-500 border-dashed" />
     </div>
   );
 };

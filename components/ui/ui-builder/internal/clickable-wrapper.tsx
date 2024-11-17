@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Layer } from "@/lib/ui-builder/store/layer-store";
 import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
 import { cn } from "@/lib/utils";
+import { getScrollParent } from "@/lib/ui-builder/utils/get-scroll-parent";
 
 const MIN_SIZE = 2;
 
@@ -14,6 +15,8 @@ interface ClickableWrapperProps {
   children: React.ReactNode;
   onDuplicateLayer: () => void;
   onDeleteLayer: () => void;
+  listenToScrollParent: boolean;
+  observeMutations: boolean;
 }
 
 /**
@@ -28,10 +31,18 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   children,
   onDuplicateLayer,
   onDeleteLayer,
+  listenToScrollParent,
+  observeMutations,
 }) => {
   const [boundingRect, setBoundingRect] = useState<DOMRect | null>(null);
+  const [touchPosition, setTouchPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const wrapperRef = useRef<HTMLSpanElement | null>(null);
 
+
+  // listen to resize and position changes
   useEffect(() => {
     // update bounding rect on page resize and scroll
     const element = wrapperRef.current?.firstElementChild as HTMLElement | null;
@@ -53,11 +64,23 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
       resizeObserver.observe(element);
     }
 
-    const scrollParent = getScrollParent(element);
-    if (scrollParent) {
-      scrollParent.addEventListener("scroll", updateBoundingRect);
+    let mutationObserver: MutationObserver | null = null;
+    if ("MutationObserver" in window && observeMutations) {
+      mutationObserver = new MutationObserver(updateBoundingRect);
+      mutationObserver.observe(document.body, {
+        attributeFilter: ["style", "class"],
+        attributes: true,
+        subtree: true,
+      });
     }
-    window.addEventListener("resize", updateBoundingRect);
+
+    let scrollParent: HTMLElement | null = null;
+    if (listenToScrollParent) {
+      scrollParent = getScrollParent(element);
+      if (scrollParent) {
+        scrollParent.addEventListener("scroll", updateBoundingRect);
+      }
+    }
 
     return () => {
       if (resizeObserver) {
@@ -67,30 +90,55 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
       if (scrollParent) {
         scrollParent.removeEventListener("scroll", updateBoundingRect);
       }
+      if (mutationObserver) {
+        mutationObserver.disconnect();
+      }
+    };
+  }, [isSelected, layer.id, children, listenToScrollParent]);
+
+
+  // listen to window resize
+  useEffect(() => {
+    const element = wrapperRef.current?.firstElementChild as HTMLElement | null;
+    if (!element) {
+      setBoundingRect(null);
+      return;
+    }
+
+    const updateBoundingRect = () => {
+      setBoundingRect(element.getBoundingClientRect());
+    };
+
+    window.addEventListener("resize", updateBoundingRect);
+    return () => {
+      
       window.removeEventListener("resize", updateBoundingRect);
     };
-  }, [isSelected, layer.id, children]);
+  }, []);
 
+
+  // listen to panel size changes
   useEffect(() => {
     //since we are using resizable panel, we need to track parent size changes
     if (!wrapperRef.current) return;
 
-    const panelContainer = document.getElementById('editor-panel-container');
+    const panelContainer = document.getElementById("editor-panel-container");
     if (!panelContainer) return;
-  
+
     const updateBoundingRect = () => {
-      const element = wrapperRef.current?.firstElementChild as HTMLElement | null;
+      const element = wrapperRef.current
+        ?.firstElementChild as HTMLElement | null;
       if (element) {
         const rect = element.getBoundingClientRect();
         setBoundingRect(rect);
       }
     };
-  
+
     const resizeObserver = new ResizeObserver(updateBoundingRect);
     resizeObserver.observe(panelContainer);
-  
+
     return () => {
-      resizeObserver.disconnect()
+      resizeObserver.disconnect();
     };
   }, [isSelected, layer.id, children]);
 
@@ -103,6 +151,7 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   return (
     <>
       <span
+        data-testid="clickable-overlay"
         className="contents" // Preserves layout
         ref={wrapperRef}
       >
@@ -136,44 +185,52 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
               scrollParent.scrollTop += e.deltaY;
             }
           }}
+          onTouchStart={(e) => {
+            setTouchPosition({
+              x: e.touches[0].clientX,
+              y: e.touches[0].clientY,
+            });
+          }}
+          onTouchMove={(e) => {
+            if (touchPosition) {
+              const deltaX = touchPosition.x - e.touches[0].clientX;
+              const deltaY = touchPosition.y - e.touches[0].clientY;
+              const scrollParent = getScrollParent(e.target as HTMLElement);
+              if (scrollParent) {
+                scrollParent.scrollLeft += deltaX;
+                scrollParent.scrollTop += deltaY;
+              }
+              setTouchPosition({
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY,
+              });
+            }
+          }}
+          onTouchEnd={() => {
+            setTouchPosition(null);
+          }}
           style={{
-            top: boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
-                  ? boundingRect.top - MIN_SIZE
-                  : boundingRect.top,
-                left: boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
-                  ? boundingRect.left - MIN_SIZE
-                  : boundingRect.left,
+            top:
+              boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
+                ? boundingRect.top - MIN_SIZE
+                : boundingRect.top,
+            left:
+              boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
+                ? boundingRect.left - MIN_SIZE
+                : boundingRect.left,
             width: Math.max(boundingRect.width, MIN_SIZE),
             height: Math.max(boundingRect.height, MIN_SIZE),
             zIndex: zIndex,
           }}
         >
           {/* {small label with layer type floating above the bounding box} */}
-          {isSelected && <span className="absolute top-[-16px] left-[-2px] text-xs text-white bg-blue-500 px-[1px]">{layer.type.replaceAll("_","")}</span>}
+          {isSelected && (
+            <span className="absolute top-[-16px] left-[-2px] text-xs text-white bg-blue-500 px-[1px]">
+              {layer.type.replaceAll("_", "")}
+            </span>
+          )}
         </div>
       )}
     </>
   );
 };
-
-function getScrollParent(element: HTMLElement | null): HTMLElement | null {
-  if (!element) return null;
-
-  const overflowRegex = /(auto|scroll)/;
-
-  let parent: HTMLElement | null = element.parentElement;
-
-  while (parent) {
-    const style = getComputedStyle(parent);
-    const overflowY = style.overflowY;
-    const overflowX = style.overflowX;
-
-    if (overflowRegex.test(overflowY) || overflowRegex.test(overflowX)) {
-      return parent;
-    }
-
-    parent = parent.parentElement;
-  }
-
-  return null;
-}

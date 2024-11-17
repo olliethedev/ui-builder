@@ -102,6 +102,7 @@ async function buildRegistry() {
 function getDependencies(): string[] {
     // Consolidate dependencies or define as needed
     return [
+        "@use-gesture/react",
         "react-error-boundary",
         "react-hook-form",
         "zod",
