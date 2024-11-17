@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Layer } from "@/lib/ui-builder/store/layer-store";
 import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
 import { cn } from "@/lib/utils";
+import { getScrollParent } from "@/lib/ui-builder/utils/get-scroll-parent";
 
 const MIN_SIZE = 2;
 
@@ -150,6 +151,7 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   return (
     <>
       <span
+        data-testid="clickable-overlay"
         className="contents" // Preserves layout
         ref={wrapperRef}
       >
@@ -232,25 +234,3 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
     </>
   );
 };
-
-function getScrollParent(element: HTMLElement | null): HTMLElement | null {
-  if (!element) return null;
-
-  const overflowRegex = /(auto|scroll)/;
-
-  let parent: HTMLElement | null = element.parentElement;
-
-  while (parent) {
-    const style = getComputedStyle(parent);
-    const overflowY = style.overflowY;
-    const overflowX = style.overflowX;
-
-    if (overflowRegex.test(overflowY) || overflowRegex.test(overflowX)) {
-      return parent;
-    }
-
-    parent = parent.parentElement;
-  }
-
-  return null;
-}

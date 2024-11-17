@@ -159,7 +159,7 @@ export function InteractiveCanvas({
       {...bind()}
       className="w-full h-full overflow-hidden relative touch-none cursor-default transition-transform duration-100 ease-in-out"
     >
-      <div className="touch-none" style={transformStyle()}>
+      <div data-testid="interactive-canvas-container" className="touch-none" style={transformStyle()}>
         {children}
       </div>
       <ZoomControls onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} />
@@ -176,6 +176,7 @@ const ZoomControls = ({ onZoomIn, onZoomOut }: ZoomControlsProps) => {
   return (
     <div className="absolute bottom-2 md:right-2 right-4">
       <Button
+        data-testid="button-ZoomIn"
         variant="secondary"
         size="icon"
         className="rounded-l-full rounded-r-none shadow md:p-4 p-6"
@@ -184,6 +185,7 @@ const ZoomControls = ({ onZoomIn, onZoomOut }: ZoomControlsProps) => {
         <ZoomIn />
       </Button>
       <Button
+        data-testid="button-ZoomOut"
         variant="secondary"
         size="icon"
         className="rounded-l-none rounded-r-full shadow md:p-4 p-6"

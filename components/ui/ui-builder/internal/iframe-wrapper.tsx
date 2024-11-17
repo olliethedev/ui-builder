@@ -204,6 +204,7 @@ const Resizer = ({
 }: React.HTMLAttributes<HTMLDivElement>) => {
   return (
     <div
+      data-testid="resizer"
       onMouseDown={(e) => {
         e.stopPropagation();
         e.preventDefault();

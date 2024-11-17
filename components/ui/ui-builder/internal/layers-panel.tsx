@@ -64,7 +64,7 @@ interface LayersTreeProps {
   duplicateLayer: (layerId: string) => void;
 }
 
-const LayersTree: React.FC<LayersTreeProps> = React.memo(
+export const LayersTree: React.FC<LayersTreeProps> = React.memo(
   ({
     className,
     layers,
@@ -162,6 +162,7 @@ const LayersTree: React.FC<LayersTreeProps> = React.memo(
     return (
       <DevProfiler id="LayersPanel" threshold={40}>
         <div
+          data-testid="layers-tree"
           className={cn(
             className,
             "flex flex-col size-full overflow-x-auto pl-4"
