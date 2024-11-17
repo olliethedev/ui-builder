@@ -402,7 +402,7 @@ npm run host-registry
 Use the local registry in a local project:
 
 ```bash
-npx shadcn@latest add http://127.0.0.1:8080/block-registry.json
+npx shadcn@latest add http://127.0.0.1:8080/block-registry.json -o
 ```
 
 ## Running Tests

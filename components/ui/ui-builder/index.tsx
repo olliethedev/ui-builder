@@ -152,7 +152,7 @@ export function PageConfigPanel({ className }: { className: string }) {
         <LayersPanel />
       </TabsContent>
       <TabsContent value="appearance">
-        <div className="py-2 gap-2 flex flex-col overflow-y-auto overflow-x-auto">
+        <div className="py-2 px-4 gap-2 flex flex-col overflow-y-auto overflow-x-auto">
           <ConfigPanel />
           <ThemePanel />
         </div>
