@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
 import isDeepEqual from "fast-deep-equal";
-import { Layer, useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer, useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { cn } from "@/lib/utils";
 import {
   findAllParentLayersRecursive,
@@ -26,19 +26,23 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
   const {
     selectedPageId,
     selectedLayerId,
-    findLayersForPageId,
+    findLayerById,
     updateLayer,
     selectLayer,
     removeLayer,
     duplicateLayer,
   } = useLayerStore();
 
-  const layers = findLayersForPageId(selectedPageId);
+  const pageLayer = findLayerById(selectedPageId);
+
+  if (!pageLayer) {
+    return null;
+  }
 
   return (
     <LayersTree
       className={className}
-      layers={layers}
+      layers={[pageLayer]}
       selectedPageId={selectedPageId}
       selectedLayerId={selectedLayerId}
       updateLayer={updateLayer}
@@ -51,13 +55,13 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
 
 interface LayersTreeProps {
   className?: string;
-  layers: Layer[];
+  layers: ComponentLayer[];
   selectedPageId: string;
   selectedLayerId: string | null;
   updateLayer: (
     layerId: string,
     newProps: Record<string, any>,
-    layerRest?: Partial<Omit<Layer, "props">>
+    layerRest?: Partial<Omit<ComponentLayer, "props">>
   ) => void;
   selectLayer: (layerId: string) => void;
   removeLayer: (layerId: string) => void;
@@ -86,7 +90,13 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
       openIds: Array.from(openIds),
       dragOpen: true,
       onChange: (newLayers) => {
-        updateLayer(selectedPageId, {}, { children: newLayers });
+        if (Array.isArray(newLayers) && newLayers.length > 0) {
+          const updatedPageLayer = newLayers[0];
+          const updatedChildren = hasLayerChildren(updatedPageLayer) ? updatedPageLayer.children : [];
+          updateLayer(selectedPageId, {}, { children: updatedChildren });
+        } else {
+          console.error("LayersTree onChange: Invalid newLayers structure received", newLayers);
+        }
       },
       renderNodeBox: ({ stat, attrs, isPlaceholder }) => {
         return isPlaceholder ? (

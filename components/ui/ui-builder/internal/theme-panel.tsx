@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from "react";
 import {
   baseColors,
@@ -8,11 +9,10 @@ import { Label } from "@/components/ui/label";
 import { CheckIcon, InfoIcon, MoonIcon, SunIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  PageLayer,
+  ComponentLayer,
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
 import { Toggle } from "@/components/ui/toggle";
-import { themeToStyleVars } from "@/components/ui/ui-builder/internal/render-utils";
 
 export function ThemePanel() {
   const {
@@ -20,7 +20,7 @@ export function ThemePanel() {
     updateLayer: updateLayerProps,
     findLayerById,
   } = useLayerStore();
-  const selectedPageData = findLayerById(selectedPageId) as PageLayer;
+  const selectedPageData = findLayerById(selectedPageId) as ComponentLayer;
   const [isCustomTheme, setIsCustomTheme] = useState(
     selectedPageData?.props.colorTheme !== undefined
   );
@@ -49,7 +49,7 @@ export function ThemePanel() {
           <InfoIcon className="size-4" /> Using Your Project&apos;s Theme
         </span>
       )}
-      {selectedPageData && (
+      {selectedPageData && isCustomTheme && (
         <ThemePicker key={selectedPageId} isDisabled={!isCustomTheme} pageLayer={selectedPageData} />
       )}
     </div>
@@ -63,7 +63,7 @@ function ThemePicker({
 }: {
   className?: string;
   isDisabled: boolean;
-  pageLayer: PageLayer;
+  pageLayer: ComponentLayer;
 }) {
   const { updateLayer: updateLayerProps } = useLayerStore();
 
@@ -188,4 +188,27 @@ function ThemePicker({
       <div className="flex gap-2">{modeOptions}</div>
     </div>
   );
+}
+
+function themeToStyleVars(
+  colors:
+    | BaseColor["cssVars"]["dark"]
+    | BaseColor["cssVars"]["light"]
+    | undefined
+) {
+  if (!colors) {
+    return undefined;
+  }
+  const styleVariables = Object.entries(colors).reduce(
+    (acc, [key, value]) => {
+      acc[`--${key}`] = value;
+      return acc;
+    },
+    {} as { [key: string]: string }
+  );
+  const globalOverrides = {
+    color: `hsl(${colors.foreground})`,
+    borderColor: `hsl(${colors.border})`,
+  };
+  return { ...styleVariables, ...globalOverrides };
 }

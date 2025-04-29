@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Layer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
 import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
 import { cn } from "@/lib/utils";
 import { getScrollParent } from "@/lib/ui-builder/utils/get-scroll-parent";
@@ -7,7 +7,7 @@ import { getScrollParent } from "@/lib/ui-builder/utils/get-scroll-parent";
 const MIN_SIZE = 2;
 
 interface ClickableWrapperProps {
-  layer: Layer;
+  layer: ComponentLayer;
   isSelected: boolean;
   zIndex: number;
   totalLayers: number;
@@ -148,6 +148,34 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
     onSelectElement(layer.id);
   };
 
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const targetElement = wrapperRef.current?.firstElementChild;
+    if (targetElement) {
+      // Create a new MouseEvent with the same properties as the original
+      const newEvent = new MouseEvent("click", {
+        bubbles: true, // Ensure the event bubbles up if needed
+        cancelable: true, // Allow it to be cancelled
+        view: window, // Typically the window object
+        detail: e.detail, // Copy detail (usually click count)
+        screenX: e.screenX,
+        screenY: e.screenY,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        ctrlKey: e.ctrlKey,
+        altKey: e.altKey,
+        shiftKey: e.shiftKey,
+        metaKey: e.metaKey,
+        button: e.button,
+        relatedTarget: e.relatedTarget,
+      });
+
+      // Dispatch the new event on the target element
+      targetElement.dispatchEvent(newEvent);
+    }
+  };
+
   return (
     <>
       <span
@@ -174,6 +202,7 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
       {boundingRect && (
         <div
           onClick={handleClick}
+          onDoubleClick={handleDoubleClick}
           className={cn(
             "fixed box-border hover:border-blue-300 hover:border-2",
             isSelected ? "border-2 border-blue-500 hover:border-blue-500" : ""
@@ -225,8 +254,8 @@ export const ClickableWrapper: React.FC<ClickableWrapperProps> = ({
         >
           {/* {small label with layer type floating above the bounding box} */}
           {isSelected && (
-            <span className="absolute top-[-16px] left-[-2px] text-xs text-white bg-blue-500 px-[1px]">
-              {layer.type.replaceAll("_", "")}
+            <span className="absolute top-[-16px] left-[-2px] text-xs text-white bg-blue-500 px-[1px] whitespace-nowrap">
+              {layer.name?.startsWith(layer.type)?layer.type.replaceAll("_", ""):`${layer.name} (${layer.type.replaceAll("_", "")})`}
             </span>
           )}
         </div>

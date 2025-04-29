@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PageLayer, Layer, isPageLayer, componentRegistry } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
 import template from "lodash.template";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
+import { ComponentRegistry } from "@/lib/ui-builder/store/editor-store";
 
-export const pageLayerToCode = (page: PageLayer) => {
+export const pageLayerToCode = (page: ComponentLayer, componentRegistry: ComponentRegistry) => {
   const layers = page.children;
   const { mode, colorTheme, borderRadius, ...restOfProps } = page.props;
   const pageProps = generatePropsString(restOfProps);
   const imports = new Set<string>();
 
-  const collectImports = (layer: Layer) => {
-    if (hasLayerChildren(layer) && !isPageLayer(layer)) {
+  const collectImports = (layer: ComponentLayer) => {
+    if (hasLayerChildren(layer) ) {
       const componentDefinition = componentRegistry[layer.type];
       if (layer.type && componentDefinition && componentDefinition.from) {
         imports.add(
@@ -24,9 +25,15 @@ export const pageLayerToCode = (page: PageLayer) => {
     }
   };
 
-  layers.forEach(collectImports);
+  let code = "";
 
-  const code = layers.map((layer) => generateLayerCode(layer, 1)).join("\n");
+  if (Array.isArray(layers)) {
+    layers.forEach(collectImports);
+    code = layers.map((layer) => generateLayerCode(layer, 1)).join("\n");
+  } else {
+    code = `{"${ layers }"}`;
+  }
+
   const importsString = Array.from(imports).join("\n");
 
   const compiled = template(reactComponentTemplate);
@@ -43,7 +50,7 @@ export const pageLayerToCode = (page: PageLayer) => {
 
 };
 
-export const generateLayerCode = (layer: Layer, indent = 0): string => {
+export const generateLayerCode = (layer: ComponentLayer, indent = 0): string => {
 
   const indentation = "  ".repeat(indent);
 
@@ -55,7 +62,7 @@ export const generateLayerCode = (layer: Layer, indent = 0): string => {
   }
   //else if children is a string, then we need render children as a text node
   else if (typeof layer.children === "string") {
-    childrenCode = `{"${ layer.children }"}`;
+    childrenCode = `{${JSON.stringify(layer.children)}}`;
   }
 
   if (childrenCode) {

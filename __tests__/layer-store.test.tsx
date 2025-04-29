@@ -1,41 +1,42 @@
 import { renderHook, act } from '@testing-library/react';
-import { ComponentLayer, useLayerStore } from '../lib/ui-builder/store/layer-store';
-import { PageLayer } from '../lib/ui-builder/store/layer-store';
+import { ComponentLayer, useLayerStore } from '@/lib/ui-builder/store/layer-store';
+import { z } from 'zod';
 
-// Mock componentRegistry
-jest.mock('../lib/ui-builder/registry/component-registry', () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { z } = require('zod'); // Require zod within the mock factory
+import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 
-  return {
-    componentRegistry: {
-      Button: {
-        schema: z.object({
-          label: z.string().default('ollie'),
-        }),
-        from: '@/components/ui/button',
-        component: () => null, // Mock component; replace with actual mocks if needed
-      },
-      Input: {
-        schema: z.object({
-          placeholder: z.string().default('input'),
-        }),
-        from: '@/components/ui/input',
-        component: () => null,
-      },
-      Textarea: {
-        schema: z.object({
-          placeholder: z.string().default('textarea'),
-        }),
-        from: '@/components/ui/textarea',
-        component: () => null,
-      },
-      // Add other components as needed with appropriate Zod schemas
-    },
-  };
-});
+
+
 
 describe('LayerStore', () => {
+  beforeAll(() => {
+    //adding a mock component registry to zustand store
+    useEditorStore.setState({
+      registry: {
+        Button: {
+          schema: z.object({
+            label: z.string().default('ollie'),
+          }),
+          from: '@/components/ui/button',
+          component: () => null, // Mock component; replace with actual mocks if needed
+        },
+        Input: {
+          schema: z.object({
+            placeholder: z.string().default('input'),
+          }),
+          from: '@/components/ui/input',
+          component: () => null,
+        },
+        Textarea: {
+          schema: z.object({
+            placeholder: z.string().default('textarea'),
+          }),
+          from: '@/components/ui/textarea',
+          component: () => null,
+        },
+        // Add other components as needed with appropriate Zod schemas
+      }
+    });
+  });
   beforeEach(() => {
     // Reset the store before each test
     useLayerStore.setState({
@@ -70,7 +71,7 @@ describe('LayerStore', () => {
       });
 
       expect(result.current.pages[0].children).toHaveLength(1);
-      const newLayer = result.current.pages[0].children[0];
+      const newLayer = result.current.pages[0].children[0] as ComponentLayer;
       expect(newLayer.type).toBe('Button');
       expect(newLayer.name).toBe('Button');
       expect(newLayer.props).toEqual({ label: 'ollie' });
@@ -90,8 +91,8 @@ describe('LayerStore', () => {
       });
 
       expect(result.current.pages[0].children).toHaveLength(2);
-      expect(result.current.pages[0].children[0].type).toBe('Input');
-      expect(result.current.pages[0].children[1].type).toBe('Button');
+      expect((result.current.pages[0].children[0] as ComponentLayer).type).toBe('Input');
+      expect((result.current.pages[0].children[1] as ComponentLayer).type).toBe('Button');
     });
   });
 
@@ -105,7 +106,7 @@ describe('LayerStore', () => {
 
       expect(result.current.pages).toHaveLength(2);
       const newPage = result.current.pages[1];
-      expect(newPage.type).toBe('_page_');
+      expect(newPage.type).toBe('div');
       expect(newPage.name).toBe('Page 2');
       expect(result.current.selectedPageId).toBe(newPage.id);
     });
@@ -120,7 +121,7 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const originalLayer = result.current.pages[0].children[0];
+      const originalLayer = result.current.pages[0].children[0] as ComponentLayer;
       const originalId = originalLayer.id;
 
       // Duplicate the button layer
@@ -129,7 +130,7 @@ describe('LayerStore', () => {
       });
 
       expect(result.current.pages[0].children).toHaveLength(2);
-      const duplicatedLayer = result.current.pages[0].children[1];
+      const duplicatedLayer = result.current.pages[0].children[1] as ComponentLayer;
       expect(duplicatedLayer.type).toBe('Button');
       expect(duplicatedLayer.name).toBe(`${originalLayer.name} (Copy)`);
       expect(duplicatedLayer.props).toEqual(originalLayer.props);
@@ -174,7 +175,7 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const layerId = result.current.pages[0].children[0].id;
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
 
       // Remove the layer
       act(() => {
@@ -212,7 +213,7 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const layerId = result.current.pages[0].children[0].id;
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
 
       // Select the layer
       act(() => {
@@ -253,8 +254,8 @@ describe('LayerStore', () => {
   
       expect(result.current.pages[0].children).toHaveLength(2);
   
-      const buttonLayerId = result.current.pages[0].children[0].id;
-      const inputLayerId = result.current.pages[0].children[1].id;
+      const buttonLayerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      const inputLayerId = (result.current.pages[0].children[1] as ComponentLayer).id;
   
       // Remove the first layer (Button)
       act(() => {
@@ -262,7 +263,7 @@ describe('LayerStore', () => {
       });
   
       expect(result.current.pages[0].children).toHaveLength(1);
-      expect(result.current.pages[0].children[0].id).toBe(inputLayerId);
+      expect((result.current.pages[0].children[0] as ComponentLayer).id).toBe(inputLayerId);
     });
   });
 
@@ -275,14 +276,14 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const layerId = result.current.pages[0].children[0].id;
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
 
       // Update the layer
       act(() => {
         result.current.updateLayer(layerId, { className: 'new-class' }, { name: 'Updated Button' });
       });
 
-      const updatedLayer = result.current.pages[0].children[0];
+      const updatedLayer = result.current.pages[0].children[0] as ComponentLayer;
       expect(updatedLayer.props.className).toBe('new-class');
       expect(updatedLayer.name).toBe('Updated Button');
     });
@@ -328,14 +329,14 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
   
-      const layerId = result.current.pages[0].children[0].id;
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
   
       // Update the layer with new props and additional fields
       act(() => {
         result.current.updateLayer(layerId, { className: 'updated-class' }, { name: 'Updated Button' });
       });
   
-      const updatedLayer = result.current.pages[0].children[0];
+      const updatedLayer = result.current.pages[0].children[0] as ComponentLayer;
       expect(updatedLayer.props.className).toBe('updated-class');
       expect(updatedLayer.name).toBe('Updated Button');
     });
@@ -374,14 +375,14 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
     
-      const layerId = result.current.pages[0].children[0].id;
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
     
       // Update the layer's type to 'Input' and add a child
       act(() => {
         result.current.updateLayer(layerId, {}, { type: 'Input', children: [] });
       });
     
-      const updatedLayer = result.current.pages[0].children[0];
+      const updatedLayer = result.current.pages[0].children[0] as ComponentLayer;
       expect(updatedLayer.type).toBe('Input');
       expect(updatedLayer.children).toEqual([]);
     });
@@ -394,14 +395,14 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Input', '1');
       });
     
-      const layerId = result.current.pages[0].children[0].id;
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
     
       // Update the layer's props and name
       act(() => {
         result.current.updateLayer(layerId, { placeholder: 'Enter text' }, { name: 'TextInput' });
       });
     
-      const updatedLayer = result.current.pages[0].children[0];
+      const updatedLayer = result.current.pages[0].children[0] as ComponentLayer;
       expect(updatedLayer.props.placeholder).toBe('Enter text');
       expect(updatedLayer.name).toBe('TextInput');
     });
@@ -415,15 +416,15 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Input', '1');
       });
     
-      const buttonLayerId = result.current.pages[0].children[0].id;
+      const buttonLayerId = (result.current.pages[0].children[0] as ComponentLayer).id;
     
       // Update the button layer
       act(() => {
         result.current.updateLayer(buttonLayerId, { label: 'Submit' }, { name: 'SubmitButton' });
       });
     
-      const updatedButtonLayer = result.current.pages[0].children[0];
-      const updatedInputLayer = result.current.pages[0].children[1];
+      const updatedButtonLayer = result.current.pages[0].children[0] as ComponentLayer;
+      const updatedInputLayer = result.current.pages[0].children[1] as ComponentLayer;
     
       expect(updatedButtonLayer.props.label).toBe('Submit');
       expect(updatedButtonLayer.name).toBe('SubmitButton');
@@ -438,14 +439,14 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Textarea', '1');
       });
     
-      const layerId = result.current.pages[0].children[0].id;
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
     
       // Attempt to update the layer with no changes
       act(() => {
         result.current.updateLayer(layerId, {}, {});
       });
     
-      const updatedLayer = result.current.pages[0].children[0];
+      const updatedLayer = result.current.pages[0].children[0] as ComponentLayer;
       expect(updatedLayer).toEqual({
         id: layerId,
         type: 'Textarea',
@@ -463,21 +464,21 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
     
-      const parentLayerId = result.current.pages[0].children[0].id;
+      const parentLayerId = (result.current.pages[0].children[0] as ComponentLayer).id;
     
       // Assuming Button can have children, add a nested Input layer
       act(() => {
         result.current.addComponentLayer('Input', parentLayerId);
       });
     
-      const childLayerId = (result.current.pages[0].children[0].children[0] as ComponentLayer).id;
+      const childLayerId = ((result.current.pages[0].children[0] as ComponentLayer).children[0] as ComponentLayer).id;
     
       // Update the nested Input layer
       act(() => {
         result.current.updateLayer(childLayerId, { placeholder: 'Nested Input' }, { name: 'NestedInput' });
       });
     
-      const updatedChildLayer = result.current.pages[0].children[0].children[0] as ComponentLayer;
+      const updatedChildLayer = (result.current.pages[0].children[0] as ComponentLayer).children[0] as ComponentLayer;
       expect(updatedChildLayer.props.placeholder).toBe('Nested Input');
       expect(updatedChildLayer.name).toBe('NestedInput');
     });
@@ -491,7 +492,7 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
     
-      const layerId = result.current.pages[0].children[0].id;
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
     
       // Attempt to update the layer with an invalid property
       act(() => {
@@ -499,7 +500,7 @@ describe('LayerStore', () => {
         result.current.updateLayer(layerId, { label: 'Click Me' }, { invalidProp: 'Invalid' });
       });
     
-      const updatedLayer = result.current.pages[0].children[0];
+      const updatedLayer = (result.current.pages[0].children[0] as ComponentLayer);
       expect(updatedLayer.props.label).toBe('Click Me');
       expect(updatedLayer).toHaveProperty('invalidProp', 'Invalid');
     });
@@ -514,7 +515,7 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
     
-      const layerId = result.current.pages[0].children[0].id;
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
     
       act(() => {
         result.current.initialize([
@@ -534,7 +535,7 @@ describe('LayerStore', () => {
       });
     
       // The original layer should remain unchanged
-      const originalLayer = result.current.pages.find(page => page.id === '2')?.children.find(layer => layer.id === layerId);
+      const originalLayer = ((result.current.pages.find(page => page.id === '2') as ComponentLayer)?.children as ComponentLayer[]).find(layer => layer.id === layerId);
       expect(originalLayer).toBeUndefined();
       expect(console.warn).toHaveBeenCalledWith(`Layer with ID ${layerId} was not found.`);
     });
@@ -571,7 +572,7 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const layerId = result.current.pages[0].children[0].id;
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
 
       // Select the layer
       act(() => {
@@ -631,7 +632,7 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const layerId = result.current.pages[0].children[0].id;
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
 
       const layer = result.current.findLayerById(layerId);
       expect(layer).toBeDefined();
@@ -697,7 +698,7 @@ describe('LayerStore', () => {
     it('should initialize the store with provided pages', () => {
       const { result } = renderHook(() => useLayerStore());
 
-      const newPages: PageLayer[] = [
+      const newPages: ComponentLayer[] = [
         {
           id: '2',
           type: '_page_',
@@ -717,7 +718,7 @@ describe('LayerStore', () => {
 
     it('should handle initialization with empty pages', () => {
       const { result } = renderHook(() => useLayerStore());
-      const initialPages: PageLayer[] = [
+      const initialPages: ComponentLayer[] = [
         {
           id: '2',
           type: '_page_',

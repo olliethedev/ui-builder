@@ -15,6 +15,7 @@ import IconNameField from "@/components/ui/ui-builder/internal/iconname-field";
 import { Textarea } from "@/components/ui/textarea";
 
 export const classNameFieldOverrides = (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   layer: ComponentLayer 
 ): FieldConfigItem => {
   return {

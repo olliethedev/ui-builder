@@ -1,4 +1,4 @@
-import { ComponentRegistry } from "@/lib/ui-builder/registry/component-registry";
+import { ComponentRegistry } from "@/lib/ui-builder/store/editor-store";
 import { z } from 'zod';
 import { childrenAsTextareaFieldOverrides, childrenFieldOverrides, classNameFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 

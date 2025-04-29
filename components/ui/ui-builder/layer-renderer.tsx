@@ -1,27 +1,29 @@
 import React from "react";
 
 import {
-  PageLayer,
+  ComponentLayer,
 } from "@/lib/ui-builder/store/layer-store";
-import { EditorConfig, RenderPage } from "@/components/ui/ui-builder/internal/render-utils";
+import { EditorConfig, RenderLayer } from "@/components/ui/ui-builder/internal/render-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
-
+import { ComponentRegistry } from "@/lib/ui-builder/store/editor-store";
 interface LayerRendererProps {
   className?: string;
-  page: PageLayer;
+  page: ComponentLayer;
   editorConfig?: EditorConfig;
+  componentRegistry: ComponentRegistry;
 }
 
 const LayerRenderer: React.FC<LayerRendererProps> = ({
   className,
   page,
   editorConfig,
+  componentRegistry,
 }: LayerRendererProps) => {
 
   return (
     <DevProfiler id="LayerRenderer" threshold={30}>
       <div className={className}>
-        <RenderPage page={page} editorConfig={editorConfig} />
+        <RenderLayer layer={page} editorConfig={editorConfig} componentRegistry={componentRegistry} />
       </div>
     </DevProfiler>
   );

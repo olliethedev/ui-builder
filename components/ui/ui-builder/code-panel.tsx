@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  PageLayer,
+  ComponentLayer,
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { pageLayerToCode } from "@/components/ui/ui-builder/internal/templates";
 import { CodeBlock } from "@/components/ui/ui-builder/codeblock";
 import { cn } from "@/lib/utils";
@@ -10,12 +11,12 @@ import { cn } from "@/lib/utils";
 
 //todo: improve performance of this component
 export function CodePanel({className}: {className?: string}) {
-    
+  const componentRegistry = useEditorStore((state) => state.registry);
   const { selectedPageId, findLayerById } = useLayerStore();
 
-  const page = findLayerById(selectedPageId) as PageLayer;
+  const page = findLayerById(selectedPageId) as ComponentLayer;
   const codeBlocks = {
-    react: pageLayerToCode(page),
+    react: pageLayerToCode(page, componentRegistry),
     serialized: JSON.stringify(
       page,
       (key, value) => (typeof value === "function" ? undefined : value),

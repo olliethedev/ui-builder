@@ -15,7 +15,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { componentRegistry, useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { cn } from "@/lib/utils";
 
 type AddComponentsPopoverProps = {
@@ -38,6 +39,8 @@ export function AddComponentsPopover({
   const [open, setOpen] = React.useState(false);
 
   const [inputValue, setInputValue] = React.useState("")
+
+  const componentRegistry = useEditorStore((state) => state.registry);
   
 
   const componentOptions = Object.keys(componentRegistry).map((name) => ({

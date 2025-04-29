@@ -228,7 +228,7 @@ function addCoerceToNumberAndDate<T extends ZodTypeAny>(schema: T): T {
     return schema;
 }
 
-// patch for autoform to respect existing values
+// patch for autoform to respect existing values, specifically for enums
 export function addDefaultValues<T extends ZodObject<any>>(
   schema: T,
   defaultValues: Partial<z.infer<T>>

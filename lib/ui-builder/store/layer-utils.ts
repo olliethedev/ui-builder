@@ -1,4 +1,4 @@
-import { ComponentLayer, Layer, LayerStore, PageLayer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer, LayerStore } from "@/lib/ui-builder/store/layer-store";
 
 /**
  * Recursively visits each layer in the layer tree and applies the provided visitor function to each layer.
@@ -8,7 +8,7 @@ import { ComponentLayer, Layer, LayerStore, PageLayer } from "@/lib/ui-builder/s
  * @param visitor - A function that takes a layer and returns a modified layer.
  * @returns The modified layer after applying the visitor function.
  */
-export const visitLayer = (layer: Layer, parentLayer: Layer | null, visitor: (layer: Layer, parentLayer: Layer | null) => Layer): Layer => {
+export const visitLayer = (layer: ComponentLayer, parentLayer: ComponentLayer | null, visitor: (layer: ComponentLayer, parentLayer: ComponentLayer | null) => ComponentLayer): ComponentLayer => {
     // Apply the visitor to the current layer
     const updatedLayer = visitor(layer, parentLayer);
 
@@ -23,7 +23,10 @@ export const visitLayer = (layer: Layer, parentLayer: Layer | null, visitor: (la
     return updatedLayer;
 };
 
-export const countLayers = (layers: Layer[]): number => {
+export const countLayers = (layers: ComponentLayer[] | string): number => {
+    if (typeof layers === 'string') {
+        return 0;
+    }
     return layers.reduce((count, layer) => {
         if (hasLayerChildren(layer)) {
             return count + 1 + countLayers(layer.children);
@@ -32,7 +35,7 @@ export const countLayers = (layers: Layer[]): number => {
     }, 0);
 };
 
-export const addLayer = (layers: Layer[], newLayer: Layer, parentId?: string, parentPosition?: number): Layer[] => {
+export const addLayer = (layers: ComponentLayer[], newLayer: ComponentLayer, parentId?: string, parentPosition?: number): ComponentLayer[] => {
     const updatedPages = layers.map((page) =>
         visitLayer(page, null, (layer) => {
             if (layer.id === parentId && hasLayerChildren(layer)) {
@@ -67,10 +70,10 @@ export const addLayer = (layers: Layer[], newLayer: Layer, parentId?: string, pa
     return updatedPages;
 }
 
-export const findAllParentLayersRecursive = (layers: Layer[], layerId: string): Layer[] => {
-    const parents: Layer[] = [];
+export const findAllParentLayersRecursive = (layers: ComponentLayer[], layerId: string): ComponentLayer[] => {
+    const parents: ComponentLayer[] = [];
 
-    const findParents = (layers: Layer[], targetId: string): boolean => {
+    const findParents = (layers: ComponentLayer[], targetId: string): boolean => {
         for (const layer of layers) {
             if (hasLayerChildren(layer)) {
                 if (layer.children.some(child => child.id === targetId)) {
@@ -93,7 +96,7 @@ export const findAllParentLayersRecursive = (layers: Layer[], layerId: string): 
     return parents;
 };
 
-export const findLayerRecursive = (layers: Layer[], layerId: string): Layer | undefined => {
+export const findLayerRecursive = (layers: ComponentLayer[], layerId: string): ComponentLayer | undefined => {
     for (const layer of layers) {
         if (layer.id === layerId) {
             return layer;
@@ -108,8 +111,8 @@ export const findLayerRecursive = (layers: Layer[], layerId: string): Layer | un
     return undefined;
 };
 
-export const duplicateWithNewIdsAndName = (layer: Layer, addCopySuffix: boolean = true): Layer => {
-    const newLayer: Layer = { ...layer, id: createId() };
+export const duplicateWithNewIdsAndName = (layer: ComponentLayer, addCopySuffix: boolean = true): ComponentLayer => {
+    const newLayer: ComponentLayer = { ...layer, id: createId() };
     if (layer.name) {
       newLayer.name = `${ layer.name }${ addCopySuffix ? ' (Copy)' : ''}`;
     }
@@ -134,13 +137,9 @@ export function createId(): string {
     return result;
 }
 
-export const hasLayerChildren = (layer: Layer): layer is ComponentLayer & { children: Layer[] } => {
+export const hasLayerChildren = (layer: ComponentLayer): layer is ComponentLayer & { children: ComponentLayer[] } => {
     return Array.isArray(layer.children) && typeof layer.children !== 'string';
 };
-
-export function isPageLayer(layer: Layer): layer is PageLayer {
-    return layer.type === '_page_';
-}
 
 export function migrateV1ToV2(persistedState: unknown): LayerStore {
     type TextLayer = {
@@ -158,7 +157,7 @@ export function migrateV1ToV2(persistedState: unknown): LayerStore {
       const migratedState = persistedState as LayerStore;
 
       // Utilize visitLayer to transform all layers recursively
-      const transformLayer = (layer: Layer): Layer => {
+      const transformLayer = (layer: ComponentLayer): ComponentLayer => {
         if (layer.type === "_text_") {
           const textLayer = layer as unknown as TextLayer;
           const transformedTextLayer: ComponentLayer = {
@@ -175,9 +174,50 @@ export function migrateV1ToV2(persistedState: unknown): LayerStore {
         return layer;
       };
 
-      const migratedPages = migratedState.pages.map((page: PageLayer) => {
-        return visitLayer(page, null, transformLayer) as PageLayer;
-      }) satisfies PageLayer[];
+      const migratedPages = migratedState.pages.map((page: ComponentLayer) => {
+        return visitLayer(page, null, transformLayer) as ComponentLayer;
+      }) satisfies ComponentLayer[];
+
+      return {
+        ...migratedState,
+        pages: migratedPages,
+      } satisfies LayerStore;
+}
+
+export function migrateV2ToV3(persistedState: unknown): LayerStore {
+    
+    
+     type PageLayer = {
+        id: string;
+        name?: string;
+        type: '_page_';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        props: Record<string, any>;
+        children: ComponentLayer[];
+      }
+
+      console.log("Migrating store", { persistedState, version: 1 });
+
+      const migratedState = persistedState as LayerStore;
+
+    
+
+      const migratedPages = migratedState.pages.map((page: ComponentLayer) => {
+        if (page.type === "_page_") {
+            const pageLayer = page as unknown as PageLayer;
+            const transformedPageLayer: ComponentLayer = {
+                type: "div",
+                children: pageLayer.children,
+                id: pageLayer.id,
+                name: pageLayer.name,
+                props: pageLayer.props,
+              };
+              console.log("Transformed page layer", transformedPageLayer);
+              return transformedPageLayer;
+        }
+        return page;
+      }) satisfies ComponentLayer[];
+
 
       return {
         ...migratedState,

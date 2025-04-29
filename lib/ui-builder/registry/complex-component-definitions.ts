@@ -1,4 +1,4 @@
-import { ComponentRegistry } from "@/lib/ui-builder/registry/component-registry";
+import { ComponentRegistry } from "@/lib/ui-builder/store/editor-store";
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -85,7 +85,12 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 .enum(["start", "end", "center", "baseline", "stretch"])
                 .default("start"),
             wrap: z.enum(["wrap", "nowrap", "wrapReverse"]).default("nowrap"),
-            gap: z.enum(["0", "1", "2", "4", "8"]).default("1"),
+            gap: z
+              .preprocess(
+                (val) => (typeof val === 'number' ? String(val) : val),
+                z.enum(["0", "1", "2", "4", "8"]).default("1")
+              )
+              .transform(Number),
         }),
         from: "@/components/ui/ui-builder/flexbox",
         fieldOverrides: {
@@ -110,8 +115,14 @@ export const complexComponentDefinitions: ComponentRegistry = {
                 .default("start"),
             templateRows: z
                 .enum(["none", "1", "2", "3", "4", "5", "6"])
-                .default("none"),
-            gap: z.enum(["0", "1", "2", "4", "8"]).default("0"),
+                .default("none")
+                .transform(val => (val === "none" ? val : Number(val))),
+            gap: z
+              .preprocess(
+                (val) => (typeof val === 'number' ? String(val) : val),
+                z.enum(["0", "1", "2", "4", "8"]).default("0")
+              )
+              .transform(Number),
         }),
         from: "@/components/ui/ui-builder/grid",
         fieldOverrides: {

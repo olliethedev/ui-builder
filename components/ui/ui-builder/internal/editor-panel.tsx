@@ -1,11 +1,12 @@
+"use client";
 import React from "react";
 import { Plus } from "lucide-react";
 import {
   countLayers,
-  Layer,
-  PageLayer,
+  ComponentLayer,
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
+
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { cn } from "@/lib/utils";
 import { IframeWrapper } from "@/components/ui/ui-builder/internal/iframe-wrapper";
@@ -28,9 +29,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
     removeLayer,
     selectedPageId,
   } = useLayerStore();
-  const { previewMode } = useEditorStore();
-  const selectedLayer = findLayerById(selectedLayerId) as Layer;
-  const selectedPage = findLayerById(selectedPageId) as PageLayer;
+  const previewMode = useEditorStore((state) => state.previewMode);
+  const componentRegistry = useEditorStore((state) => state.registry);
+  const selectedLayer = findLayerById(selectedLayerId) as ComponentLayer;
+  const selectedPage = findLayerById(selectedPageId) as ComponentLayer;
 
   const layers = selectedPage.children;
 
@@ -64,7 +66,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
 
   const renderer = (
     <div id="editor-panel-container" className="overflow-visible pt-3 pb-10">
-      <LayerRenderer page={selectedPage} editorConfig={editorConfig} />
+      <LayerRenderer page={selectedPage} editorConfig={editorConfig} componentRegistry={componentRegistry} />
     </div>
   );
 

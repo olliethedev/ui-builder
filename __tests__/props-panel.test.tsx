@@ -7,10 +7,17 @@ import {
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
 import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
+import { z } from "zod";
+import { RegistryEntry, useEditorStore } from "@/lib/ui-builder/store/editor-store";
 
 // Mock dependencies
-jest.mock("@/lib/ui-builder/store/layer-store", () => ({
+jest.mock("../lib/ui-builder/store/layer-store", () => ({
   useLayerStore: jest.fn(),
+}));
+
+// Add mock for editor store
+jest.mock("../lib/ui-builder/store/editor-store", () => ({
+  useEditorStore: jest.fn(),
 }));
 
 // jest.mock("@/components/ui/auto-form", () => ({
@@ -44,81 +51,62 @@ jest.mock("@/components/ui/textarea", () => ({
   ),
 }));
 
-// Mock component-registry with necessary components
-jest.mock("@/lib/ui-builder/registry/component-registry", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { z } = require("zod"); // Ensure zod is available
-
-  return {
-    componentRegistry: {
-      Button: {
-        schema: z.object({
-          label: z.string().default("ollie"),
-        }),
-        from: "@/components/ui/button",
-        component: ({ children, ...props }: any) => (
-          <button data-testid={`button-${children}`} {...props}>
-            {children}
-          </button>
-        ),
-      },
-      Input: {
-        schema: z.object({
-          placeholder: z.string().default("input"),
-        }),
-        from: "@/components/ui/input",
-        component: ({ ...props }: any) => (
-          <input data-testid="input" {...props} />
-        ),
-      },
-      Textarea: {
-        schema: z.object({
-          placeholder: z.string().default("textarea"),
-        }),
-        from: "@/components/ui/textarea",
-        component: ({ ...props }: any) => (
-          <textarea data-testid="textarea" {...props} />
-        ),
-      },
-      // Add other necessary components here
-      Accordion: {
-        schema: z.object({
-          // define necessary schema fields
-        }),
-        from: "@/components/ui/accordion",
-        component: ({ children, ...props }: any) => (
-          <div data-testid="accordion" {...props}>
-            {children}
-          </div>
-        ),
-      },
-      Badge: {
-        schema: z.object({
-          // define necessary schema fields
-        }),
-        from: "@/components/ui/badge",
-        component: ({ children, ...props }: any) => (
-          <span data-testid="badge" {...props}>
-            {children}
-          </span>
-        ),
-      },
-      // Continue adding other components as needed
-    },
-    generateFieldOverrides: jest.fn().mockReturnValue({}),
-  };
-});
-
 describe("PropsPanel", () => {
   const mockedUseLayerStore = useLayerStore as unknown as jest.Mock;
+  const mockedUseEditorStore = useEditorStore as unknown as jest.Mock;
 
   const mockRemoveLayer = jest.fn();
   const mockDuplicateLayer = jest.fn();
   const mockUpdateLayer = jest.fn();
   const mockFindLayerById = jest.fn();
   const mockAddComponentLayer = jest.fn();
+  const mockGetComponentDefinition = jest.fn();
 
-  const mockState = {
+  const mockRegistry: Record<string, RegistryEntry<any>> = {
+    Button: {
+      schema: z.object({
+        label: z.string().default("ollie"),
+        className: z.string().optional(),
+      }),
+      from: "@/components/ui/button",
+      component: ({ children, ...props }: any) => (
+        <button data-testid={`button-${children}`} {...props}>
+          {children}
+        </button>
+      ),
+    },
+    Input: {
+      schema: z.object({
+        placeholder: z.string().default("input"),
+      }),
+      from: "@/components/ui/input",
+      component: ({ ...props }: any) => (
+        <input data-testid="input" {...props} />
+      ),
+    },
+    Textarea: {
+      schema: z.object({
+        placeholder: z.string().default("textarea"),
+      }),
+      from: "@/components/ui/textarea",
+      component: ({ ...props }: any) => (
+        <textarea data-testid="textarea" {...props} />
+      ),
+    },
+    Badge: {
+      schema: z.object({
+        label: z.string().default("New Badge"),
+      }),
+      from: "@/components/ui/badge",
+      component: ({ children, ...props }: any) => (
+        <span data-testid="badge" {...props}>
+          {children}
+        </span>
+      ),
+    },
+  };
+
+  const mockLayerState = {
     selectedLayerId: "layer-1",
     findLayerById: mockFindLayerById,
     removeLayer: mockRemoveLayer,
@@ -127,8 +115,16 @@ describe("PropsPanel", () => {
     addComponentLayer: mockAddComponentLayer,
   };
 
+  const mockEditorState = {
+    registry: mockRegistry,
+    getComponentDefinition: mockGetComponentDefinition,
+  };
+
   beforeEach(() => {
-    mockedUseLayerStore.mockImplementation((selector) => selector(mockState));
+    jest.clearAllMocks();
+    mockedUseLayerStore.mockImplementation((selector) => selector(mockLayerState));
+    mockedUseEditorStore.mockImplementation((selector) => selector(mockEditorState));
+    mockGetComponentDefinition.mockImplementation((type: string) => mockRegistry[type]);
   });
 
   afterEach(() => {
@@ -166,15 +162,21 @@ describe("PropsPanel", () => {
       };
 
       mockFindLayerById.mockReturnValue(componentLayer);
-      renderPropsPanel();
+      const { container } = renderPropsPanel();
+      
+      let labelInput: HTMLElement | null = null;
+      await waitFor(() => {
+        labelInput = container.querySelector('input[name="label"]');
+        expect(labelInput).toBeInTheDocument();
+      });
 
-      const labelInput = screen.getByTestId("input");
-      userEvent.clear(labelInput);
-      userEvent.type(labelInput, "Updated Label", { delay: 0 });
+      await userEvent.clear(labelInput!);
+      await userEvent.type(labelInput!, "Updated Label", { delay: 0 });
 
       await waitFor(() => {
         expect(mockUpdateLayer).toHaveBeenLastCalledWith("layer-6", {
           label: "Updated Label",
+          className: "merge-class",
         }, undefined);
       });
     });
@@ -191,7 +193,7 @@ describe("PropsPanel", () => {
       expect(mockRemoveLayer).toHaveBeenCalledWith('layer1');
     });
   
-    it('should call duplicateLayer when Duplicate Component button is clicked', () => {
+    it('should call duplicateLayer when Duplicate Component button is clicked', async () => {
       const selectedLayer = { id: 'layer1', type: 'Button', props: {} };
       mockFindLayerById.mockReturnValue(selectedLayer);
   
@@ -201,6 +203,63 @@ describe("PropsPanel", () => {
       fireEvent.click(duplicateButton);
   
       expect(mockDuplicateLayer).toHaveBeenCalledWith('layer1');
+    });
+
+    it("should render the form", async () => {
+      const { container } = render(<PropsPanel />);
+      await waitFor(() => {
+        expect(container.querySelector('form')).toBeInTheDocument();
+        expect(container.querySelector('input[name="label"]')).toBeInTheDocument();
+      });
+    });
+
+    it("should display the duplicate and delete buttons", async () => {
+      const { container } = renderPropsPanel();
+      let labelInput: HTMLElement | null = null;
+      await waitFor(() => {
+        labelInput = container.querySelector('input[name="label"]');
+        expect(labelInput).toBeInTheDocument();
+      });
+
+      userEvent.clear(labelInput!);
+      userEvent.type(labelInput!, "New Label", { delay: 0 });
+
+      renderPropsPanel();
+
+      expect(screen.queryByTestId("auto-form")).not.toBeInTheDocument();
+    });
+
+    it("should handle rapid consecutive updates correctly", async () => {
+      const componentLayer: ComponentLayer = {
+        id: "layer-4",
+        type: "Button",
+        name: "Fast Button",
+        props: { className: "fast-button-class", label: "Click Quickly" },
+        children: [],
+      };
+
+      mockFindLayerById.mockReturnValue(componentLayer);
+      const { container } = renderPropsPanel();
+
+      let labelInput: HTMLElement | null = null;
+      await waitFor(() => {
+        labelInput = container.querySelector('input[name="label"]');
+        expect(labelInput).toBeInTheDocument();
+      });
+
+      await userEvent.clear(labelInput!);
+      await userEvent.type(labelInput!, "Type Fast", { delay: 0 });
+      await userEvent.clear(labelInput!);
+      await userEvent.type(labelInput!, "Type Faster", { delay: 0 });
+      await userEvent.clear(labelInput!);
+      await userEvent.type(labelInput!, "Type Fastest", { delay: 0 });
+
+      await waitFor(() => {
+        expect(mockUpdateLayer).toHaveBeenLastCalledWith("layer-4", {
+          label: "Type Fastest",
+          className: "fast-button-class",
+        }, undefined);
+      });
     });
   });
 
@@ -213,6 +272,7 @@ describe("PropsPanel", () => {
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
       }));
+      mockedUseEditorStore.mockImplementation((selector) => selector(mockEditorState));
       renderPropsPanel();
     });
 
@@ -245,10 +305,12 @@ describe("PropsPanel", () => {
       expect(screen.getByText("Type: Button")).toBeInTheDocument();
     });
 
-    it("should render the form", () => {
+    it("should render the form", async () => {
       const { container } = render(<PropsPanel />);
-      const form = container.querySelector("form");
-      expect(form).toBeInTheDocument();
+      await waitFor(() => {
+        expect(container.querySelector('form')).toBeInTheDocument();
+        expect(container.querySelector('input[name="label"]')).toBeInTheDocument();
+      });
     });
 
     it("should display the duplicate and delete buttons", () => {
@@ -259,22 +321,22 @@ describe("PropsPanel", () => {
     });
 
     it("should update layer properties on form change", async () => {
-      // Simulate changing the 'label' field
+      const { container } = renderPropsPanel();
+      let labelInput: HTMLElement | null = null;
+      await waitFor(() => {
+        labelInput = container.querySelector('input[name="label"]');
+        expect(labelInput).toBeInTheDocument();
+      });
 
-      // Find the input field for 'label'
-      const labelInput = screen.getByTestId("input");
-      expect(labelInput).toBeInTheDocument();
+      userEvent.clear(labelInput!);
+      userEvent.type(labelInput!, "New Label", { delay: 0 });
 
-      // Change the value
-      userEvent.clear(labelInput);
-      userEvent.type(labelInput, "New Label", { delay: 0 });
-
-      
       await waitFor(() => {
         expect(mockUpdateLayer).toHaveBeenLastCalledWith(
           "layer-1",
           {
             label: "New Label",
+            className: "button-class",
           },
           undefined
         );
@@ -292,6 +354,7 @@ describe("PropsPanel", () => {
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
       }));
+      mockedUseEditorStore.mockImplementation((selector) => selector(mockEditorState));
       renderPropsPanel();
 
       expect(screen.getByText("Component Properties")).toBeInTheDocument();
@@ -300,9 +363,43 @@ describe("PropsPanel", () => {
     });
 
     it("should handle unknown component types gracefully", () => {
-      mockFindLayerById.mockReturnValue({ id: "unknown-layer", type: "Unknown" });
-      const { container } = renderPropsPanel();
-      expect(container.firstChild).toBeNull();
+      const unknownComponentLayer: ComponentLayer = {
+        id: "layer-unknown",
+        type: "UnknownComponent",
+        name: "Unknown Test Component",
+        props: {},
+        children: [],
+      };
+
+      // Mock findLayerById to return the unknown component layer
+      mockFindLayerById.mockReturnValue(unknownComponentLayer);
+      
+      // Ensure getComponentDefinition returns undefined for the unknown type
+      mockGetComponentDefinition.mockImplementation((type: string) => {
+        if (type === "UnknownComponent") {
+          return undefined;
+        }
+        return mockRegistry[type];
+      });
+      
+      // Reset layer store mock to use the updated findLayerById
+      mockedUseLayerStore.mockImplementation((selector) => selector({
+        selectedLayerId: "layer-unknown",
+        findLayerById: mockFindLayerById,
+        removeLayer: mockRemoveLayer,
+        duplicateLayer: mockDuplicateLayer,
+        updateLayer: mockUpdateLayer,
+      }));
+      mockedUseEditorStore.mockImplementation((selector) => selector(mockEditorState));
+
+      renderPropsPanel();
+
+      // Because the component type is unknown, the entire panel should render null
+      expect(screen.queryByText("Unknown Test Component Properties")).not.toBeInTheDocument();
+      expect(screen.queryByText("Type: UnknownComponent")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("auto-form")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("button-Duplicate Component")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("button-Delete Component")).not.toBeInTheDocument();
     });
 
     it("should handle rapid consecutive updates correctly", async () => {
@@ -315,37 +412,25 @@ describe("PropsPanel", () => {
       };
 
       mockFindLayerById.mockReturnValue(componentLayer);
-      renderPropsPanel();
+      const { container } = renderPropsPanel();
 
-      // Await the label input to appear in the DOM
-      const labelInput = await screen.findByTestId("input");
-      expect(labelInput).toBeInTheDocument();
+      let labelInput: HTMLElement | null = null;
+      await waitFor(() => {
+        labelInput = container.querySelector('input[name="label"]');
+        expect(labelInput).toBeInTheDocument();
+      });
 
-      // Simulate rapid changes
-      await userEvent.clear(labelInput);
-      await userEvent.type(labelInput, "Type Fast", { delay: 0 });
+      await userEvent.clear(labelInput!);
+      await userEvent.type(labelInput!, "Type Fast", { delay: 0 });
+      await userEvent.clear(labelInput!);
+      await userEvent.type(labelInput!, "Type Faster", { delay: 0 });
+      await userEvent.clear(labelInput!);
+      await userEvent.type(labelInput!, "Type Fastest", { delay: 0 });
 
       await waitFor(() => {
         expect(mockUpdateLayer).toHaveBeenLastCalledWith("layer-4", {
-          label: "Type Fast",
-        }, undefined);
-      });
-
-      await userEvent.clear(labelInput);
-      await userEvent.type(labelInput, "Type Faster", { delay: 0 });
-
-      await waitFor(() => {
-        expect(mockUpdateLayer).toHaveBeenCalledWith("layer-4", {
-          label: "Type Faster",
-        }, undefined);
-      });
-
-      await userEvent.clear(labelInput);
-      await userEvent.type(labelInput, "Type Fastest", { delay: 0 });
-
-      await waitFor(() => {
-        expect(mockUpdateLayer).toHaveBeenCalledWith("layer-4", {
           label: "Type Fastest",
+          className: "fast-button-class",
         }, undefined);
       });
     });

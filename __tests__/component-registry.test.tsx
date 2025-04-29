@@ -1,13 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  componentRegistry,
-  generateFieldOverrides,
-  RegistryEntry,
-  ComponentRegistry,
-} from "@/lib/ui-builder/registry/component-registry";
-import { ComponentLayer, PageLayer } from "@/lib/ui-builder/store/layer-store";
+  generateFieldOverrides
+} from "@/lib/ui-builder/store/editor-utils";
+import { RegistryEntry } from "@/lib/ui-builder/store/editor-store";
+import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
 import { FieldConfigItem } from "@/components/ui/auto-form/types";
+import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
+import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
+
+const componentRegistry = {
+  ...primitiveComponentDefinitions,
+  ...complexComponentDefinitions,
+};
 
 describe("generateFieldOverrides", () => {
   it("should return empty object if component is not in registry", () => {
@@ -17,7 +22,7 @@ describe("generateFieldOverrides", () => {
       props: {},
       children: [],
     };
-    const overrides = generateFieldOverrides(layer);
+    const overrides = generateFieldOverrides(componentRegistry, layer);
     expect(overrides).toEqual({});
   });
 
@@ -34,7 +39,7 @@ describe("generateFieldOverrides", () => {
       props: {},
       children: [],
     };
-    const overrides = generateFieldOverrides(layer);
+    const overrides = generateFieldOverrides(componentRegistry, layer);
     expect(overrides).toEqual({});
   });
 
@@ -55,7 +60,7 @@ describe("generateFieldOverrides", () => {
       props: { title: "Original Title" },
       children: [],
     };
-    const overrides = generateFieldOverrides(layer);
+    const overrides = generateFieldOverrides(componentRegistry, layer);
     expect(overrides).toEqual({ title: mockFieldConfig });
   });
 
@@ -79,7 +84,7 @@ describe("generateFieldOverrides", () => {
       props: { title: "Original Title", description: "Original Description" },
       children: [],
     };
-    const overrides = generateFieldOverrides(layer);
+    const overrides = generateFieldOverrides(componentRegistry, layer);
     expect(overrides).toEqual({
       title: mockFieldConfig1,
       description: mockFieldConfig2,
@@ -103,7 +108,7 @@ describe("generateFieldOverrides", () => {
       props: { title: "Original Title", subtitle: "Original Subtitle" },
       children: [],
     };
-    const overrides = generateFieldOverrides(layer);
+    const overrides = generateFieldOverrides(componentRegistry, layer);
     expect(overrides).toEqual({ subtitle: mockFieldConfig });
   });
 });

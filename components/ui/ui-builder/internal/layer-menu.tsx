@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { ChevronRight, Plus, Trash, Copy } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
-  componentRegistry,
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { cn } from "@/lib/utils";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
@@ -33,6 +33,8 @@ export const LayerMenu: React.FC<MenuProps> = ({
   const selectedLayer = useLayerStore((state) =>
     state.findLayerById(layerId)
   );
+
+  const componentRegistry = useEditorStore((state) => state.registry);
 
   //const hasChildrenInSchema = schema.shape.children !== undefined;
   const hasChildrenInSchema =

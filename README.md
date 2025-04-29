@@ -413,13 +413,12 @@ npm run test
 
 ## Roadmap
 
-- [ ] Increase test coverage
-- [ ] Refactor page layers to be more consistent with component layers
-- [ ] Improve performance
-- [ ] Add form component definitions since we already depend on most shadcn/ui form components
-- [ ] Add option to add children component layers by reference to existing layers (this would be like figma component instances)
+- [ ] Add Blocks. Reusable component blocks that can be used in multiple pages.
+- [ ] Add data sources to component layers (ex, getUser() binds prop user.name)
 - [ ] Add event handlers to component layers (onClick, onSubmit, etc)
-- [ ] Add data sources to component layers (ex, getUser() sets prop user)
+- [ ] React 19 support
+- [ ] Shadcn/ui + Tailwind v4 support
+
 
 ## License
 

@@ -5,50 +5,41 @@ import { produce } from 'immer';
 import { temporal } from 'zundo';
 import isDeepEqual from 'fast-deep-equal';
 
-import { visitLayer, addLayer, hasLayerChildren, isPageLayer, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2 } from '@/lib/ui-builder/store/layer-utils';
+import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3 } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
+import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 
-import { componentRegistry } from '@/lib/ui-builder/registry/component-registry';
+
 
 
 const DEFAULT_PAGE_PROPS = {
   className: "p-4 flex flex-col gap-2",
 };
 
-export type Layer =
-  | ComponentLayer
-  | PageLayer;
+
 
 export type ComponentLayer = {
   id: string;
   name?: string;
-  type: keyof typeof componentRegistry;
+  type: string;
   props: Record<string, any>;
-  children: Layer[] | string;
+  children: ComponentLayer[] | string;
 };
 
-export type PageLayer = {
-  id: string;
-  name?: string;
-  type: '_page_';
-  props: Record<string, any>;
-  children: Layer[];
-}
-
 export interface LayerStore {
-  pages: PageLayer[];
+  pages: ComponentLayer[];
   selectedLayerId: string | null;
   selectedPageId: string;
-  initialize: (pages: PageLayer[], selectedPageId?: string, selectedLayerId?: string) => void;
-  addComponentLayer: (layerType: keyof typeof componentRegistry, parentId: string, parentPosition?: number) => void;
+  initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string) => void;
+  addComponentLayer: (layerType: string, parentId: string, parentPosition?: number) => void;
   addPageLayer: (pageId: string) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
-  updateLayer: (layerId: string, newProps: Record<string, any>, layerRest?: Partial<Omit<Layer, 'props'>>) => void;
+  updateLayer: (layerId: string, newProps: Record<string, any>, layerRest?: Partial<Omit<ComponentLayer, 'props'>>) => void;
   selectLayer: (layerId: string) => void;
   selectPage: (pageId: string) => void;
-  findLayerById: (layerId: string | null) => Layer | undefined;
-  findLayersForPageId: (pageId: string) => Layer[];
+  findLayerById: (layerId: string | null) => ComponentLayer | undefined;
+  findLayersForPageId: (pageId: string) => ComponentLayer[];
 }
 
 const store: StateCreator<LayerStore, [], []> = (set, get) => (
@@ -57,7 +48,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
     pages: [
       {
         id: '1',
-        type: '_page_',
+        type: 'div',
         name: 'Page 1',
         props: DEFAULT_PAGE_PROPS,
         children: [],
@@ -66,9 +57,8 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
 
     selectedLayerId: null,
     selectedPageId: '1',
-    initialize: (pages: PageLayer[], selectedPageId?: string, selectedLayerId?: string) => {
+    initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string) => {
       set({ pages, selectedPageId: selectedPageId || pages[0].id, selectedLayerId: selectedLayerId || null });
-      console.log("Store initialized with", { pages });
     },
     findLayerById: (layerId: string | null) => {
       const { selectedPageId, findLayersForPageId, pages } = get();
@@ -83,12 +73,16 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
     findLayersForPageId: (pageId: string) => {
       const { pages } = get();
       const page = pages.find(page => page.id === pageId);
-      return page?.children || [];
+      if(page && hasLayerChildren(page)) {
+        return page?.children || [];
+      }
+      return  [];
     },
 
-    addComponentLayer: (layerType: keyof typeof componentRegistry, parentId: string, parentPosition?: number) => set(produce((state: LayerStore) => {
-      const defaultProps = getDefaultProps(componentRegistry[layerType].schema);
-      const defaultChildrenRaw = componentRegistry[layerType].defaultChildren;
+    addComponentLayer: (layerType: string, parentId: string, parentPosition?: number) => set(produce((state: LayerStore) => {
+      const { registry } = useEditorStore.getState();
+      const defaultProps = getDefaultProps(registry[layerType].schema);
+      const defaultChildrenRaw = registry[layerType].defaultChildren;
       const defaultChildren = typeof defaultChildrenRaw === "string" ? defaultChildrenRaw : (defaultChildrenRaw?.map(child => duplicateWithNewIdsAndName(child, false)) || []);
 
       const initialProps = Object.entries(defaultProps).reduce((acc, [key, propDef]) => {
@@ -98,7 +92,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
         return acc;
       }, {} as Record<string, any>);
 
-      const newLayer: Layer = {
+      const newLayer: ComponentLayer = {
         id: createId(),
         type: layerType,
         name: layerType,
@@ -115,9 +109,9 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
     })),
 
     addPageLayer: (pageName: string) => set(produce((state: LayerStore) => {
-      const newPage: PageLayer = {
+      const newPage: ComponentLayer = {
         id: createId(),
-        type: '_page_',
+        type: 'div',
         name: pageName,
         props: DEFAULT_PAGE_PROPS,
         children: [],
@@ -125,11 +119,12 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       return {
         pages: [...state.pages, newPage],
         selectedPageId: newPage.id,
+        selectedLayerId: newPage.id,
       };
     })),
 
     duplicateLayer: (layerId: string) => set(produce((state: LayerStore) => {
-      let layerToDuplicate: Layer | undefined;
+      let layerToDuplicate: ComponentLayer | undefined;
       let parentId: string | undefined;
       let parentPosition: number | undefined;
 
@@ -151,7 +146,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
         return;
       }
 
-      const isNewLayerAPage = isPageLayer(layerToDuplicate);
+      const isNewLayerAPage = state.pages.some(page => page.id === layerId);
 
       const newLayer = duplicateWithNewIdsAndName(layerToDuplicate, !isNewLayerAPage);
 
@@ -175,11 +170,12 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
     })),
 
     removeLayer: (layerId: string) => set(produce((state: LayerStore) => {
-      const { selectedLayerId, pages, findLayerById } = get();
+      const { selectedLayerId, pages } = get();
 
       let newSelectedLayerId = selectedLayerId;
 
-      if (isPageLayer(findLayerById(layerId) as Layer) && pages.length > 1) {
+      const isPage = state.pages.some(page => page.id === layerId);
+      if (isPage && pages.length > 1) {
         const newPages = state.pages.filter(page => page.id !== layerId);
         return {
           ...state,
@@ -214,7 +210,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       };
     })),
 
-    updateLayer: (layerId: string, newProps: Layer['props'], layerRest?: Partial<Omit<Layer, 'props'>>) => set(
+    updateLayer: (layerId: string, newProps: ComponentLayer['props'], layerRest?: Partial<Omit<ComponentLayer, 'props'>>) => set(
       produce((state: LayerStore) => {
         const { selectedPageId, findLayersForPageId, pages } = get();
 
@@ -237,7 +233,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
 
 
         // Visitor function to update layer properties
-        const visitor = (layer: Layer): Layer => {
+        const visitor = (layer: ComponentLayer): ComponentLayer => {
           if (layer.id === layerId) {
             return {
               ...layer,
@@ -271,6 +267,11 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
     selectLayer: (layerId: string) => set(produce((state: LayerStore) => {
       const { selectedPageId, findLayersForPageId } = get();
       const layers = findLayersForPageId(selectedPageId);
+      if(selectedPageId === layerId) {
+        return {
+          selectedLayerId: layerId
+        };
+      }
       if (!layers) return state;
       const layer = findLayerRecursive(layers, layerId);
       if (layer) {
@@ -293,23 +294,22 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
 
 const useLayerStore = create(persist(temporal<LayerStore>(store,
   {
-    // onSave: (pastState: LayerStore, currentState: LayerStore) => {
-    //   console.log("Temporal Store onSave", { previousState: pastState, currentState });
-    // },
     equality: (pastState, currentState) =>
       isDeepEqual(pastState, currentState),
   }
 ), {
   name: "layer-store",
-  version: 2,
+  version: 3,
   storage: createJSONStorage(() => localStorage),
   migrate: (persistedState: unknown, version: number) => {
     /* istanbul ignore if*/
     if (version === 1) {
       return migrateV1ToV2(persistedState as LayerStore);
+    } else if (version === 2) {
+      return migrateV2ToV3(persistedState as LayerStore);
     }
     return persistedState;
   }
 }))
 
-export { useLayerStore, componentRegistry, isPageLayer, countLayers, findAllParentLayersRecursive };
+export { useLayerStore, countLayers, findAllParentLayersRecursive };

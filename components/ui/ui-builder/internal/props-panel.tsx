@@ -4,13 +4,13 @@ import { z } from "zod";
 import {
   useLayerStore,
   ComponentLayer,
-  Layer,
 } from "@/lib/ui-builder/store/layer-store";
-import { componentRegistry } from "@/lib/ui-builder/registry/component-registry";
+import { ComponentRegistry, useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
-import { generateFieldOverrides } from "@/lib/ui-builder/registry/component-registry";
+import { generateFieldOverrides } from "@/lib/ui-builder/store/editor-utils";
 import { addDefaultValues } from "@/lib/ui-builder/store/schema-utils";
+import { getBaseType } from "@/components/ui/auto-form/utils";
 
 interface PropsPanelProps {
   className?: string;
@@ -18,16 +18,18 @@ interface PropsPanelProps {
 
 const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
   const selectedLayerId = useLayerStore((state) => state.selectedLayerId);
+  const selectedPageId = useLayerStore((state) => state.selectedPageId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const removeLayer = useLayerStore((state) => state.removeLayer);
   const duplicateLayer = useLayerStore((state) => state.duplicateLayer);
   const updateLayer = useLayerStore((state) => state.updateLayer);
   const addComponentLayer = useLayerStore((state) => state.addComponentLayer);
-
+  const componentRegistry = useEditorStore((state) => state.registry);
+  const pagePropsForm = useEditorStore((state) => state.pagePropsForm);
   const selectedLayer = findLayerById(selectedLayerId);
 
   const handleAddComponentLayer = useCallback((layerType: string, parentLayerId: string, addPosition?: number) => {
-    addComponentLayer(layerType as keyof typeof componentRegistry, parentLayerId, addPosition);
+    addComponentLayer(layerType, parentLayerId, addPosition);
   }, [addComponentLayer]);
 
   const handleDeleteLayer = useCallback(
@@ -47,7 +49,7 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
     (
       id: string,
       props: Record<string, any>,
-      rest?: Partial<Omit<Layer, "props">>
+      rest?: Partial<Omit<ComponentLayer, "props">>
     ) => {
       updateLayer(id, props, rest);
     },
@@ -81,9 +83,13 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
           <p>No component selected</p>
         </>
       )}
+      {selectedLayerId === selectedPageId && (
+        pagePropsForm
+      )}
       {selectedLayer && (
         <ComponentPropsAutoForm
           key={selectedLayer.id}
+          componentRegistry={componentRegistry}
           selectedLayerId={selectedLayer.id}
           removeLayer={handleDeleteLayer}
           duplicateLayer={handleDuplicateLayer}
@@ -99,14 +105,16 @@ export default PropsPanel;
 
 interface ComponentPropsAutoFormProps {
   selectedLayerId: string;
+  componentRegistry: ComponentRegistry;
   removeLayer: (id: string) => void;
   duplicateLayer: (id: string) => void;
-  updateLayer: (id: string, props: Record<string, any>, rest?: Partial<Omit<Layer, "props">>) => void;
+  updateLayer: (id: string, props: Record<string, any>, rest?: Partial<Omit<ComponentLayer, "props">>) => void;
   addComponentLayer: (layerType: string, parentLayerId: string, addPosition?: number) => void;
 }
 
 const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
   selectedLayerId,
+  componentRegistry,
   removeLayer,
   duplicateLayer,
   updateLayer,
@@ -144,7 +152,34 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
       return componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
     }
     return { schema: z.object({}) }; // Fallback schema
-  }, [selectedLayer]);
+  }, [selectedLayer, componentRegistry]);
+
+  // Prepare values for AutoForm, converting enum values to strings as select elements only accept string values
+  const formValues = useMemo(() => {
+    if (!selectedLayer) return {};
+
+    const transformedProps: Record<string, any> = {};
+    const schemaShape = schema?.shape as z.ZodRawShape | undefined; // Get shape from the memoized schema
+    
+    if (schemaShape) {
+      for (const [key, value] of Object.entries(selectedLayer.props)) {
+        const fieldDef = schemaShape[key];
+        // Check if the field definition exists and if its base type is ZodEnum
+        if (fieldDef && getBaseType(fieldDef as z.ZodAny) === z.ZodFirstPartyTypeKind.ZodEnum) {
+          // Convert enum value to string if it's not already a string
+          transformedProps[key] = typeof value === 'string' ? value : String(value);
+        } else {
+          transformedProps[key] = value;
+        }
+      }
+      
+    } else {
+       // Fallback if schema shape isn't available: copy props as is
+       Object.assign(transformedProps, selectedLayer.props);
+    }
+
+    return { ...transformedProps, children: selectedLayer.children };
+  }, [selectedLayer, schema]); // Depend on selectedLayer and schema
 
   if (!selectedLayer || !componentRegistry[selectedLayer.type as keyof typeof componentRegistry]) {
     return null;
@@ -152,11 +187,11 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
 
   return (
     <AutoForm
-      formSchema={addDefaultValues(schema, { ...selectedLayer.props, children: selectedLayer.children })}
-      values={ { ...selectedLayer.props, children: selectedLayer.children }}
+      formSchema={addDefaultValues(schema, formValues)}
+      values={formValues} // Use the memoized and transformed values
       onParsedValuesChange={onParsedValuesChange}
-      fieldConfig={generateFieldOverrides(selectedLayer)}
-      className="space-y-4"
+      fieldConfig={generateFieldOverrides(componentRegistry, selectedLayer)}
+      className="space-y-4 mt-4"
       onSubmit={() => {}} // Optional: no-op or remove if not needed
     >
       <Button
@@ -181,6 +216,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
 
 ComponentPropsAutoForm.displayName = "ComponentPropsAutoForm";
 
-const nameForLayer = (layer: Layer) => {
+const nameForLayer = (layer: ComponentLayer) => {
   return layer.name || layer.type.replaceAll("_", "");
 };
