@@ -6,7 +6,7 @@ import PropsPanel from "@/components/ui/ui-builder/internal/props-panel";
 import {
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
-import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { z } from "zod";
 import { RegistryEntry, useEditorStore } from "@/lib/ui-builder/store/editor-store";
 

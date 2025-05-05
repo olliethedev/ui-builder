@@ -13,30 +13,35 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
-import {
-  ComponentLayer,
-  useLayerStore,
-} from "@/lib/ui-builder/store/layer-store";
+import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useStore } from "@/hooks/use-store";
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import {
   ComponentRegistry,
-  useEditorStore,
-} from "@/lib/ui-builder/store/editor-store";
+  ComponentLayer,
+} from "@/components/ui/ui-builder/types";
+import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
+
+interface PanelConfig {
+  navBar?: React.ReactNode;
+  pageConfigPanel?: React.ReactNode;
+  editorPanel?: React.ReactNode;
+  propsPanel?: React.ReactNode;
+  tailwindThemePanel?: React.ReactNode;
+}
 
 interface UIBuilderProps {
   initialLayers?: ComponentLayer[];
   onChange?: (pages: ComponentLayer[]) => void;
   componentRegistry: ComponentRegistry;
-  pagePropsForm: React.ReactNode;
-  useCanvas?: boolean;
+  panelConfig?: PanelConfig;
 }
 
 const UIBuilder = ({
   initialLayers,
   onChange,
-  useCanvas = true,
-  pagePropsForm,
   componentRegistry,
+  panelConfig = defaultPanelConfig(true),
 }: UIBuilderProps) => {
   const layerStore = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
@@ -46,21 +51,16 @@ const UIBuilder = ({
 
   // Effect 1: Initialize Editor Store with registry and page form props
   useEffect(() => {
-    if (
-      editorStore &&
-      componentRegistry &&
-      pagePropsForm &&
-      !editorStoreInitialized
-    ) {
-      editorStore.initializeRegistry(componentRegistry, pagePropsForm);
+    if (editorStore && componentRegistry && !editorStoreInitialized) {
+      editorStore.initializeRegistry(componentRegistry);
       setEditorStoreInitialized(true);
     }
-  }, [editorStore, componentRegistry, pagePropsForm, editorStoreInitialized]); // Depend on store and props
+  }, [editorStore, componentRegistry, editorStoreInitialized]);
 
   // Effect 2: Conditionally initialize Layer Store *after* Editor Store is initialized
   useEffect(() => {
-    // Only initialize layer store if initial layers (pages) are provided
     if (layerStore && editorStore) {
+      // Only initialize layer store if initial layers (pages) are provided, else empty div page is the root component
       if (initialLayers && !layerStoreInitialized) {
         layerStore.initialize(initialLayers);
         setLayerStoreInitialized(true);
@@ -70,7 +70,13 @@ const UIBuilder = ({
         setLayerStoreInitialized(true);
       }
     }
-  }, [layerStore, editorStore, componentRegistry, initialLayers, layerStoreInitialized]); // Depend on stores (and registry existence)
+  }, [
+    layerStore,
+    editorStore,
+    componentRegistry,
+    initialLayers,
+    layerStoreInitialized,
+  ]);
 
   // Effect 3: Handle onChange callback when pages change
   useEffect(() => {
@@ -82,8 +88,11 @@ const UIBuilder = ({
   }, [layerStore?.pages, onChange, layerStoreInitialized]);
 
   const isLoading = !layerStoreInitialized || !editorStoreInitialized;
-  const layout = isLoading ? <LoadingSkeleton /> : <MainLayout useCanvas={useCanvas} />;
-
+  const layout = isLoading ? (
+    <LoadingSkeleton />
+  ) : (
+    <MainLayout panelConfig={panelConfig} />
+  );
 
   return (
     <ThemeProvider
@@ -98,35 +107,26 @@ const UIBuilder = ({
   );
 };
 
-function MainLayout({ useCanvas }: { useCanvas: boolean }) {
+function MainLayout({ panelConfig }: { panelConfig: PanelConfig }) {
   const mainPanels = useMemo(
     () => [
       {
         title: "Page Config",
-        content: (
-          <PageConfigPanel className="pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />
-        ),
+        content: panelConfig.pageConfigPanel,
         defaultSize: 25,
       },
       {
         title: "UI Editor",
-        content: (
-          <EditorPanel
-            className="pb-20 md:pb-0 overflow-y-auto"
-            useCanvas={useCanvas}
-          />
-        ),
+        content: panelConfig.editorPanel,
         defaultSize: 50,
       },
       {
         title: "Props",
-        content: (
-          <PropsPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />
-        ),
+        content: panelConfig.propsPanel,
         defaultSize: 25,
       },
     ],
-    [useCanvas]
+    [panelConfig]
   );
 
   const [selectedPanel, setSelectedPanel] = useState(mainPanels[1]);
@@ -135,7 +135,7 @@ function MainLayout({ useCanvas }: { useCanvas: boolean }) {
       data-testid="component-editor"
       className="flex flex-col w-full flex-grow h-screen"
     >
-      <NavBar useCanvas={useCanvas} />
+      {panelConfig.navBar}
       {/* Desktop Layout */}
       <div className="hidden md:flex flex-1 overflow-hidden">
         <ResizablePanelGroup
@@ -215,3 +215,21 @@ export function LoadingSkeleton() {
 }
 
 export default UIBuilder;
+
+export const defaultPanelConfig = (useCanvas: boolean) => {
+  return {
+    navBar: <NavBar useCanvas={useCanvas} />,
+    pageConfigPanel: (
+      <PageConfigPanel className="pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />
+    ),
+    editorPanel: (
+      <EditorPanel
+        useCanvas={useCanvas}
+        className="pb-20 md:pb-0 overflow-y-auto"
+      />
+    ),
+    propsPanel: (
+      <PropsPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" pagePropsForm={<TailwindThemePanel />} />
+    )
+  };
+};

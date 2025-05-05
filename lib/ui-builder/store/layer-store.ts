@@ -8,6 +8,7 @@ import isDeepEqual from 'fast-deep-equal';
 import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3 } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 
 
@@ -17,14 +18,6 @@ const DEFAULT_PAGE_PROPS = {
 };
 
 
-
-export type ComponentLayer = {
-  id: string;
-  name?: string;
-  type: string;
-  props: Record<string, any>;
-  children: ComponentLayer[] | string;
-};
 
 export interface LayerStore {
   pages: ComponentLayer[];

@@ -11,9 +11,7 @@ import {
   migrateV1ToV2,
   migrateV2ToV3
 } from "../lib/ui-builder/store/layer-utils";
-import {
-  ComponentLayer,
-} from "../lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 describe("Layer Utils", () => {
   let mockPages: ComponentLayer[];

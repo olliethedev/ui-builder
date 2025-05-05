@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '../types';
 import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
 import { cn } from "@/lib/utils";
 import { getScrollParent } from "@/lib/ui-builder/utils/get-scroll-parent";

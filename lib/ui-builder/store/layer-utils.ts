@@ -1,4 +1,5 @@
-import { ComponentLayer, LayerStore } from "@/lib/ui-builder/store/layer-store";
+import { LayerStore } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 /**
  * Recursively visits each layer in the layer tree and applies the provided visitor function to each layer.

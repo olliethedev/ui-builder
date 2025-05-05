@@ -4,7 +4,7 @@ import {
   generateFieldOverrides
 } from "@/lib/ui-builder/store/editor-utils";
 import { RegistryEntry } from "@/lib/ui-builder/store/editor-store";
-import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { FieldConfigItem } from "@/components/ui/auto-form/types";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";

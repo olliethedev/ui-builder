@@ -1,10 +1,9 @@
-"use client"
+"use client";
 
-import UIBuilder from "@/components/ui/ui-builder";
+import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
+import { ComponentLayer } from "@/components/ui/ui-builder/types";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
-
 
 const initialLayers: ComponentLayer[] = [{
     "id": "1",
@@ -979,12 +978,9 @@ const initialLayers: ComponentLayer[] = [{
     ]
   }]
 
-export const BuilderWithPages = () => {
-  return <UIBuilder 
-    initialLayers={initialLayers}
-    componentRegistry={{
-        ...complexComponentDefinitions,
-        ...primitiveComponentDefinitions,
-    }}
-    />;
-};
+export function SimpleLayerRenderer() {
+  return <LayerRenderer page={initialLayers[0]} componentRegistry={{
+    ...complexComponentDefinitions,
+    ...primitiveComponentDefinitions,
+  }} />;
+}

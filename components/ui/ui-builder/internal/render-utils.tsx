@@ -2,7 +2,7 @@
 import React, { memo, Suspense, useRef } from "react";
 import isDeepEqual from "fast-deep-equal";
 
-import { ComponentLayer} from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '../types';
 import { ClickableWrapper } from "@/components/ui/ui-builder/internal/clickable-wrapper";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -10,7 +10,7 @@ import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallbac
 import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
-import { ComponentRegistry } from "@/lib/ui-builder/store/editor-store";
+import { ComponentRegistry } from '../types';
 
 export interface EditorConfig {
   

@@ -4,8 +4,8 @@ import React from "react";
 import { X as XIcon, ChevronsUpDown } from "lucide-react";
 import {
   useLayerStore,
-  ComponentLayer,
 } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '../types';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";

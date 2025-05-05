@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ComponentRegistry, RegistryEntry } from "@/lib/ui-builder/store/editor-store";
-import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
+import { RegistryEntry } from "@/lib/ui-builder/store/editor-store";
+import { ComponentRegistry } from '@/components/ui/ui-builder/types';
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { FieldConfigItem } from "@/components/ui/auto-form/types";
 import { ComponentType as ReactComponentType } from "react";
 

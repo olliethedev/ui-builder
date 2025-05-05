@@ -3,9 +3,7 @@ import { render, screen } from "@testing-library/react";
 import {
   RenderLayer,
 } from "../components/ui/ui-builder/internal/render-utils";
-import {
-  ComponentLayer,
-} from "../lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { BaseColor, baseColors } from "../components/ui/ui-builder/internal/base-colors";
 import { z } from "zod";
 // Mock dependencies

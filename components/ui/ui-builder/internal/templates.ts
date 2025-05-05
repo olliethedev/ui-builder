@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '../types';
 import template from "lodash.template";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
-import { ComponentRegistry } from "@/lib/ui-builder/store/editor-store";
+import { ComponentRegistry } from '../types';
 
 export const pageLayerToCode = (page: ComponentLayer, componentRegistry: ComponentRegistry) => {
   const layers = page.children;

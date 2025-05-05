@@ -3,9 +3,9 @@ import React from "react";
 import { Plus } from "lucide-react";
 import {
   countLayers,
-  ComponentLayer,
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '../types';
 
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { cn } from "@/lib/utils";

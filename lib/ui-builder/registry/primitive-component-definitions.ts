@@ -1,6 +1,6 @@
-import { ComponentRegistry } from "@/lib/ui-builder/store/editor-store";
+import { ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
-import { childrenAsTextareaFieldOverrides, childrenFieldOverrides, classNameFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { childrenAsTextareaFieldOverrides, classNameFieldOverrides, commonFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 export const primitiveComponentDefinitions: ComponentRegistry = {
   'a': {
@@ -13,10 +13,7 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
         title: z.string().optional(),
         download: z.boolean().optional().default(false),
     }),
-        fieldOverrides: {
-            className:(layer)=> classNameFieldOverrides(layer),
-            children: (layer)=> childrenFieldOverrides(layer)
-        }
+        fieldOverrides: commonFieldOverrides()
   },
   'img': {
     schema: z.object({
@@ -35,10 +32,7 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
         className: z.string().optional(),
         children: z.any().optional(),
     }),
-    fieldOverrides: {
-        className:(layer)=> classNameFieldOverrides(layer),
-        children: (layer)=> childrenFieldOverrides(layer)
-    }
+    fieldOverrides: commonFieldOverrides()
   },
   'iframe': {
     schema: z.object({

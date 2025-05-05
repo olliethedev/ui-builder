@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
-import { Layer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from "@/components/ui/ui-builder/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +21,7 @@ import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-co
 import { NameEdit } from "@/components/ui/ui-builder/internal/name-edit";
 
 interface TreeRowNodeProps {
-  node: Layer;
+  node: ComponentLayer;
   id: number | string;
   level: number;
   open: boolean;
@@ -34,10 +34,10 @@ interface TreeRowNodeProps {
   duplicateLayer: (id: string) => void;
   updateLayer: (
     id: string,
-    update: Partial<Layer>,
+    update: Partial<ComponentLayer>,
     options?: {
       name?: string;
-      children?: Layer[];
+      children?: ComponentLayer[];
     }
   ) => void;
 }

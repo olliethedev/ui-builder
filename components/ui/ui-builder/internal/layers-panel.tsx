@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
 import isDeepEqual from "fast-deep-equal";
-import { ComponentLayer, useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '../types';
 import { cn } from "@/lib/utils";
 import {
   findAllParentLayersRecursive,

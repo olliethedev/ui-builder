@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { create, StateCreator } from 'zustand';
-import { ComponentType as ReactComponentType, ReactNode } from "react";
+import { ComponentType as ReactComponentType } from "react";
 import { ZodObject } from "zod";
-import { ComponentLayer } from '@/lib/ui-builder/store/layer-store';
+import { ComponentLayer, ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { FieldConfigItem } from '@/components/ui/auto-form/types';
 
 export interface RegistryEntry<T extends ReactComponentType<any>> {
@@ -13,11 +13,6 @@ export interface RegistryEntry<T extends ReactComponentType<any>> {
     fieldOverrides?: Record<string, FieldConfigFunction>;
 }
 
-export type ComponentRegistry = Record<
-    string,
-    RegistryEntry<ReactComponentType<any>>
->;
-
 export type FieldConfigFunction = (layer: ComponentLayer) => FieldConfigItem;
 
 export interface EditorStore {
@@ -25,9 +20,8 @@ export interface EditorStore {
     setPreviewMode: (mode: 'mobile' | 'tablet' | 'desktop' | 'responsive') => void;
 
     registry: ComponentRegistry;
-    pagePropsForm: ReactNode | null;
 
-    initializeRegistry: (registry: ComponentRegistry, pagePropsForm: ReactNode) => void;
+    initializeRegistry: (registry: ComponentRegistry) => void;
     getComponentDefinition: (type: string) => RegistryEntry<ReactComponentType<any>> | undefined;
 }
 
@@ -36,10 +30,9 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
     setPreviewMode: (mode) => set({ previewMode: mode }),
 
     registry: {},
-    pagePropsForm: null,
 
-    initializeRegistry: (registry, pagePropsForm) => {
-        set({ registry, pagePropsForm });
+    initializeRegistry: (registry) => {
+        set({ registry });
     },
     getComponentDefinition: (type: string) => {
         const { registry } = get();

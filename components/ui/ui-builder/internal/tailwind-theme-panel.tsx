@@ -9,12 +9,12 @@ import { Label } from "@/components/ui/label";
 import { CheckIcon, InfoIcon, MoonIcon, SunIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  ComponentLayer,
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '../types';
 import { Toggle } from "@/components/ui/toggle";
 
-export function ThemePanel() {
+export function TailwindThemePanel() {
   const {
     selectedPageId,
     updateLayer: updateLayerProps,

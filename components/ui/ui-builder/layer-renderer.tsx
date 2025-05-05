@@ -1,11 +1,9 @@
 import React from "react";
 
-import {
-  ComponentLayer,
-} from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from './types';
 import { EditorConfig, RenderLayer } from "@/components/ui/ui-builder/internal/render-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
-import { ComponentRegistry } from "@/lib/ui-builder/store/editor-store";
+import { ComponentRegistry } from './types';
 interface LayerRendererProps {
   className?: string;
   page: ComponentLayer;

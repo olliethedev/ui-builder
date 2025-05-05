@@ -3,9 +3,10 @@ import React, { useCallback, useMemo } from "react";
 import { z } from "zod";
 import {
   useLayerStore,
-  ComponentLayer,
 } from "@/lib/ui-builder/store/layer-store";
-import { ComponentRegistry, useEditorStore } from "@/lib/ui-builder/store/editor-store";
+import { ComponentLayer } from '../types';
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
+import { ComponentRegistry } from '../types';
 import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
 import { generateFieldOverrides } from "@/lib/ui-builder/store/editor-utils";
@@ -14,9 +15,10 @@ import { getBaseType } from "@/components/ui/auto-form/utils";
 
 interface PropsPanelProps {
   className?: string;
+  pagePropsForm: React.ReactNode;
 }
 
-const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
+const PropsPanel: React.FC<PropsPanelProps> = ({ className, pagePropsForm }) => {
   const selectedLayerId = useLayerStore((state) => state.selectedLayerId);
   const selectedPageId = useLayerStore((state) => state.selectedPageId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
@@ -25,7 +27,6 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
   const updateLayer = useLayerStore((state) => state.updateLayer);
   const addComponentLayer = useLayerStore((state) => state.addComponentLayer);
   const componentRegistry = useEditorStore((state) => state.registry);
-  const pagePropsForm = useEditorStore((state) => state.pagePropsForm);
   const selectedLayer = findLayerById(selectedLayerId);
 
   const handleAddComponentLayer = useCallback((layerType: string, parentLayerId: string, addPosition?: number) => {

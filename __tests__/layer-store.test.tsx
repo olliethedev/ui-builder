@@ -1,5 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
-import { ComponentLayer, useLayerStore } from '@/lib/ui-builder/store/layer-store';
+import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
