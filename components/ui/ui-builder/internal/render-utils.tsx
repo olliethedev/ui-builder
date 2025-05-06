@@ -68,7 +68,7 @@ export const RenderLayer: React.FC<{
     }
 
     const WrappedComponent = isPrimitive ? (
-      <Component id={layer.id} data-testid={layer.id} {...childProps} />
+      <Component id={layer.id} data-testid={layer.id} {...removeSpecialAttributes(layer.type, childProps)} />
     ) : (
       <ErrorSuspenseWrapper key={layer.id} id={layer.id}>
         <Component data-testid={layer.id} {...childProps} />
@@ -134,3 +134,13 @@ const ErrorSuspenseWrapper: React.FC<{
     <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
   </ErrorBoundary>
 );
+
+const removeSpecialAttributes = (type: string, attributes: Record<string, any>) => {
+  if(type === 'div') {
+    const specialAttrs = ["borderRadius", "colorTheme", "mode"];
+    return Object.fromEntries(
+      Object.entries(attributes).filter(([key]) => !specialAttrs.includes(key))
+    );
+  }
+  return attributes;
+};
