@@ -3,8 +3,8 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import LayersPanel from "@/components/ui/ui-builder/internal/layers-panel";
 import { useLayerStore} from "@/lib/ui-builder/store/layer-store";
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
-import { RegistryEntry, useEditorStore } from "@/lib/ui-builder/store/editor-store";
+import { ComponentLayer, RegistryEntry } from '@/components/ui/ui-builder/types';
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { z } from "zod";
 
 // Mock dependencies

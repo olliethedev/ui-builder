@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import {
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
-import { ComponentLayer } from '../types';
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { Toggle } from "@/components/ui/toggle";
 
 export function TailwindThemePanel() {
@@ -22,16 +22,16 @@ export function TailwindThemePanel() {
   } = useLayerStore();
   const selectedPageData = findLayerById(selectedPageId) as ComponentLayer;
   const [isCustomTheme, setIsCustomTheme] = useState(
-    selectedPageData?.props.colorTheme !== undefined
+    selectedPageData?.props["data-color-theme"] !== undefined
   );
   //if not isCustomTheme we delete the themeColors from the pageLayer
   useEffect(() => {
     if (!isCustomTheme) {
       updateLayerProps(selectedPageId, {
         style: undefined,
-        mode: undefined,
-        colorTheme: undefined,
-        borderRadius: undefined,
+        "data-mode": undefined,
+        "data-color-theme": undefined,
+        "data-border-radius": undefined,
       });
     }
   }, [isCustomTheme, updateLayerProps, selectedPageId]);
@@ -68,13 +68,13 @@ function ThemePicker({
   const { updateLayer: updateLayerProps } = useLayerStore();
 
   const [colorTheme, setColorTheme] = useState<BaseColor["name"]>(
-    pageLayer.props?.colorTheme || "red"
+    pageLayer.props?.["data-color-theme"] || "red"
   );
   const [borderRadius, setBorderRadius] = useState(
-    pageLayer.props?.borderRadius || 0.3
+    pageLayer.props?.["data-border-radius"] || 0.3
   );
   const [mode, setMode] = useState<"light" | "dark">(
-    pageLayer.props?.mode || "light"
+    pageLayer.props?.["data-mode"] || "light"
   );
 
   useEffect(() => {
@@ -97,9 +97,9 @@ function ThemePicker({
 
       updateLayerProps(pageLayer.id, {
         style: themeStyle,
-        mode,
-        colorTheme,
-        borderRadius,
+        "data-mode": mode,
+        "data-color-theme": colorTheme,
+        "data-border-radius": borderRadius,
       });
     }
   }, [pageLayer.id, updateLayerProps, colorTheme, borderRadius, mode, isDisabled]);

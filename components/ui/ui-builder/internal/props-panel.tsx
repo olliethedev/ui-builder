@@ -4,9 +4,8 @@ import { z } from "zod";
 import {
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
-import { ComponentLayer } from '../types';
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
-import { ComponentRegistry } from '../types';
+import { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
 import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
 import { generateFieldOverrides } from "@/lib/ui-builder/store/editor-utils";
@@ -113,6 +112,9 @@ interface ComponentPropsAutoFormProps {
   addComponentLayer: (layerType: string, parentLayerId: string, addPosition?: number) => void;
 }
 
+const EMPTY_ZOD_SCHEMA = z.object({});
+const EMPTY_FORM_VALUES = {};
+
 const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
   selectedLayerId,
   componentRegistry,
@@ -152,12 +154,12 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
     if (selectedLayer && componentRegistry[selectedLayer.type as keyof typeof componentRegistry]) {
       return componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
     }
-    return { schema: z.object({}) }; // Fallback schema
+    return { schema: EMPTY_ZOD_SCHEMA }; // Fallback schema
   }, [selectedLayer, componentRegistry]);
 
   // Prepare values for AutoForm, converting enum values to strings as select elements only accept string values
   const formValues = useMemo(() => {
-    if (!selectedLayer) return {};
+    if (!selectedLayer) return EMPTY_FORM_VALUES;
 
     const transformedProps: Record<string, any> = {};
     const schemaShape = schema?.shape as z.ZodRawShape | undefined; // Get shape from the memoized schema
@@ -182,16 +184,25 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
     return { ...transformedProps, children: selectedLayer.children };
   }, [selectedLayer, schema]); // Depend on selectedLayer and schema
 
+  const autoFormSchema = useMemo(() => {
+    return addDefaultValues(schema, formValues);
+  }, [schema, formValues]);
+
+  const autoFormFieldConfig = useMemo(() => {
+    if (!selectedLayer) return undefined; // Or a default config if appropriate
+    return generateFieldOverrides(componentRegistry, selectedLayer);
+  }, [componentRegistry, selectedLayer]);
+
   if (!selectedLayer || !componentRegistry[selectedLayer.type as keyof typeof componentRegistry]) {
     return null;
   }
 
   return (
     <AutoForm
-      formSchema={addDefaultValues(schema, formValues)}
+      formSchema={autoFormSchema}
       values={formValues} // Use the memoized and transformed values
       onParsedValuesChange={onParsedValuesChange}
-      fieldConfig={generateFieldOverrides(componentRegistry, selectedLayer)}
+      fieldConfig={autoFormFieldConfig}
       className="space-y-4 mt-4"
       onSubmit={() => {}} // Optional: no-op or remove if not needed
     >

@@ -149,7 +149,7 @@ describe('LayerStore', () => {
       expect(result.current.pages).toHaveLength(2);
       const duplicatedPage = result.current.pages[1];
       expect(duplicatedPage.type).toBe('_page_');
-      expect(duplicatedPage.name).toBe('Page 1');
+      expect(duplicatedPage.name).toBe('Page 1 (Copy)');
       expect(result.current.selectedPageId).toBe(duplicatedPage.id);
     });
 

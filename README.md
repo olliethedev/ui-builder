@@ -286,6 +286,7 @@ For more detailed documentation read the [docs](https://uibuilder.app/)
 - The `componentRegistry` is now passed as a prop to the `UIBuilder` component instead of being defined in a standalone file.
 - Removed the script used to generate component schema definitions. This approach proved problematic to maintain and didn't function correctly for complex components or varying project setups. Component schema definitions should now be manually created or generated using project-specific tooling if desired.
 - `pagePropsForm` prop added to `UIBuilder` to allow customization of the form used for editing page-level (root layer) properties.
+- Made `layer-store` local storage persistence optional and configurable via props.
 
 
 ### v0.0.2
@@ -323,11 +324,15 @@ npm run test
 - [ ] Add tiptap editor for markdown content
 - [ ] Add global variables for component props
 - [ ] Add Blocks. Reusable component blocks that can be used in multiple pages
+- [ ] Move component schemas to separate shadcn registry to keep main registry light
+- [ ] Move prop form field components (overrides) to separate shadcn registry to keep main registry light
 - [ ] Add data sources to component layers (ex, getUser() binds prop user.name)
 - [ ] Add event handlers to component layers (onClick, onSubmit, etc)
 - [ ] React native support
 - [ ] Update to React 19
 - [ ] Update to latest Shadcn/ui + Tailwind CSS v4
+- [ ] Update to new AutoForm when stable
+- [ ] Update to Zod v4 (when stable) for native json schema conversion to enforce safety in layer props
 
 ## Contributing
 

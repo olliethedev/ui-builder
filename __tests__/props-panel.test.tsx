@@ -6,9 +6,9 @@ import PropsPanel from "@/components/ui/ui-builder/internal/props-panel";
 import {
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import { RegistryEntry, ComponentLayer } from '@/components/ui/ui-builder/types';
 import { z } from "zod";
-import { RegistryEntry, useEditorStore } from "@/lib/ui-builder/store/editor-store";
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 
 // Mock dependencies
 jest.mock("../lib/ui-builder/store/layer-store", () => ({
@@ -132,7 +132,7 @@ describe("PropsPanel", () => {
   });
 
   const renderPropsPanel = () => {
-    const { container } = render(<PropsPanel className="test-class" />);
+    const { container } = render(<PropsPanel className="test-class" pagePropsForm={<div>Page Props Form</div>} />);
     return { container };
   };
 
@@ -185,7 +185,7 @@ describe("PropsPanel", () => {
       const selectedLayer = { id: 'layer1', type: 'Button', props: {} };
       mockFindLayerById.mockReturnValue(selectedLayer);
   
-      render(<PropsPanel />);
+      render(<PropsPanel pagePropsForm={<div>Page Props Form</div>} />);
   
       const deleteButton = screen.getByText('Delete Component');
       fireEvent.click(deleteButton);
@@ -197,7 +197,7 @@ describe("PropsPanel", () => {
       const selectedLayer = { id: 'layer1', type: 'Button', props: {} };
       mockFindLayerById.mockReturnValue(selectedLayer);
   
-      render(<PropsPanel />);
+      render(<PropsPanel pagePropsForm={<div>Page Props Form</div>} />);
   
       const duplicateButton = screen.getByText('Duplicate Component');
       fireEvent.click(duplicateButton);
@@ -206,7 +206,7 @@ describe("PropsPanel", () => {
     });
 
     it("should render the form", async () => {
-      const { container } = render(<PropsPanel />);
+      const { container } = render(<PropsPanel pagePropsForm={<div>Page Props Form</div>} />);
       await waitFor(() => {
         expect(container.querySelector('form')).toBeInTheDocument();
         expect(container.querySelector('input[name="label"]')).toBeInTheDocument();
@@ -306,7 +306,7 @@ describe("PropsPanel", () => {
     });
 
     it("should render the form", async () => {
-      const { container } = render(<PropsPanel />);
+      const { container } = render(<PropsPanel pagePropsForm={<div>Page Props Form</div>} />);
       await waitFor(() => {
         expect(container.querySelector('form')).toBeInTheDocument();
         expect(container.querySelector('input[name="label"]')).toBeInTheDocument();

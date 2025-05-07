@@ -241,7 +241,7 @@ export function addDefaultValues<T extends ZodObject<any>>(
     if (updatedShape[key]) {
       // Apply the default value to the existing schema field
       updatedShape[key] = updatedShape[key].default(defaultValues[key]);
-    } else {
+    } else if (process.env.NODE_ENV !== "production") {
       console.warn(
         `Key "${key}" does not exist in the schema and will be ignored.`
       );

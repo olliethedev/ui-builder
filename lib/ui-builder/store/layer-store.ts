@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { create, StateCreator } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { persist, createJSONStorage, StorageValue } from 'zustand/middleware'
 import { produce } from 'immer';
 import { temporal } from 'zundo';
 import isDeepEqual from 'fast-deep-equal';
@@ -141,7 +141,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
 
       const isNewLayerAPage = state.pages.some(page => page.id === layerId);
 
-      const newLayer = duplicateWithNewIdsAndName(layerToDuplicate, !isNewLayerAPage);
+      const newLayer = duplicateWithNewIdsAndName(layerToDuplicate, true);
 
       if (isNewLayerAPage) {
         return {
@@ -285,6 +285,34 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
   }
 )
 
+// Custom storage adapter (mimics localStorage API for createJSONStorage)
+const conditionalLocalStorage = {
+  getItem: (name: string): Promise<string | null> => {
+    const { persistLayerStoreConfig } = useEditorStore.getState();
+    if (!persistLayerStoreConfig) {
+      return Promise.resolve(null);
+    }
+    const value = localStorage.getItem(name);
+    return Promise.resolve(value);
+  },
+  setItem: (name: string, value: string): Promise<void> => {
+    const { persistLayerStoreConfig } = useEditorStore.getState();
+    if (!persistLayerStoreConfig) {
+      return Promise.resolve();
+    }
+    localStorage.setItem(name, value);
+    return Promise.resolve();
+  },
+  removeItem: (name: string): Promise<void> => {
+    const { persistLayerStoreConfig } = useEditorStore.getState();
+    if (!persistLayerStoreConfig) {
+        return Promise.resolve();
+    }
+    localStorage.removeItem(name);
+    return Promise.resolve();
+  },
+};
+
 const useLayerStore = create(persist(temporal<LayerStore>(store,
   {
     equality: (pastState, currentState) =>
@@ -293,7 +321,7 @@ const useLayerStore = create(persist(temporal<LayerStore>(store,
 ), {
   name: "layer-store",
   version: 3,
-  storage: createJSONStorage(() => localStorage),
+  storage: createJSONStorage(() => conditionalLocalStorage),
   migrate: (persistedState: unknown, version: number) => {
     /* istanbul ignore if*/
     if (version === 1) {

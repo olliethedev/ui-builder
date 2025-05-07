@@ -118,7 +118,7 @@ export const duplicateWithNewIdsAndName = (layer: ComponentLayer, addCopySuffix:
       newLayer.name = `${ layer.name }${ addCopySuffix ? ' (Copy)' : ''}`;
     }
     if (hasLayerChildren(newLayer) && hasLayerChildren(layer)) {
-      newLayer.children = layer.children.map(child => duplicateWithNewIdsAndName(child, addCopySuffix));
+      newLayer.children = layer.children.map(child => duplicateWithNewIdsAndName(child, false));
     }
     return newLayer;
   };
@@ -201,7 +201,11 @@ export function migrateV2ToV3(persistedState: unknown): LayerStore {
 
       const migratedState = persistedState as LayerStore;
 
-    
+      const keysToMap = {   
+        borderRadius: "data-border-radius",
+        colorTheme: "data-color-theme",
+        mode: "data-mode",
+      };
 
       const migratedPages = migratedState.pages.map((page: ComponentLayer) => {
         if (page.type === "_page_") {
@@ -211,7 +215,13 @@ export function migrateV2ToV3(persistedState: unknown): LayerStore {
                 children: pageLayer.children,
                 id: pageLayer.id,
                 name: pageLayer.name,
-                props: pageLayer.props,
+                //map keys called borderRadius, colorTheme, mode to data-border-radius, data-color-theme, data-mode
+                props: Object.fromEntries(Object.entries(pageLayer.props).map(([key, value]) => {
+                    if (keysToMap[key as keyof typeof keysToMap]) {
+                        return [keysToMap[key as keyof typeof keysToMap], value];
+                    }
+                    return [key, value];
+                })),
               };
               console.log("Transformed page layer", transformedPageLayer);
               return transformedPageLayer;

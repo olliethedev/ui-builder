@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, memo } from "react";
 import { NodeAttrs } from "he-tree-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +42,7 @@ interface TreeRowNodeProps {
   ) => void;
 }
 
-export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
+export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
   node,
   id,
   level,
@@ -192,7 +192,9 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = ({
       </DropdownMenu>
     </div>
   );
-};
+});
+
+TreeRowNode.displayName = "TreeRowNode";
 
 const RowOffset = ({ level }: { level: number }) => {
   return (
@@ -214,8 +216,6 @@ const RowOffset = ({ level }: { level: number }) => {
     </div>
   );
 };
-
-TreeRowNode.displayName = "TreeRowNode";
 
 export const TreeRowPlaceholder: React.FC<
   Pick<TreeRowNodeProps, "nodeAttributes">

@@ -1,19 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { create, StateCreator } from 'zustand';
 import { ComponentType as ReactComponentType } from "react";
-import { ZodObject } from "zod";
-import { ComponentLayer, ComponentRegistry } from '@/components/ui/ui-builder/types';
-import { FieldConfigItem } from '@/components/ui/auto-form/types';
+import { RegistryEntry, ComponentRegistry } from '@/components/ui/ui-builder/types';
 
-export interface RegistryEntry<T extends ReactComponentType<any>> {
-    component?: T;
-    schema: ZodObject<any>;
-    from?: string;
-    defaultChildren?: (ComponentLayer)[] | string;
-    fieldOverrides?: Record<string, FieldConfigFunction>;
-}
 
-export type FieldConfigFunction = (layer: ComponentLayer) => FieldConfigItem;
 
 export interface EditorStore {
     previewMode: 'mobile' | 'tablet' | 'desktop' | 'responsive';
@@ -21,8 +11,11 @@ export interface EditorStore {
 
     registry: ComponentRegistry;
 
-    initializeRegistry: (registry: ComponentRegistry) => void;
+    initialize: (registry: ComponentRegistry, persistLayerStoreConfig: boolean) => void;
     getComponentDefinition: (type: string) => RegistryEntry<ReactComponentType<any>> | undefined;
+
+    persistLayerStoreConfig: boolean;
+    setPersistLayerStoreConfig: (shouldPersist: boolean) => void;
 }
 
 const store: StateCreator<EditorStore, [], []> = (set, get) => ({
@@ -31,8 +24,8 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
 
     registry: {},
 
-    initializeRegistry: (registry) => {
-        set({ registry });
+    initialize: (registry, persistLayerStoreConfig) => {
+        set(state => ({ ...state, registry, persistLayerStoreConfig }));
     },
     getComponentDefinition: (type: string) => {
         const { registry } = get();
@@ -41,10 +34,10 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
             return undefined;
         }
         return registry[type];
-    }
+    },
 
-
-
+    persistLayerStoreConfig: true,
+    setPersistLayerStoreConfig: (shouldPersist) => set({ persistLayerStoreConfig: shouldPersist }),
 });
 
 export const useEditorStore = create<EditorStore>()(store);

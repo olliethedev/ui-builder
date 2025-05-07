@@ -5,7 +5,7 @@ import {
   countLayers,
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
-import { ComponentLayer } from '../types';
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { cn } from "@/lib/utils";
@@ -65,7 +65,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
   const isMobileScreen = window.innerWidth < 768;
 
   const renderer = (
-    <div id="editor-panel-container" className="overflow-visible pt-3 pb-10">
+    <div id="editor-panel-container" className="overflow-visible pt-3 pb-10 pr-20">
       <LayerRenderer page={selectedPage} editorConfig={editorConfig} componentRegistry={componentRegistry} />
     </div>
   );

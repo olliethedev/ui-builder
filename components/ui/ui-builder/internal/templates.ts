@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ComponentLayer } from '../types';
 import template from "lodash.template";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
-import { ComponentRegistry } from '../types';
+import { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
 
 export const pageLayerToCode = (page: ComponentLayer, componentRegistry: ComponentRegistry) => {
   const layers = page.children;
@@ -12,14 +11,13 @@ export const pageLayerToCode = (page: ComponentLayer, componentRegistry: Compone
   const imports = new Set<string>();
 
   const collectImports = (layer: ComponentLayer) => {
-    if (hasLayerChildren(layer) ) {
-      const componentDefinition = componentRegistry[layer.type];
-      if (layer.type && componentDefinition && componentDefinition.from) {
-        imports.add(
-          `import { ${ layer.type } } from "${ componentDefinition.from }";`
+
+    const componentDefinition = componentRegistry[layer.type];
+    if (componentDefinition && componentDefinition.from) {
+      imports.add(
+        createFromString(componentDefinition.from, layer.type, componentDefinition.isFromDefaultExport)
         );
-      }
-      if (layer.children) {
+      if (hasLayerChildren(layer)) {
         layer.children.forEach(collectImports);
       }
     }
@@ -62,7 +60,7 @@ export const generateLayerCode = (layer: ComponentLayer, indent = 0): string => 
   }
   //else if children is a string, then we need render children as a text node
   else if (typeof layer.children === "string") {
-    childrenCode = `{${JSON.stringify(layer.children)}}`;
+    childrenCode = `${ indentation }${"  "}{${JSON.stringify(layer.children)}}`;
   }
 
   if (childrenCode) {
@@ -106,3 +104,10 @@ const Page = () => {
 
 export default Page;
 `;
+
+const createFromString = (from: string, layerType: string, isFromDefaultExport?: boolean) => {
+  if (isFromDefaultExport) {
+    return `import ${ layerType } from "${ from }";`;
+  }
+  return `import { ${ layerType } } from "${ from }";`;
+};

@@ -2,7 +2,6 @@
 import React, { memo, Suspense, useRef } from "react";
 import isDeepEqual from "fast-deep-equal";
 
-import { ComponentLayer } from '../types';
 import { ClickableWrapper } from "@/components/ui/ui-builder/internal/clickable-wrapper";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -10,7 +9,7 @@ import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallbac
 import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
-import { ComponentRegistry } from '../types';
+import { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
 
 export interface EditorConfig {
   
@@ -68,7 +67,7 @@ export const RenderLayer: React.FC<{
     }
 
     const WrappedComponent = isPrimitive ? (
-      <Component id={layer.id} data-testid={layer.id} {...removeSpecialAttributes(layer.type, childProps)} />
+      <Component id={layer.id} data-testid={layer.id} {...childProps} />
     ) : (
       <ErrorSuspenseWrapper key={layer.id} id={layer.id}>
         <Component data-testid={layer.id} {...childProps} />
@@ -135,12 +134,3 @@ const ErrorSuspenseWrapper: React.FC<{
   </ErrorBoundary>
 );
 
-const removeSpecialAttributes = (type: string, attributes: Record<string, any>) => {
-  if(type === 'div') {
-    const specialAttrs = ["borderRadius", "colorTheme", "mode"];
-    return Object.fromEntries(
-      Object.entries(attributes).filter(([key]) => !specialAttrs.includes(key))
-    );
-  }
-  return attributes;
-};

@@ -1,3 +1,8 @@
+/** 
+ * Learn more about the UI Builder:
+ * https://github.com/olliethedev/ui-builder 
+*/
+
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
@@ -35,27 +40,38 @@ interface UIBuilderProps {
   onChange?: (pages: ComponentLayer[]) => void;
   componentRegistry: ComponentRegistry;
   panelConfig?: PanelConfig;
+  persistLayerStore?: boolean;
 }
 
 const UIBuilder = ({
   initialLayers,
   onChange,
   componentRegistry,
-  panelConfig = defaultPanelConfig(true),
+  panelConfig: userPanelConfig,
+  persistLayerStore = true,
 }: UIBuilderProps) => {
   const layerStore = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
 
+
   const [editorStoreInitialized, setEditorStoreInitialized] = useState(false);
   const [layerStoreInitialized, setLayerStoreInitialized] = useState(false);
+
+  // Memoize the default panel configuration.
+  // The dependency array is empty because defaultPanelConfig is called with a constant 'true'.
+  const memoizedDefaultPanelConfig = useMemo(() => defaultPanelConfig(true), []);
+
+  // Use user-provided config if available, otherwise use the memoized default.
+  const currentPanelConfig = userPanelConfig || memoizedDefaultPanelConfig;
+
 
   // Effect 1: Initialize Editor Store with registry and page form props
   useEffect(() => {
     if (editorStore && componentRegistry && !editorStoreInitialized) {
-      editorStore.initializeRegistry(componentRegistry);
+      editorStore.initialize(componentRegistry, persistLayerStore);
       setEditorStoreInitialized(true);
     }
-  }, [editorStore, componentRegistry, editorStoreInitialized]);
+  }, [editorStore, componentRegistry, editorStoreInitialized, persistLayerStore]);
 
   // Effect 2: Conditionally initialize Layer Store *after* Editor Store is initialized
   useEffect(() => {
@@ -91,7 +107,7 @@ const UIBuilder = ({
   const layout = isLoading ? (
     <LoadingSkeleton />
   ) : (
-    <MainLayout panelConfig={panelConfig} />
+    <MainLayout panelConfig={currentPanelConfig} />
   );
 
   return (

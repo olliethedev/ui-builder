@@ -448,7 +448,7 @@ describe("Layer Utils", () => {
         ],
       };
 
-      const duplicatedLayer = duplicateWithNewIdsAndName(originalLayer);
+      const duplicatedLayer = duplicateWithNewIdsAndName(originalLayer, true);
 
       expect(duplicatedLayer.id).not.toBe(originalLayer.id);
       expect(duplicatedLayer.name).toBe(`${originalLayer.name} (Copy)`);
@@ -460,7 +460,7 @@ describe("Layer Utils", () => {
         duplicatedLayer.children.forEach((child, index) => {
           expect(child.id).not.toBe((originalLayer.children![index] as ComponentLayer).id);
           expect(child.name).toBe(
-          `${(originalLayer.children![index] as ComponentLayer).name} (Copy)`
+          `${(originalLayer.children![index] as ComponentLayer).name}`
         );
         expect(child.type).toBe((originalLayer.children![index] as ComponentLayer).type);
         expect(child.props).toEqual((originalLayer.children![index] as ComponentLayer).props);
@@ -537,7 +537,7 @@ describe("Layer Utils", () => {
       const duplicatedChild = duplicatedLayer.children![0] as ComponentLayer;
       expect(duplicatedChild.id).not.toBe((originalLayer.children![0] as ComponentLayer).id);
       expect(duplicatedChild.name).toBe(
-        `${(originalLayer.children![0] as ComponentLayer).name} (Copy)`
+        `${(originalLayer.children![0] as ComponentLayer).name}`
       );
 
       const duplicatedDeepChild = duplicatedChild.children![0] as ComponentLayer;
@@ -545,7 +545,7 @@ describe("Layer Utils", () => {
         ((originalLayer.children![0] as ComponentLayer).children![0] as ComponentLayer).id
       );
       expect(duplicatedDeepChild.name).toBe(
-        `${((originalLayer.children![0] as ComponentLayer).children![0] as ComponentLayer).name} (Copy)`
+        `${((originalLayer.children![0] as ComponentLayer).children![0] as ComponentLayer).name}`
       );
     });
 
