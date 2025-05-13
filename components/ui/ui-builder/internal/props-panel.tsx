@@ -14,12 +14,10 @@ import { getBaseType } from "@/components/ui/auto-form/utils";
 
 interface PropsPanelProps {
   className?: string;
-  pagePropsForm: React.ReactNode;
 }
 
-const PropsPanel: React.FC<PropsPanelProps> = ({ className, pagePropsForm }) => {
+const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
   const selectedLayerId = useLayerStore((state) => state.selectedLayerId);
-  const selectedPageId = useLayerStore((state) => state.selectedPageId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const removeLayer = useLayerStore((state) => state.removeLayer);
   const duplicateLayer = useLayerStore((state) => state.duplicateLayer);
@@ -68,9 +66,7 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className, pagePropsForm }) => 
     <div className={className}>
       {selectedLayer && (
         <>
-          <h2 className="text-xl font-semibold mb-2">
-            {nameForLayer(selectedLayer)} Properties
-          </h2>
+          <Title />
           <h3 className="text-base font-medium mb-4">
             Type: {selectedLayer.type.replaceAll("_", "")}
           </h3>
@@ -82,9 +78,6 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className, pagePropsForm }) => 
           <h2 className="text-xl font-semibold mb-2">Component Properties</h2>
           <p>No component selected</p>
         </>
-      )}
-      {selectedLayerId === selectedPageId && (
-        pagePropsForm
       )}
       {selectedLayer && (
         <ComponentPropsAutoForm
@@ -231,3 +224,14 @@ ComponentPropsAutoForm.displayName = "ComponentPropsAutoForm";
 const nameForLayer = (layer: ComponentLayer) => {
   return layer.name || layer.type.replaceAll("_", "");
 };
+
+const Title =() =>{
+  const { selectedLayerId } = useLayerStore();
+  const findLayerById = useLayerStore((state) => state.findLayerById);
+  const selectedLayer = findLayerById(selectedLayerId);
+  return (
+    <h2 className="text-xl font-semibold mb-2">
+        {selectedLayer ? nameForLayer(selectedLayer): ""} Properties
+    </h2>
+  )
+}

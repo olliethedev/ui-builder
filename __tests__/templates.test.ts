@@ -38,6 +38,13 @@ const componentRegistry = {
     }),
     from: "../components/ui/Footer",
   },
+  DefaultExportComponent: {
+    schema: z.object({
+      text: z.string(),
+    }),
+    from: "../components/ui/DefaultExportComponent",
+    isFromDefaultExport: true, // Indicate this component uses a default export
+  },
 };
 
 // Mock lodash/template
@@ -421,6 +428,39 @@ export default Page;
 import { Footer } from "../components/ui/Footer";`;
       const expectedChildren = `    <Header title="Home" />
     <Footer year={2023} />`;
+      const expected = `
+import React from "react";
+${expectedImports}
+
+const Page = () => {
+  return (
+    <div>
+${expectedChildren}
+  </div>
+    );
+};
+
+export default Page;
+      `;
+      expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
+    });
+
+    it("should handle default exports correctly", () => {
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "defaultExport1",
+            type: "DefaultExportComponent",
+            props: { text: "Hello from default export" },
+            children: [],
+          },
+        ],
+      };
+      const expectedImports = `import DefaultExportComponent from "../components/ui/DefaultExportComponent";`;
+      const expectedChildren = `    <DefaultExportComponent text="Hello from default export" />`;
       const expected = `
 import React from "react";
 ${expectedImports}

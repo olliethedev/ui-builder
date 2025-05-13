@@ -301,7 +301,7 @@ const _ClickableWrapper: React.FC<ClickableWrapperProps> = ({
           {/* {small label with layer type floating above the bounding box} */}
           {isSelected && (
             <span className="absolute top-[-16px] left-[-2px] text-xs text-white bg-blue-500 px-[1px] whitespace-nowrap">
-              {layer.name?.startsWith(layer.type)?layer.type.replaceAll("_", ""):`${layer.name} (${layer.type.replaceAll("_", "")})`}
+              {layer.name?.toLowerCase().startsWith(layer.type.toLowerCase())?layer.type.replaceAll("_", ""):`${layer.name} (${layer.type.replaceAll("_", "")})`}
             </span>
           )}
         </div>

@@ -1,6 +1,5 @@
 "use client";
-import React from "react";
-import { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { coldarkDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { CopyIcon, CheckIcon } from "lucide-react";
@@ -55,21 +54,8 @@ export const CodeBlock = memo(function CodeBlock({
     copyToClipboard(value);
   };
 
-  return (
-    <div className="codeblock relative w-full bg-zinc-950 font-sans">
-      <div className="flex w-full items-center justify-between bg-background px-6 py-2 pr-4 text-foreground border-b border-border">
-        <span className="text-xs lowercase">{language}</span>
-        <div className="flex items-center space-x-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onCopy}
-          >
-            {isCopied ? <CheckIcon /> : <CopyIcon />}
-            <span className="sr-only">Copy code</span>
-          </Button>
-        </div>
-      </div>
+  const highlighted = useMemo(
+    () => (
       <SyntaxHighlighter
         language={language}
         style={coldarkDark}
@@ -90,6 +76,26 @@ export const CodeBlock = memo(function CodeBlock({
       >
         {value}
       </SyntaxHighlighter>
+    ),
+    [language, value]
+  );
+
+  return (
+    <div className="codeblock relative w-full bg-zinc-950 font-sans">
+      <div className="flex w-full items-center justify-between bg-background px-6 py-2 pr-4 text-foreground border-b border-border">
+        <span className="text-xs lowercase">{language}</span>
+        <div className="flex items-center space-x-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onCopy}
+          >
+            {isCopied ? <CheckIcon /> : <CopyIcon />}
+            <span className="sr-only">Copy code</span>
+          </Button>
+        </div>
+      </div>
+      {highlighted}
     </div>
   );
 });

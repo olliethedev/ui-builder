@@ -115,7 +115,6 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
             value: selectedLayer.name,
             // defaultValue: selectedLayer.name,
           },
-          description: "The name of the page.",
         },
         className: {
           fieldType: ({

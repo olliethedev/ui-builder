@@ -11,12 +11,12 @@ import { z } from "zod";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 
 // Mock dependencies
-jest.mock("../lib/ui-builder/store/layer-store", () => ({
+jest.mock("@/lib/ui-builder/store/layer-store", () => ({
   useLayerStore: jest.fn(),
 }));
 
 // Add mock for editor store
-jest.mock("../lib/ui-builder/store/editor-store", () => ({
+jest.mock("@/lib/ui-builder/store/editor-store", () => ({
   useEditorStore: jest.fn(),
 }));
 
@@ -120,10 +120,47 @@ describe("PropsPanel", () => {
     getComponentDefinition: mockGetComponentDefinition,
   };
 
+  beforeAll(() => {
+    mockedUseLayerStore.mockImplementation((selector) => {
+      if (typeof selector === "function") {
+        return selector(mockLayerState);
+      }
+      if (selector === undefined) {
+        return mockLayerState;
+      }
+      throw new Error("useLayerStore called with invalid argument");
+    });
+    mockedUseEditorStore.mockImplementation((selector) => {
+      if (typeof selector === "function") {
+        return selector(mockEditorState);
+      }
+      if (selector === undefined) {
+        return mockEditorState;
+      }
+      throw new Error("useEditorStore called with invalid argument");
+    });
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedUseLayerStore.mockImplementation((selector) => selector(mockLayerState));
-    mockedUseEditorStore.mockImplementation((selector) => selector(mockEditorState));
+    mockedUseLayerStore.mockImplementation((selector) => {
+      if (typeof selector === "function") {
+        return selector(mockLayerState);
+      }
+      if (selector === undefined) {
+        return mockLayerState;
+      }
+      throw new Error("useLayerStore called with invalid argument");
+    });
+    mockedUseEditorStore.mockImplementation((selector) => {
+      if (typeof selector === "function") {
+        return selector(mockEditorState);
+      }
+      if (selector === undefined) {
+        return mockEditorState;
+      }
+      throw new Error("useEditorStore called with invalid argument");
+    });
     mockGetComponentDefinition.mockImplementation((type: string) => mockRegistry[type]);
   });
 
@@ -132,7 +169,7 @@ describe("PropsPanel", () => {
   });
 
   const renderPropsPanel = () => {
-    const { container } = render(<PropsPanel className="test-class" pagePropsForm={<div>Page Props Form</div>} />);
+    const { container } = render(<PropsPanel className="test-class" />);
     return { container };
   };
 
@@ -185,7 +222,7 @@ describe("PropsPanel", () => {
       const selectedLayer = { id: 'layer1', type: 'Button', props: {} };
       mockFindLayerById.mockReturnValue(selectedLayer);
   
-      render(<PropsPanel pagePropsForm={<div>Page Props Form</div>} />);
+      render(<PropsPanel />);
   
       const deleteButton = screen.getByText('Delete Component');
       fireEvent.click(deleteButton);
@@ -197,7 +234,7 @@ describe("PropsPanel", () => {
       const selectedLayer = { id: 'layer1', type: 'Button', props: {} };
       mockFindLayerById.mockReturnValue(selectedLayer);
   
-      render(<PropsPanel pagePropsForm={<div>Page Props Form</div>} />);
+      render(<PropsPanel />);
   
       const duplicateButton = screen.getByText('Duplicate Component');
       fireEvent.click(duplicateButton);
@@ -206,7 +243,7 @@ describe("PropsPanel", () => {
     });
 
     it("should render the form", async () => {
-      const { container } = render(<PropsPanel pagePropsForm={<div>Page Props Form</div>} />);
+      const { container } = render(<PropsPanel />);
       await waitFor(() => {
         expect(container.querySelector('form')).toBeInTheDocument();
         expect(container.querySelector('input[name="label"]')).toBeInTheDocument();
@@ -306,7 +343,7 @@ describe("PropsPanel", () => {
     });
 
     it("should render the form", async () => {
-      const { container } = render(<PropsPanel pagePropsForm={<div>Page Props Form</div>} />);
+      const { container } = render(<PropsPanel />);
       await waitFor(() => {
         expect(container.querySelector('form')).toBeInTheDocument();
         expect(container.querySelector('input[name="label"]')).toBeInTheDocument();

@@ -26,19 +26,19 @@ jest.mock("../components/ui/ui-builder/internal/nav", () => ({
 }));
 
 it("UIBuilder: renders", async () => {
-  render(<UIBuilder componentRegistry={componentRegistry} pagePropsForm={<div>Page Props Form</div>} />);
+  render(<UIBuilder componentRegistry={componentRegistry} />);
   const themeProvider = await screen.findByTestId("theme-provider");
   expect(themeProvider).toBeInTheDocument();
 });
 
 it("UIBuilder: renders component-editor", async () => {
-  render(<UIBuilder componentRegistry={componentRegistry} pagePropsForm={<div>Page Props Form</div>} />);
+  render(<UIBuilder componentRegistry={componentRegistry} />);
   const componentEditor = await screen.findByTestId("component-editor");
   expect(componentEditor).toBeInTheDocument();
 });
 
 it("UIBuilder: renders page-config-panel", async () => {
-  render(<UIBuilder componentRegistry={componentRegistry} pagePropsForm={<div>Page Props Form</div>} />);
+  render(<UIBuilder componentRegistry={componentRegistry} />);
   const pageConfigPanel = await screen.findByTestId("page-config-panel");
   expect(pageConfigPanel).toBeInTheDocument();
 });

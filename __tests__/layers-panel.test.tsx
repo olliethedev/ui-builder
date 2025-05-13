@@ -93,7 +93,6 @@ describe("LayersPanel", () => {
 
   const mockEditorState = {
     registry: mockEditorRegistry,
-    pagePropsForm: null,
     initializeRegistry: mockInitializeRegistry,
     getComponentDefinition: mockGetComponentDefinition,
     previewMode: 'responsive',

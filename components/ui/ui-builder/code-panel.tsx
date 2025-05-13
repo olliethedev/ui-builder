@@ -7,22 +7,23 @@ import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { pageLayerToCode } from "@/components/ui/ui-builder/internal/templates";
 import { CodeBlock } from "@/components/ui/ui-builder/codeblock";
 import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
 
-//todo: improve performance of this component
 export function CodePanel({className}: {className?: string}) {
   const componentRegistry = useEditorStore((state) => state.registry);
   const { selectedPageId, findLayerById } = useLayerStore();
 
   const page = findLayerById(selectedPageId) as ComponentLayer;
-  const codeBlocks = {
+  const codeBlocks = useMemo(() => ({
     react: pageLayerToCode(page, componentRegistry),
     serialized: JSON.stringify(
       page,
       (key, value) => (typeof value === "function" ? undefined : value),
       2
     ),
-  };
+  }), [page, componentRegistry]);
+
   return <CodeContent codeBlocks={codeBlocks} className={className} />;
 }
 

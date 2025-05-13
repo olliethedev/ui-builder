@@ -1,7 +1,7 @@
-/** 
+/**
  * Learn more about the UI Builder:
- * https://github.com/olliethedev/ui-builder 
-*/
+ * https://github.com/olliethedev/ui-builder
+ */
 
 "use client";
 
@@ -26,15 +26,30 @@ import {
   ComponentLayer,
 } from "@/components/ui/ui-builder/types";
 import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
+import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
 
+/**
+ * TabsContentConfig defines the structure for the content of the page config panel tabs.
+ */
+export interface TabsContentConfig {
+  layers: { title: string; content: React.ReactNode };
+  appearance: { title: string; content: React.ReactNode };
+}
+
+/**
+ * PanelConfig defines the configuration for the main panels in the UI Builder.
+ */
 interface PanelConfig {
   navBar?: React.ReactNode;
   pageConfigPanel?: React.ReactNode;
+  pageConfigPanelTabsContent?: TabsContentConfig;
   editorPanel?: React.ReactNode;
   propsPanel?: React.ReactNode;
-  tailwindThemePanel?: React.ReactNode;
 }
 
+/**
+ * UIBuilderProps defines the props for the UIBuilder component.
+ */
 interface UIBuilderProps {
   initialLayers?: ComponentLayer[];
   onChange?: (pages: ComponentLayer[]) => void;
@@ -43,6 +58,12 @@ interface UIBuilderProps {
   persistLayerStore?: boolean;
 }
 
+/**
+ * UIBuilder component manages the initialization of editor and layer stores, and renders the serializable layout.
+ *
+ * @param {UIBuilderProps} props - The props for the UIBuilder component.
+ * @returns {JSX.Element} The UIBuilder component wrapped in a ThemeProvider.
+ */
 const UIBuilder = ({
   initialLayers,
   onChange,
@@ -53,17 +74,22 @@ const UIBuilder = ({
   const layerStore = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
 
-
   const [editorStoreInitialized, setEditorStoreInitialized] = useState(false);
   const [layerStoreInitialized, setLayerStoreInitialized] = useState(false);
 
-  // Memoize the default panel configuration.
-  // The dependency array is empty because defaultPanelConfig is called with a constant 'true'.
-  const memoizedDefaultPanelConfig = useMemo(() => defaultPanelConfig(true), []);
+  const memoizedDefaultTabsContent = useMemo(() => defaultConfigTabsContent(), []);
 
-  // Use user-provided config if available, otherwise use the memoized default.
-  const currentPanelConfig = userPanelConfig || memoizedDefaultPanelConfig;
+  const currentPanelConfig = useMemo(() => {
+    const effectiveTabsContent = userPanelConfig?.pageConfigPanelTabsContent || memoizedDefaultTabsContent;
+    const defaultPanels = getDefaultPanelConfigValues(true, effectiveTabsContent);
 
+    return {
+      navBar: userPanelConfig?.navBar ?? defaultPanels.navBar,
+      pageConfigPanel: userPanelConfig?.pageConfigPanel ?? defaultPanels.pageConfigPanel,
+      editorPanel: userPanelConfig?.editorPanel ?? defaultPanels.editorPanel,
+      propsPanel: userPanelConfig?.propsPanel ?? defaultPanels.propsPanel,
+    };
+  }, [userPanelConfig, memoizedDefaultTabsContent]);
 
   // Effect 1: Initialize Editor Store with registry and page form props
   useEffect(() => {
@@ -71,12 +97,16 @@ const UIBuilder = ({
       editorStore.initialize(componentRegistry, persistLayerStore);
       setEditorStoreInitialized(true);
     }
-  }, [editorStore, componentRegistry, editorStoreInitialized, persistLayerStore]);
+  }, [
+    editorStore,
+    componentRegistry,
+    editorStoreInitialized,
+    persistLayerStore,
+  ]);
 
   // Effect 2: Conditionally initialize Layer Store *after* Editor Store is initialized
   useEffect(() => {
     if (layerStore && editorStore) {
-      // Only initialize layer store if initial layers (pages) are provided, else empty div page is the root component
       if (initialLayers && !layerStoreInitialized) {
         layerStore.initialize(initialLayers);
         setLayerStoreInitialized(true);
@@ -96,11 +126,9 @@ const UIBuilder = ({
 
   // Effect 3: Handle onChange callback when pages change
   useEffect(() => {
-    // Ensure onChange exists and layer store is initialized with pages
     if (onChange && layerStore?.pages && layerStoreInitialized) {
       onChange(layerStore.pages);
     }
-    // Depend on the pages array itself for changes
   }, [layerStore?.pages, onChange, layerStoreInitialized]);
 
   const isLoading = !layerStoreInitialized || !editorStoreInitialized;
@@ -197,23 +225,65 @@ function MainLayout({ panelConfig }: { panelConfig: PanelConfig }) {
   );
 }
 
-export function PageConfigPanel({ className }: { className: string }) {
+/**
+ * PageConfigPanel renders a tabbed panel for page configuration, including layers and appearance tabs.
+ *
+ * @param {object} props
+ * @param {string} props.className - The class name for the panel container.
+ * @param {TabsContentConfig} props.tabsContent - The content for the tabs.
+ * @returns {JSX.Element} The page config panel with tabs.
+ */
+export function PageConfigPanel({
+  className,
+  tabsContent,
+}: {
+  className: string;
+  tabsContent: { layers: { title: string; content: React.ReactNode }; appearance: { title: string; content: React.ReactNode } };
+}) {
+  const { layers, appearance } = tabsContent;
   return (
     <Tabs
       data-testid="page-config-panel"
       defaultValue="layers"
       className={className}
     >
-      <TabsList className="grid grid-cols-1 mx-4">
-        <TabsTrigger value="layers">Layers</TabsTrigger>
+      <TabsList className="grid grid-cols-2 mx-4">
+        <TabsTrigger value="layers">{layers.title}</TabsTrigger>
+        <TabsTrigger value="appearance">{appearance.title}</TabsTrigger>
       </TabsList>
       <TabsContent value="layers">
-        <LayersPanel />
+        {layers.content}
+      </TabsContent>
+      <TabsContent value="appearance">
+        {appearance.content}
       </TabsContent>
     </Tabs>
   );
 }
 
+/**
+ * Returns the default tab content configuration for the page config panel.
+ *
+ * @returns {TabsContentConfig} The default tabs content configuration.
+ */
+export function defaultConfigTabsContent() {
+  return {
+    layers: { title: "Layers", content: <LayersPanel /> },
+    appearance: { title: "Appearance", content: (
+      <div className="py-2 px-4 gap-2 flex flex-col overflow-y-auto overflow-x-auto">
+        <ConfigPanel />
+        <TailwindThemePanel />
+        </div>
+      ),
+    }
+  }
+}
+
+/**
+ * LoadingSkeleton renders a skeleton UI while the builder is initializing.
+ *
+ * @returns {JSX.Element} The loading skeleton.
+ */
 export function LoadingSkeleton() {
   return (
     <div
@@ -230,13 +300,18 @@ export function LoadingSkeleton() {
   );
 }
 
-export default UIBuilder;
-
-export const defaultPanelConfig = (useCanvas: boolean) => {
+/**
+ * Returns the default panel configuration values for the UI Builder.
+ *
+ * @param {boolean} useCanvas - Whether to use the canvas editor.
+ * @param {TabsContentConfig} tabsContent - The content for the page config panel tabs.
+ * @returns {PanelConfig} The default panel configuration.
+ */
+export const getDefaultPanelConfigValues = (useCanvas: boolean, tabsContent: TabsContentConfig) => {
   return {
     navBar: <NavBar useCanvas={useCanvas} />,
     pageConfigPanel: (
-      <PageConfigPanel className="pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />
+      <PageConfigPanel className="pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" tabsContent={tabsContent} />
     ),
     editorPanel: (
       <EditorPanel
@@ -245,7 +320,9 @@ export const defaultPanelConfig = (useCanvas: boolean) => {
       />
     ),
     propsPanel: (
-      <PropsPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" pagePropsForm={<TailwindThemePanel />} />
-    )
+      <PropsPanel className="px-4 pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" />
+    ),
   };
 };
+
+export default UIBuilder;

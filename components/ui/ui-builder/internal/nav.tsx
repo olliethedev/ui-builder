@@ -79,7 +79,8 @@ interface NavBarProps {
 }
 
 export function NavBar({ useCanvas }: NavBarProps) {
-  const { selectedPageId, findLayerById } = useLayerStore();
+  const selectedPageId = useLayerStore((state) => state.selectedPageId);
+  const findLayerById = useLayerStore((state) => state.findLayerById);
   const componentRegistry = useEditorStore((state) => state.registry);
   const { undo, redo, futureStates, pastStates } =
     useLayerStore.temporal.getState();
