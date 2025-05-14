@@ -7,18 +7,14 @@ import {
   findAllParentLayersRecursive,
   createId,
   hasLayerChildren,
-  isPageLayer,
   duplicateWithNewIdsAndName,
-  migrateV1ToV2
+  migrateV1ToV2,
+  migrateV2ToV3
 } from "../lib/ui-builder/store/layer-utils";
-import {
-  Layer,
-  PageLayer,
-  ComponentLayer,
-} from "../lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 describe("Layer Utils", () => {
-  let mockPages: PageLayer[];
+  let mockPages: ComponentLayer[];
 
   beforeEach(() => {
     mockPages = [
@@ -56,7 +52,7 @@ describe("Layer Utils", () => {
 
   describe("visitLayer", () => {
     it("should apply visitor function to all layers", () => {
-      const visitor = jest.fn((layer: Layer, parent: Layer | null) => layer);
+      const visitor = jest.fn((layer: ComponentLayer, parent: ComponentLayer | null) => layer);
       visitLayer(mockPages[0], null, visitor);
 
       // Expect visitor to be called for each layer including the page
@@ -73,7 +69,7 @@ describe("Layer Utils", () => {
     });
 
     it("should modify layers correctly", () => {
-      const visitor = (layer: Layer, parent: Layer | null): Layer => {
+      const visitor = (layer: ComponentLayer, parent: ComponentLayer | null): ComponentLayer => {
         if (layer.type === "button") {
           return {
             ...layer,
@@ -85,14 +81,14 @@ describe("Layer Utils", () => {
         }
         return layer;
       };
-      const updatedPages = visitLayer(mockPages[0], null, visitor) as PageLayer;
+      const updatedPages = visitLayer(mockPages[0], null, visitor) as ComponentLayer;
 
-      const updatedButton = updatedPages.children!.find(
+      const updatedButton = (updatedPages.children as ComponentLayer[]).find(
         (layer) => layer.id === "layer1"
       ) as ComponentLayer;
       expect(updatedButton.props.label).toBe("Updated Label");
 
-      const textLayer = updatedPages.children!.find(
+      const textLayer = (updatedPages.children as ComponentLayer[]).find(
         (layer) => layer.id === "layer2"
       ) as ComponentLayer;
       expect(textLayer.children).toBe("Hello World"); // Unchanged
@@ -125,9 +121,9 @@ describe("Layer Utils", () => {
 
       const page1 = updatedLayers.find(
         (page) => page.id === "page1"
-      ) as PageLayer;
+      ) as ComponentLayer;
       expect(page1.children).toHaveLength(3);
-      const addedLayer = page1.children.find((layer) => layer.id === "layer3");
+      const addedLayer = (page1.children as ComponentLayer[]).find((layer) => layer.id === "layer3");
       expect(addedLayer).toBeDefined();
       expect(addedLayer?.type).toBe("input");
     });
@@ -144,9 +140,9 @@ describe("Layer Utils", () => {
 
       const page1 = updatedLayers.find(
         (page) => page.id === "page1"
-      ) as PageLayer;
+      ) as ComponentLayer;
       expect(page1.children).toHaveLength(3);
-      expect(page1.children[1].id).toBe("layer3");
+      expect((page1.children as ComponentLayer[])[1].id).toBe("layer3");
     });
 
     it("should append the new layer if position is undefined", () => {
@@ -161,9 +157,9 @@ describe("Layer Utils", () => {
 
       const page1 = updatedLayers.find(
         (page) => page.id === "page1"
-      ) as PageLayer;
+      ) as ComponentLayer;
       expect(page1.children).toHaveLength(3);
-      expect(page1.children[2].id).toBe("layer3");
+      expect((page1.children as ComponentLayer[])[2].id).toBe("layer3");
     });
 
     it("should handle negative positions by inserting at the beginning", () => {
@@ -178,9 +174,9 @@ describe("Layer Utils", () => {
 
       const page1 = updatedLayers.find(
         (page) => page.id === "page1"
-      ) as PageLayer;
+      ) as ComponentLayer;
       expect(page1.children).toHaveLength(3);
-      expect(page1.children[0].id).toBe("layer0");
+      expect((page1.children as ComponentLayer[])[0].id).toBe("layer0");
     });
 
     it("should append if position exceeds the number of children", () => {
@@ -195,9 +191,9 @@ describe("Layer Utils", () => {
 
       const page1 = updatedLayers.find(
         (page) => page.id === "page1"
-      ) as PageLayer;
+      ) as ComponentLayer;
       expect(page1.children).toHaveLength(3);
-      expect(page1.children[2].id).toBe("layer4");
+      expect((page1.children as ComponentLayer[])[2].id).toBe("layer4");
     });
   });
 
@@ -217,7 +213,9 @@ describe("Layer Utils", () => {
       const page = findLayerRecursive(mockPages, "page2");
       expect(page).toBeDefined();
       expect(page?.type).toBe("_page_");
-      expect(isPageLayer(page!)).toBe(true);
+      const isPage = mockPages.find(page => page.id === "page2");
+      expect(isPage).toBeDefined();
+      expect(isPage?.type).toBe("_page_");
     });
   });
 
@@ -256,33 +254,9 @@ describe("Layer Utils", () => {
     });
   });
 
-  describe("isPageLayer", () => {
-    it("should return true for page layers", () => {
-      const layer: PageLayer = {
-        id: "page3",
-        type: "_page_",
-        name: "Page 3",
-        props: { className: "page3-class" },
-        children: [], // Ensure children is present
-      };
-      expect(isPageLayer(layer)).toBe(true);
-    });
-
-    it("should return false for non-page layers", () => {
-      const layer: ComponentLayer = {
-        id: "comp3",
-        type: "checkbox",
-        name: "Checkbox Layer",
-        props: { checked: true },
-        children: [],
-      };
-      expect(isPageLayer(layer)).toBe(false);
-    });
-  });
-
   describe("findAllParentLayersRecursive", () => {
     it("should find all parent layers for a given layer", () => {
-      const layers: Layer[] = [
+      const layers: ComponentLayer[] = [
         {
           id: "page1",
           type: "_page_",
@@ -327,7 +301,7 @@ describe("Layer Utils", () => {
     });
 
     it("should return parents in order from immediate parent up", () => {
-      const layers: Layer[] = [
+      const layers: ComponentLayer[] = [
         {
           id: "page1",
           type: "_page_",
@@ -373,7 +347,7 @@ describe("Layer Utils", () => {
     });
 
     it("should find multiple parent layers correctly", () => {
-      const layers: Layer[] = [
+      const layers: ComponentLayer[] = [
         {
           id: "page1",
           type: "_page_",
@@ -417,7 +391,7 @@ describe("Layer Utils", () => {
 
   describe("duplicateWithNewIdsAndName", () => {
     it("should create a duplicate with a new ID and name suffix by default", () => {
-      const originalLayer: Layer = {
+      const originalLayer: ComponentLayer = {
         id: "layer1",
         type: "button",
         name: "Button Layer",
@@ -436,7 +410,7 @@ describe("Layer Utils", () => {
     });
 
     it("should not append name suffix when addCopySuffix is false", () => {
-      const originalLayer: Layer = {
+      const originalLayer: ComponentLayer = {
         id: "layer2",
         type: "span",
         name: "Text Layer",
@@ -451,7 +425,7 @@ describe("Layer Utils", () => {
     });
 
     it("should duplicate nested children with new IDs and name suffixes", () => {
-      const originalLayer: Layer = {
+      const originalLayer: ComponentLayer = {
         id: "layer3",
         type: "container",
         name: "Container Layer",
@@ -474,7 +448,7 @@ describe("Layer Utils", () => {
         ],
       };
 
-      const duplicatedLayer = duplicateWithNewIdsAndName(originalLayer);
+      const duplicatedLayer = duplicateWithNewIdsAndName(originalLayer, true);
 
       expect(duplicatedLayer.id).not.toBe(originalLayer.id);
       expect(duplicatedLayer.name).toBe(`${originalLayer.name} (Copy)`);
@@ -486,7 +460,7 @@ describe("Layer Utils", () => {
         duplicatedLayer.children.forEach((child, index) => {
           expect(child.id).not.toBe((originalLayer.children![index] as ComponentLayer).id);
           expect(child.name).toBe(
-          `${(originalLayer.children![index] as ComponentLayer).name} (Copy)`
+          `${(originalLayer.children![index] as ComponentLayer).name}`
         );
         expect(child.type).toBe((originalLayer.children![index] as ComponentLayer).type);
         expect(child.props).toEqual((originalLayer.children![index] as ComponentLayer).props);
@@ -496,7 +470,7 @@ describe("Layer Utils", () => {
     });
 
     it("should handle layers without a name", () => {
-      const originalLayer: Layer = {
+      const originalLayer: ComponentLayer = {
         id: "layer4",
         type: "checkbox",
         props: { checked: false },
@@ -510,7 +484,7 @@ describe("Layer Utils", () => {
     });
 
     it("should generate different IDs for each duplicate", () => {
-      const originalLayer: Layer = {
+      const originalLayer: ComponentLayer = {
         id: "layer5",
         type: "icon",
         name: "Icon Layer",
@@ -531,7 +505,7 @@ describe("Layer Utils", () => {
     });
 
     it("should recursively duplicate children when they have their own children", () => {
-      const originalLayer: Layer = {
+      const originalLayer: ComponentLayer = {
         id: "layer6",
         type: "container",
         name: "Parent Container",
@@ -563,7 +537,7 @@ describe("Layer Utils", () => {
       const duplicatedChild = duplicatedLayer.children![0] as ComponentLayer;
       expect(duplicatedChild.id).not.toBe((originalLayer.children![0] as ComponentLayer).id);
       expect(duplicatedChild.name).toBe(
-        `${(originalLayer.children![0] as ComponentLayer).name} (Copy)`
+        `${(originalLayer.children![0] as ComponentLayer).name}`
       );
 
       const duplicatedDeepChild = duplicatedChild.children![0] as ComponentLayer;
@@ -571,12 +545,12 @@ describe("Layer Utils", () => {
         ((originalLayer.children![0] as ComponentLayer).children![0] as ComponentLayer).id
       );
       expect(duplicatedDeepChild.name).toBe(
-        `${((originalLayer.children![0] as ComponentLayer).children![0] as ComponentLayer).name} (Copy)`
+        `${((originalLayer.children![0] as ComponentLayer).children![0] as ComponentLayer).name}`
       );
     });
 
     it("should preserve the structure and properties of the original layers", () => {
-      const originalLayer: Layer = {
+      const originalLayer: ComponentLayer = {
         id: "layer7",
         type: "form",
         name: "Form Layer",
@@ -648,7 +622,7 @@ describe("Layer Utils", () => {
       const migratedPage = migratedState.pages[0];
 
       expect(migratedPage.children).toHaveLength(2);
-      const migratedTextLayer = migratedPage.children.find((layer: Layer) => layer.id === "layer1");
+      const migratedTextLayer = (migratedPage.children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1");
       expect(migratedTextLayer).toBeDefined();
       expect(migratedTextLayer?.type).toBe("span");
       expect(migratedTextLayer?.children).toBe("Sample text");
@@ -679,7 +653,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV1ToV2(persistedState);
 
-      const migratedTextLayer = migratedState.pages[0].children.find((layer: Layer) => layer.id === "layer1");
+      const migratedTextLayer = (migratedState.pages[0].children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1");
       expect(migratedTextLayer).toBeDefined();
       expect(migratedTextLayer?.type).toBe("Markdown");
       expect(migratedTextLayer?.children).toBe("# Heading");
@@ -708,7 +682,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV1ToV2(persistedState);
 
-      const migratedTextLayer = migratedState.pages[0].children.find((layer: Layer) => layer.id === "layer1");
+      const migratedTextLayer = (migratedState.pages[0].children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1");
       expect(migratedTextLayer).toBeDefined();
       expect(migratedTextLayer?.type).toBe("span");
       expect(migratedTextLayer?.children).toBe("No name layer");
@@ -738,7 +712,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV1ToV2(persistedState);
 
-      const migratedButtonLayer = migratedState.pages[0].children.find((layer: Layer) => layer.id === "layer1");
+      const migratedButtonLayer = (migratedState.pages[0].children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1");
       expect(migratedButtonLayer).toBeDefined();
       expect(migratedButtonLayer?.type).toBe("button");
       expect(migratedButtonLayer?.name).toBe("Button Layer");
@@ -777,7 +751,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV1ToV2(persistedState);
 
-      const migratedNestedTextLayer = (migratedState.pages[0].children[0].children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1-1");
+      const migratedNestedTextLayer = ((migratedState.pages[0].children as ComponentLayer[])[0].children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1-1");
       expect(migratedNestedTextLayer).toBeDefined();
       expect(migratedNestedTextLayer?.type).toBe("span");
       expect(migratedNestedTextLayer?.children).toBe("Nested text");
@@ -810,6 +784,151 @@ describe("Layer Utils", () => {
       migrateV1ToV2(persistedState);
 
       expect(persistedState).toEqual(persistedStateCopy);
+    });
+  });
+
+  describe("migrateV2ToV3", () => {
+    it("should migrate _page_ layers to div layers", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "_page_",
+            name: "Page 1",
+            props: { className: "page-class" },
+            children: [
+              {
+                id: "layer1",
+                type: "button",
+                name: "Button Layer",
+                props: { label: "Click Me" },
+                children: [],
+              },
+            ],
+          },
+          {
+            id: "page2",
+            type: "_page_",
+            name: "Page 2",
+            props: { className: "page2-class" },
+            children: [],
+          },
+        ],
+        selectedPageId: "page1",
+        selectedLayerId: null,
+        // Add other potential V2 state properties if needed
+      };
+
+      const migratedState = migrateV2ToV3(persistedState);
+
+      expect(migratedState.pages).toHaveLength(2);
+
+      // Check Page 1
+      const migratedPage1 = migratedState.pages.find(
+        (p) => p.id === "page1"
+      );
+      expect(migratedPage1).toBeDefined();
+      expect(migratedPage1?.type).toBe("div");
+      expect(migratedPage1?.name).toBe("Page 1");
+      expect(migratedPage1?.props).toEqual({ className: "page-class" });
+      expect(migratedPage1?.children).toHaveLength(1);
+      expect((migratedPage1?.children as ComponentLayer[])[0].type).toBe(
+        "button"
+      ); // Child should be untouched
+
+      // Check Page 2
+      const migratedPage2 = migratedState.pages.find(
+        (p) => p.id === "page2"
+      );
+      expect(migratedPage2).toBeDefined();
+      expect(migratedPage2?.type).toBe("div");
+      expect(migratedPage2?.name).toBe("Page 2");
+      expect(migratedPage2?.props).toEqual({ className: "page2-class" });
+      expect(migratedPage2?.children).toEqual([]);
+
+      // Check other state properties (should be preserved)
+      expect(migratedState.selectedPageId).toBe("page1");
+      expect(migratedState.selectedLayerId).toBeNull();
+    });
+
+    it("should not modify layers that are already divs or other types", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "div", // Already a div
+            name: "Page 1",
+            props: { className: "page-class" },
+            children: [
+              {
+                id: "layer1",
+                type: "button",
+                name: "Button Layer",
+                props: { label: "Click Me" },
+                children: [],
+              },
+            ],
+          },
+        ],
+        selectedPageId: "page1",
+        selectedLayerId: null,
+      };
+
+      const originalStateCopy = JSON.parse(JSON.stringify(persistedState));
+      const migratedState = migrateV2ToV3(persistedState);
+
+      expect(migratedState).toEqual(originalStateCopy);
+    });
+
+    it("should handle state with no _page_ layers", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "div",
+            name: "Page 1",
+            props: {},
+            children: [],
+          },
+        ],
+        selectedPageId: "page1",
+        selectedLayerId: null,
+      };
+
+      const originalStateCopy = JSON.parse(JSON.stringify(persistedState));
+      const migratedState = migrateV2ToV3(persistedState);
+
+      expect(migratedState).toEqual(originalStateCopy);
+    });
+
+    it("should preserve all other state properties", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "p1",
+            type: "_page_",
+            name: "Old Page",
+            props: {},
+            children: [],
+          },
+        ],
+        selectedPageId: "p1",
+        selectedLayerId: "someLayer",
+        someOtherV2Property: { nested: true, value: 123 },
+      };
+
+      const migratedState = migrateV2ToV3(persistedState);
+
+      expect(migratedState.pages[0].type).toBe("div"); // Check migration happened
+      expect(migratedState.selectedPageId).toBe("p1");
+      expect(migratedState.selectedLayerId).toBe("someLayer");
+      expect(
+        (migratedState as unknown as { someOtherV2Property: unknown })
+          .someOtherV2Property
+      ).toEqual({
+        nested: true,
+        value: 123,
+      });
     });
   });
 });

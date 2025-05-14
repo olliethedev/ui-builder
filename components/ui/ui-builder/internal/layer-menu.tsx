@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { ChevronRight, Plus, Trash, Copy } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import {
-  componentRegistry,
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { cn } from "@/lib/utils";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
@@ -34,6 +34,8 @@ export const LayerMenu: React.FC<MenuProps> = ({
     state.findLayerById(layerId)
   );
 
+  const componentRegistry = useEditorStore((state) => state.registry);
+
   //const hasChildrenInSchema = schema.shape.children !== undefined;
   const hasChildrenInSchema =
     selectedLayer &&
@@ -53,7 +55,7 @@ export const LayerMenu: React.FC<MenuProps> = ({
         <span className={cn("h-5 group flex items-center rounded-bl-full rounded-r-full bg-blue-500/85 p-0 text-sm font-semibold text-secondary-foreground shadow-sm ring-1 ring-inset ring-blue-500 hover:bg-secondary/85 hover:h-10 hover:ring-2 transition-all duration-200 ease-in-out overflow-hidden cursor-pointer hover:cursor-auto", popoverOpen ? "h-10 ring-2" : "")}>
           <ChevronRight className={cn("h-5 w-5 text-secondary-foreground group-hover:size-8 transition-all duration-200 ease-in-out group-hover:opacity-30", popoverOpen ? "size-8 opacity-30" : "")} />
 
-          <div className={cn("overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out", popoverOpen ? "max-w-xs" : "")}>
+          <div className={cn("flex flex-nowrap overflow-hidden max-w-0 group-hover:max-w-xs transition-all duration-200 ease-in-out", popoverOpen ? "max-w-xs" : "")}>
             {hasChildrenInSchema && (
               <AddComponentsPopover
                 parentLayerId={layerId}

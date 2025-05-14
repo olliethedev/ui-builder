@@ -1,32 +1,37 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PageLayer, Layer, isPageLayer, componentRegistry } from "@/lib/ui-builder/store/layer-store";
 import template from "lodash.template";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
+import { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
 
-export const pageLayerToCode = (page: PageLayer) => {
+export const pageLayerToCode = (page: ComponentLayer, componentRegistry: ComponentRegistry) => {
   const layers = page.children;
   const { mode, colorTheme, borderRadius, ...restOfProps } = page.props;
   const pageProps = generatePropsString(restOfProps);
   const imports = new Set<string>();
 
-  const collectImports = (layer: Layer) => {
-    if (hasLayerChildren(layer) && !isPageLayer(layer)) {
-      const componentDefinition = componentRegistry[layer.type];
-      if (layer.type && componentDefinition && componentDefinition.from) {
-        imports.add(
-          `import { ${ layer.type } } from "${ componentDefinition.from }";`
+  const collectImports = (layer: ComponentLayer) => {
+
+    const componentDefinition = componentRegistry[layer.type];
+    if (componentDefinition && componentDefinition.from) {
+      imports.add(
+        createFromString(componentDefinition.from, layer.type, componentDefinition.isFromDefaultExport)
         );
-      }
-      if (layer.children) {
+      if (hasLayerChildren(layer)) {
         layer.children.forEach(collectImports);
       }
     }
   };
 
-  layers.forEach(collectImports);
+  let code = "";
 
-  const code = layers.map((layer) => generateLayerCode(layer, 1)).join("\n");
+  if (Array.isArray(layers)) {
+    layers.forEach(collectImports);
+    code = layers.map((layer) => generateLayerCode(layer, 1)).join("\n");
+  } else {
+    code = `{"${ layers }"}`;
+  }
+
   const importsString = Array.from(imports).join("\n");
 
   const compiled = template(reactComponentTemplate);
@@ -43,7 +48,7 @@ export const pageLayerToCode = (page: PageLayer) => {
 
 };
 
-export const generateLayerCode = (layer: Layer, indent = 0): string => {
+export const generateLayerCode = (layer: ComponentLayer, indent = 0): string => {
 
   const indentation = "  ".repeat(indent);
 
@@ -55,7 +60,7 @@ export const generateLayerCode = (layer: Layer, indent = 0): string => {
   }
   //else if children is a string, then we need render children as a text node
   else if (typeof layer.children === "string") {
-    childrenCode = `{"${ layer.children }"}`;
+    childrenCode = `${ indentation }${"  "}{${JSON.stringify(layer.children)}}`;
   }
 
   if (childrenCode) {
@@ -99,3 +104,10 @@ const Page = () => {
 
 export default Page;
 `;
+
+const createFromString = (from: string, layerType: string, isFromDefaultExport?: boolean) => {
+  if (isFromDefaultExport) {
+    return `import ${ layerType } from "${ from }";`;
+  }
+  return `import { ${ layerType } } from "${ from }";`;
+};

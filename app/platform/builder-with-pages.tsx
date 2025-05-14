@@ -1,13 +1,14 @@
+"use client"
+
 import UIBuilder from "@/components/ui/ui-builder";
-import { PageLayer } from "@/lib/ui-builder/store/layer-store";
+import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
+import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
-export const metadata = {
-  title: "UI Builder",
-};
 
-const initialLayers: PageLayer[] = [{
+const initialLayers: ComponentLayer[] = [{
   "id": "1",
-  "type": "_page_",
+  "type": "div",
   "name": "Page 1",
   "props": {
     "className": "flex flex-col gap-6 bg-background px-4",
@@ -36,11 +37,13 @@ const initialLayers: PageLayer[] = [{
       "--chart-3": "197 37% 24%",
       "--chart-4": "43 74% 66%",
       "--chart-5": "27 87% 67%",
-      "--radius": "1rem"
+      "--radius": "0.5rem",
+      "color": "hsl(240 10% 3.9%)",
+      "borderColor": "hsl(240 5.9% 90%)"
     },
     "mode": "light",
     "colorTheme": "green",
-    "borderRadius": 1
+    "borderRadius": 0.5
   },
   "children": [
     {
@@ -206,7 +209,7 @@ const initialLayers: PageLayer[] = [{
           "children": [
             {
               "type": "span",
-              "children": "No-Code UI Builder for React Developers",
+              "children": "No-Code UI Builder for React Developers!",
               "id": "1MnLSMe",
               "name": "Text",
               "props": {
@@ -978,10 +981,12 @@ const initialLayers: PageLayer[] = [{
   ]
 }]
 
-export default function Page() {
-  return (
-    <main className="flex flex-col h-dvh">
-      <UIBuilder initialLayers={initialLayers} />
-    </main>
-  );
-}
+export const BuilderWithPages = () => {
+  return <UIBuilder 
+    initialLayers={initialLayers}
+    componentRegistry={{
+        ...complexComponentDefinitions,
+        ...primitiveComponentDefinitions,
+    }}
+    />;
+};

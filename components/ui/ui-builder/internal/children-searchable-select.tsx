@@ -4,13 +4,12 @@ import React from "react";
 import { X as XIcon, ChevronsUpDown } from "lucide-react";
 import {
   useLayerStore,
-  Layer,
 } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
-import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
 
 interface ChildrenSearchableSelectProps { 
   layer: ComponentLayer;
@@ -61,6 +60,6 @@ export function ChildrenSearchableSelect({ layer, onChange }: ChildrenSearchable
     );
   }
 
-  const nameForLayer = (layer: Layer) => {
+  const nameForLayer = (layer: ComponentLayer) => {
     return layer.name || layer.type.replaceAll("_","");
   };

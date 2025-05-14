@@ -28,7 +28,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useLayerStore, PageLayer } from "@/lib/ui-builder/store/layer-store";
+import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { useTheme } from "next-themes";
 import {
@@ -60,6 +60,7 @@ import {
   EditorStore,
   useEditorStore,
 } from "@/lib/ui-builder/store/editor-store";
+import { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
 import {
   Tooltip,
   TooltipContent,
@@ -78,11 +79,13 @@ interface NavBarProps {
 }
 
 export function NavBar({ useCanvas }: NavBarProps) {
-  const { selectedPageId, findLayerById } = useLayerStore();
+  const selectedPageId = useLayerStore((state) => state.selectedPageId);
+  const findLayerById = useLayerStore((state) => state.findLayerById);
+  const componentRegistry = useEditorStore((state) => state.registry);
   const { undo, redo, futureStates, pastStates } =
     useLayerStore.temporal.getState();
 
-  const page = findLayerById(selectedPageId) as PageLayer;
+  const page = findLayerById(selectedPageId) as ComponentLayer;
 
   const canUndo = !!pastStates.length;
   const canRedo = !!futureStates.length;
@@ -187,6 +190,7 @@ export function NavBar({ useCanvas }: NavBarProps) {
           isOpen={isPreviewModalOpen}
           onOpenChange={setIsPreviewModalOpen}
           page={page}
+          componentRegistry={componentRegistry}
         />
         <CodeDialog
           isOpen={isExportModalOpen}
@@ -365,13 +369,15 @@ const ResponsiveDropdown: React.FC<ResponsiveDropdownProps> = ({
 interface PreviewDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  page: PageLayer;
+  page: ComponentLayer;
+  componentRegistry: ComponentRegistry;
 }
 
 const PreviewDialog: React.FC<PreviewDialogProps> = ({
   isOpen,
   onOpenChange,
   page,
+  componentRegistry,
 }) => {
   useKeyboardShortcuts([
     {
@@ -398,6 +404,7 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
         <LayerRenderer
           className="w-full h-full flex flex-col overflow-x-hidden"
           page={page}
+          componentRegistry={componentRegistry}
         />
       </DialogContentWithZIndex>
     </Dialog>

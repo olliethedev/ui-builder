@@ -4,14 +4,13 @@ import React, { useCallback } from "react";
 import { z } from "zod";
 import {
   useLayerStore,
-  PageLayer,
-  Layer,
 } from "@/lib/ui-builder/store/layer-store";
 import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
 import { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
 import ClassNameField from "@/components/ui/ui-builder/internal/classname-field";
 import { addDefaultValues } from "@/lib/ui-builder/store/schema-utils";
+import { ComponentLayer } from "@/components/ui/ui-builder/types";
 
 export const ConfigPanel = () => {
   const {
@@ -25,7 +24,7 @@ export const ConfigPanel = () => {
 
   
 
-  const selectedLayer = findLayerById(selectedPageId) as PageLayer;
+  const selectedLayer = findLayerById(selectedPageId) as ComponentLayer;
 
   const handleDeleteLayer = useCallback(
     (layerId: string) => {
@@ -44,7 +43,7 @@ export const ConfigPanel = () => {
     (
       id: string,
       props: Record<string, any>,
-      rest?: Omit<Layer, "props" | "children">
+      rest?: Omit<ComponentLayer, "props" | "children">
     ) => {
       updateLayer(id, props, rest);
     },
@@ -63,13 +62,13 @@ export const ConfigPanel = () => {
 };
 
 interface PageLayerFormProps {
-  selectedLayer: PageLayer;
+  selectedLayer: ComponentLayer;
   removeLayer: (id: string) => void;
   duplicateLayer: (id: string) => void;
   updateLayerProps: (
     id: string,
     props: Record<string, any>,
-    rest?: Omit<Layer, "props" | "children">
+    rest?: Omit<ComponentLayer, "props" | "children">
   ) => void;
   allowDelete: boolean;
 }
@@ -116,7 +115,6 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
             value: selectedLayer.name,
             // defaultValue: selectedLayer.name,
           },
-          description: "The name of the page.",
         },
         className: {
           fieldType: ({

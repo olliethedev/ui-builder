@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
 import isDeepEqual from "fast-deep-equal";
-import { Layer, useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { cn } from "@/lib/utils";
 import {
   findAllParentLayersRecursive,
@@ -26,19 +27,23 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
   const {
     selectedPageId,
     selectedLayerId,
-    findLayersForPageId,
+    findLayerById,
     updateLayer,
     selectLayer,
     removeLayer,
     duplicateLayer,
   } = useLayerStore();
 
-  const layers = findLayersForPageId(selectedPageId);
+  const pageLayer = findLayerById(selectedPageId);
+
+  if (!pageLayer) {
+    return null;
+  }
 
   return (
     <LayersTree
       className={className}
-      layers={layers}
+      layers={[pageLayer]}
       selectedPageId={selectedPageId}
       selectedLayerId={selectedLayerId}
       updateLayer={updateLayer}
@@ -51,13 +56,13 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
 
 interface LayersTreeProps {
   className?: string;
-  layers: Layer[];
+  layers: ComponentLayer[];
   selectedPageId: string;
   selectedLayerId: string | null;
   updateLayer: (
     layerId: string,
     newProps: Record<string, any>,
-    layerRest?: Partial<Omit<Layer, "props">>
+    layerRest?: Partial<Omit<ComponentLayer, "props">>
   ) => void;
   selectLayer: (layerId: string) => void;
   removeLayer: (layerId: string) => void;
@@ -79,48 +84,74 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
 
     const prevSelectedLayerId = useRef(selectedLayerId);
 
-    const { renderTree, scrollToNode } = useHeTree({
+    const handleNodeToggle = useCallback((id: Id, open: boolean) => {
+      setOpenIds((prev) => {
+        const newSet = new Set(prev);
+        if (open) {
+          newSet.add(id);
+        } else {
+          newSet.delete(id);
+        }
+        return newSet;
+      });
+    }, []);
+
+    const handleChange = useCallback((newLayers: unknown) => {
+      if (Array.isArray(newLayers) && newLayers.length > 0) {
+        const updatedPageLayer = newLayers[0] as ComponentLayer;
+        const updatedChildren = hasLayerChildren(updatedPageLayer) ? updatedPageLayer.children : [];
+        updateLayer(selectedPageId, {}, { children: updatedChildren });
+      } else {
+        console.error("LayersTree onChange: Invalid newLayers structure received", newLayers);
+      }
+    }, [updateLayer, selectedPageId]);
+
+    const handleDragOpen = useCallback((stat: { node: ComponentLayer; id: Id; }) => {
+      if (hasLayerChildren(stat.node)) {
+        handleNodeToggle(stat.id, true);
+      }
+    }, [handleNodeToggle]);
+
+    const canNodeDrop = useCallback((layer: { node: ComponentLayer; }) => {
+      const isDroppable = hasLayerChildren(layer.node);
+      return isDroppable;
+    }, []);
+
+    const renderNode = useCallback(({ stat, attrs, isPlaceholder }: any) => {
+      return isPlaceholder ? (
+        <TreeRowPlaceholder
+          key={`placeholder-${attrs.key}`}
+          nodeAttributes={attrs}
+        />
+      ) : (
+        <TreeRowNode
+          key={attrs.key}
+          nodeAttributes={attrs}
+          node={stat.node}
+          id={stat.id}
+          open={stat.open}
+          draggable={stat.draggable}
+          onToggle={handleNodeToggle}
+          level={stat.level}
+          selectedLayerId={selectedLayerId}
+          selectLayer={selectLayer}
+          removeLayer={removeLayer}
+          duplicateLayer={duplicateLayer}
+          updateLayer={updateLayer}
+        />
+      );
+    }, [handleNodeToggle, selectedLayerId, selectLayer, removeLayer, duplicateLayer, updateLayer]);
+
+    const { renderTree, scrollToNode } = useHeTree<ComponentLayer>({
       data: layers,
       dataType: "tree",
       childrenKey: "children",
       openIds: Array.from(openIds),
       dragOpen: true,
-      onChange: (newLayers) => {
-        updateLayer(selectedPageId, {}, { children: newLayers });
-      },
-      renderNodeBox: ({ stat, attrs, isPlaceholder }) => {
-        return isPlaceholder ? (
-          <TreeRowPlaceholder
-            key={`placeholder-${attrs.key}`}
-            nodeAttributes={attrs}
-          />
-        ) : (
-          <TreeRowNode
-            key={attrs.key}
-            nodeAttributes={attrs}
-            node={stat.node}
-            id={stat.id}
-            open={stat.open}
-            draggable={stat.draggable}
-            onToggle={handleOpen}
-            level={stat.level}
-            selectedLayerId={selectedLayerId}
-            selectLayer={selectLayer}
-            removeLayer={removeLayer}
-            duplicateLayer={duplicateLayer}
-            updateLayer={updateLayer}
-          />
-        );
-      },
-      onDragOpen(stat) {
-        if (hasLayerChildren(stat.node)) {
-          handleOpen(stat.id, true);
-        }
-      },
-      canDrop: (layer) => {
-        const isDroppable = hasLayerChildren(layer.node);
-        return isDroppable;
-      },
+      onChange: handleChange,
+      renderNodeBox: renderNode,
+      onDragOpen: handleDragOpen,
+      canDrop: canNodeDrop,
     });
 
     useLayoutEffect(() => {
@@ -146,18 +177,6 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
         }
       }
     }, [scrollToNode, selectedLayerId]);
-
-    const handleOpen = useCallback((id: Id, open: boolean) => {
-      setOpenIds((prev) => {
-        const newSet = new Set(prev);
-        if (open) {
-          newSet.add(id);
-        } else {
-          newSet.delete(id);
-        }
-        return newSet;
-      });
-    }, []);
 
     return (
       <DevProfiler id="LayersPanel" threshold={40}>

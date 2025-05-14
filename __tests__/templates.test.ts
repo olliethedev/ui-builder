@@ -1,50 +1,51 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { pageLayerToCode, generateLayerCode, generatePropsString } from "../components/ui/ui-builder/internal/templates";
-import { PageLayer, ComponentLayer } from "../lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import template from "lodash/template";
 import { normalizeSchema } from "./test-utils";
+import { z } from "zod";
 
-// Mock the componentRegistry with Zod schemas
-jest.mock("../lib/ui-builder/registry/component-registry", () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { z } = require('zod'); 
-  return {
-    componentRegistry: {
-      Button: {
-        schema: z.object({
-          id: z.string().optional(),
-          className: z.string().optional(),
-          onClick: z.function().optional(),
-          // Add other props as needed
-        }),
-        from: "../components/ui/Button",
-        component: () => null, // Mock component
-      },
-      Container: {
-        schema: z.object({
-          id: z.string().optional(),
-          className: z.string().optional(),
-          // Add other props as needed
-        }),
-        from: "../components/ui/Container",
-        component: () => null, // Mock component
-      },
-      Header: {
-        schema: z.object({
-          title: z.string(),
-        }),
-        from: "../components/ui/Header",
-      },
-      Footer: {
-        schema: z.object({
-          year: z.number(),
-        }),
-        from: "../components/ui/Footer",
-      },
-    },
-  };
-});
+const componentRegistry = {
+  Button: {
+    schema: z.object({
+      id: z.string().optional(),
+      className: z.string().optional(),
+      onClick: z.function().optional(),
+      // Add other props as needed
+    }),
+    from: "../components/ui/Button",
+    component: () => null, // Mock component
+  },
+  Container: {
+    schema: z.object({
+      id: z.string().optional(),
+      className: z.string().optional(),
+      // Add other props as needed
+    }),
+    from: "../components/ui/Container",
+    component: () => null, // Mock component
+  },
+  Header: {
+    schema: z.object({
+      title: z.string(),
+    }),
+    from: "../components/ui/Header",
+  },
+  Footer: {
+    schema: z.object({
+      year: z.number(),
+    }),
+    from: "../components/ui/Footer",
+  },
+  DefaultExportComponent: {
+    schema: z.object({
+      text: z.string(),
+    }),
+    from: "../components/ui/DefaultExportComponent",
+    isFromDefaultExport: true, // Indicate this component uses a default export
+  },
+};
 
 // Mock lodash/template
 jest.mock("lodash/template", () => {
@@ -215,7 +216,7 @@ export default Page;
     });
 
     it("should generate correct code for an empty page layer", () => {
-      const page: PageLayer = {
+      const page: ComponentLayer = {
         id: "page1",
         type: "_page_",
         props: {},
@@ -233,11 +234,11 @@ const Page = () => {
 
 export default Page;
       `;
-      expect(normalizeSchema(pageLayerToCode(page))).toBe(normalizeSchema(expected));
+      expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
     });
 
     it("should include imports for markdown and components", () => {
-      const page: PageLayer = {
+      const page: ComponentLayer = {
         id: "page1",
         type: "_page_",
         props: { id: "page1" },
@@ -275,11 +276,11 @@ ${expectedChildren}
 
 export default Page;
       `;
-      expect(normalizeSchema(pageLayerToCode(page))).toBe(normalizeSchema(expected));
+      expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
     });
 
     it("should handle nested layers and generate all necessary imports", () => {
-      const page: PageLayer = {
+      const page: ComponentLayer = {
         id: "page1",
         type: "_page_",
         props: { className: "main-page" },
@@ -334,11 +335,11 @@ ${expectedChildren}
 
 export default Page;
       `;
-      expect(normalizeSchema(pageLayerToCode(page))).toBe(normalizeSchema(expected));
+      expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
     });
 
     it("should handle layers without children correctly", () => {
-      const page: PageLayer = {
+      const page: ComponentLayer = {
         id: "page1",
         type: "_page_",
         props: {},
@@ -369,11 +370,11 @@ ${expectedChildren}
 
 export default Page;
       `;
-      expect(normalizeSchema(pageLayerToCode(page))).toBe(normalizeSchema(expected));
+      expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
     });
 
     it("should generate code with no additional imports when not required", () => {
-      const page: PageLayer = {
+      const page: ComponentLayer = {
         id: "page1",
         type: "_page_",
         props: {},
@@ -400,11 +401,11 @@ ${expectedChildren}
 
 export default Page;
       `;
-      expect(normalizeSchema(pageLayerToCode(page))).toBe(normalizeSchema(expected));
+      expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
     });
 
     it("should handle pages with no props and multiple children", () => {
-      const page: PageLayer = {
+      const page: ComponentLayer = {
         id: "page1",
         type: "_page_",
         props: {},
@@ -441,7 +442,40 @@ ${expectedChildren}
 
 export default Page;
       `;
-      expect(normalizeSchema(pageLayerToCode(page))).toBe(normalizeSchema(expected));
+      expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
+    });
+
+    it("should handle default exports correctly", () => {
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "defaultExport1",
+            type: "DefaultExportComponent",
+            props: { text: "Hello from default export" },
+            children: [],
+          },
+        ],
+      };
+      const expectedImports = `import DefaultExportComponent from "../components/ui/DefaultExportComponent";`;
+      const expectedChildren = `    <DefaultExportComponent text="Hello from default export" />`;
+      const expected = `
+import React from "react";
+${expectedImports}
+
+const Page = () => {
+  return (
+    <div>
+${expectedChildren}
+  </div>
+    );
+};
+
+export default Page;
+      `;
+      expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
     });
   });
 });

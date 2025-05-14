@@ -2,11 +2,11 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { ClickableWrapper } from "@/components/ui/ui-builder/internal/clickable-wrapper";
-import { Layer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { getScrollParent } from "@/lib/ui-builder/utils/get-scroll-parent";
 
 describe("ClickableWrapper", () => {
-  const mockLayer: Layer = {
+  const mockLayer: ComponentLayer = {
     id: "layer-1",
     type: "BUTTON",
     props: {},
@@ -75,7 +75,7 @@ describe("ClickableWrapper", () => {
       />
     );
     expect(
-      screen.getByText(mockLayer.type.replaceAll("_", ""))
+      screen.getByText(`undefined (${mockLayer.type.replaceAll("_", "")})`)
     ).toBeInTheDocument();
   });
 

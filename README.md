@@ -1,17 +1,34 @@
-# UI Builder for @shadcn/ui
+# 🧩 UI Builder — Drop‑in Visual Editor for Your React App
 
-UI Builder is a React component that allows you to create and edit user interfaces through a visual no-code editor. It comes with a handful of core components and integrates easily with existing [shadcn/ui](https://ui.shadcn.com/) projects and can be extended to use your own custom components. 
+**UI Builder solves the fundamental problem of UI creation tools: they ignore your existing React component library and force you to rebuild from scratch.**
 
-You can use UI Builder to design and build UIs quickly. It's a great tool for creating landing pages, forms, dashboards, or anything else you can imagine. It can be used internally within your organization as a storybook alternative or a prototyping tool or as part of a product that provides users a no-code way to build their own applications, like Shopify, Builder.io, Framer, etc.
+UI Builder is a shadcn/ui package that adds a Figma‑style editor to your own product, letting non‑developers compose pages, emails, dashboards, and white‑label views with the exact React components you already ship. 
 
-See the [demo](https://uibuilder.app/) to get an idea of how it works.
+Layouts are saved as plain JSON for easy versioning and can be rendered instantly allowing:
+
+- your marketing team to update a landing page without waiting on engineering.
+- a customer to tweak a branded portal.
+- a product manager to modify email templates.
+- add a visual "head" to your headless CMS, connecting your content API with your component library.
+
+
+How it unlocks novel product features:
+
+- Give users no‑code superpowers — add a full visual builder to your SaaS with one install.
+- Design with components you already ship — nothing new to build or maintain.
+- Store layouts as human‑readable JSON — render inside your product to ship changes immediately.
+
+See the [docs site](https://uibuilder.app/) for more information.
 
 ![UI Builder Demo](./public/demo.png)
 
+---
+
+# Quick Start
 
 ## Installation
 
-If you are using the latest shadcn/ui in your project, you can install the component directly from the registry. 
+If you are using shadcn/ui in your project, you can install the component directly from the registry. 
 
 ```bash
 npx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json
@@ -41,28 +58,45 @@ And that's it! You have a UI Builder that you can use to build your UI.
 
 ### Basic Example
 
+To use the UI Builder, you just need to provide a component registry.
+
 ```tsx
 import UIBuilder from "@/components/ui/ui-builder";
+import { ComponentRegistry } from "@/components/ui/ui-builder/types";
+import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions"; // Basic html primitives registry
+import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions"; // Sample shadcn/ui components registry
+
+// Define your component registry
+const myComponentRegistry: ComponentRegistry = {
+  ...primitiveComponentDefinitions,
+  ...complexComponentDefinitions,
+};
 
 export function App() {
-  return <UIBuilder />;
+  return (
+    <UIBuilder
+      componentRegistry={myComponentRegistry}
+    />
+  );
 }
 ```
 
-By default the state of the UI is stored in the browser's local storage, so it will persist across sessions.
-
 ### Example with initial state and onChange callback
+
+You can initialize the UI with initial layers from a database and use the onChange callback to persist the state to a database.
 
 ```tsx
 import React from "react";
 import UIBuilder from "@/components/ui/ui-builder";
-import { PageLayer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer, ComponentRegistry } from "@/components/ui/ui-builder/types";
+
+const myComponentRegistry: ComponentRegistry = {...}; // Your component registry
 
 // Static initial layers or you can fetch from database
-const initialLayers: PageLayer[] = [
+const initialLayers: ComponentLayer[] = [
   {
-    id: "1",
-    type: "_page_",
+    id: "page1",
+    type: "div", // Ensure div is in your componentRegistry
     name: "Page 1",
     props: {
       className: "p-4 flex flex-col gap-2",
@@ -70,7 +104,7 @@ const initialLayers: PageLayer[] = [
     children: [
       {
         id: "qCTIIed",
-        type: "Button",
+        type: "Button", // Ensure Button is in your componentRegistry
         name: "Button",
         props: {
             variant: "default",
@@ -80,14 +114,14 @@ const initialLayers: PageLayer[] = [
         children: [
             {
                 id: "UzZY6Dp",
-                type: "span",
+                type: "span", // Ensure span is in your componentRegistry
                 name: "span",
                 props: {},
                 children: "Hello World",
             },
             {
                 id: "hn3PF6A",
-                type: "Icon",
+                type: "Icon", // Ensure Icon is in your componentRegistry
                 name: "Icon",
                 props: {
                     size: "medium",
@@ -105,14 +139,18 @@ const initialLayers: PageLayer[] = [
 ];
 
 const App = () => {
-  const handleLayersChange = (updatedLayers: PageLayer[]) => {
+  const handleLayersChange = (updatedLayers: ComponentLayer[]) => {
     // Here you can send the updated layers to the backend
-    console.log(updatedLayers);
+    console.log("Layers updated:", updatedLayers);
   };
 
   return (
     <div>
-      <UIBuilder initialLayers={initialLayers} onChange={handleLayersChange} />
+      <UIBuilder
+        initialLayers={initialLayers}
+        onChange={handleLayersChange}
+        componentRegistry={myComponentRegistry}
+      />
     </div>
   );
 };
@@ -121,266 +159,160 @@ export default App;
 
 ```
 
+### UIBuilder Props
+- `componentRegistry`: **Required**. An object mapping component type names to their definitions (component, schema, import path, etc.).
 - `initialLayers`: Optional prop to set up initial pages and layers. Useful for setting the initial state of the builder, from a database for example.
 - `onChange`: Optional callback triggered when the editor state changes, providing the updated pages. Can be used to persist the state to a database.
-- `useCanvas`: Optional prop to disable the interactive canvas. Defaults to true.
+- `panelConfig`: Optional. An object to customize the different panels of the UI Builder (e.g., nav bar, editor panel, props panel). If not provided, a default configuration is used. This allows for fine-grained control over the editor's appearance and layout.
+- `persistLayerStore`: Optional boolean (defaults to `true`). Determines whether the editor's state (layers and their configurations) is persisted in the browser's local storage across sessions. Set to `false` to disable local storage persistence, useful if you are managing state entirely through `initialLayers` and `onChange`.
 
+
+## Rendering from Serialized Layer Data
 
 You can also render the page layer without editor functionality by using the LayerRenderer component:
 
 ```tsx
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
-import { PageLayer } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from "@/components/ui/ui-builder/types";
+import { ComponentRegistry } from "@/components/ui/ui-builder/types";
 
-const page: PageLayer = {...} // Fetch or define your page
+const myComponentRegistry: ComponentRegistry = {...}; // Your component registry
+
+const page: ComponentLayer = {...} // Fetch or define your page layer
 
 export function MyPage() {
-  return <LayerRenderer page={page} />;
+  return <LayerRenderer page={page} componentRegistry={myComponentRegistry} />;
 }
 ```
-
-`LayerRenderer` is useful when you want to render the finished page without any editor functionality.
 
 ## Add your custom components to the registry
 
-Navigate to the [component-registry.tsx](lib/ui-builder/registry/component-registry.tsx) file and add your component definitions to the array. Here is an example of how to define a custom component:
+You add custom components by defining them in a `ComponentRegistry` object and passing that object to the `UIBuilder` component via the `componentRegistry` prop. The registry maps a unique component type name (string) to its definition.
+
+Here is an example of how to define a custom component within the registry object:
 
 ```tsx
-
-import { ComponentRegistry } from "@/lib/ui-builder/registry/component-registry";
 import { z } from 'zod';
-import { FancyComponent } from '@/components/ui/fancy-component';
+import { FancyComponent } from '@/components/ui/fancy-component'; // Example custom component with className, children, title, count, disabled, timestamp, mode props
 import { classNameFieldOverrides, childrenFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { ComponentRegistry } from "@/components/ui/ui-builder/types";
 
-export const customComponentDefinitions: ComponentRegistry = {
-    FancyComponent: {
-        component: FancyComponent,
-        schema: z.object({
-            className: z.string().optional(),
-            children: z.any().optional(),
-            title: z.string().default("Default Title"),
-            count: z.coerce.number().default(1),
-            disabled: z.boolean().optional(),
-            timestamp: z.coerce.date().optional(),
-            mode: z
-                .enum([
-                    "fancy",
-                    "boring"
-                ])
-                .default("fancy"),
-        }),
-        from: "@/components/ui/button",
-        fieldOverrides: {
-            className:(layer)=> classNameFieldOverrides(layer),
-            children: (layer)=> childrenFieldOverrides(layer)
-        }
-    },
-}
-
-```
-
-- `component`: The React component itself.
-- `from`: The source path of the component. Used when exporting the page as code.
-- `fieldOverrides`: Customizes auto-form fields for the component's properties.
-
-- `schema`: A Zod schema defining the properties and validation rules for the component props. We use zod to define the component schema which represents the props that the component accepts. The required props **MUST** have a default value, this allows the UI Builder to render the component with the default value when the user adds the component to the page. This project leverages [Auto-Form](https://github.com/vantezzen/auto-form) to dynamically render component property forms based on the component definitions zod schema. Currently only these zod types are supported:
-    - boolean
-    - date
-    - number
-    - string
-    - enum of supported zod types
-    - object with properties of the supported zod types
-    - array of objects with properties of the supported zod types
-
-See core concepts below for more information on the component definitions.
-
-## Optional: Generate the component registry for your components
-To generate the component definition for your project components you can run the following command:
-
-```bash
-npx tsx lib/ui-builder/scripts/zod-gen.ts
-```
-
-This will generate the component definitions at the root of every folder in your /components directory. Note: You should wrap the generated schema `patchSchema` from schema-uitls.ts this will fix some issues with the generated schema and make sure they play well with auto-form. But in many complex component cases the generated files will need to be refactored manually. But the script will save you a lot of time compared to writing the definitions manually.
-The script uses [ts-morph](https://www.npmjs.com/package/ts-morph) , [react-docgen-typescript](https://www.npmjs.com/package/react-docgen-typescript), and [ts-to-zod](https://www.npmjs.com/package/ts-to-zod) to generate the component definitions.
-
-
-# UI Builder Technical Overview
-
-----
-Note: This project is an work in progress and the API will change.
-
-----
-
-## Core Concepts
-
-### Layers
-
-- **Layers** are the fundamental units representing components or pages within the UI structure.
-- They form a hierarchical tree, allowing for complex and nested UI layouts.
-- Each layer possesses properties and can contain child layers, enabling modular and scalable UI designs.
-
-
-### Pages
-
-- **Pages** are top-level layers that act as containers for other layers.
-- They represent distinct sections or views within the application.
-- Each page maintains its own set of properties and child layers, facilitating organized UI management.
-- Pages can have theme settings.
-
-
-### Components
-
-- **Components** are reusable UI elements defined within the `component-registry`.
-- They can be categorized as:
-  - **Primitive Components**: Basic HTML elements like `<div>`, `<img>`, etc.
-  - **Advanced Components**: Complex UI elements like `<Button>`, `<Badge>`, etc.
-- Components are registered with associated schemas, default properties, and behaviors, ensuring consistency and ease of use.
-
-
-## Core Types
-
-### `Layer` Types (`layer-store.ts`)
-
-
-The `layer-store.ts` module defines the essential types used to manage UI layers.
-
-```ts
-
-export type Layer =
-  | ComponentLayer
-  | PageLayer;
-
-export type ComponentLayer = {
-  id: string;
-  name?: string;
-  type: keyof typeof componentRegistry;
-  props: Record<string, any>;
-  children: Layer[] | string;
-};
-
-export type PageLayer = {
-  id: string;
-  name?: string;
-  type: '_page_';
-  props: Record<string, any>;
-  children: Layer[];
-}
-
-interface LayerStore {
-  pages: PageLayer[];
-  selectedLayerId: string | null;
-  selectedPageId: string;
-  initialize: (pages: PageLayer[]) => void;
-  addComponentLayer: (layerType: keyof typeof componentRegistry, parentId: string, parentPosition?: number) => void;
-  addPageLayer: (pageId: string) => void;
-  duplicateLayer: (layerId: string, parentId?: string) => void;
-  removeLayer: (layerId: string) => void;
-  updateLayer: (layerId: string, newProps: Record<string, any>, layerRest?: Partial<Omit<Layer, 'props'>>) => void;
-  selectLayer: (layerId: string) => void;
-  selectPage: (pageId: string) => void;
-  findLayerById: (layerId: string | null) => Layer | undefined;
-  findLayersForPageId: (pageId: string) => Layer[];
-}
-
-```
-
-- `Layer`: A union type representing any possible layer, encompassing component or page layers.
-- `ComponentLayer`: Represents layers that are components.
-- `PageLayer`: Represents layers that serve as pages containing other layers.
-- `LayerStore`: Defines the structure of the state, including pages, selected layer/page IDs, and various actions to manipulate layers.
-
-
-### `ComponentRegistry` Types (`component-registry.tsx`)
-
-The `component-registry.tsx` module manages the registration and configuration of UI components.
-
-```ts
-export interface RegistryEntry<T extends ReactComponentType<any>> {
-  component?: T;
-  schema: ZodObject<any>;
-  from?: string;
-  defaultChildren?: (ComponentLayer)[];
-  fieldOverrides?: Record<string, FieldConfigFunction>;
-}
-
-export type ComponentRegistry = Record<
-  string,
-  RegistryEntry<ReactComponentType<any>>
->;
-
-export type FieldConfigFunction = (layer: ComponentLayer) => FieldConfigItem;
-
-export const componentRegistry: ComponentRegistry = {
-  // ...YourOtherProjectComponentDefinitions
-  ...complexComponentDefinitions,
-  ...primitiveComponentDefinitions,
-} as const;
-
-export const generateFieldOverrides = (layer: ComponentLayer): Record<string, FieldConfigItem> => {...}
-
-```
-
-- `RegistryEntry`: Defines the structure for each component's registry entry, including the component itself, its schema, source path, default children, and field overrides.
-- `ComponentRegistry`: A record mapping component names to their respective RegistryEntry.
-- `FieldConfigFunction`: A function type used to override default form fields based on the layer.
-
-### Registration Structure
-Each component is registered with the following details:
-- `component`: The React component itself. Primitive components will not have this property.
-- `schema`: A Zod schema defining the properties and validation rules for the component.
-- `from`: The source path of the component. Used when exporting the page as code. Primitive components will not have this property.
-- `defaultChildren`: An array of default child layers that the component should contain upon creation. This is useful for creating the initial scaffolding of a component hierarchy like a Card with CardTitle, CardDescription, and CardContent.
-- `fieldOverrides`: Functions to customize auto-form fields when editing the component's properties.
-
-
-### Example Registration
-
-```ts
-export const componentRegistry: ComponentRegistry = {
-  Button: {
-    component: Button,
+// Define your custom component's schema and configuration
+const fancyComponentDefinition = {
+    // The React component itself
+    component: FancyComponent,
+    // The Zod schema defining the component's props. This will be used to generate the properties form in the editor
     schema: z.object({
         className: z.string().optional(),
-        children: z.any().optional(),
-        asChild: z.boolean().optional(),
-        variant: z
+        children: z.any().optional(), // Use z.any() for children prop and provide custom handling in fieldOverrides
+        title: z.string().default("Default Title"),
+        count: z.coerce.number().default(1),
+        disabled: z.boolean().optional(),
+        timestamp: z.coerce.date().optional(),
+        mode: z
             .enum([
-                "default",
-                "destructive",
-                "outline",
-                "secondary",
-                "ghost",
-                "link",
+                "fancy",
+                "boring"
             ])
-            .default("default"),
-        size: z.enum(["default", "sm", "lg", "icon"]).default("default"),
+            .default("fancy"),
     }),
-    from: "@/components/ui/button",
-    defaultChildren: [
-        {
-            id: "button-text",
-            type: "span",
-            name: "span",
-            props: {},
-            children: "Button",
-        } satisfies ComponentLayer,
-    ],
+    // The import path for code generation
+    from: "@/components/ui/fancy-component",
+    // Customizations for the properties auto-form
     fieldOverrides: {
-        className:(layer)=> classNameFieldOverrides(layer),
-        children: (layer)=> childrenFieldOverrides(layer)
+        className: (layer) => classNameFieldOverrides(layer), // Handle className selection with a custom component that is not a default auto-form component
+        children: (layer) => childrenFieldOverrides(layer), // Handle children selection with a custom component that is not a default auto-form component
+        // You can add your own component overrides for other fields here
     }
-  }
-  // ... Other component definitions
 };
+
+// Create the full registry, potentially combining with other component definitions
+export const myComponentRegistry: ComponentRegistry = {
+    FancyComponent: fancyComponentDefinition,
+};
+
+// Then pass `myComponentRegistry` to the UIBuilder prop:
+// <UIBuilder componentRegistry={myComponentRegistry} />
 ```
 
-### Button Component:
-- `Schema`: Defines props like className, variant, and size with default values.
-- `Default Children`: A span layer with default text "Button".
-- `Field Overrides`: Customizes form fields for className and children properties.
+**Component Definition Fields:**
+
+-   `component`: **Required**. The React component function or class.
+-   `schema`: **Required**. A Zod schema defining the component's props, their types, and validation rules.
+    -   This schema powers the automatic generation of a properties form in the editor using [Auto-Form](https://github.com/vantezzen/autoform/tree/pure-shadcn).
+    -   Currently supported Zod types for auto-form generation include: `boolean`, `date`, `number`, `string`, `enum` (of supported types), `object` (with supported property types), and `array` (of objects with supported property types).
+-   `from`: **Required**. The source import path for the component. This is used when generating React code.
+-   `isFromDefaultExport`: Optional. If true, indicates the component should be imported as a default export when generating React code.
+-   `fieldOverrides`: Optional. An object to customize the auto-generated form fields for the component's properties in the editor's sidebar.
+    -   The keys of this object correspond to the prop names defined in the Zod schema.
+    -   The values are typically functions that receive the current `layer` object and return configuration options for the `AutoForm` field. These options can control the field's label, input type (`fieldType`), visibility (`isHidden`), placeholder text, render logic, and more. See the AutoForm documentation for available options.
+    -   This is useful for:
+        *   Providing more descriptive labels or help text.
+        *   Using specific input components (e.g., a color picker, a custom slider).
+        *   Hiding props that shouldn't be user-editable (like internal state).
+        *   Implementing conditional logic (e.g., showing/hiding a field based on another prop's value).
+    -   The example uses `classNameFieldOverrides` and `childrenFieldOverrides` from `@/lib/ui-builder/registry/form-field-overrides` to provide standardized handling for common props like `className` (using a auto suggest text input) and `children` (using a custom component). You can create your own override functions or objects.
+-   `defaultChildren`: Optional. Default children to use when a new instance of this component is added to the canvas. For example setting initial text on a span component.
+
+
+### Customizing the Page Config Panel Tabs
+
+You can customize the tabs in the left "Page Config" panel (by default, "Layers" and "Appearance") by providing a `pageConfigPanelTabsContent` property inside the `panelConfig` prop. This allows you to change the tab titles or provide custom content for each tab. For example, you might want to provide your own appearance tab if you not using tailwind or a custom subset of tailwind like in React-Email .
+
+```tsx
+import UIBuilder, { defaultConfigTabsContent } from "@/components/ui/ui-builder";
+
+// Example: Customizing the tabs
+const myTabsContent = {
+  layers: { title: "My Layers", content: <MyCustomLayersPanel /> },
+  appearance: { title: "Theme", content: <MyCustomAppearancePanel /> },
+};
+
+<UIBuilder
+  componentRegistry={myComponentRegistry}
+  panelConfig={{
+    pageConfigPanelTabsContent: myTabsContent,
+    // ...other panel overrides
+  }}
+/>
+```
+
+If you do not provide this, the default tabs ("Layers" and "Appearance") will be used.
+You can also override other panels in the `panelConfig` like `editorPanel`, `propsPanel`, and `navBar`.
+
+---
+
+## How it Works
+
+UI Builder empowers you to visually construct and modify user interfaces by leveraging your own React components. Here's a breakdown of its core principles:
+
+*   **Component-Driven Foundation**: At its heart, UI Builder operates on your existing React components. You provide a `componentRegistry` detailing the components you want to make available in the editor. This registry includes the component itself, its Zod schema for props, its import path for code generation, and optional UI customizations for the editor.
+
+*   **Layer-Based Canvas**: The user interface is constructed as a tree of "layers." Each layer represents an instance of a component from your registry. Users can visually add, remove, reorder, and nest these layers on an interactive canvas, offering a direct manipulation experience. Any component type, like `div`, `main`, or custom containers, can serve as the root page layer.
+
+*   **Dynamic Props Editing**: Each component in the registry is defined with a Zod schema that outlines its props, their types, and default values. UI Builder utilizes this schema to automatically generate a properties panel (using [Auto-Form](https://github.com/vantezzen/autoform/tree/pure-shadcn)). This allows users to configure component instances in real-time, with changes immediately reflected on the canvas.
+
+*   **Flexible State Management**: By default, the editor's state (the arrangement and configuration of layers) is persisted in the browser's local storage for convenience across sessions. For more robust or backend-integrated solutions, you can provide `initialLayers` to seed the editor (e.g., from a database) and use the `onChange` callback to capture state changes and persist them as needed.
+
+*   **React Code Generation**: A key feature is the ability to export the visually designed page structure as clean, readable React code. This process uses the import paths (`from` property) specified in your component registry, ensuring the generated code correctly references your components.
+
+*   **Extensibility and Customization**: The system is designed for deep integration with your project:
+    *   Customize the properties form for each component using `fieldOverrides` to enhance the editing experience (e.g., custom labels, input types, or conditional visibility).
+    *   Provide custom React components via the `panelConfig` prop to provide custom components for the editor panels.
+    *   If you only need to display a UI Builder page without the editor, the `LayerRenderer` component can render it using the same `componentRegistry` and serialized page data.
+
+---
+
 
 ## Changelog
+
+### v1.0.0
+- Removed _page_ layer type in favor of using any component type (like `div`, `main`, or custom containers) as the root page layer. This enhances flexibility, enabling use cases like building react-email templates directly. You should migrate any layers stored in the database to use a standard component type as the root. The [migrateV2ToV3](lib/ui-builder/store/layer-utils.ts) function in `layer-utils.ts` can assist with this migration.
+- The `componentRegistry` is now passed as a prop to the `UIBuilder` component instead of being defined in a standalone file.
+- Removed the script used to generate component schema definitions. This approach proved problematic to maintain and didn't function correctly for complex components or varying project setups. Component schema definitions should now be manually created or generated using project-specific tooling if desired.
+- `panelConfig` prop added to `UIBuilder` to allow customization of the page config panel tabs.
+- Made `layer-store` local storage persistence optional and configurable via props.
+
 
 ### v0.0.2
 - Removed _text_ layer type in favor of using span and Markdown components. You should migrate any layers stored in the database to use the new components. You can use the [migrateV1ToV2](lib/ui-builder/store/layer-utils.ts) function in layer-utils.ts to help with the migration.
@@ -413,13 +345,23 @@ npm run test
 
 ## Roadmap
 
-- [ ] Increase test coverage
-- [ ] Refactor page layers to be more consistent with component layers
-- [ ] Improve performance
-- [ ] Add form component definitions since we already depend on most shadcn/ui form components
-- [ ] Add option to add children component layers by reference to existing layers (this would be like figma component instances)
+- [ ] Add user friendly styling component along with of directly using tailwind classes
+- [ ] Add tiptap editor for markdown content
+- [ ] Add global variables for component props
+- [ ] Add Blocks. Reusable component blocks that can be used in multiple pages
+- [ ] Move component schemas to separate shadcn registry to keep main registry light
+- [ ] Move prop form field components (overrides) to separate shadcn registry to keep main registry light
+- [ ] Add data sources to component layers (ex, getUser() binds prop user.name)
 - [ ] Add event handlers to component layers (onClick, onSubmit, etc)
-- [ ] Add data sources to component layers (ex, getUser() sets prop user)
+- [ ] React Native support
+- [ ] Update to React 19
+- [ ] Update to latest Shadcn/ui + Tailwind CSS v4
+- [ ] Update to new AutoForm when stable
+- [ ] Update to Zod v4 (when stable) for native json schema conversion to enforce safety in layer props
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
 
 ## License
 

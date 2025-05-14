@@ -1,15 +1,11 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import {
-  RenderPage,
   RenderLayer,
-  themeToStyleVars
 } from "../components/ui/ui-builder/internal/render-utils";
-import {
-  PageLayer,
-  ComponentLayer,
-} from "../lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { BaseColor, baseColors } from "../components/ui/ui-builder/internal/base-colors";
+import { z } from "zod";
 // Mock dependencies
 
 jest.mock("../components/ui/ui-builder/internal/clickable-wrapper", () => ({
@@ -17,54 +13,60 @@ jest.mock("../components/ui/ui-builder/internal/clickable-wrapper", () => ({
     <div>{children}</div>
   ),
 }));
-jest.mock("../lib/ui-builder/registry/component-registry", () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const z = require("zod");
-  return {
-    componentRegistry: {
-      // Complex Components
-      Button: {
-        schema: z.object({
-          label: z.string(),
-        }),
-        from: "../components/ui/button",
-        component: () => <button data-testid="button">Button</button>,
-      },
-      Input: {
-        schema: z.object({
-          label: z.string(),
-        }),
-        from: "../components/ui/input",
-        component: () => <input data-testid="input" />,
-      },
-      Card: {
-        schema: z.object({
-          children: z.string(),
-        }),
-        from: "../components/ui/card",
-        component: ({ children }: { children: React.ReactNode }) => <div data-testid="card">{children}</div>,
-      },
-      // Primitive Components
-      span: {
-        schema: z.object({
-          children: z.string(),
-        }),
-      },
-      div: {
-        schema: z.object({
-          label: z.string(),
-        }),
-        from: undefined,
-      },
-      // Other
-      UndefinedComponent: {
-        schema: {},
-        from: './example-component',
-        // 'component' is intentionally omitted to test edgecase
-      },
-    },
-  };
-});
+const mockRegistry = {
+  // Complex Components
+  Button: {
+    schema: z.object({
+      label: z.string(),
+    }),
+    from: "../components/ui/button",
+    component: () => <button data-testid="button">Button</button>,
+  },
+  Input: {
+    schema: z.object({
+      label: z.string(),
+    }),
+    from: "../components/ui/input",
+    component: () => <input data-testid="input" />,
+  },
+  Card: {
+    schema: z.object({
+      children: z.string(),
+    }),
+    from: "../components/ui/card",
+    component: ({ children }: { children: React.ReactNode }) => <div data-testid="card">{children}</div>,
+  },
+  // Primitive Components
+  span: {
+    schema: z.object({
+      children: z.string(),
+    }),
+  },
+  div: {
+    schema: z.object({
+      label: z.string(),
+    }),
+    from: undefined,
+  },
+  // Add mock for _page_ type
+  _page_: {
+    schema: z.object({}), // Assuming simple schema for test purposes
+    component: ({ children, ...props }: {
+      children?: React.ReactNode;
+      // Allow any props for test flexibility
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      [key: string]: any;
+    }) => (
+      <div {...props}>{children}</div>
+    ),
+  },
+  // Other
+  UndefinedComponent: {
+    schema: z.object({}),
+    from: './example-component',
+    // 'component' is intentionally omitted to test edgecase
+  },
+};
 jest.mock("react-error-boundary", () => ({
   ErrorBoundary: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="error-boundary">{children}</div>
@@ -87,7 +89,7 @@ describe("render-utils", () => {
     style: { padding: "20px" },
     borderRadius: "8px",
   };
-  const pageLayer: PageLayer = {
+  const pageLayer: ComponentLayer = {
     id: "page-1",
     type: "_page_",
     name: "Test Page",
@@ -130,7 +132,7 @@ describe("render-utils", () => {
         ...pageLayer,
         children: [componentLayer, textComponentLayer],
       };
-      render(<RenderPage page={modifiedPage} />);
+      render(<RenderLayer layer={modifiedPage} componentRegistry={mockRegistry} />);
       const container = screen.getByTestId("page-1");
       expect(container).toHaveStyle("padding: 20px");
       expect(container).toHaveStyle("borderColor: hsl(undefined)"); // colorData is undefined in baseColors
@@ -216,7 +218,7 @@ describe("render-utils", () => {
         },
       };
       jest.spyOn(baseColors, "find").mockReturnValue(mockBaseColors);
-      render(<RenderPage page={modifiedPage} />);
+      render(<RenderLayer layer={modifiedPage} componentRegistry={mockRegistry} />);
       const container = screen.getByTestId("page-1");
       expect(container).toHaveStyle("color: hsl(222.2 84% 4.9%)");
       expect(container).toHaveStyle("borderColor: hsl(214.3 31.8% 91.4%)");
@@ -232,7 +234,7 @@ describe("render-utils", () => {
         props: noColorThemeProps,
         children: [componentLayer],
       };
-      render(<RenderPage page={modifiedPage} />);
+      render(<RenderLayer layer={modifiedPage} componentRegistry={mockRegistry} />);
       const container = screen.getByTestId("page-1");
       expect(container).toHaveStyle("padding: 20px");
       expect(container).toHaveStyle("color: initial");
@@ -252,7 +254,7 @@ describe("render-utils", () => {
       };
       // Mock baseColors to return undefined
       jest.spyOn(baseColors, "find").mockReturnValue(undefined);
-      render(<RenderPage page={modifiedPage} />);
+      render(<RenderLayer layer={modifiedPage} componentRegistry={mockRegistry} />);
       const container = screen.getByTestId("page-1");
       expect(container).toHaveStyle("padding: 20px");
       expect(container).toHaveStyle("color: initial");
@@ -263,7 +265,7 @@ describe("render-utils", () => {
 
   describe("RenderLayer", () => {
     it("renders a component layer without editorConfig", () => {
-      render(<RenderLayer layer={componentLayer} />);
+      render(<RenderLayer layer={componentLayer} componentRegistry={mockRegistry} />);
       expect(screen.getByTestId("error-boundary")).toBeInTheDocument();
       expect(screen.getByTestId("button")).toBeInTheDocument();
       expect(screen.getByTestId("button")).toHaveTextContent("Button");
@@ -278,12 +280,12 @@ describe("render-utils", () => {
         handleDuplicateLayer: jest.fn(),
         handleDeleteLayer: jest.fn(),
       };
-      render(<RenderLayer layer={componentLayer} editorConfig={editorConfig} />);
+      render(<RenderLayer layer={componentLayer} editorConfig={editorConfig} componentRegistry={mockRegistry} />);
       expect(screen.getByTestId("button")).toBeInTheDocument();
     });
 
     it("renders a text component layer without editorConfig", () => {
-      render(<RenderLayer layer={textComponentLayer} />);
+      render(<RenderLayer layer={textComponentLayer} componentRegistry={mockRegistry} />);
       const textElement = screen.getByTestId("layer-2");
       expect(textElement).toBeInTheDocument();
       expect(textElement).toHaveTextContent("Hello, World!");
@@ -299,7 +301,7 @@ describe("render-utils", () => {
         handleDuplicateLayer: jest.fn(),
         handleDeleteLayer: jest.fn(),
       };
-      render(<RenderLayer layer={textComponentLayer} editorConfig={editorConfig} />);
+      render(<RenderLayer layer={textComponentLayer} editorConfig={editorConfig} componentRegistry={mockRegistry} />);
       const textElement = screen.getByTestId("layer-2");
       expect(textElement).toBeInTheDocument();
       expect(textElement).toHaveClass("text-class");
@@ -307,14 +309,14 @@ describe("render-utils", () => {
     });
 
     it("renders a primitive component layer", () => {
-      render(<RenderLayer layer={primitiveComponentLayer} />);
+      render(<RenderLayer layer={primitiveComponentLayer} componentRegistry={mockRegistry} />);
       const primitiveElement = screen.getByTestId("layer-5");
       expect(primitiveElement).toBeInTheDocument();
       expect(primitiveElement).toHaveClass("div-class");
     });
 
     it("renders a layer with children", () => {
-      render(<RenderLayer layer={cardLayer} />);
+      render(<RenderLayer layer={cardLayer} componentRegistry={mockRegistry} />);
       const cardElement = screen.getByTestId("card");
       expect(cardElement).toBeInTheDocument();
       expect(screen.getByTestId("layer-2")).toBeInTheDocument();
@@ -330,7 +332,7 @@ describe("render-utils", () => {
         handleDeleteLayer: jest.fn(),
       };
     
-      render(<RenderLayer layer={cardLayer} editorConfig={editorConfig} />);
+      render(<RenderLayer layer={cardLayer} editorConfig={editorConfig} componentRegistry={mockRegistry} />);
     
       // Check if the card element is rendered
       const cardElement = screen.getByTestId("card");
@@ -346,7 +348,7 @@ describe("render-utils", () => {
 
     it("returns null if component is not found", () => {
       const notFoundLayer = { ...componentLayer, type: "not-found" };
-      const { container } = render(<RenderLayer layer={notFoundLayer} />);
+      const { container } = render(<RenderLayer layer={notFoundLayer} componentRegistry={mockRegistry} />);
       expect(container.firstChild).toBeNull();
     });
 
@@ -359,7 +361,7 @@ describe("render-utils", () => {
         children: [],
       };
 
-      const { container } = render(<RenderLayer layer={undefinedComponentLayer} />);
+      const { container } = render(<RenderLayer layer={undefinedComponentLayer} componentRegistry={mockRegistry} />);
       expect(container.firstChild).toBeNull();
     });
   });
@@ -378,131 +380,5 @@ describe("render-utils", () => {
     });
   });
 
-  describe("themeToStyleVars", () => {
-    it("converts color variables to CSS variables correctly for dark mode", () => {
-      const colors = {
-        background: "222.2 84% 4.9%",
-        foreground: "210 40% 98%",
-        card: "222.2 84% 4.9%",
-        "card-foreground": "210 40% 98%",
-        popover: "222.2 84% 4.9%",
-        "popover-foreground": "210 40% 98%",
-        primary: "217.2 91.2% 59.8%",
-        "primary-foreground": "222.2 47.4% 11.2%",
-        secondary: "217.2 32.6% 17.5%",
-        "secondary-foreground": "210 40% 98%",
-        muted: "217.2 32.6% 17.5%",
-        "muted-foreground": "215 20.2% 65.1%",
-        accent: "217.2 32.6% 17.5%",
-        "accent-foreground": "210 40% 98%",
-        destructive: "0 62.8% 30.6%",
-        "destructive-foreground": "210 40% 98%",
-        border: "217.2 32.6% 17.5%",
-        input: "217.2 32.6% 17.5%",
-        ring: "224.3 76.3% 48%",
-        "chart-1": "220 70% 50%",
-        "chart-2": "160 60% 45%",
-        "chart-3": "30 80% 55%",
-        "chart-4": "280 65% 60%",
-        "chart-5": "340 75% 55%",
-      } satisfies BaseColor["cssVars"]["dark"] | BaseColor["cssVars"]["light"];
   
-      const expectedStyleVars = {
-        "--background": "222.2 84% 4.9%",
-        "--foreground": "210 40% 98%",
-        "--card": "222.2 84% 4.9%",
-        "--card-foreground": "210 40% 98%",
-        "--popover": "222.2 84% 4.9%",
-        "--popover-foreground": "210 40% 98%",
-        "--primary": "217.2 91.2% 59.8%",
-        "--primary-foreground": "222.2 47.4% 11.2%",
-        "--secondary": "217.2 32.6% 17.5%",
-        "--secondary-foreground": "210 40% 98%",
-        "--muted": "217.2 32.6% 17.5%",
-        "--muted-foreground": "215 20.2% 65.1%",
-        "--accent": "217.2 32.6% 17.5%",
-        "--accent-foreground": "210 40% 98%",
-        "--destructive": "0 62.8% 30.6%",
-        "--destructive-foreground": "210 40% 98%",
-        "--border": "217.2 32.6% 17.5%",
-        "--input": "217.2 32.6% 17.5%",
-        "--ring": "224.3 76.3% 48%",
-        "--chart-1": "220 70% 50%",
-        "--chart-2": "160 60% 45%",
-        "--chart-3": "30 80% 55%",
-        "--chart-4": "280 65% 60%",
-        "--chart-5": "340 75% 55%",
-      };
-  
-      expect(themeToStyleVars(colors)).toEqual(expectedStyleVars);
-    });
-  
-    it("converts color variables to CSS variables correctly for light mode", () => {
-      const colors = {
-        background: "0 0% 100%",
-        foreground: "222.2 84% 4.9%",
-        card: "0 0% 100%",
-        "card-foreground": "222.2 84% 4.9%",
-        popover: "0 0% 100%",
-        "popover-foreground": "222.2 84% 4.9%",
-        primary: "221.2 83.2% 53.3%",
-        "primary-foreground": "210 40% 98%",
-        secondary: "210 40% 96.1%",
-        "secondary-foreground": "222.2 47.4% 11.2%",
-        muted: "210 40% 96.1%",
-        "muted-foreground": "215.4 16.3% 46.9%",
-        accent: "210 40% 96.1%",
-        "accent-foreground": "222.2 47.4% 11.2%",
-        destructive: "0 84.2% 60.2%",
-        "destructive-foreground": "210 40% 98%",
-        border: "214.3 31.8% 91.4%",
-        input: "214.3 31.8% 91.4%",
-        ring: "221.2 83.2% 53.3%",
-        "chart-1": "12 76% 61%",
-        "chart-2": "173 58% 39%",
-        "chart-3": "197 37% 24%",
-        "chart-4": "43 74% 66%",
-        "chart-5": "27 87% 67%",
-      } satisfies BaseColor["cssVars"]["dark"] | BaseColor["cssVars"]["light"];
-  
-      const expectedStyleVars = {
-        "--background": "0 0% 100%",
-        "--foreground": "222.2 84% 4.9%",
-        "--card": "0 0% 100%",
-        "--card-foreground": "222.2 84% 4.9%",
-        "--popover": "0 0% 100%",
-        "--popover-foreground": "222.2 84% 4.9%",
-        "--primary": "221.2 83.2% 53.3%",
-        "--primary-foreground": "210 40% 98%",
-        "--secondary": "210 40% 96.1%",
-        "--secondary-foreground": "222.2 47.4% 11.2%",
-        "--muted": "210 40% 96.1%",
-        "--muted-foreground": "215.4 16.3% 46.9%",
-        "--accent": "210 40% 96.1%",
-        "--accent-foreground": "222.2 47.4% 11.2%",
-        "--destructive": "0 84.2% 60.2%",
-        "--destructive-foreground": "210 40% 98%",
-        "--border": "214.3 31.8% 91.4%",
-        "--input": "214.3 31.8% 91.4%",
-        "--ring": "221.2 83.2% 53.3%",
-        "--chart-1": "12 76% 61%",
-        "--chart-2": "173 58% 39%",
-        "--chart-3": "197 37% 24%",
-        "--chart-4": "43 74% 66%",
-        "--chart-5": "27 87% 67%",
-      };
-  
-      expect(themeToStyleVars(colors)).toEqual(expectedStyleVars);
-    });
-  
-    it("returns undefined when colors are undefined", () => {
-      expect(themeToStyleVars(undefined)).toBeUndefined();
-    });
-  
-    it("handles empty color variables", () => {
-      const colors = {};
-      const expectedStyleVars = {};
-      expect(themeToStyleVars(colors as BaseColor["cssVars"]["dark"] | BaseColor["cssVars"]["light"])).toEqual(expectedStyleVars);
-    });
-  });
 });

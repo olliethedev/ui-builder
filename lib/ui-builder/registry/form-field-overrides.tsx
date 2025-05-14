@@ -8,15 +8,16 @@ import {
 import { ChildrenSearchableSelect } from "@/components/ui/ui-builder/internal/children-searchable-select";
 import {
   AutoFormInputComponentProps,
-  FieldConfigItem,
-} from "@/components/ui/auto-form/types";
-import { ComponentLayer } from "@/lib/ui-builder/store/layer-store";
+  ComponentLayer,
+  FieldConfigFunction,
+} from '@/components/ui/ui-builder/types';
 import IconNameField from "@/components/ui/ui-builder/internal/iconname-field";
 import { Textarea } from "@/components/ui/textarea";
 
-export const classNameFieldOverrides = (
-  layer: ComponentLayer 
-): FieldConfigItem => {
+export const classNameFieldOverrides: FieldConfigFunction = (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  layer
+) => {
   return {
     fieldType: ({ label, isRequired, field, fieldProps }: AutoFormInputComponentProps) => (
       <ClassNameField
@@ -31,7 +32,7 @@ export const classNameFieldOverrides = (
 };
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const childrenFieldOverrides = (layer: ComponentLayer): FieldConfigItem => {
+export const childrenFieldOverrides: FieldConfigFunction = (layer) => {
   return {
     fieldType: ({
       label,
@@ -56,9 +57,7 @@ export const childrenFieldOverrides = (layer: ComponentLayer): FieldConfigItem =
   };
 };
 
-export const iconNameFieldOverrides = (
-  layer: ComponentLayer
-): FieldConfigItem => {
+export const iconNameFieldOverrides: FieldConfigFunction = (layer) => {
   return {
     fieldType: ({ label, isRequired, field, fieldProps }: AutoFormInputComponentProps) => (
       <IconNameField
@@ -72,7 +71,7 @@ export const iconNameFieldOverrides = (
   };
 };
 
-export const childrenAsTextareaFieldOverrides = (layer: ComponentLayer): FieldConfigItem => {
+export const childrenAsTextareaFieldOverrides: FieldConfigFunction = (layer) => {
   return {
     fieldType: ({
       label,
@@ -101,3 +100,10 @@ export const childrenAsTextareaFieldOverrides = (layer: ComponentLayer): FieldCo
     ),
   };
 };
+
+export const commonFieldOverrides = () => {
+  return {
+    className: (layer: ComponentLayer)=> classNameFieldOverrides(layer),
+    children: (layer: ComponentLayer)=> childrenFieldOverrides(layer)
+}
+}

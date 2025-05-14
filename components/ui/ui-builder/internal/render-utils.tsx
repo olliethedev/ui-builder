@@ -1,25 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { memo, Suspense, useRef } from "react";
 import isDeepEqual from "fast-deep-equal";
-import {
-  baseColors,
-  BaseColor,
-} from "@/components/ui/ui-builder/internal/base-colors";
 
-import { Layer, PageLayer } from "@/lib/ui-builder/store/layer-store";
 import { ClickableWrapper } from "@/components/ui/ui-builder/internal/clickable-wrapper";
-import { componentRegistry } from "@/lib/ui-builder/store/layer-store";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallback";
-import { isPrimitiveComponent } from "@/lib/ui-builder/registry/registry-utils";
+import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
+import { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
 
 export interface EditorConfig {
+  
   zIndex: number;
   totalLayers: number;
-  selectedLayer: Layer;
+  selectedLayer: ComponentLayer;
   parentUpdated?: boolean;
   onSelectElement: (layerId: string) => void;
   handleDuplicateLayer: () => void;
@@ -27,53 +23,12 @@ export interface EditorConfig {
   usingCanvas?: boolean;
 }
 
-export const RenderPage: React.FC<{
-  page: PageLayer;
-  editorConfig?: EditorConfig;
-}> = memo(({ page, editorConfig }) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { mode, colorTheme, style, borderRadius, ...rest } = page.props;
-
-  const prevPage = useRef(page);
-
-  const colorData = React.useMemo(() => {
-    return colorTheme
-      ? baseColors.find((color) => color.name === colorTheme)
-      : undefined;
-  }, [colorTheme]);
-
-  const globalOverrides = React.useMemo(() => {
-    if (!colorData) return {};
-    return {
-      color: `hsl(${colorData.cssVars[mode as "light" | "dark"].foreground})`,
-      borderColor: `hsl(${colorData.cssVars[mode as "light" | "dark"].border})`,
-    };
-  }, [colorData, mode]);
-
-  return (
-    <div
-      data-testid={page.id}
-      className="flex flex-col w-full overflow-y-visible relative"
-      style={{
-        ...style,
-        ...globalOverrides,
-      }}
-      {...rest}
-    >
-      {page.children.map((child) => (
-        <RenderLayer key={child.id} layer={child} editorConfig={editorConfig ? { ...editorConfig, parentUpdated: !isDeepEqual(prevPage.current, page) } : undefined} />
-      ))}
-    </div>
-  );
-});
-
-RenderPage.displayName = "RenderPage";
-
 export const RenderLayer: React.FC<{
-  layer: Layer;
+  layer: ComponentLayer;
+  componentRegistry: ComponentRegistry;
   editorConfig?: EditorConfig;
 }> = memo(
-  ({ layer, editorConfig }) => {
+  ({ layer, componentRegistry, editorConfig }) => {
     const componentDefinition =
       componentRegistry[layer.type as keyof typeof componentRegistry];
 
@@ -98,6 +53,7 @@ export const RenderLayer: React.FC<{
       childProps.children = layer.children.map((child) => (
         <RenderLayer
           key={child.id}
+          componentRegistry={componentRegistry}
           layer={child}
           editorConfig={
             editorConfig
@@ -178,21 +134,3 @@ const ErrorSuspenseWrapper: React.FC<{
   </ErrorBoundary>
 );
 
-export function themeToStyleVars(
-  colors:
-    | BaseColor["cssVars"]["dark"]
-    | BaseColor["cssVars"]["light"]
-    | undefined
-) {
-  if (!colors) {
-    return undefined;
-  }
-  const styleVariables = Object.entries(colors).reduce(
-    (acc, [key, value]) => {
-      acc[`--${key}`] = value;
-      return acc;
-    },
-    {} as { [key: string]: string }
-  );
-  return styleVariables;
-}

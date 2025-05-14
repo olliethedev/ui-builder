@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useState } from "react";
 import {
   baseColors,
@@ -8,30 +9,29 @@ import { Label } from "@/components/ui/label";
 import { CheckIcon, InfoIcon, MoonIcon, SunIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  PageLayer,
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
+import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { Toggle } from "@/components/ui/toggle";
-import { themeToStyleVars } from "@/components/ui/ui-builder/internal/render-utils";
 
-export function ThemePanel() {
+export function TailwindThemePanel() {
   const {
     selectedPageId,
     updateLayer: updateLayerProps,
     findLayerById,
   } = useLayerStore();
-  const selectedPageData = findLayerById(selectedPageId) as PageLayer;
+  const selectedPageData = findLayerById(selectedPageId) as ComponentLayer;
   const [isCustomTheme, setIsCustomTheme] = useState(
-    selectedPageData?.props.colorTheme !== undefined
+    selectedPageData?.props["data-color-theme"] !== undefined
   );
   //if not isCustomTheme we delete the themeColors from the pageLayer
   useEffect(() => {
     if (!isCustomTheme) {
       updateLayerProps(selectedPageId, {
         style: undefined,
-        mode: undefined,
-        colorTheme: undefined,
-        borderRadius: undefined,
+        "data-mode": undefined,
+        "data-color-theme": undefined,
+        "data-border-radius": undefined,
       });
     }
   }, [isCustomTheme, updateLayerProps, selectedPageId]);
@@ -49,7 +49,7 @@ export function ThemePanel() {
           <InfoIcon className="size-4" /> Using Your Project&apos;s Theme
         </span>
       )}
-      {selectedPageData && (
+      {selectedPageData && isCustomTheme && (
         <ThemePicker key={selectedPageId} isDisabled={!isCustomTheme} pageLayer={selectedPageData} />
       )}
     </div>
@@ -63,18 +63,18 @@ function ThemePicker({
 }: {
   className?: string;
   isDisabled: boolean;
-  pageLayer: PageLayer;
+  pageLayer: ComponentLayer;
 }) {
   const { updateLayer: updateLayerProps } = useLayerStore();
 
   const [colorTheme, setColorTheme] = useState<BaseColor["name"]>(
-    pageLayer.props?.colorTheme || "red"
+    pageLayer.props?.["data-color-theme"] || "red"
   );
   const [borderRadius, setBorderRadius] = useState(
-    pageLayer.props?.borderRadius || 0.3
+    pageLayer.props?.["data-border-radius"] || 0.3
   );
   const [mode, setMode] = useState<"light" | "dark">(
-    pageLayer.props?.mode || "light"
+    pageLayer.props?.["data-mode"] || "light"
   );
 
   useEffect(() => {
@@ -97,9 +97,9 @@ function ThemePicker({
 
       updateLayerProps(pageLayer.id, {
         style: themeStyle,
-        mode,
-        colorTheme,
-        borderRadius,
+        "data-mode": mode,
+        "data-color-theme": colorTheme,
+        "data-border-radius": borderRadius,
       });
     }
   }, [pageLayer.id, updateLayerProps, colorTheme, borderRadius, mode, isDisabled]);
@@ -188,4 +188,27 @@ function ThemePicker({
       <div className="flex gap-2">{modeOptions}</div>
     </div>
   );
+}
+
+function themeToStyleVars(
+  colors:
+    | BaseColor["cssVars"]["dark"]
+    | BaseColor["cssVars"]["light"]
+    | undefined
+) {
+  if (!colors) {
+    return undefined;
+  }
+  const styleVariables = Object.entries(colors).reduce(
+    (acc, [key, value]) => {
+      acc[`--${key}`] = value;
+      return acc;
+    },
+    {} as { [key: string]: string }
+  );
+  const globalOverrides = {
+    color: `hsl(${colors.foreground})`,
+    borderColor: `hsl(${colors.border})`,
+  };
+  return { ...styleVariables, ...globalOverrides };
 }
