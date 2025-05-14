@@ -33,7 +33,7 @@ import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
  */
 export interface TabsContentConfig {
   layers: { title: string; content: React.ReactNode };
-  appearance: { title: string; content: React.ReactNode };
+  appearance?: { title: string; content: React.ReactNode };
 }
 
 /**
@@ -238,7 +238,7 @@ export function PageConfigPanel({
   tabsContent,
 }: {
   className: string;
-  tabsContent: { layers: { title: string; content: React.ReactNode }; appearance: { title: string; content: React.ReactNode } };
+  tabsContent: { layers: { title: string; content: React.ReactNode }; appearance?: { title: string; content: React.ReactNode } };
 }) {
   const { layers, appearance } = tabsContent;
   return (
@@ -247,16 +247,18 @@ export function PageConfigPanel({
       defaultValue="layers"
       className={className}
     >
-      <TabsList className="grid grid-cols-2 mx-4">
+      <TabsList className={`grid ${appearance ? 'grid-cols-2' : 'grid-cols-1'} mx-4`}>
         <TabsTrigger value="layers">{layers.title}</TabsTrigger>
-        <TabsTrigger value="appearance">{appearance.title}</TabsTrigger>
+        {appearance && <TabsTrigger value="appearance">{appearance.title}</TabsTrigger>}
       </TabsList>
       <TabsContent value="layers">
         {layers.content}
       </TabsContent>
-      <TabsContent value="appearance">
-        {appearance.content}
-      </TabsContent>
+      {appearance && (
+        <TabsContent value="appearance">
+          {appearance.content}
+        </TabsContent>
+      )}
     </Tabs>
   );
 }
