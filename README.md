@@ -1,11 +1,11 @@
-# 🧩 UI Builder — The Open-Source Visual Interface Builder for React
+# 🧩 UI Builder — Drop‑in Visual Editor for Your React App
 
 **UI Builder solves the fundamental problem of UI creation tools: they ignore your existing React component library and force you to rebuild from scratch.**
 
 UI Builder is a shadcn/ui package that adds a Figma‑style editor to your own product, letting non‑developers compose pages, emails, dashboards, and white‑label views with the exact React components you already ship. 
 
 Layouts are saved as plain JSON for easy versioning and can be rendered instantly allowing:
- 
+
 - your marketing team to update a landing page without waiting on engineering.
 - a customer to tweak a branded portal.
 - a product manager to modify email templates.
