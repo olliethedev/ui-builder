@@ -1,21 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef, ReactNode, useMemo } from "react";
+import { useState, useEffect, ReactNode, useMemo } from "react";
 import {
-  ALargeSmall,
-  Boxes,
   Eraser,
+  Heading,
   MoreVertical,
   Palette,
   Percent,
-  TypeOutline,
+  Redo2,
+  Space,
+  Type,
   UnfoldHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-// import { baseColors } from "@/components/ui/ui-builder/internal/base-colors";
 
 import {
   Tooltip,
@@ -65,6 +64,7 @@ import {
   TAILWIND_BOX_SHADOW_CLASSES,
   TAILWIND_BOX_SHADOW_COLOR_CLASSES,
   TAILWIND_DISPLAY_CLASSES,
+  TAILWIND_GAP_CLASSES,
   TAILWIND_FLEX_DIRECTION_CLASSES,
   TAILWIND_JUSTIFY_CONTENT_CLASSES,
   TAILWIND_ALIGN_ITEMS_CLASSES,
@@ -84,6 +84,13 @@ type ConfigType = {
   [key: string]: ConfigItem;
 };
 
+type StateType = {
+  [key in keyof typeof CONFIG]:
+    | (typeof CONFIG)[key]["possibleTypes"][number]
+    | string[]
+    | null;
+};
+
 // Type guards for Tailwind class arrays
 function isTailwindClass<T extends readonly string[]>(
   arr: T,
@@ -98,18 +105,18 @@ const CONFIG: ConfigType = {
     possibleTypes: [
       null,
       "w-full",
-      "w-max",
+      "auto",
       ...TAILWIND_FIXED_WIDTH_CLASSES,
       ...TAILWIND_PERCENTAGE_WIDTH_CLASSES,
     ] as const,
     component: ToggleGroup,
     options: [
-      { value: "w-full", tooltip: "Fill", icon: <FillIcon /> },
-      { value: "w-max", tooltip: "Hug", icon: <HugIcon /> },
+      { value: "w-full", tooltip: "Fill (w-full)", icon: <FillIcon /> },
+      { value: "w-auto", tooltip: "Hug (w-auto)", icon: <HugIcon /> },
       {
         value: "_w-fixed",
         label: "Fixed",
-        tooltip: "Fixed",
+        tooltip: "Fixed (w-*)",
         icon: <FixedIcon />,
         dropdown: {
           items: [...TAILWIND_FIXED_WIDTH_CLASSES].map((cls) => ({
@@ -120,7 +127,7 @@ const CONFIG: ConfigType = {
       },
       {
         value: "_w-percentage",
-        label: "Percentage",
+        label: "Percentage (w-*/*)",
         tooltip: "Percentage",
         icon: <Percent className="!size-4" strokeWidth={1} />,
         dropdown: {
@@ -151,12 +158,12 @@ const CONFIG: ConfigType = {
     ] as const,
     component: ToggleGroup,
     options: [
-      { value: "h-full", tooltip: "Fill", icon: <FillIcon /> },
-      { value: "h-max", tooltip: "Hug", icon: <HugIcon /> },
+      { value: "h-full", tooltip: "Fill (h-auto)", icon: <FillIcon /> },
+      { value: "h-auto", tooltip: "Hug (h-auto)", icon: <HugIcon /> },
       {
         value: "_h-fixed",
         label: "Fixed",
-        tooltip: "Fixed",
+        tooltip: "Fixed (h-*)",
         icon: <FixedIcon />,
         dropdown: {
           items: TAILWIND_FIXED_HEIGHT_CLASSES.map((cls) => ({
@@ -168,7 +175,7 @@ const CONFIG: ConfigType = {
       {
         value: "_h-percentage",
         label: "Percentage",
-        tooltip: "Percentage",
+        tooltip: "Percentage  (h-*/*)",
         icon: <Percent className="!size-4" strokeWidth={1} />,
         dropdown: {
           items: TAILWIND_PERCENTAGE_HEIGHT_CLASSES.map((cls) => ({
@@ -194,6 +201,7 @@ const CONFIG: ConfigType = {
       null,
       ...TAILWIND_BORDER_WIDTH_CLASSES,
       ...TAILWIND_BORDER_COLOR_CLASSES,
+      ...TAILWIND_CORNER_RADIUS_CLASSES,
     ] as const,
     component: ToggleGroup,
     multiple: true,
@@ -211,10 +219,22 @@ const CONFIG: ConfigType = {
         },
       },
       {
+        value: "_corner-radius",
+        label: "Radius",
+        tooltip: "Corner Radius (rounded-*)",
+        icon: <CornerRadiusIcon />,
+        dropdown: {
+          items: TAILWIND_CORNER_RADIUS_CLASSES.map((cls) => ({
+            value: cls,
+            label: cls.replace("rounded-", "") as ReactNode,
+          })),
+        },
+      },
+      {
         value: "_border-color",
         label: "Color",
         tooltip: "Border Color (border-*)",
-        icon: <Palette strokeWidth={1} />,
+        icon: <Palette className="!size-4" strokeWidth={1} />,
         dropdown: {
           dropdownDisplay: "grid",
           items: TAILWIND_BORDER_COLOR_CLASSES.map((cls) => {
@@ -236,31 +256,37 @@ const CONFIG: ConfigType = {
         return token;
       } else if (isTailwindClass(TAILWIND_BORDER_COLOR_CLASSES, token)) {
         return token;
+      } else if (isTailwindClass(TAILWIND_CORNER_RADIUS_CLASSES, token)) {
+        return token;
       } else {
         return null;
       }
     },
   },
-  appearance: {
-    label: "Appearance",
+  background: {
+    label: "Fill & Opacity",
     possibleTypes: [
       null,
-      ...TAILWIND_CORNER_RADIUS_CLASSES,
+      ...TAILWIND_BACKGROUND_COLOR_CLASSES,
       ...TAILWIND_OPACITY_CLASSES,
     ] as const,
     component: ToggleGroup,
     multiple: true,
     options: [
       {
-        value: "_corner-radius",
-        label: "Radius",
-        tooltip: "Corner Radius (rounded-*)",
-        icon: <CornerRadiusIcon />,
+        value: "_bg-color",
+        label: "Color",
+        tooltip: "Background Color (bg-*)",
+        icon: <Palette className="!size-4" strokeWidth={1} />,
         dropdown: {
-          items: TAILWIND_CORNER_RADIUS_CLASSES.map((cls) => ({
-            value: cls,
-            label: cls.replace("rounded-", "") as ReactNode,
-          })),
+          dropdownDisplay: "grid",
+          items: TAILWIND_BACKGROUND_COLOR_CLASSES.map((cls) => {
+            const colorName = cls.replace("bg-", "");
+            return {
+              value: cls,
+              label: <DropdownOption color={cls}>{colorName}</DropdownOption>,
+            };
+          }),
         },
       },
       {
@@ -277,39 +303,9 @@ const CONFIG: ConfigType = {
       },
     ],
     parse: (token: string) => {
-      if (isTailwindClass(TAILWIND_CORNER_RADIUS_CLASSES, token)) {
+      if (isTailwindClass(TAILWIND_BACKGROUND_COLOR_CLASSES, token)) {
         return token;
       } else if (isTailwindClass(TAILWIND_OPACITY_CLASSES, token)) {
-        return token;
-      } else {
-        return null;
-      }
-    },
-  },
-  background: {
-    label: "Background",
-    possibleTypes: [null, ...TAILWIND_BACKGROUND_COLOR_CLASSES] as const,
-    component: ToggleGroup,
-    options: [
-      {
-        value: "_bg-color",
-        label: "Color",
-        tooltip: "Background Color (bg-*)",
-        icon: <Palette strokeWidth={1} />,
-        dropdown: {
-          dropdownDisplay: "grid",
-          items: TAILWIND_BACKGROUND_COLOR_CLASSES.map((cls) => {
-            const colorName = cls.replace("bg-", "");
-            return {
-              value: cls,
-              label: <DropdownOption color={cls}>{colorName}</DropdownOption>,
-            };
-          }),
-        },
-      },
-    ],
-    parse: (token: string) => {
-      if (isTailwindClass(TAILWIND_BACKGROUND_COLOR_CLASSES, token)) {
         return token;
       } else {
         return null;
@@ -334,7 +330,7 @@ const CONFIG: ConfigType = {
         value: "_font-size",
         label: "Size",
         tooltip: "Font Size (text-*)",
-        icon: <ALargeSmall strokeWidth={1} />,
+        icon: <Heading className="!size-4" strokeWidth={1} />,
         dropdown: {
           items: TAILWIND_FONT_SIZE_CLASSES.map((cls) => ({
             value: cls,
@@ -346,7 +342,7 @@ const CONFIG: ConfigType = {
         value: "_font-weight",
         label: "Weight",
         tooltip: "Font Weight (font-*)",
-        icon: <TypeOutline strokeWidth={1} />,
+        icon: <Type className="!size-4" strokeWidth={1} />,
         dropdown: {
           items: TAILWIND_FONT_WEIGHT_CLASSES.map((cls) => ({
             value: cls,
@@ -358,7 +354,7 @@ const CONFIG: ConfigType = {
         value: "_text-align",
         label: "Align",
         tooltip: "Text Align (text-*)",
-        icon: <UnfoldHorizontal strokeWidth={1} />,
+        icon: <UnfoldHorizontal className="!size-4" strokeWidth={1} />,
         dropdown: {
           items: TAILWIND_TEXT_ALIGN_CLASSES.map((cls) => ({
             value: cls,
@@ -370,7 +366,7 @@ const CONFIG: ConfigType = {
         value: "_text-color",
         label: "Color",
         tooltip: "Text Color (text-*)",
-        icon: <Palette strokeWidth={1} />,
+        icon: <Palette className="!size-4" strokeWidth={1} />,
         dropdown: {
           dropdownDisplay: "grid",
           items: TAILWIND_TEXT_COLOR_CLASSES.map((cls) => {
@@ -449,7 +445,7 @@ const CONFIG: ConfigType = {
       {
         value: "p-0",
         tooltip: "No padding",
-        icon: <Eraser strokeWidth={1} />,
+        icon: <Eraser className="!size-4" strokeWidth={1} />,
       },
     ],
     parse: (token: string) => {
@@ -495,7 +491,7 @@ const CONFIG: ConfigType = {
       {
         value: "p-0",
         tooltip: "No padding",
-        icon: <Eraser strokeWidth={1} />,
+        icon: <Eraser className="!size-4" strokeWidth={1} />,
       },
     ],
     parse: (token: string) => {
@@ -573,7 +569,7 @@ const CONFIG: ConfigType = {
       {
         value: "p-0",
         tooltip: "No padding",
-        icon: <Eraser strokeWidth={1} />,
+        icon: <Eraser className="!size-4" strokeWidth={1} />,
       },
     ],
     parse: (token: string) => {
@@ -600,7 +596,7 @@ const CONFIG: ConfigType = {
         value: "_m",
         label: "All",
         tooltip: "All Margin (m-*)",
-        icon: <Boxes />,
+        icon: <PaddingIcon />,
         dropdown: {
           items: TAILWIND_MARGIN_CLASSES.map((cls) => ({
             value: cls,
@@ -611,7 +607,7 @@ const CONFIG: ConfigType = {
       {
         value: "m-0",
         tooltip: "No margin",
-        icon: <Boxes />,
+        icon: <Eraser className="!size-4" strokeWidth={1} />,
       },
     ],
     parse: (token: string) => {
@@ -634,7 +630,7 @@ const CONFIG: ConfigType = {
         value: "_m-horizontal",
         label: "Horizontal",
         tooltip: "Horizontal Margin (mx-*)",
-        icon: <Boxes />,
+        icon: <PaddingAxisIcon axis="x" />,
         dropdown: {
           items: TAILWIND_HORIZONTAL_MARGIN_CLASSES.map((cls) => ({
             value: cls,
@@ -646,7 +642,7 @@ const CONFIG: ConfigType = {
         value: "_m-vertical",
         label: "Vertical",
         tooltip: "Vertical Margin (my-*)",
-        icon: <Boxes />,
+        icon: <PaddingAxisIcon axis="y" />,
         dropdown: {
           items: TAILWIND_VERTICAL_MARGIN_CLASSES.map((cls) => ({
             value: cls,
@@ -657,7 +653,7 @@ const CONFIG: ConfigType = {
       {
         value: "m-0",
         tooltip: "No margin",
-        icon: <Boxes />,
+        icon: <Eraser className="!size-4" strokeWidth={1} />,
       },
     ],
     parse: (token: string) => {
@@ -688,7 +684,7 @@ const CONFIG: ConfigType = {
         value: "_mt",
         label: "Top",
         tooltip: "Top Margin (mt-*)",
-        icon: <Boxes />,
+        icon: <PaddingSideIcon side="top" />,
         dropdown: {
           items: TAILWIND_TOP_MARGIN_CLASSES.map((cls) => ({
             value: cls,
@@ -700,7 +696,7 @@ const CONFIG: ConfigType = {
         value: "_mr",
         label: "Right",
         tooltip: "Right Margin (mr-*)",
-        icon: <Boxes />,
+        icon: <PaddingSideIcon side="right" />,
         dropdown: {
           items: TAILWIND_RIGHT_MARGIN_CLASSES.map((cls) => ({
             value: cls,
@@ -712,7 +708,7 @@ const CONFIG: ConfigType = {
         value: "_mb",
         label: "Bottom",
         tooltip: "Bottom Margin (mb-*)",
-        icon: <Boxes />,
+        icon: <PaddingSideIcon side="bottom" />,
         dropdown: {
           items: TAILWIND_BOTTOM_MARGIN_CLASSES.map((cls) => ({
             value: cls,
@@ -724,7 +720,7 @@ const CONFIG: ConfigType = {
         value: "_ml",
         label: "Left",
         tooltip: "Left Margin (ml-*)",
-        icon: <Boxes />,
+        icon: <PaddingSideIcon side="left" />,
         dropdown: {
           items: TAILWIND_LEFT_MARGIN_CLASSES.map((cls) => ({
             value: cls,
@@ -733,9 +729,9 @@ const CONFIG: ConfigType = {
         },
       },
       {
-        value: "mt-0",
-        tooltip: "No top margin",
-        icon: <Boxes />,
+        value: "m-0",
+        tooltip: "No margin",
+        icon: <Eraser className="!size-4" strokeWidth={1} />,
       },
     ],
     parse: (token: string) => {
@@ -778,7 +774,7 @@ const CONFIG: ConfigType = {
         value: "_shadow-color",
         label: "Color",
         tooltip: "Box Shadow Color (shadow-*)",
-        icon: <Palette strokeWidth={1} />,
+        icon: <Palette className="!size-4" strokeWidth={1} />,
         dropdown: {
           dropdownDisplay: "grid",
           items: TAILWIND_BOX_SHADOW_COLOR_CLASSES.map((cls) => {
@@ -806,33 +802,46 @@ const CONFIG: ConfigType = {
     },
   },
   display: {
-    label: "Display",
-    possibleTypes: [
-      null,
-      "block",
-      "inline",
-      "flex flex-row",
-      "flex flex-col",
-    ] as const,
+    label: "Layout",
+    possibleTypes: [null, "block", "inline", "flex"] as const,
     component: ToggleGroup,
     options: [
       { value: "block", tooltip: "Block", label: "Block" },
       { value: "inline", tooltip: "Inline", label: "Inline" },
-      { value: "flex flex-row", tooltip: "Flex Row", label: "Flex Row" },
-      { value: "flex flex-col", tooltip: "Flex Col", label: "Flex Col" },
+      { value: "flex", tooltip: "Flex Box", label: "Flex Box" },
     ],
     parse: (token: string) => {
-      if (token === "block" || token === "inline") return token;
-      if (token === "flex" || token === "flex-row") return "flex flex-row";
-      if (token === "flex-col") return "flex flex-col";
+      if (token === "block" || token === "inline" || token === "flex")
+        return token;
       return null;
     },
   },
-  align: {
-    label: "Align",
-    possibleTypes: [null, ...TAILWIND_ALIGN_ITEMS_CLASSES] as const,
+  flexSettings: {
+    label: "Flex Settings",
+    possibleTypes: [
+      null,
+      ...TAILWIND_FLEX_DIRECTION_CLASSES,
+      ...TAILWIND_ALIGN_ITEMS_CLASSES,
+      ...TAILWIND_JUSTIFY_CONTENT_CLASSES,
+      ...TAILWIND_GAP_CLASSES,
+      "flex-wrap",
+      "flex-nowrap",
+      "flex-wrap-reverse",
+    ] as const,
     component: ToggleGroup,
+    multiple: true,
     options: [
+      {
+        value: "_flex-direction",
+        label: "Direction",
+        tooltip: "Flex Direction",
+        dropdown: {
+          items: TAILWIND_FLEX_DIRECTION_CLASSES.map((cls) => ({
+            value: cls,
+            label: cls.replace("flex-", ""),
+          })),
+        },
+      },
       {
         value: "_align",
         label: "Align",
@@ -844,15 +853,6 @@ const CONFIG: ConfigType = {
           })),
         },
       },
-    ],
-    parse: (token: string) =>
-      TAILWIND_ALIGN_ITEMS_CLASSES.includes(token as any) ? token : null,
-  },
-  justify: {
-    label: "Justify",
-    possibleTypes: [null, ...TAILWIND_JUSTIFY_CONTENT_CLASSES] as const,
-    component: ToggleGroup,
-    options: [
       {
         value: "_justify",
         label: "Justify",
@@ -864,46 +864,24 @@ const CONFIG: ConfigType = {
           })),
         },
       },
-    ],
-    parse: (token: string) =>
-      TAILWIND_JUSTIFY_CONTENT_CLASSES.includes(token as any) ? token : null,
-  },
-  gap: {
-    label: "Gap",
-    possibleTypes: [null, "gap-0", "gap-1", "gap-2", "gap-4", "gap-8"] as const, // Simplified for demo
-    component: ToggleGroup,
-    options: [
       {
         value: "_gap",
         label: "Gap",
         tooltip: "Gap",
+        icon: <Space className="!size-4" strokeWidth={1} />,
         dropdown: {
-          items: ["gap-0", "gap-1", "gap-2", "gap-4", "gap-8"].map((cls) => ({
+          items: TAILWIND_GAP_CLASSES.map((cls) => ({
             value: cls,
             label: cls.replace("gap-", ""),
           })),
         },
       },
-    ],
-    parse: (token: string) =>
-      ["gap-0", "gap-1", "gap-2", "gap-4", "gap-8"].includes(token)
-        ? token
-        : null,
-  },
-  wrap: {
-    label: "Wrap",
-    possibleTypes: [
-      null,
-      "flex-wrap",
-      "flex-nowrap",
-      "flex-wrap-reverse",
-    ] as const,
-    component: ToggleGroup,
-    options: [
+
       {
         value: "_wrap",
         label: "Wrap",
         tooltip: "Wrap",
+        icon: <Redo2 strokeWidth={1} className="rotate-180 !size-4" />,
         dropdown: {
           items: [
             { value: "flex-wrap", label: "wrap" },
@@ -913,22 +891,22 @@ const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) =>
-      ["flex-wrap", "flex-nowrap", "flex-wrap-reverse"].includes(token)
-        ? token
-        : null,
+    parse: (token: string) => {
+      if (isTailwindClass(TAILWIND_FLEX_DIRECTION_CLASSES, token)) return token;
+      if (isTailwindClass(TAILWIND_ALIGN_ITEMS_CLASSES, token)) return token;
+      if (isTailwindClass(TAILWIND_JUSTIFY_CONTENT_CLASSES, token))
+        return token;
+      if (isTailwindClass(TAILWIND_GAP_CLASSES, token)) return token;
+      if (["flex-wrap", "flex-nowrap", "flex-wrap-reverse"].includes(token))
+        return token;
+      return null;
+    },
   },
 };
 
 const LAYOUT_GROUPS: {
   label: string;
   keys: string[];
-  valueModifier?: (key: string) => string;
-  subKeys?: string[];
-  showSubKeys?: (
-    selectedKey: string | null | undefined,
-    state: Record<string, string | string[] | null>
-  ) => boolean;
   clearState?: (
     currentSelectedKey: string,
     state: Record<string, string | string[] | null>
@@ -974,105 +952,35 @@ const LAYOUT_GROUPS: {
       "ml-0",
     ],
   },
-  {
-    label: "Display",
-    keys: ["display"],
-    valueModifier: (key: string) => {
-      if (key === "flex flex-row") return "flex flex-row";
-      if (key === "flex flex-col") return "flex flex-col";
-      if (key === "block") return "block";
-      if (key === "inline") return "inline";
-      return key;
-    },
-    subKeys: ["align", "justify", "gap", "wrap"],
-    showSubKeys: (selectedKey) =>
-      !!selectedKey && selectedKey.startsWith("flex"),
-    clearState: () => [
-      ...TAILWIND_DISPLAY_CLASSES,
-      ...TAILWIND_FLEX_DIRECTION_CLASSES,
-      "flex",
-      "flex-row",
-      "flex-col",
-      "flex-row-reverse",
-      "flex-col-reverse",
-    ],
-  },
 ];
 
 const LAYOUT_ORDER: Array<
-  { type: "group"; label: string } | { type: "item"; key: keyof typeof CONFIG }
+  | { type: "group"; label: string; isVisible?: (state: StateType) => boolean }
+  | {
+      type: "item";
+      key: keyof typeof CONFIG;
+      isVisible?: (state: StateType) => boolean;
+    }
 > = [
   { type: "item", key: "width" },
   { type: "item", key: "height" },
-  { type: "group", label: "Display" },
-  { type: "group", label: "Padding" },
   { type: "group", label: "Margin" },
-  { type: "item", key: "appearance" },
-  { type: "item", key: "border" },
-  { type: "item", key: "background" },
+  { type: "group", label: "Padding" },
+  { type: "item", key: "display" },
+  {
+    type: "item",
+    key: "flexSettings",
+    isVisible: (state) => state.display === "flex",
+  },
   { type: "item", key: "typography" },
+  { type: "item", key: "background" },
+  { type: "item", key: "border" },
   { type: "item", key: "boxShadow" },
 ];
 
 interface DesignPanelProps {
   onChange?: (classes: string) => void;
   value?: string;
-}
-
-// LayoutGroup component (generic)
-type LayoutGroupProps = {
-  group: {
-    label: string;
-    keys: string[];
-    valueModifier?: (key: string) => string;
-    subKeys?: string[];
-    showSubKeys?: (
-      selectedKey: string | null | undefined,
-      state: Record<string, string | string[] | null>
-    ) => boolean;
-  };
-  state: Record<string, string | string[] | null>;
-  onChange: (key: string, value: string | string[] | null) => void;
-  selectedKey: string | null | undefined;
-};
-
-function LayoutGroup({
-  group,
-  state,
-  onChange,
-  selectedKey,
-}: LayoutGroupProps) {
-  // Always render the main group ToggleGroup (first key)
-  const mainKey = group.keys[0];
-  const mainConfig = CONFIG[mainKey];
-  const showSub = group.showSubKeys
-    ? group.showSubKeys(selectedKey, state)
-    : !!group.subKeys;
-  return (
-    <div>
-      <mainConfig.component
-        {...mainConfig}
-        value={state[mainKey]}
-        onChange={(val: string | string[] | null) => {
-          onChange(mainKey, val);
-        }}
-        hideLabel={true}
-      />
-      {showSub &&
-        group.subKeys?.map((key: string) => {
-          const config = CONFIG[key];
-          return (
-            <config.component
-              key={key}
-              {...config}
-              value={state[key]}
-              onChange={(val: string | string[] | null) => onChange(key, val)}
-              hideLabel={true}
-            />
-          );
-        })}
-    </div>
-  );
 }
 
 export default function ClassNameAdvancedField({
@@ -1184,7 +1092,7 @@ export default function ClassNameAdvancedField({
                   <span>Tablet & Desktop</span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  Overrides for screens larger than 768px
+                  Overrides for screens larger than 768px (md:*)
                 </TooltipContent>
               </Tooltip>
             </TabsTrigger>
@@ -1206,13 +1114,6 @@ export default function ClassNameAdvancedField({
 }
 
 function ClassUtilities({ value, onChange }: DesignPanelProps) {
-  type StateType = {
-    [key in keyof typeof CONFIG]:
-      | (typeof CONFIG)[key]["possibleTypes"][number]
-      | string[]
-      | null;
-  };
-
   // Memoize parsing for performance
   const parsed = useMemo(() => {
     if (value) {
@@ -1349,15 +1250,27 @@ function ClassUtilities({ value, onChange }: DesignPanelProps) {
           );
         }
       }
-      // Handle subKeys visibility
-      if (group && group.subKeys && group.showSubKeys) {
-        const willShow = group.showSubKeys(value as string, newState);
-        if (!willShow) {
-          group.subKeys.forEach((subKey) => {
-            newState[subKey] = null;
-          });
+
+      console.log({
+        newState,
+      });
+      // if visibility changes from visible to invisible null the value for that key in the newState
+      const layoutOrderItemsInvisible = LAYOUT_ORDER.filter(
+        (item) => item.isVisible && !item.isVisible(newState)
+      );
+      layoutOrderItemsInvisible.forEach((item) => {
+        if (item.type === "item") {
+          newState[item.key] = null;
+        } else if (item.type === "group") {
+          const group = LAYOUT_GROUPS.find((g) => g.label === item.label);
+          if (group) {
+            group.keys.forEach((key) => {
+              newState[key] = null;
+            });
+          }
         }
-      }
+      });
+
       return newState;
     });
   };
@@ -1419,73 +1332,23 @@ function ClassUtilities({ value, onChange }: DesignPanelProps) {
             if (!group) return null;
             const keys = group.keys.map(String);
             const selectedKey = selectedKeys[group.label] || keys[0];
-            if (group.label === "Display") {
-              return (
-                <div key={group.label}>
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {group.label}
-                  </span>
-                  <LayoutGroup
-                    group={group}
-                    state={state}
-                    onChange={handleStateChange}
-                    selectedKey={state.display as string}
-                  />
-                </div>
-              );
-            }
+            if (entry.isVisible && !entry.isVisible(state)) return null;
             const groupConfig = CONFIG[selectedKey as keyof typeof CONFIG];
+
             return (
               <div key={group.label}>
-                <span className="text-xs font-medium text-muted-foreground">
-                  {group.label}
-                </span>
-                <div className="flex flex-row items-center justify-between gap-2">
-                  <div className="flex-1">
-                    <groupConfig.component
-                      {...groupConfig}
-                      {...("multiple" in groupConfig
-                        ? { multiple: groupConfig.multiple }
-                        : {})}
-                      hideLabel={true}
-                      value={state[selectedKey]}
-                      onChange={(value: string | string[] | null) =>
-                        handleStateChange(selectedKey, value)
-                      }
-                    />
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="text-xs px-2 py-1"
-                      >
-                        <MoreVertical className="!size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {group.keys.map((key) => (
-                        <DropdownMenuItem
-                          key={String(key)}
-                          onClick={() =>
-                            handleGroupKeySelect(group.label, String(key))
-                          }
-                          className={
-                            selectedKey === String(key)
-                              ? "bg-secondary-foreground/10"
-                              : ""
-                          }
-                        >
-                          {CONFIG[String(key)].label || String(key)}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <NewLayoutGroup
+                  groupConfig={groupConfig}
+                  group={group}
+                  state={state}
+                  handleStateChange={handleStateChange}
+                  handleGroupKeySelect={handleGroupKeySelect}
+                  selectedKey={selectedKey}
+                />
               </div>
             );
           } else if (entry.type === "item") {
+            if (entry.isVisible && !entry.isVisible(state)) return null;
             const configKey = entry.key;
             const ungroupedConfig = CONFIG[configKey];
             return (
@@ -1505,9 +1368,77 @@ function ClassUtilities({ value, onChange }: DesignPanelProps) {
           }
           return null;
         })}
-        <Separator />
       </div>
     </div>
+  );
+}
+
+type NewLayoutGroupProps = {
+  groupConfig: ConfigItem;
+  group: {
+    label: string;
+    keys: string[];
+  };
+  state: StateType;
+  handleStateChange: (
+    key: keyof StateType,
+    value: string | string[] | null
+  ) => void;
+  handleGroupKeySelect: (groupLabel: string, key: string) => void;
+  selectedKey: string | string[] | null;
+};
+
+function NewLayoutGroup({
+  groupConfig,
+  group,
+  state,
+  handleStateChange,
+  handleGroupKeySelect,
+  selectedKey,
+}: NewLayoutGroupProps) {
+  return (
+    <>
+      <span className="text-xs font-medium text-muted-foreground">
+        {group.label}
+      </span>
+      <div className="flex flex-row items-center justify-between gap-2">
+        <div className="flex-1">
+          <groupConfig.component
+            {...groupConfig}
+            {...("multiple" in groupConfig
+              ? { multiple: groupConfig.multiple }
+              : {})}
+            hideLabel={true}
+            value={state[selectedKey as keyof StateType]}
+            onChange={(value: string | string[] | null) =>
+              handleStateChange(selectedKey as keyof StateType, value)
+            }
+          />
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="text-xs px-2 py-1">
+              <MoreVertical className="!size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {group.keys.map((key) => (
+              <DropdownMenuItem
+                key={String(key)}
+                onClick={() => handleGroupKeySelect(group.label, String(key))}
+                className={
+                  selectedKey === String(key)
+                    ? "bg-secondary-foreground/10"
+                    : ""
+                }
+              >
+                {CONFIG[String(key)].label || String(key)}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </>
   );
 }
 
@@ -1641,7 +1572,7 @@ function ToggleGroup({
     }
   };
 
-  const selectedClass = "bg-background";
+  const selectedClass = "bg-background font-semibold shadow-sm";
 
   return (
     <div>
@@ -1652,7 +1583,7 @@ function ToggleGroup({
       )}
       <div
         className={cn(
-          "flex items-center gap-px flex-wrap bg-foreground/5 rounded-md p-1 w-fit",
+          "flex items-center gap-1 flex-wrap bg-muted rounded-md p-1 w-fit",
           className
         )}
       >
@@ -1685,7 +1616,8 @@ function ToggleGroup({
                         size="sm"
                         className={cn(
                           "gap-px p-1 min-w-8 h-8",
-                          isSelected && selectedClass
+                          isSelected && selectedClass, 
+                          !option.icon && "flex flex-col items-center justify-center"
                         )}
                         onClick={() => handleToggleClick(option)}
                         aria-label={
@@ -1693,15 +1625,12 @@ function ToggleGroup({
                         }
                         aria-pressed={isSelected}
                       >
-                        {option.icon}
+                        {}
+                        {option.icon ? option.icon : <div className="text-muted-foreground text-xs leading-3">{option.label}</div>}
                         {isSelected && option.dropdown && (
                           <DropdownOption>
                             {selectedDropdownItem?.label ||
                               option.dropdown.defaultValue ||
-                              (option.dropdown.items[0] &&
-                              typeof option.dropdown.items[0].label === "string"
-                                ? option.dropdown.items[0].label
-                                : "") ||
                               ""}
                           </DropdownOption>
                         )}
@@ -1714,8 +1643,9 @@ function ToggleGroup({
                   align="end"
                   onCloseAutoFocus={(e) => e.preventDefault()}
                   className={cn(
+                    "max-h-96 overflow-y-auto",
                     option.dropdown.dropdownDisplay === "grid"
-                      ? "grid grid-cols-4 gap-px p-1 max-h-96 overflow-y-auto"
+                      ? "grid grid-cols-5 gap-px p-1 "
                       : ""
                   )}
                 >
@@ -1772,13 +1702,20 @@ function ToggleGroup({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={cn("p-1 min-w-8 h-8", isSelected && selectedClass)}
+                  className={cn(
+                    "p-1 min-w-8 h-8 text-[12px] text-muted-foreground",
+                    isSelected && selectedClass
+                  )}
                   onClick={() => handleToggleClick(option)}
                   aria-label={option.tooltip || option.label || option.value}
                   aria-pressed={isSelected}
                 >
                   {option.icon}
-                  {option.label && <span className="ml-2">{option.label}</span>}
+                  {option.label && (
+                    <span className={cn(option.icon && "ml-2")}>
+                      {option.label}
+                    </span>
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>{option.tooltip}</TooltipContent>
@@ -1786,6 +1723,30 @@ function ToggleGroup({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function DropdownOption({
+  color,
+  children,
+}: {
+  color?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center text-center w-full">
+      {color && (
+        <span
+          className={cn(
+            "inline-block size-[14px] rounded-full border border-border",
+            color
+          )}
+        />
+      )}
+      <span className="text-[10px] text-muted-foreground leading-3">
+        {children}
+      </span>
     </div>
   );
 }
@@ -1884,30 +1845,6 @@ function PaddingAxisIcon({ axis }: { axis: "x" | "y" }) {
         clipRule="evenodd"
       ></path>
     </svg>
-  );
-}
-
-function DropdownOption({
-  color,
-  children,
-}: {
-  color?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center text-center w-full">
-      {color && (
-        <span
-          className={cn(
-            "inline-block size-[14px] rounded-full border border-border",
-            color
-          )}
-        />
-      )}
-      <span className="text-[10px] text-muted-foreground leading-3">
-        {children}
-      </span>
-    </div>
   );
 }
 

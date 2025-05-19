@@ -68,7 +68,7 @@ export const TAILWIND_MARGIN_CLASSES = [
 ] as const;
 
 export const TAILWIND_HORIZONTAL_MARGIN_CLASSES = [
-    "mx-0","mx-px","mx-0.5","mx-1","mx-1.5","mx-2","mx-2.5","mx-3","mx-3.5","mx-4","mx-5","mx-6","mx-7","mx-8","mx-9","mx-10","mx-11","mx-12",
+    "mx-auto", "mx-0","mx-px","mx-0.5","mx-1","mx-1.5","mx-2","mx-2.5","mx-3","mx-3.5","mx-4","mx-5","mx-6","mx-7","mx-8","mx-9","mx-10","mx-11","mx-12",
     "mx-14","mx-16","mx-20","mx-24","mx-28","mx-32","mx-36","mx-40","mx-44","mx-48","mx-52","mx-56","mx-60","mx-64","mx-72","mx-80","mx-96",
 ] as const;
 
@@ -268,6 +268,11 @@ export const TAILWIND_ALIGN_ITEMS_CLASSES = [
     "items-start","items-end","items-center","items-baseline","items-stretch",
 ] as const;
 
+export const TAILWIND_GAP_CLASSES = [
+    "gap-0","gap-px","gap-0.5","gap-1","gap-1.5","gap-2","gap-2.5","gap-3","gap-3.5","gap-4","gap-5","gap-6","gap-7","gap-8","gap-9","gap-10","gap-11","gap-12",
+    "gap-14","gap-16","gap-20","gap-24","gap-28","gap-32","gap-36","gap-40","gap-44","gap-48","gap-52","gap-56","gap-60","gap-64","gap-72","gap-80","gap-96",
+]
+
 export const TAILWIND_CLASSES = [
     // MARK: Layout
     
@@ -275,7 +280,7 @@ export const TAILWIND_CLASSES = [
     "aspect-auto","aspect-video","aspect-square",
     
     /* Container */
-    "container","mx-auto","max-width","min-width",
+    "container","max-width","min-width",
     
     /* Columns */
     "columns-1","columns-2","columns-3","columns-4","columns-5","columns-6","columns-7","columns-8","columns-9","columns-10","columns-11","columns-12","columns-auto","columns-3xs","columns-2xs","columns-xs","columns-sm","columns-md","columns-lg","columns-xl","columns-2xl","columns-3xl","columns-4xl","columns-5xl","columns-6xl","columns-7xl",
@@ -446,8 +451,7 @@ export const TAILWIND_CLASSES = [
     "auto-rows-auto","auto-rows-min","auto-rows-max","auto-rows-fr",
     
     /* Gap */
-    "gap-0","gap-px","gap-0.5","gap-1","gap-1.5","gap-2","gap-2.5","gap-3","gap-3.5","gap-4","gap-5","gap-6","gap-7","gap-8","gap-9","gap-10","gap-11","gap-12",
-    "gap-14","gap-16","gap-20","gap-24","gap-28","gap-32","gap-36","gap-40","gap-44","gap-48","gap-52","gap-56","gap-60","gap-64","gap-72","gap-80","gap-96",
+    ...TAILWIND_GAP_CLASSES,
     
     "gap-x-0","gap-x-px","gap-x-0.5","gap-x-1","gap-x-1.5","gap-x-2","gap-x-2.5","gap-x-3","gap-x-3.5","gap-x-4","gap-x-5","gap-x-6","gap-x-7","gap-x-8","gap-x-9","gap-x-10","gap-x-11","gap-x-12",
     "gap-x-14","gap-x-16","gap-x-20","gap-x-24","gap-x-28","gap-x-32","gap-x-36","gap-x-40","gap-x-44","gap-x-48","gap-x-52","gap-x-56","gap-x-60","gap-x-64","gap-x-72","gap-x-80","gap-x-96",
