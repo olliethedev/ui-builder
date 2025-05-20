@@ -5,9 +5,9 @@ import {
   FormControl,
   FormDescription,
 } from "@/components/ui/form";
-import ClassNameMultiselect from "@/components/ui/ui-builder/internal/classname-multiselect";
+import { BreakpointClassNameControl } from "@/components/ui/ui-builder/internal/classname-control/breakpoint-classname-control";
 
-interface ClassNameFieldProps {
+interface BreakpointClassNameFieldProps {
   className: string;
   onChange: (newClassName: string) => void;
   description?: React.ReactNode;
@@ -15,7 +15,7 @@ interface ClassNameFieldProps {
   isRequired?: boolean;
 }
 
-const ClassNameField: React.FC<ClassNameFieldProps> = ({
+export const BreakpointClassNameField: React.FC<BreakpointClassNameFieldProps> = ({
   className,
   onChange,
   description,
@@ -30,11 +30,11 @@ const ClassNameField: React.FC<ClassNameFieldProps> = ({
         {isRequired && <span className="text-destructive"> *</span>}
       </FormLabel>
       <FormControl>
-        <ClassNameMultiselect value={className} onChange={onChange} />
+        <BreakpointClassNameControl value={className} onChange={onChange} />
       </FormControl>
       {description && <FormDescription>{description}</FormDescription>}
     </FormItem>
   );
 };
 
-export default ClassNameField;
+export default BreakpointClassNameField;
