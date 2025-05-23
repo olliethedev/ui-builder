@@ -26,7 +26,7 @@ export const BreakpointClassNameField: React.FC<BreakpointClassNameFieldProps> =
   return (
     <FormItem className="flex flex-col">
       <FormLabel>
-        {label}
+        Styles
         {isRequired && <span className="text-destructive"> *</span>}
       </FormLabel>
       <FormControl>

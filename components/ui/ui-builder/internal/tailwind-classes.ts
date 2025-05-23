@@ -260,6 +260,10 @@ export const TAILWIND_FLEX_DIRECTION_CLASSES = [
     "flex-row","flex-row-reverse","flex-col","flex-col-reverse",
 ] as const;
 
+export const TAILWIND_FLEX_WRAP_CLASSES = [
+    "flex-wrap","flex-wrap-reverse","flex-nowrap",
+] as const;
+
 export const TAILWIND_JUSTIFY_CONTENT_CLASSES = [
     "justify-normal","justify-start","justify-end","justify-center","justify-between","justify-around","justify-evenly","justify-stretch",
 ] as const;
@@ -405,7 +409,7 @@ export const TAILWIND_CLASSES = [
     ...TAILWIND_FLEX_DIRECTION_CLASSES,
     
     /* Flex Wrap */
-    "flex-wrap","flex-wrap-reverse","flex-nowrap",
+    ...TAILWIND_FLEX_WRAP_CLASSES,
     
     /* Flex */
     "flex-1","flex-auto","flex-initial","flex-none",

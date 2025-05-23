@@ -45,6 +45,7 @@ import {
   TAILWIND_FLEX_DIRECTION_CLASSES,
   TAILWIND_JUSTIFY_CONTENT_CLASSES,
   TAILWIND_ALIGN_ITEMS_CLASSES,
+  TAILWIND_FLEX_WRAP_CLASSES,
 } from "@/components/ui/ui-builder/internal/tailwind-classes";
 import {
   DropdownOption,
@@ -65,14 +66,14 @@ import {
   ShadowIcon,
   PaddingIcon,
 } from "@/components/ui/ui-builder/internal/classname-control/icons";
-import { isTailwindClass } from "@/components/ui/ui-builder/internal/classname-control/utils";
+import { filterClassnameArray } from "@/components/ui/ui-builder/internal/classname-control/utils";
 
 export type ConfigItem = {
   label: string;
   possibleTypes: readonly (string | null)[];
   component: typeof ToggleGroup;
   options: ToggleOption[];
-  parse: (token: string) => string | null;
+  parse?: (token: string) => string | null;
   multiple?: boolean;
 };
 
@@ -84,8 +85,7 @@ export const CONFIG: ConfigType = {
     label: "Width",
     possibleTypes: [
       null,
-      "w-full",
-      "auto",
+      ...filterClassnameArray(TAILWIND_AUTO_WIDTH_CLASSES, ["w-full","w-auto"] as const),
       ...TAILWIND_FIXED_WIDTH_CLASSES,
       ...TAILWIND_PERCENTAGE_WIDTH_CLASSES,
     ] as const,
@@ -118,21 +118,12 @@ export const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) => {
-      if (/^w-/.test(token)) {
-        if (isTailwindClass(TAILWIND_AUTO_WIDTH_CLASSES, token)) return token;
-        if (isTailwindClass(TAILWIND_FIXED_WIDTH_CLASSES, token)) return token;
-        if (isTailwindClass(TAILWIND_PERCENTAGE_WIDTH_CLASSES, token))
-          return token;
-      }
-      return null;
-    },
   },
   height: {
     label: "Height",
     possibleTypes: [
       null,
-      ...TAILWIND_AUTO_HEIGHT_CLASSES,
+      ...filterClassnameArray(TAILWIND_AUTO_HEIGHT_CLASSES, ["h-full","h-auto"] as const),
       ...TAILWIND_FIXED_HEIGHT_CLASSES,
       ...TAILWIND_PERCENTAGE_HEIGHT_CLASSES,
     ] as const,
@@ -165,15 +156,6 @@ export const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) => {
-      if (/^h-/.test(token)) {
-        if (isTailwindClass(TAILWIND_AUTO_HEIGHT_CLASSES, token)) return token;
-        if (isTailwindClass(TAILWIND_FIXED_HEIGHT_CLASSES, token)) return token;
-        if (isTailwindClass(TAILWIND_PERCENTAGE_HEIGHT_CLASSES, token))
-          return token;
-      }
-      return null;
-    },
   },
   border: {
     label: "Border",
@@ -231,17 +213,6 @@ export const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) => {
-      if (isTailwindClass(TAILWIND_BORDER_WIDTH_CLASSES, token)) {
-        return token;
-      } else if (isTailwindClass(TAILWIND_BORDER_COLOR_CLASSES, token)) {
-        return token;
-      } else if (isTailwindClass(TAILWIND_CORNER_RADIUS_CLASSES, token)) {
-        return token;
-      } else {
-        return null;
-      }
-    },
   },
   background: {
     label: "Fill & Opacity",
@@ -282,15 +253,6 @@ export const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) => {
-      if (isTailwindClass(TAILWIND_BACKGROUND_COLOR_CLASSES, token)) {
-        return token;
-      } else if (isTailwindClass(TAILWIND_OPACITY_CLASSES, token)) {
-        return token;
-      } else {
-        return null;
-      }
-    },
   },
   typography: {
     label: "Typography",
@@ -387,23 +349,6 @@ export const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) => {
-      if (isTailwindClass(TAILWIND_FONT_SIZE_CLASSES, token)) {
-        return token;
-      } else if (isTailwindClass(TAILWIND_FONT_WEIGHT_CLASSES, token)) {
-        return token;
-      } else if (isTailwindClass(TAILWIND_LINE_HEIGHT_CLASSES, token)) {
-        return token;
-      } else if (isTailwindClass(TAILWIND_LETTER_SPACING_CLASSES, token)) {
-        return token;
-      } else if (isTailwindClass(TAILWIND_TEXT_ALIGN_CLASSES, token)) {
-        return token;
-      } else if (isTailwindClass(TAILWIND_TEXT_COLOR_CLASSES, token)) {
-        return token;
-      } else {
-        return null;
-      }
-    },
   },
   padding: {
     label: "Padding",
@@ -423,12 +368,6 @@ export const CONFIG: ConfigType = {
         },
       }
     ],
-    parse: (token: string) => {
-      if (/^p-/.test(token)) {
-        if (isTailwindClass(TAILWIND_PADDING_CLASSES, token)) return token;
-      }
-      return null;
-    },
   },
   directionalPadding: {
     label: "X and Y Padding",
@@ -464,18 +403,6 @@ export const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) => {
-      if (/^px-/.test(token)) {
-        if (isTailwindClass(TAILWIND_HORIZONTAL_PADDING_CLASSES, token))
-          return token;
-      } else if (/^py-/.test(token)) {
-        if (isTailwindClass(TAILWIND_VERTICAL_PADDING_CLASSES, token))
-          return token;
-      } else if (token === "p-0") {
-        return token;
-      }
-      return null;
-    },
   },
   individualPadding: {
     label: "Individual Padding",
@@ -537,20 +464,6 @@ export const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) => {
-      if (/^pl-/.test(token)) {
-        if (isTailwindClass(TAILWIND_LEFT_PADDING_CLASSES, token)) return token;
-      } else if (/^pr-/.test(token)) {
-        if (isTailwindClass(TAILWIND_RIGHT_PADDING_CLASSES, token))
-          return token;
-      } else if (/^pb-/.test(token)) {
-        if (isTailwindClass(TAILWIND_BOTTOM_PADDING_CLASSES, token))
-          return token;
-      } else if (/^pt-/.test(token)) {
-        if (isTailwindClass(TAILWIND_TOP_PADDING_CLASSES, token)) return token;
-      }
-      return null;
-    },
   },
   margin: {
     label: "Margin",
@@ -570,12 +483,6 @@ export const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) => {
-      if (/^m-/.test(token)) {
-        if (isTailwindClass(TAILWIND_MARGIN_CLASSES, token)) return token;
-      }
-      return null;
-    },
   },
   directionalMargin: {
     label: "X and Y Margin",
@@ -611,18 +518,6 @@ export const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) => {
-      if (/^mx-/.test(token)) {
-        if (isTailwindClass(TAILWIND_HORIZONTAL_MARGIN_CLASSES, token))
-          return token;
-      } else if (/^my-/.test(token)) {
-        if (isTailwindClass(TAILWIND_VERTICAL_MARGIN_CLASSES, token))
-          return token;
-      } else if (token === "m-0") {
-        return token;
-      }
-      return null;
-    },
   },
   individualMargin: {
     label: "Individual Margin",
@@ -684,19 +579,6 @@ export const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) => {
-      if (/^ml-/.test(token)) {
-        if (isTailwindClass(TAILWIND_LEFT_MARGIN_CLASSES, token)) return token;
-      } else if (/^mr-/.test(token)) {
-        if (isTailwindClass(TAILWIND_RIGHT_MARGIN_CLASSES, token)) return token;
-      } else if (/^mb-/.test(token)) {
-        if (isTailwindClass(TAILWIND_BOTTOM_MARGIN_CLASSES, token))
-          return token;
-      } else if (/^mt-/.test(token)) {
-        if (isTailwindClass(TAILWIND_TOP_MARGIN_CLASSES, token)) return token;
-      }
-      return null;
-    },
   },
   boxShadow: {
     label: "Box Shadow",
@@ -741,30 +623,19 @@ export const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) => {
-      if (isTailwindClass(TAILWIND_BOX_SHADOW_CLASSES, token)) {
-        return token;
-      } else if (isTailwindClass(TAILWIND_BOX_SHADOW_COLOR_CLASSES, token)) {
-        return token;
-      } else {
-        return null;
-      }
-    },
   },
   display: {
     label: "Layout",
-    possibleTypes: [null, "block", "inline", "flex"] as const,
+    possibleTypes: [
+      null,
+      ...filterClassnameArray(TAILWIND_DISPLAY_CLASSES, ["block", "inline", "flex"] as const),
+    ] as const,
     component: ToggleGroup,
     options: [
       { value: "block", tooltip: "Block", label: "Block" },
       { value: "inline", tooltip: "Inline", label: "Inline" },
       { value: "flex", tooltip: "Flex Box", label: "Flex Box" },
     ],
-    parse: (token: string) => {
-      if (token === "block" || token === "inline" || token === "flex")
-        return token;
-      return null;
-    },
   },
   flexSettings: {
     label: "Flex Settings",
@@ -774,9 +645,7 @@ export const CONFIG: ConfigType = {
       ...TAILWIND_ALIGN_ITEMS_CLASSES,
       ...TAILWIND_JUSTIFY_CONTENT_CLASSES,
       ...TAILWIND_GAP_CLASSES,
-      "flex-wrap",
-      "flex-nowrap",
-      "flex-wrap-reverse",
+      ...filterClassnameArray(TAILWIND_FLEX_WRAP_CLASSES, ["flex-wrap","flex-nowrap","flex-wrap-reverse"] as const),
     ] as const,
     component: ToggleGroup,
     multiple: true,
@@ -839,16 +708,6 @@ export const CONFIG: ConfigType = {
         },
       },
     ],
-    parse: (token: string) => {
-      if (isTailwindClass(TAILWIND_FLEX_DIRECTION_CLASSES, token)) return token;
-      if (isTailwindClass(TAILWIND_ALIGN_ITEMS_CLASSES, token)) return token;
-      if (isTailwindClass(TAILWIND_JUSTIFY_CONTENT_CLASSES, token))
-        return token;
-      if (isTailwindClass(TAILWIND_GAP_CLASSES, token)) return token;
-      if (["flex-wrap", "flex-nowrap", "flex-wrap-reverse"].includes(token))
-        return token;
-      return null;
-    },
   },
 };
 
@@ -878,13 +737,6 @@ export const LAYOUT_GROUPS: {
         ...TAILWIND_RIGHT_PADDING_CLASSES,
         ...TAILWIND_BOTTOM_PADDING_CLASSES,
         ...TAILWIND_LEFT_PADDING_CLASSES,
-        "p-0",
-        "px-0",
-        "py-0",
-        "pt-0",
-        "pr-0",
-        "pb-0",
-        "pl-0",
       ],
     },
     {
@@ -898,13 +750,6 @@ export const LAYOUT_GROUPS: {
         ...TAILWIND_RIGHT_MARGIN_CLASSES,
         ...TAILWIND_BOTTOM_MARGIN_CLASSES,
         ...TAILWIND_LEFT_MARGIN_CLASSES,
-        "m-0",
-        "mx-0",
-        "my-0",
-        "mt-0",
-        "mr-0",
-        "mb-0",
-        "ml-0",
       ],
     },
   ];
@@ -925,7 +770,7 @@ export const LAYOUT_ORDER: Array<
   > = [
     { type: "item", key: "width" },
     { type: "item", key: "height"},
-    { type: "group", label: "Margin", className: "w-fit" },
+    { type: "group", label: "Margin", className: "w-fit mr-2" },
     { type: "group", label: "Padding", className: "w-fit" },
     { type: "item", key: "display" },
     {
@@ -935,6 +780,6 @@ export const LAYOUT_ORDER: Array<
     },
     { type: "item", key: "typography" },
     { type: "item", key: "background" },
-    { type: "item", key: "border" },
-    { type: "item", key: "boxShadow" },
+    { type: "item", key: "border", className: "w-fit mr-2" },
+    { type: "item", key: "boxShadow", className: "w-fit" },
   ];

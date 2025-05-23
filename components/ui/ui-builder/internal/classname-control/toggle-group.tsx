@@ -211,7 +211,7 @@ export function ToggleGroup({
                               </div>
                             ) : (
                               <div className="text-muted-foreground text-xs leading-3 font-normal">
-                                {option.label}:
+                                {option.label}{isSelected && ":"}
                               </div>
                             )}
                             {isSelected && option.dropdown && (

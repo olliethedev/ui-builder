@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import { CONFIG, LAYOUT_GROUPS, LAYOUT_ORDER, StateType } from "@/components/ui/ui-builder/internal/classname-control/config";
 import { ClassNameGroupControl } from "@/components/ui/ui-builder/internal/classname-control/classname-group-control";
 import { cn } from "@/lib/utils";
+import { isTailwindClass } from "@/components/ui/ui-builder/internal/classname-control/utils";
 
 interface ClassNameItemControlProps {
     value: string;
@@ -16,16 +17,9 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
         // Parse all keys
         const parsedState = Object.entries(CONFIG).reduce(
           (acc, [key, config]) => {
-            if (config.multiple) {
-              const parsed = tokens.filter((token) => config.parse(token));
-              if (parsed.length) {
-                (acc as any)[key] = parsed;
-              }
-            } else {
-              const parsed = tokens.find((token) => config.parse(token));
-              if (parsed) {
-                (acc as any)[key] = parsed;
-              }
+            const parsed = tokens.filter((token) => isTailwindClass(config.possibleTypes.filter((type): type is string => type !== null), token));
+            if (parsed.length > 0) {
+              (acc as any)[key] = config.multiple ? parsed : parsed[0];
             }
             return acc;
           },
@@ -37,7 +31,6 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
         // For each group, only allow one key to be active at a time
         const initialSelected: { [groupLabel: string]: string } = {};
         LAYOUT_GROUPS.forEach((group) => {
-          const foundKey = group.keys.find((key) => parsedState[key]);
           // If multiple keys have values, clear all but the first
           let found = false;
           group.keys.forEach((key) => {
@@ -146,9 +139,6 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
           }
         }
   
-        console.log({
-          newState,
-        });
         // if visibility changes from visible to invisible null the value for that key in the newState
         const layoutOrderItemsInvisible = LAYOUT_ORDER.filter(
           (item) => item.isVisible && !item.isVisible(newState)
@@ -219,8 +209,8 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
     }, [state, unhandled]);
   
     return (
-      <div className="w-full border rounded-lg shadow-sm">
-        <div className="flex flex-wrap gap-y-1 border border-border rounded-lg p-4">
+      <div className="w-full" data-testid="classname-item-control">
+        <div className="flex flex-wrap gap-y-1 px-4 pt-2 pb-4">
           {LAYOUT_ORDER.map((entry) => {
             if (entry.type === "group") {
               const group = LAYOUT_GROUPS.find((g) => g.label === entry.label);
@@ -231,7 +221,7 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
               const groupConfig = CONFIG[selectedKey as keyof typeof CONFIG];
   
               return (
-                <div key={group.label} className={cn("w-full", entry.className)}>
+                <div key={group.label} className={cn("w-full", entry.className)} data-testid={`group-${group.label.toLowerCase().replace(/\s+/g, '-')}`}>
                   <ClassNameGroupControl
                     groupConfig={groupConfig}
                     group={group}
@@ -247,7 +237,7 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
               const configKey = entry.key;
               const ungroupedConfig = CONFIG[configKey];
               return (
-                <div key={configKey} className={cn("w-full", entry.className)}>
+                <div key={configKey} className={cn("w-full", entry.className)} data-testid={`item-${configKey}`}>
                   <ungroupedConfig.component
                     {...ungroupedConfig}
                     {...("multiple" in ungroupedConfig

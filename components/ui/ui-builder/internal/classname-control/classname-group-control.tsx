@@ -47,7 +47,7 @@ type ClassNameGroupControlProps = {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-xs px-2 py-1">
+              <Button variant="outline" size="icon" className="text-xs w-6 px-1 py-1">
                 <MoreVertical className="!size-4" />
               </Button>
             </DropdownMenuTrigger>

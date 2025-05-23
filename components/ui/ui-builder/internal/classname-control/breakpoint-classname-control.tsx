@@ -8,13 +8,21 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClassNameMultiselect from "@/components/ui/ui-builder/internal/classname-multiselect";
 import { ClassNameItemControl } from "@/components/ui/ui-builder/internal/classname-control/classname-item-control";
-
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 interface BreakpointClassNameControlProps {
-    onChange?: (classes: string) => void;
-    value?: string;
-  }
-export const BreakpointClassNameControl = ({ onChange, value }: BreakpointClassNameControlProps) => {
+  onChange?: (classes: string) => void;
+  value?: string;
+}
+export const BreakpointClassNameControl = ({
+  onChange,
+  value,
+}: BreakpointClassNameControlProps) => {
   // Helper to parse classString into base, md, rest
   const parseClassString = (str: string) => {
     const tokens = str.trim().split(/\s+/);
@@ -91,20 +99,20 @@ export const BreakpointClassNameControl = ({ onChange, value }: BreakpointClassN
 
   // When multiselect changes, update classString (and tabs will re-parse)
   const handleMultiselectChange = (newClassString: string) => {
-    console.log({ newClassString });
     setClassString(newClassString);
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full border rounded-lg" data-testid="breakpoint-classname-control">
       <TooltipProvider>
         <Tabs
           value={tab}
           onValueChange={(val) => setTab(val as "base" | "md")}
           className="w-full"
+          data-testid="breakpoint-tabs"
         >
-          <TabsList className="w-full grid grid-cols-2">
-            <TabsTrigger value="base">
+          <TabsList className="w-full grid grid-cols-2" data-testid="breakpoint-tabs-list">
+            <TabsTrigger value="base" data-testid="base-tab-trigger">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>Base</span>
@@ -114,7 +122,7 @@ export const BreakpointClassNameControl = ({ onChange, value }: BreakpointClassN
                 </TooltipContent>
               </Tooltip>
             </TabsTrigger>
-            <TabsTrigger value="md">
+            <TabsTrigger value="md" data-testid="md-tab-trigger">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>Tablet & Desktop</span>
@@ -125,19 +133,25 @@ export const BreakpointClassNameControl = ({ onChange, value }: BreakpointClassN
               </Tooltip>
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="base">
+          <TabsContent className="mt-0" value="base" data-testid="base-tab-content">
             <ClassNameItemControl value={base} onChange={handleBaseChange} />
           </TabsContent>
-          <TabsContent value="md">
+          <TabsContent className="mt-0" value="md" data-testid="md-tab-content">
             <ClassNameItemControl value={md} onChange={handleMdChange} />
           </TabsContent>
         </Tabs>
+        <Accordion type="single" collapsible defaultValue="" data-testid="classes-accordion">
+          <AccordionItem value="classes" className="border-t border-b-0 px-4" data-testid="classes-accordion-item">
+            <AccordionTrigger className="text-sm" data-testid="classes-accordion-trigger">Edit Classes</AccordionTrigger>
+            <AccordionContent data-testid="classes-accordion-content">
+              <ClassNameMultiselect
+                value={classString}
+                onChange={handleMultiselectChange}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </TooltipProvider>
-      <ClassNameMultiselect
-        value={classString}
-        onChange={handleMultiselectChange}
-      />
     </div>
   );
 };
-
