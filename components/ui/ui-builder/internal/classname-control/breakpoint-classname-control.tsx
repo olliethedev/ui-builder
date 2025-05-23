@@ -14,6 +14,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 
 interface BreakpointClassNameControlProps {
   onChange?: (classes: string) => void;
@@ -115,7 +116,12 @@ export const BreakpointClassNameControl = ({
             <TabsTrigger value="base" data-testid="base-tab-trigger">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span>Base</span>
+                  <>
+                    <span>Base</span>
+                    {base && (
+                      <Badge className="ml-1 justify-center text-center px-[3px] h-[18px] min-w-[18px] !text-[10px]">{base.split(" ").filter(Boolean).length}</Badge>
+                    )}
+                  </>
                 </TooltipTrigger>
                 <TooltipContent>
                   Base styles for all screen sizes
@@ -125,7 +131,12 @@ export const BreakpointClassNameControl = ({
             <TabsTrigger value="md" data-testid="md-tab-trigger">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span>Tablet & Desktop</span>
+                  <>
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap text-nowrap">Tablet & Desktop</span>
+                  {md && (
+                    <Badge className="ml-1 justify-center text-center px-[3px] h-[18px] min-w-[18px] !text-[10px]">{md.split(" ").filter(Boolean).length}</Badge>
+                  )}
+                  </>
                 </TooltipTrigger>
                 <TooltipContent>
                   Overrides for screens larger than 768px (md:*)
