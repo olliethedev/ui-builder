@@ -30,14 +30,17 @@ import {
   TAILWIND_CORNER_RADIUS_CLASSES,
   TAILWIND_BORDER_WIDTH_CLASSES,
   TAILWIND_BORDER_COLOR_CLASSES,
+  SHADCN_TAILWIND_BORDER_COLOR_CLASSES,
   TAILWIND_OPACITY_CLASSES,
   TAILWIND_BACKGROUND_COLOR_CLASSES,
+  SHADCN_TAILWIND_BACKGROUND_COLOR_CLASSES,
   TAILWIND_TEXT_ALIGN_CLASSES,
   TAILWIND_LETTER_SPACING_CLASSES,
   TAILWIND_LINE_HEIGHT_CLASSES,
   TAILWIND_FONT_SIZE_CLASSES,
   TAILWIND_FONT_WEIGHT_CLASSES,
   TAILWIND_TEXT_COLOR_CLASSES,
+  SHADCN_TAILWIND_TEXT_COLOR_CLASSES,
   TAILWIND_BOX_SHADOW_CLASSES,
   TAILWIND_BOX_SHADOW_COLOR_CLASSES,
   TAILWIND_DISPLAY_CLASSES,
@@ -48,7 +51,6 @@ import {
   TAILWIND_FLEX_WRAP_CLASSES,
 } from "@/components/ui/ui-builder/internal/tailwind-classes";
 import {
-  DropdownOption,
   ToggleGroup,
   ToggleOption,
 } from "@/components/ui/ui-builder/internal/classname-control/toggle-group";
@@ -67,6 +69,12 @@ import {
   PaddingIcon,
 } from "@/components/ui/ui-builder/internal/classname-control/icons";
 import { filterClassnameArray } from "@/components/ui/ui-builder/internal/classname-control/utils";
+import {
+  THEME_AWARE_BORDER_COLOR_ITEMS,
+  THEME_AWARE_BACKGROUND_COLOR_ITEMS,
+  THEME_AWARE_TEXT_COLOR_ITEMS,
+  THEME_AWARE_SHADOW_COLOR_ITEMS,
+} from "@/components/ui/ui-builder/internal/classname-control/theme-aware-config";
 
 export type ConfigItem = {
   label: string;
@@ -161,6 +169,7 @@ export const CONFIG: ConfigType = {
     label: "Border",
     possibleTypes: [
       null,
+      ...SHADCN_TAILWIND_BORDER_COLOR_CLASSES,
       ...TAILWIND_BORDER_WIDTH_CLASSES,
       ...TAILWIND_BORDER_COLOR_CLASSES,
       ...TAILWIND_CORNER_RADIUS_CLASSES,
@@ -199,17 +208,7 @@ export const CONFIG: ConfigType = {
         icon: <Palette className="!size-[14px]"  />,
         dropdown: {
           dropdownDisplay: "grid",
-          items: TAILWIND_BORDER_COLOR_CLASSES.map((cls) => {
-            const colorName = cls.replace("border-", "");
-            return {
-              value: cls,
-              label: (
-                <DropdownOption color={cls.replace("border-", "bg-")}>
-                  {colorName}
-                </DropdownOption>
-              ),
-            };
-          }),
+          items: THEME_AWARE_BORDER_COLOR_ITEMS,
         },
       },
     ],
@@ -219,6 +218,7 @@ export const CONFIG: ConfigType = {
     possibleTypes: [
       null,
       ...TAILWIND_BACKGROUND_COLOR_CLASSES,
+      ...SHADCN_TAILWIND_BACKGROUND_COLOR_CLASSES,
       ...TAILWIND_OPACITY_CLASSES,
     ] as const,
     component: ToggleGroup,
@@ -231,13 +231,7 @@ export const CONFIG: ConfigType = {
         icon: <Palette className="!size-[14px]"  />,
         dropdown: {
           dropdownDisplay: "grid",
-          items: TAILWIND_BACKGROUND_COLOR_CLASSES.map((cls) => {
-            const colorName = cls.replace("bg-", "");
-            return {
-              value: cls,
-              label: <DropdownOption color={cls}>{colorName}</DropdownOption>,
-            };
-          }),
+          items: THEME_AWARE_BACKGROUND_COLOR_ITEMS,
         },
       },
       {
@@ -263,6 +257,7 @@ export const CONFIG: ConfigType = {
       ...TAILWIND_LINE_HEIGHT_CLASSES,
       ...TAILWIND_LETTER_SPACING_CLASSES,
       ...TAILWIND_TEXT_ALIGN_CLASSES,
+      ...SHADCN_TAILWIND_TEXT_COLOR_CLASSES,
       ...TAILWIND_TEXT_COLOR_CLASSES,
     ] as const,
     component: ToggleGroup,
@@ -311,17 +306,7 @@ export const CONFIG: ConfigType = {
         icon: <Palette className="!size-[14px]"  />,
         dropdown: {
           dropdownDisplay: "grid",
-          items: TAILWIND_TEXT_COLOR_CLASSES.map((cls) => {
-            const colorName = cls.replace("text-", "");
-            return {
-              value: cls,
-              label: (
-                <DropdownOption color={cls.replace("text-", "bg-")}>
-                  {colorName}
-                </DropdownOption>
-              ),
-            };
-          }),
+          items: THEME_AWARE_TEXT_COLOR_ITEMS,
         },
       },
       {
@@ -609,17 +594,7 @@ export const CONFIG: ConfigType = {
         icon: <Palette className="!size-[14px]"  />,
         dropdown: {
           dropdownDisplay: "grid",
-          items: TAILWIND_BOX_SHADOW_COLOR_CLASSES.map((cls) => {
-            const colorName = cls.replace("shadow-", "");
-            return {
-              value: cls,
-              label: (
-                <DropdownOption color={cls.replace("shadow-", "bg-")}>
-                  {colorName}
-                </DropdownOption>
-              ),
-            };
-          }),
+          items: THEME_AWARE_SHADOW_COLOR_ITEMS,
         },
       },
     ],

@@ -7,8 +7,6 @@ import {
 } from "@/lib/ui-builder/store/layer-store";
 import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
-import { AutoFormInputComponentProps } from "@/components/ui/auto-form/types";
-import ClassNameField from "@/components/ui/ui-builder/internal/classname-field";
 import { addDefaultValues } from "@/lib/ui-builder/store/schema-utils";
 import { ComponentLayer } from "@/components/ui/ui-builder/types";
 
@@ -82,15 +80,14 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
 }) => {
   const schema = z.object({
     name: z.string().min(1, "Name is required"),
-    className: z.string().optional(),
   });
 
   const handleSetValues = useCallback(
     (data: Partial<z.infer<typeof schema>>) => {
-      const { name, className } = data;
+      const { name } = data;
 
       // Merge the changed fields into the existing layer
-      const mergedValues = { ...selectedLayer, name, props: { className } };
+      const mergedValues = { ...selectedLayer, name, props: { } };
       const { props, ...rest } = mergedValues;
 
       updateLayerProps(selectedLayer.id, props, rest);
@@ -102,12 +99,10 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
     <AutoForm
       formSchema={addDefaultValues(schema, {
         name: selectedLayer.name,
-        className: selectedLayer.props.className,
       })}
       onValuesChange={handleSetValues}
       values={{
         name: selectedLayer.name,
-        className: selectedLayer.props.className,
       }}
       fieldConfig={{
         name: {
@@ -115,23 +110,6 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
             value: selectedLayer.name,
             // defaultValue: selectedLayer.name,
           },
-        },
-        className: {
-          fieldType: ({
-            label,
-            isRequired,
-          }: AutoFormInputComponentProps) => (
-            <ClassNameField
-              label={label}
-              isRequired={isRequired}
-              className={selectedLayer.props.className}
-              onChange={(value) => {
-                updateLayerProps(selectedLayer.id, {
-                  className: value,
-                });
-              }}
-            />
-          ),
         },
       }}
     >

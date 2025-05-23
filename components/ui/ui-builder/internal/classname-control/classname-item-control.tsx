@@ -183,7 +183,7 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
                 newState[k] = (newState[k] as string[]).filter(
                   (v) => !classesToClear.includes(v as any)
                 );
-                if (Array.isArray(newState[k]) && newState[k].length === 0)
+                if (Array.isArray(newState[k]) && newState[k]?.length === 0)
                   newState[k] = null;
               } else if (classesToClear.includes(newState[k] as any)) {
                 newState[k] = null;

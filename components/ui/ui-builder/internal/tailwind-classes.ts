@@ -105,10 +105,11 @@ export const TAILWIND_BORDER_WIDTH_CLASSES = [
     "border-0","border","border-2","border-4","border-8",
 ] as const;
 
-export const TAILWIND_BORDER_COLOR_CLASSES = [
-    //shadcn
+export const SHADCN_TAILWIND_BORDER_COLOR_CLASSES = [
     "border-primary","border-primary-foreground","border-secondary","border-secondary-foreground","border-destructive","border-destructive-foreground",
-    //rest
+] as const;
+
+export const TAILWIND_BORDER_COLOR_CLASSES = [
     "border-inherit","border-current","border-transparent", "border-black","border-white",
     "border-muted","border-muted-foreground","border-accent","border-accent-foreground","border-popover","border-popover-foreground","border-card","border-card-foreground","border-border","border-input","border-ring","border-background","border-foreground",
     "border-slate-50","border-slate-100","border-slate-200","border-slate-300","border-slate-400","border-slate-500","border-slate-600","border-slate-700","border-slate-800","border-slate-900","border-slate-950",
@@ -139,11 +140,12 @@ export const TAILWIND_OPACITY_CLASSES = [
     "opacity-0","opacity-5","opacity-10","opacity-20","opacity-25","opacity-30","opacity-40","opacity-50","opacity-60","opacity-70","opacity-75","opacity-80","opacity-90","opacity-95","opacity-100",
 ] as const;
 
-export const TAILWIND_BACKGROUND_COLOR_CLASSES = [
-    //shadcn
+export const SHADCN_TAILWIND_BACKGROUND_COLOR_CLASSES = [
     "bg-primary","bg-primary-foreground","bg-secondary","bg-secondary-foreground","bg-destructive","bg-destructive-foreground","bg-muted","bg-muted-foreground","bg-accent","bg-accent-foreground",
     "bg-popover","bg-popover-foreground","bg-card","bg-card-foreground","bg-border","bg-input","bg-ring","bg-background","bg-foreground",
-    //rest
+] as const;
+
+export const TAILWIND_BACKGROUND_COLOR_CLASSES = [
     "bg-inherit","bg-current","bg-transparent","bg-black","bg-white",
     "bg-slate-50","bg-slate-100","bg-slate-200","bg-slate-300","bg-slate-400","bg-slate-500","bg-slate-600","bg-slate-700","bg-slate-800","bg-slate-900","bg-slate-950",
     "bg-gray-50","bg-gray-100","bg-gray-200","bg-gray-300","bg-gray-400","bg-gray-500","bg-gray-600","bg-gray-700","bg-gray-800","bg-gray-900","bg-gray-950",
@@ -169,13 +171,13 @@ export const TAILWIND_BACKGROUND_COLOR_CLASSES = [
     "bg-rose-50","bg-rose-100","bg-rose-200","bg-rose-300","bg-rose-400","bg-rose-500","bg-rose-600","bg-rose-700","bg-rose-800","bg-rose-900","bg-rose-950",
 ] as const;
 
-
-export const TAILWIND_TEXT_COLOR_CLASSES = [
-    //shadcn
+export const SHADCN_TAILWIND_TEXT_COLOR_CLASSES = [
     "text-primary","text-primary-foreground","text-secondary","text-secondary-foreground",
     "text-destructive","text-destructive-foreground","text-muted","text-muted-foreground","text-accent","text-accent-foreground","text-popover","text-popover-foreground","text-card","text-card-foreground",
     "text-border","text-input","text-ring","text-background","text-foreground",
-    //rest
+] as const;
+
+export const TAILWIND_TEXT_COLOR_CLASSES = [
     "text-inherit","text-current","text-transparent","text-black","text-white",
     "text-slate-50","text-slate-100","text-slate-200","text-slate-300","text-slate-400","text-slate-500","text-slate-600","text-slate-700","text-slate-800","text-slate-900","text-slate-950",
     "text-gray-50","text-gray-100","text-gray-200","text-gray-300","text-gray-400","text-gray-500","text-gray-600","text-gray-700","text-gray-800","text-gray-900","text-gray-950",
@@ -613,6 +615,7 @@ export const TAILWIND_CLASSES = [
     "text-start","text-end",
     
     /* Text Color */
+    ...SHADCN_TAILWIND_TEXT_COLOR_CLASSES,
     ...TAILWIND_TEXT_COLOR_CLASSES,
 
     /* Text Decoration */
@@ -689,6 +692,7 @@ export const TAILWIND_CLASSES = [
     "bg-clip-border","bg-clip-padding","bg-clip-content","bg-clip-text",
     
     /* Background Color */
+    ...SHADCN_TAILWIND_BACKGROUND_COLOR_CLASSES,
     ... TAILWIND_BACKGROUND_COLOR_CLASSES,
     
     /* Background Origin */
@@ -747,6 +751,7 @@ export const TAILWIND_CLASSES = [
     "border-l-0","border-l-2","border-l-4","border-l-8","border-l",
     
     /* Border Color */
+    ...SHADCN_TAILWIND_BORDER_COLOR_CLASSES,
     ...TAILWIND_BORDER_COLOR_CLASSES,
     
     
