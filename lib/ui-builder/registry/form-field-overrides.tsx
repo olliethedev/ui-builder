@@ -1,4 +1,4 @@
-import ClassNameField from "@/components/ui/ui-builder/internal/classname-field";
+import { ClassNameField } from "@/components/ui/ui-builder/internal/classname-control";
 import {
   FormControl,
   FormDescription,

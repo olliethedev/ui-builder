@@ -345,19 +345,21 @@ npm run test
 
 ## Roadmap
 
-- [ ] Add user friendly styling component along with of directly using tailwind classes
 - [ ] Add tiptap editor for markdown content
-- [ ] Add global variables for component props
+- [ ] Add data variables to editor (foundation for all the fun data binding features). Update the Renderer component to accept data variables
+- [ ] Drag and drop component in the editor panel and not just in the layers panel
 - [ ] Add Blocks. Reusable component blocks that can be used in multiple pages
 - [ ] Move component schemas to separate shadcn registry to keep main registry light
 - [ ] Move prop form field components (overrides) to separate shadcn registry to keep main registry light
 - [ ] Add data sources to component layers (ex, getUser() binds prop user.name)
+- [ ] Add visual data model editor + code gen for backend code for CRUD operations
 - [ ] Add event handlers to component layers (onClick, onSubmit, etc)
 - [ ] React Native support
 - [ ] Update to React 19
 - [ ] Update to latest Shadcn/ui + Tailwind CSS v4
 - [ ] Update to new AutoForm when stable
 - [ ] Update to Zod v4 (when stable) for native json schema conversion to enforce safety in layer props
+- [ ] VS Code plugin integration for UI Builder
 
 ## Contributing
 
