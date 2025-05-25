@@ -9,7 +9,7 @@ import { Markdown } from "@/components/ui/ui-builder/markdown";
 import { Icon, iconNames } from "@/components/ui/ui-builder/icon";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { classNameFieldOverrides, childrenFieldOverrides, iconNameFieldOverrides, childrenAsTextareaFieldOverrides, commonFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { classNameFieldOverrides, childrenFieldOverrides, iconNameFieldOverrides, childrenAsTextareaFieldOverrides, commonFieldOverrides, childrenAsTipTapFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 export const complexComponentDefinitions: ComponentRegistry = {
@@ -137,7 +137,7 @@ export const complexComponentDefinitions: ComponentRegistry = {
         from: "@/components/ui/ui-builder/markdown",
         fieldOverrides: {
             className:(layer)=> classNameFieldOverrides(layer),
-            children: (layer)=> childrenAsTextareaFieldOverrides(layer)
+            children: (layer)=> childrenAsTipTapFieldOverrides(layer)
         }
     },
     Icon: {

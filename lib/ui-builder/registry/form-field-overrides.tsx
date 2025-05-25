@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/ui-builder/types';
 import IconNameField from "@/components/ui/ui-builder/internal/iconname-field";
 import { Textarea } from "@/components/ui/textarea";
+import { MinimalTiptapEditor } from "@/components/ui/minimal-tiptap";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const classNameFieldOverrides: FieldConfigFunction = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -92,6 +94,50 @@ export const childrenAsTextareaFieldOverrides: FieldConfigFunction = (layer) => 
             onChange={field.onChange}
             {...fieldProps}
         />
+        </FormControl>
+        {fieldConfigItem.description && (
+          <FormDescription>{fieldConfigItem.description}</FormDescription>
+        )}
+      </FormItem>
+    ),
+  };
+};
+
+export const childrenAsTipTapFieldOverrides: FieldConfigFunction = (layer) => {
+  return {
+    fieldType: ({
+      label,
+      isRequired,
+      fieldConfigItem,
+      field,
+      fieldProps,
+    }: AutoFormInputComponentProps) => (
+      <FormItem className="flex flex-col">
+        <FormLabel>
+          {label}
+          {isRequired && <span className="text-destructive"> *</span>}
+        </FormLabel>
+        <FormControl>
+          {/* <ChildrenTextArea layer={layer} /> */}
+          <TooltipProvider>
+            <MinimalTiptapEditor
+              immediatelyRender={false}
+              output="markdown"
+              editable={true}
+              value={layer.children as string}
+              editorClassName="focus:outline-none px-4 py-2 h-full"
+              onChange={(content)=> {
+                console.log({content})
+                //if string call field.onChange
+                if (typeof content === 'string') {
+                  field.onChange(content)
+                }else{
+                  console.warn("Tiptap content is not a string")
+                }
+              }}
+              {...fieldProps}
+          />
+        </TooltipProvider>
         </FormControl>
         {fieldConfigItem.description && (
           <FormDescription>{fieldConfigItem.description}</FormDescription>

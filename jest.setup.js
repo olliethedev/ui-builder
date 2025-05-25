@@ -7,6 +7,23 @@ jest.mock("remark-gfm", () => () => {
 jest.mock("remark-math", () => () => {
 })
 
+jest.mock("lowlight", () => ({
+  common: {},
+  createLowlight: jest.fn(() => ({
+    highlight: jest.fn(() => ({ value: [] })),
+    highlightAuto: jest.fn(() => ({ value: [] })),
+    register: jest.fn(),
+    registered: jest.fn(() => true),
+    listLanguages: jest.fn(() => []),
+  })),
+}));
+
+jest.mock("react-medium-image-zoom", () => ({
+  __esModule: true,
+  default: ({ children }) => children,
+  Zoom: ({ children }) => children,
+}));
+
 jest.mock("next-themes", () => ({
   useTheme: jest.fn(),
   ThemeProvider: jest.fn(),
