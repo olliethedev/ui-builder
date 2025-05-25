@@ -134,6 +134,7 @@ function getDevDependencies(): string[] {
 
 function getRegistryDependencies(): string[] {
     return ["https://raw.githubusercontent.com/vantezzen/autoform/refs/heads/pure-shadcn/registry/auto-form.json",
+        "https://raw.githubusercontent.com/olliethedev/shadcn-minimal-tiptap/refs/heads/feat/markdown/registry/block-registry.json",
         "badge",
         "command",
         "dropdown-menu",
