@@ -24,6 +24,12 @@ See the [docs site](https://uibuilder.app/) for more information.
 
 ---
 
+## Tailwind 4, React 19 Support and latest Shadcn/ui
+
+Migration will be coming soon. Some 3rd party shadcn component dependencies are not yet compatible with the latest versions of Tailwind, so we are waiting for the latest versions of these components to be stable.
+If you are having issues with latest shadcn/ui cli you can try using older version in the command like `npx shadcn@2.1.8 add ...`
+
+
 # Quick Start
 
 ## Installation
@@ -61,15 +67,44 @@ And that's it! You have a UI Builder that you can use to build your UI.
 To use the UI Builder, you just need to provide a component registry.
 
 ```tsx
+import z from "zod";
 import UIBuilder from "@/components/ui/ui-builder";
-import { ComponentRegistry } from "@/components/ui/ui-builder/types";
-import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions"; // Basic html primitives registry
-import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions"; // Sample shadcn/ui components registry
+import { Button } from "@/components/ui/button";
+import { ComponentRegistry, ComponentLayer } from "@/components/ui/ui-builder/types";
+import { commonFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+
 
 // Define your component registry
 const myComponentRegistry: ComponentRegistry = {
-  ...primitiveComponentDefinitions,
-  ...complexComponentDefinitions,
+    Button: {
+        component: Button,
+        schema: z.object({
+            className: z.string().optional(),
+            children: z.any().optional(),
+            variant: z
+                .enum([
+                    "default",
+                    "destructive",
+                    "outline",
+                    "secondary",
+                    "ghost",
+                    "link",
+                ])
+                .default("default"),
+            size: z.enum(["default", "sm", "lg", "icon"]).default("default"),
+        }),
+        from: "@/components/ui/button",
+        defaultChildren: [
+            {
+                id: "button-text",
+                type: "span",
+                name: "span",
+                props: {},
+                children: "Hello World",
+            } satisfies ComponentLayer,
+        ],
+        fieldOverrides: commonFieldOverrides()
+    }
 };
 
 export function App() {
@@ -80,6 +115,8 @@ export function App() {
   );
 }
 ```
+
+Note: fieldOverrides is optional, they provide the ability to customize the auto-generated form fields for the component's properties in the editor's sidebar. In the above example we are using the commonFieldOverrides to provide custom form fields for children, className props. Read more about fieldOverrides in the [Add your custom components to the registry](#add-your-custom-components-to-the-registry) section.
 
 ### Example with initial state and onChange callback
 
@@ -345,20 +382,19 @@ npm run test
 
 ## Roadmap
 
-- [ ] Add tiptap editor for markdown content
 - [ ] Add data variables to editor (foundation for all the fun data binding features). Update the Renderer component to accept data variables
 - [ ] Drag and drop component in the editor panel and not just in the layers panel
+- [ ] Update to React 19
+- [ ] Update to latest Shadcn/ui + Tailwind CSS v4
 - [ ] Add Blocks. Reusable component blocks that can be used in multiple pages
 - [ ] Move component schemas to separate shadcn registry to keep main registry light
 - [ ] Move prop form field components (overrides) to separate shadcn registry to keep main registry light
-- [ ] Add data sources to component layers (ex, getUser() binds prop user.name)
+- [ ] Add data sources (functions) to component layers (ex, getUser() binds prop user.name)
 - [ ] Add visual data model editor + code gen for backend code for CRUD operations
 - [ ] Add event handlers to component layers (onClick, onSubmit, etc)
-- [ ] React Native support
-- [ ] Update to React 19
-- [ ] Update to latest Shadcn/ui + Tailwind CSS v4
 - [ ] Update to new AutoForm when stable
 - [ ] Update to Zod v4 (when stable) for native json schema conversion to enforce safety in layer props
+- [ ] React Native support
 - [ ] VS Code plugin integration for UI Builder
 
 ## Contributing
