@@ -16,6 +16,10 @@ export interface EditorStore {
 
     persistLayerStoreConfig: boolean;
     setPersistLayerStoreConfig: (shouldPersist: boolean) => void;
+
+    // Revision counter to track state changes for form revalidation
+    revisionCounter: number;
+    incrementRevision: () => void;
 }
 
 const store: StateCreator<EditorStore, [], []> = (set, get) => ({
@@ -38,6 +42,9 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
 
     persistLayerStoreConfig: true,
     setPersistLayerStoreConfig: (shouldPersist) => set({ persistLayerStoreConfig: shouldPersist }),
+
+    revisionCounter: 0,
+    incrementRevision: () => set(state => ({ revisionCounter: state.revisionCounter + 1 })),
 });
 
 export const useEditorStore = create<EditorStore>()(store);

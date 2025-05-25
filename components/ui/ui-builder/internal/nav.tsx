@@ -71,6 +71,7 @@ import {
   KeyCombination,
   useKeyboardShortcuts,
 } from "@/hooks/use-keyboard-shortcuts";
+import { useStore } from "zustand";
 
 const Z_INDEX = 1000;
 
@@ -82,8 +83,12 @@ export function NavBar({ useCanvas }: NavBarProps) {
   const selectedPageId = useLayerStore((state) => state.selectedPageId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const componentRegistry = useEditorStore((state) => state.registry);
-  const { undo, redo, futureStates, pastStates } =
-    useLayerStore.temporal.getState();
+  const incrementRevision = useEditorStore((state) => state.incrementRevision);
+  
+  // Fix: Subscribe to temporal state changes using useStoreWithEqualityFn
+  const pastStates = useStore(useLayerStore.temporal, (state) => state.pastStates);
+  const futureStates = useStore(useLayerStore.temporal, (state) => state.futureStates);
+  const { undo, redo } = useLayerStore.temporal.getState();
 
   const page = findLayerById(selectedPageId) as ComponentLayer;
 
@@ -96,11 +101,15 @@ export function NavBar({ useCanvas }: NavBarProps) {
 
   const handleUndo = useCallback(() => {
     undo();
-  }, [undo]);
+    // Increment revision counter to trigger form revalidation
+    incrementRevision();
+  }, [undo, incrementRevision]);
 
   const handleRedo = useCallback(() => {
     redo();
-  }, [redo]);
+    // Increment revision counter to trigger form revalidation
+    incrementRevision();
+  }, [redo, incrementRevision]);
 
   const keyCombinations = useMemo<KeyCombination[]>(
     () => [

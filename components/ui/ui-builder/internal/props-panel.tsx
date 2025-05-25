@@ -117,6 +117,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
   addComponentLayer,
 }) => {
   const findLayerById = useLayerStore((state) => state.findLayerById);
+  const revisionCounter = useEditorStore((state) => state.revisionCounter);
   const selectedLayer = findLayerById(selectedLayerId) as ComponentLayer | undefined;
   
   const handleDeleteLayer = useCallback(() => {
@@ -175,7 +176,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
     }
 
     return { ...transformedProps, children: selectedLayer.children };
-  }, [selectedLayer, schema]); // Depend on selectedLayer and schema
+  }, [selectedLayer, schema, revisionCounter]); // Include revisionCounter to detect undo/redo changes
 
   const autoFormSchema = useMemo(() => {
     return addDefaultValues(schema, formValues);
@@ -186,12 +187,19 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
     return generateFieldOverrides(componentRegistry, selectedLayer);
   }, [componentRegistry, selectedLayer]);
 
+  // Create a unique key that changes when we need to force re-render the form
+  // This includes selectedLayerId and revisionCounter to handle both layer changes and undo/redo
+  const formKey = useMemo(() => {
+    return `${selectedLayerId}-${revisionCounter}`;
+  }, [selectedLayerId, revisionCounter]);
+
   if (!selectedLayer || !componentRegistry[selectedLayer.type as keyof typeof componentRegistry]) {
     return null;
   }
 
   return (
     <AutoForm
+      key={formKey} // Force re-render when layer changes or undo/redo occurs
       formSchema={autoFormSchema}
       values={formValues} // Use the memoized and transformed values
       onParsedValuesChange={onParsedValuesChange}

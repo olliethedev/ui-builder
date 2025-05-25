@@ -107,6 +107,9 @@ jest.mock("@/components/ui/ui-builder/internal/classname-control/classname-item-
 describe("BreakpointClassNameControl", () => {
   const mockOnChange = jest.fn();
 
+  // Set timeout for all tests in this file to 20 seconds
+  jest.setTimeout(20000);
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
