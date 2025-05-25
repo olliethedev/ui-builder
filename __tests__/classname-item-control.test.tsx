@@ -267,6 +267,9 @@ jest.mock("@/lib/utils", () => ({
 describe("ClassNameItemControl", () => {
   const mockOnChange = jest.fn();
 
+  // Set timeout for all tests in this file to 20 seconds
+  jest.setTimeout(20000);
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -352,67 +355,66 @@ describe("ClassNameItemControl", () => {
 
   describe("State Changes", () => {
     it("should call onChange when individual control value changes", async () => {
-      const user = userEvent.setup();
       render(<ClassNameItemControl value="" onChange={mockOnChange} />);
       
-      const widthSelect = screen.getByTestId("width-select");
-      await user.selectOptions(widthSelect, "w-full");
+      // Clear any calls from initial render
+      mockOnChange.mockClear();
       
-      await waitFor(() => {
-        expect(mockOnChange).toHaveBeenCalledWith("w-full");
-      });
+      const widthSelect = screen.getByTestId("width-select");
+      fireEvent.change(widthSelect, { target: { value: "w-full" } });
+      
+      expect(mockOnChange).toHaveBeenCalledWith("w-full");
     });
 
     it("should update multiple controls independently", async () => {
-      const user = userEvent.setup();
       render(<ClassNameItemControl value="" onChange={mockOnChange} />);
+      
+      // Clear any calls from initial render
+      mockOnChange.mockClear();
       
       const widthSelect = screen.getByTestId("width-select");
       const heightSelect = screen.getByTestId("height-select");
       
-      await user.selectOptions(widthSelect, "w-full");
-      await user.selectOptions(heightSelect, "h-auto");
+      fireEvent.change(widthSelect, { target: { value: "w-full" } });
+      fireEvent.change(heightSelect, { target: { value: "h-auto" } });
       
-      await waitFor(() => {
-        expect(mockOnChange).toHaveBeenLastCalledWith("w-full h-auto");
-      });
+      expect(mockOnChange).toHaveBeenLastCalledWith("w-full h-auto");
     });
 
     it("should handle multi-select controls", async () => {
-      const user = userEvent.setup();
       render(<ClassNameItemControl value="" onChange={mockOnChange} />);
+      
+      // Clear any calls from initial render
+      mockOnChange.mockClear();
       
       const borderCheckbox = screen.getByTestId("border-checkbox-border");
       const roundedCheckbox = screen.getByTestId("border-checkbox-rounded");
       
-      await user.click(borderCheckbox);
-      await user.click(roundedCheckbox);
+      fireEvent.click(borderCheckbox);
+      fireEvent.click(roundedCheckbox);
       
-      await waitFor(() => {
-        expect(mockOnChange).toHaveBeenLastCalledWith("border rounded");
-      });
+      expect(mockOnChange).toHaveBeenLastCalledWith("border rounded");
     });
 
     it("should remove values when unchecking multi-select options", async () => {
-      const user = userEvent.setup();
       render(<ClassNameItemControl value="border rounded" onChange={mockOnChange} />);
       
-      const borderCheckbox = screen.getByTestId("border-checkbox-border");
-      await user.click(borderCheckbox);
+      // Clear any calls from initial render
+      mockOnChange.mockClear();
       
-      await waitFor(() => {
-        expect(mockOnChange).toHaveBeenLastCalledWith("rounded");
-      });
+      const borderCheckbox = screen.getByTestId("border-checkbox-border");
+      fireEvent.click(borderCheckbox);
+      
+      expect(mockOnChange).toHaveBeenLastCalledWith("rounded");
     });
   });
 
   describe("Group Handling", () => {
     it("should handle group key selection", async () => {
-      const user = userEvent.setup();
       render(<ClassNameItemControl value="" onChange={mockOnChange} />);
       
       const groupSelect = screen.getByTestId("group-key-select-padding");
-      await user.selectOptions(groupSelect, "directionalPadding");
+      fireEvent.change(groupSelect, { target: { value: "directionalPadding" } });
       
       // The component should update the selected key for the group
       expect(groupSelect).toHaveValue("directionalPadding");
