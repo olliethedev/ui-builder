@@ -116,12 +116,12 @@ export const BreakpointClassNameControl = ({
             <TabsTrigger value="base" data-testid="base-tab-trigger">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <>
+                  <div className="flex items-center">
                     <span>Base</span>
                     {base && (
                       <Badge className="ml-1 justify-center text-center px-[3px] h-[18px] min-w-[18px] !text-[10px]">{base.split(" ").filter(Boolean).length}</Badge>
                     )}
-                  </>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   Base styles for all screen sizes
@@ -131,12 +131,12 @@ export const BreakpointClassNameControl = ({
             <TabsTrigger value="md" data-testid="md-tab-trigger">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <>
+                  <div className="flex items-center">
                   <span className="overflow-hidden text-ellipsis whitespace-nowrap text-nowrap">Tablet & Desktop</span>
                   {md && (
                     <Badge className="ml-1 justify-center text-center px-[3px] h-[18px] min-w-[18px] !text-[10px]">{md.split(" ").filter(Boolean).length}</Badge>
                   )}
-                  </>
+                  </div>
                 </TooltipTrigger>
                 <TooltipContent>
                   Overrides for screens larger than 768px (md:*)

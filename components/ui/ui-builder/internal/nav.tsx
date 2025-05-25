@@ -460,8 +460,8 @@ function ModeToggle() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Tooltip>
+      <Tooltip>
+        <DropdownMenuTrigger asChild>
           <TooltipTrigger asChild>
             <Button variant="outline" size="icon">
               <SunIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -469,9 +469,9 @@ function ModeToggle() {
               <span className="sr-only">Toggle theme</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Toggle theme</TooltipContent>
-        </Tooltip>
-      </DropdownMenuTrigger>
+        </DropdownMenuTrigger>
+        <TooltipContent>Toggle theme</TooltipContent>
+      </Tooltip>
       <DropdownMenuContent align="end" style={{ zIndex: Z_INDEX + 1 }}>
         <DropdownMenuItem onClick={() => setTheme("light")}>
           Light
@@ -542,8 +542,8 @@ function PagesPopover() {
   return (
     <div className="relative flex justify-center">
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger>
-          <Tooltip>
+        <Tooltip>
+          <PopoverTrigger asChild>
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
@@ -553,9 +553,9 @@ function PagesPopover() {
                 {selectedPageData?.name}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Select page</TooltipContent>
-          </Tooltip>
-        </PopoverTrigger>
+          </PopoverTrigger>
+          <TooltipContent>Select page</TooltipContent>
+        </Tooltip>
         <PopoverContent
           className="w-[300px] p-0"
           style={{ zIndex: Z_INDEX + 1 }}
@@ -629,8 +629,8 @@ const PreviewModeToggle = () => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Tooltip>
+      <Tooltip>
+        <DropdownMenuTrigger asChild>
           <TooltipTrigger asChild>
             <Button variant="outline" size="icon">
               {
@@ -644,9 +644,9 @@ const PreviewModeToggle = () => {
               <span className="sr-only">Select screen size</span>
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Select screen size</TooltipContent>
-        </Tooltip>
-      </DropdownMenuTrigger>
+        </DropdownMenuTrigger>
+        <TooltipContent>Select screen size</TooltipContent>
+      </Tooltip>
       <DropdownMenuContent align="end" style={{ zIndex: Z_INDEX + 1 }}>
         <DropdownMenuItem
           onSelect={() => handleSelect("mobile")}
