@@ -13,7 +13,7 @@ import { ComponentLayer } from '@/components/ui/ui-builder/types';
 export interface Variable {
   id: string;
   name: string;
-  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
+  type: 'string' | 'number' | 'boolean';
   defaultValue: any;
 }
 

@@ -85,9 +85,25 @@ const AddVariableForm: React.FC<AddVariableFormProps> = ({ onSave, onCancel }) =
   const [name, setName] = useState("");
   const [type, setType] = useState<Variable['type']>("string");
   const [defaultValue, setDefaultValue] = useState("");
+  const [errors, setErrors] = useState<{ name?: string; defaultValue?: string }>({});
+
+  const validateForm = () => {
+    const newErrors: { name?: string; defaultValue?: string } = {};
+    
+    if (!name.trim()) {
+      newErrors.name = "Name is required";
+    }
+    
+    if (!defaultValue.trim()) {
+      newErrors.defaultValue = "Preview value is required";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSave = () => {
-    if (!name.trim()) return;
+    if (!validateForm()) return;
     
     let parsedValue: any = defaultValue;
     try {
@@ -95,8 +111,6 @@ const AddVariableForm: React.FC<AddVariableFormProps> = ({ onSave, onCancel }) =
         parsedValue = parseFloat(defaultValue) || 0;
       } else if (type === "boolean") {
         parsedValue = defaultValue.toLowerCase() === "true";
-      } else if (type === "object" || type === "array") {
-        parsedValue = JSON.parse(defaultValue || (type === "array" ? "[]" : "{}"));
       }
     } catch (e) {
       // Keep as string if parsing fails
@@ -112,13 +126,22 @@ const AddVariableForm: React.FC<AddVariableFormProps> = ({ onSave, onCancel }) =
       </CardHeader>
       <CardContent className="space-y-3">
         <div>
-          <Label htmlFor="var-name">Name</Label>
+          <Label htmlFor="var-name">
+            Name <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="var-name"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (errors.name) setErrors(prev => ({ ...prev, name: undefined }));
+            }}
             placeholder="variableName"
+            className={errors.name ? "border-red-500" : ""}
           />
+          {errors.name && (
+            <p className="text-sm text-red-500 mt-1">{errors.name}</p>
+          )}
         </div>
         
         <div>
@@ -131,24 +154,31 @@ const AddVariableForm: React.FC<AddVariableFormProps> = ({ onSave, onCancel }) =
               <SelectItem value="string">String</SelectItem>
               <SelectItem value="number">Number</SelectItem>
               <SelectItem value="boolean">Boolean</SelectItem>
-              <SelectItem value="object">Object</SelectItem>
-              <SelectItem value="array">Array</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div>
-          <Label htmlFor="var-default">Default Value</Label>
+          <Label htmlFor="var-default">
+            Preview Value <span className="text-red-500">*</span>
+          </Label>
           <Input
             id="var-default"
             value={defaultValue}
-            onChange={(e) => setDefaultValue(e.target.value)}
+            onChange={(e) => {
+              setDefaultValue(e.target.value);
+              if (errors.defaultValue) setErrors(prev => ({ ...prev, defaultValue: undefined }));
+            }}
             placeholder={getPlaceholderForType(type)}
+            className={errors.defaultValue ? "border-red-500" : ""}
           />
+          {errors.defaultValue && (
+            <p className="text-sm text-red-500 mt-1">{errors.defaultValue}</p>
+          )}
         </div>
 
         <div className="flex gap-2">
-          <Button size="sm" onClick={handleSave} disabled={!name.trim()}>
+          <Button size="sm" onClick={handleSave}>
             <Check className="h-4 w-4 mr-2" />
             Save
           </Button>
@@ -182,20 +212,34 @@ const VariableCard: React.FC<VariableCardProps> = ({
   const [name, setName] = useState(variable.name);
   const [type, setType] = useState(variable.type);
   const [defaultValue, setDefaultValue] = useState(
-    typeof variable.defaultValue === "object" 
-      ? JSON.stringify(variable.defaultValue, null, 2)
-      : String(variable.defaultValue)
+    String(variable.defaultValue)
   );
+  const [errors, setErrors] = useState<{ name?: string; defaultValue?: string }>({});
+
+  const validateForm = () => {
+    const newErrors: { name?: string; defaultValue?: string } = {};
+    
+    if (!name.trim()) {
+      newErrors.name = "Name is required";
+    }
+    
+    if (!defaultValue.trim()) {
+      newErrors.defaultValue = "Preview value is required";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSave = () => {
+    if (!validateForm()) return;
+    
     let parsedValue: any = defaultValue;
     try {
       if (type === "number") {
         parsedValue = parseFloat(defaultValue) || 0;
       } else if (type === "boolean") {
         parsedValue = defaultValue.toLowerCase() === "true";
-      } else if (type === "object" || type === "array") {
-        parsedValue = JSON.parse(defaultValue || (type === "array" ? "[]" : "{}"));
       }
     } catch (e) {
       // Keep as string if parsing fails
@@ -209,12 +253,21 @@ const VariableCard: React.FC<VariableCardProps> = ({
       <Card>
         <CardContent className="pt-4 space-y-3">
           <div>
-            <Label htmlFor={`edit-name-${variable.id}`}>Name</Label>
+            <Label htmlFor={`edit-name-${variable.id}`}>
+              Name <span className="text-red-500">*</span>
+            </Label>
             <Input
               id={`edit-name-${variable.id}`}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (errors.name) setErrors(prev => ({ ...prev, name: undefined }));
+              }}
+              className={errors.name ? "border-red-500" : ""}
             />
+            {errors.name && (
+              <p className="text-sm text-red-500 mt-1">{errors.name}</p>
+            )}
           </div>
           
           <div>
@@ -227,20 +280,27 @@ const VariableCard: React.FC<VariableCardProps> = ({
                 <SelectItem value="string">String</SelectItem>
                 <SelectItem value="number">Number</SelectItem>
                 <SelectItem value="boolean">Boolean</SelectItem>
-                <SelectItem value="object">Object</SelectItem>
-                <SelectItem value="array">Array</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label htmlFor={`edit-default-${variable.id}`}>Default Value</Label>
+            <Label htmlFor={`edit-default-${variable.id}`}>
+              Preview Value <span className="text-red-500">*</span>
+            </Label>
             <Input
               id={`edit-default-${variable.id}`}
               value={defaultValue}
-              onChange={(e) => setDefaultValue(e.target.value)}
+              onChange={(e) => {
+                setDefaultValue(e.target.value);
+                if (errors.defaultValue) setErrors(prev => ({ ...prev, defaultValue: undefined }));
+              }}
               placeholder={getPlaceholderForType(type)}
+              className={errors.defaultValue ? "border-red-500" : ""}
             />
+            {errors.defaultValue && (
+              <p className="text-sm text-red-500 mt-1">{errors.defaultValue}</p>
+            )}
           </div>
 
           <div className="flex gap-2">
@@ -268,10 +328,7 @@ const VariableCard: React.FC<VariableCardProps> = ({
               <span className="text-xs bg-muted px-2 py-1 rounded">{variable.type}</span>
             </div>
             <div className="text-sm text-muted-foreground mt-1">
-              {typeof variable.defaultValue === "object" 
-                ? JSON.stringify(variable.defaultValue)
-                : String(variable.defaultValue)
-              }
+              {String(variable.defaultValue)}
             </div>
           </div>
           <div className="flex gap-1">
@@ -296,10 +353,6 @@ function getPlaceholderForType(type: Variable['type']): string {
       return "0";
     case "boolean":
       return "true";
-    case "object":
-      return "{}";
-    case "array":
-      return "[]";
     default:
       return "";
   }

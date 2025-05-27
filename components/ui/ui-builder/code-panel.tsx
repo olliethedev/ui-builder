@@ -12,7 +12,8 @@ import { useMemo } from "react";
 
 export function CodePanel({className}: {className?: string}) {
   const componentRegistry = useEditorStore((state) => state.registry);
-  const { selectedPageId, findLayerById } = useLayerStore();
+  const selectedPageId = useLayerStore( state => state.selectedPageId);
+  const findLayerById = useLayerStore( state => state.findLayerById);
 
   const page = findLayerById(selectedPageId) as ComponentLayer;
   const codeBlocks = useMemo(() => ({

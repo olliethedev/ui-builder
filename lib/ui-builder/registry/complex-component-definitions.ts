@@ -9,10 +9,29 @@ import { Markdown } from "@/components/ui/ui-builder/markdown";
 import { Icon, iconNames } from "@/components/ui/ui-builder/icon";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { classNameFieldOverrides, childrenFieldOverrides, iconNameFieldOverrides, childrenAsTextareaFieldOverrides, commonFieldOverrides, childrenAsTipTapFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { classNameFieldOverrides, childrenFieldOverrides, iconNameFieldOverrides, commonFieldOverrides, childrenAsTipTapFieldOverrides, textInputFieldOverrides, commonVariableRenderParentOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import { ExampleComp } from '../../../app/platform/example-comp';
 
 export const complexComponentDefinitions: ComponentRegistry = {
+    ExampleComp: {
+        component: ExampleComp,
+        schema: z.object({
+            name: z.string().default("World"),
+            age: z.coerce.number().default(20),
+            birthDate: z.coerce.date().default(new Date()),
+            married: z.boolean().default(false),
+            work: z.enum(["developer", "designer", "manager"]).default("developer"),
+            children: z.any().optional(),
+        }),
+        from: "@/components/ui/ui-builder/example-comp",
+        fieldOverrides: {
+            name: (layer: ComponentLayer)=> textInputFieldOverrides(layer, true, "name"),
+            age: (layer: ComponentLayer)=> commonVariableRenderParentOverrides("age"),
+            married: (layer: ComponentLayer)=> commonVariableRenderParentOverrides("married"),
+            children: (layer: ComponentLayer)=> childrenFieldOverrides(layer),
+        },
+    },
     Button: {
         component: Button,
         schema: z.object({
