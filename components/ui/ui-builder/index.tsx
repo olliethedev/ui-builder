@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/ui-builder/types";
 import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
+import { VariablesPanel } from "@/components/ui/ui-builder/internal/variables-panel";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 /**
  * TabsContentConfig defines the structure for the content of the page config panel tabs.
@@ -34,6 +36,7 @@ import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
 export interface TabsContentConfig {
   layers: { title: string; content: React.ReactNode };
   appearance?: { title: string; content: React.ReactNode };
+  data?: { title: string; content: React.ReactNode };
 }
 
 /**
@@ -146,7 +149,9 @@ const UIBuilder = ({
       enableSystem
       disableTransitionOnChange
     >
+      <TooltipProvider>
       {layout}
+      </TooltipProvider>
     </ThemeProvider>
   );
 };
@@ -226,7 +231,7 @@ function MainLayout({ panelConfig }: { panelConfig: PanelConfig }) {
 }
 
 /**
- * PageConfigPanel renders a tabbed panel for page configuration, including layers and appearance tabs.
+ * PageConfigPanel renders a tabbed panel for page configuration, including layers, appearance, and variables tabs.
  *
  * @param {object} props
  * @param {string} props.className - The class name for the panel container.
@@ -238,18 +243,21 @@ export function PageConfigPanel({
   tabsContent,
 }: {
   className: string;
-  tabsContent: { layers: { title: string; content: React.ReactNode }; appearance?: { title: string; content: React.ReactNode } };
+  tabsContent: TabsContentConfig;
 }) {
-  const { layers, appearance } = tabsContent;
+  const { layers, appearance, data } = tabsContent;
+  const tabCount = 1 + (appearance ? 1 : 0) + (data ? 1 : 0);
+  
   return (
     <Tabs
       data-testid="page-config-panel"
       defaultValue="layers"
       className={className}
     >
-      <TabsList className={`grid ${appearance ? 'grid-cols-2' : 'grid-cols-1'} mx-4`}>
+      <TabsList className={`grid grid-cols-${tabCount} mx-4`}>
         <TabsTrigger value="layers">{layers.title}</TabsTrigger>
         {appearance && <TabsTrigger value="appearance">{appearance.title}</TabsTrigger>}
+        {data && <TabsTrigger value="variables">{data.title}</TabsTrigger>}
       </TabsList>
       <TabsContent value="layers">
         {layers.content}
@@ -257,6 +265,11 @@ export function PageConfigPanel({
       {appearance && (
         <TabsContent value="appearance">
           {appearance.content}
+        </TabsContent>
+      )}
+      {data && (
+        <TabsContent value="variables">
+          {data.content}
         </TabsContent>
       )}
     </Tabs>
@@ -277,7 +290,8 @@ export function defaultConfigTabsContent() {
         <TailwindThemePanel />
         </div>
       ),
-    }
+    },
+    data: { title: "Data", content: <VariablesPanel /> }
   }
 }
 

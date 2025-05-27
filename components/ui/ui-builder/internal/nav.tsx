@@ -65,7 +65,6 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-  TooltipProvider,
 } from "@/components/ui/tooltip";
 import {
   KeyCombination,
@@ -154,7 +153,7 @@ export function NavBar({ useCanvas }: NavBarProps) {
       className="flex items-center justify-between bg-background px-2 md:px-6 py-4 border-b"
       style={{ zIndex: Z_INDEX }}
     >
-      <TooltipProvider>
+      
         <div className="flex items-center gap-2">
           <h1 className="block text-lg md:text-2xl font-bold whitespace-nowrap">
             UI Builder
@@ -205,7 +204,6 @@ export function NavBar({ useCanvas }: NavBarProps) {
           isOpen={isExportModalOpen}
           onOpenChange={setIsExportModalOpen}
         />
-      </TooltipProvider>
     </div>
   );
 }

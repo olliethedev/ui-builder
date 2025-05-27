@@ -28,7 +28,7 @@ export interface RegistryEntry<T extends ReactComponentType<any>> {
   fieldOverrides?: Record<string, FieldConfigFunction>;
 }
 
-export type FieldConfigFunction = (layer: ComponentLayer) => FieldConfigItem;
+export type FieldConfigFunction = (layer: ComponentLayer, allowBinding?: boolean ) => FieldConfigItem;
 
 export type ComponentRegistry = Record<
     string, RegistryEntry<ReactComponentType<any>>

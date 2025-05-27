@@ -10,19 +10,22 @@ import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
-
-
+export interface Variable {
+  id: string;
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'object' | 'array';
+  defaultValue: any;
+}
 
 const DEFAULT_PAGE_PROPS = {
   className: "p-4 flex flex-col gap-2",
 };
 
-
-
 export interface LayerStore {
   pages: ComponentLayer[];
   selectedLayerId: string | null;
   selectedPageId: string;
+  variables: Variable[];
   initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string) => void;
   addComponentLayer: (layerType: string, parentId: string, parentPosition?: number) => void;
   addPageLayer: (pageId: string) => void;
@@ -33,6 +36,12 @@ export interface LayerStore {
   selectPage: (pageId: string) => void;
   findLayerById: (layerId: string | null) => ComponentLayer | undefined;
   findLayersForPageId: (pageId: string) => ComponentLayer[];
+
+  addVariable: (name: string, type: Variable['type'], defaultValue: any) => void;
+  updateVariable: (variableId: string, updates: Partial<Omit<Variable, 'id'>>) => void;
+  removeVariable: (variableId: string) => void;
+  bindPropToVariable: (layerId: string, propName: string, variableId: string) => void;
+  unbindPropFromVariable: (layerId: string, propName: string) => void;
 }
 
 const store: StateCreator<LayerStore, [], []> = (set, get) => (
@@ -48,6 +57,8 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       }
     ],
 
+    // Variables available for binding
+    variables: [],
     selectedLayerId: null,
     selectedPageId: '1',
     initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string) => {
@@ -282,6 +293,89 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
         selectedPageId: pageId
       };
     })),
+
+    // Add a new variable
+    addVariable: (name, type, defaultValue) => set(produce((state: LayerStore) => {
+      state.variables.push({ id: createId(), name, type, defaultValue });
+    })),
+
+    // Update an existing variable
+    updateVariable: (variableId, updates) => set(produce((state: LayerStore) => {
+      const v = state.variables.find(v => v.id === variableId);
+      if (v) Object.assign(v, updates);
+    })),
+
+    // Remove a variable
+    removeVariable: (variableId) => set(produce((state: LayerStore) => {
+      state.variables = state.variables.filter(v => v.id !== variableId);
+      
+      // Remove any references to the variable in the layers and set default value from schema
+      const { registry } = useEditorStore.getState();
+      
+      // Helper function to clean variable references from props
+      const cleanVariableReferences = (layer: ComponentLayer): ComponentLayer => {
+        const updatedProps = { ...layer.props };
+        let hasChanges = false;
+        
+        // Check each prop for variable references
+        Object.entries(updatedProps).forEach(([propName, propValue]) => {
+          if (propValue && typeof propValue === 'object' && propValue.__variableRef === variableId) {
+            // This prop references the variable being removed
+            // Get the default value from the schema
+            const layerSchema = registry[layer.type]?.schema;
+            if (layerSchema && layerSchema.shape && layerSchema.shape[propName]) {
+              const defaultProps = getDefaultProps(layerSchema);
+              updatedProps[propName] = defaultProps[propName];
+              hasChanges = true;
+            } else {
+              // Fallback: remove the prop entirely if no schema default
+              delete updatedProps[propName];
+              hasChanges = true;
+            }
+          }
+        });
+        
+        return hasChanges ? { ...layer, props: updatedProps } : layer;
+      };
+      
+      // Update all pages and their layers
+      state.pages = state.pages.map(page => 
+        visitLayer(page, null, cleanVariableReferences)
+      );
+    })),
+
+    // Bind a component prop to a variable reference
+    bindPropToVariable: (layerId, propName, variableId) => {
+      // Store a special object as prop to indicate binding
+      get().updateLayer(layerId, { [propName]: { __variableRef: variableId } });
+    },
+
+    // Unbind a component prop from a variable reference and set default value from schema
+    unbindPropFromVariable: (layerId, propName) => {
+      const { registry } = useEditorStore.getState();
+      const layer = get().findLayerById(layerId);
+      
+      if (!layer) {
+        console.warn(`Layer with ID ${layerId} not found.`);
+        return;
+      }
+
+      // Get the default value from the schema
+      const layerSchema = registry[layer.type]?.schema;
+      let defaultValue: any = undefined;
+      
+      if (layerSchema && layerSchema.shape && layerSchema.shape[propName]) {
+        const defaultProps = getDefaultProps(layerSchema);
+        defaultValue = defaultProps[propName];
+      }
+      
+      // If no default value found in schema, use empty string for string-like props
+      if (defaultValue === undefined) {
+        defaultValue = "";
+      }
+
+      get().updateLayer(layerId, { [propName]: defaultValue });
+    },
   }
 )
 
@@ -320,7 +414,7 @@ const useLayerStore = create(persist(temporal<LayerStore>(store,
   }
 ), {
   name: "layer-store",
-  version: 3,
+  version: 4,
   storage: createJSONStorage(() => conditionalLocalStorage),
   migrate: (persistedState: unknown, version: number) => {
     /* istanbul ignore if*/
@@ -328,6 +422,9 @@ const useLayerStore = create(persist(temporal<LayerStore>(store,
       return migrateV1ToV2(persistedState as LayerStore);
     } else if (version === 2) {
       return migrateV2ToV3(persistedState as LayerStore);
+    } else if (version === 3) {
+      // New variable support: ensure variables array exists
+      return { ...(persistedState as LayerStore), variables: [] as Variable[] } as LayerStore;
     }
     return persistedState;
   }

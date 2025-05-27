@@ -10,6 +10,8 @@ import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
 import { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
+import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { resolveVariableReferences } from "@/lib/ui-builder/utils/variable-resolver";
 
 export interface EditorConfig {
   
@@ -27,8 +29,10 @@ export const RenderLayer: React.FC<{
   layer: ComponentLayer;
   componentRegistry: ComponentRegistry;
   editorConfig?: EditorConfig;
+  variableValues?: Record<string, any>;
 }> = memo(
-  ({ layer, componentRegistry, editorConfig }) => {
+  ({ layer, componentRegistry, editorConfig, variableValues }) => {
+    const variables = useLayerStore((state) => state.variables);
     const componentDefinition =
       componentRegistry[layer.type as keyof typeof componentRegistry];
 
@@ -48,13 +52,16 @@ export const RenderLayer: React.FC<{
 
     if (!Component) return null;
 
-    const childProps: Record<string, any> = { ...layer.props };
+    // Resolve variable references in props
+    const resolvedProps = resolveVariableReferences(layer.props, variables, variableValues);
+    const childProps: Record<string, any> = { ...resolvedProps };
     if (hasLayerChildren(layer) && layer.children.length > 0) {
       childProps.children = layer.children.map((child) => (
         <RenderLayer
           key={child.id}
           componentRegistry={componentRegistry}
           layer={child}
+          variableValues={variableValues}
           editorConfig={
             editorConfig
               ? { ...editorConfig, zIndex: editorConfig.zIndex + 1, parentUpdated: editorConfig.parentUpdated || !isDeepEqual(prevLayer.current, layer) }
