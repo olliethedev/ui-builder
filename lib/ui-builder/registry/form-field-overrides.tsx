@@ -279,7 +279,7 @@ export function VariableBindingWrapper({
     <div className="flex w-full gap-2 items-end">
       {isCurrentlyBound && boundVariable ? (
         // Bound state - show variable info and unbind button
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 w-full">
           <Label>{propName.charAt(0).toUpperCase() + propName.slice(1)}</Label>
           <div className="flex items-end gap-2 w-full">
             <Card className="w-full">

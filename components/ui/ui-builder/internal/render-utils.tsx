@@ -9,7 +9,7 @@ import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallbac
 import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
-import { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
+import { ComponentRegistry, ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { resolveVariableReferences } from "@/lib/ui-builder/utils/variable-resolver";
 
@@ -29,10 +29,13 @@ export const RenderLayer: React.FC<{
   layer: ComponentLayer;
   componentRegistry: ComponentRegistry;
   editorConfig?: EditorConfig;
+  variables?: Variable[];
   variableValues?: Record<string, any>;
 }> = memo(
-  ({ layer, componentRegistry, editorConfig, variableValues }) => {
-    const variables = useLayerStore((state) => state.variables);
+  ({ layer, componentRegistry, editorConfig, variables, variableValues }) => {
+    const storeVariables = useLayerStore((state) => state.variables);
+    // Use provided variables or fall back to store variables
+    const effectiveVariables = variables || storeVariables;
     const componentDefinition =
       componentRegistry[layer.type as keyof typeof componentRegistry];
 
@@ -53,7 +56,7 @@ export const RenderLayer: React.FC<{
     if (!Component) return null;
 
     // Resolve variable references in props
-    const resolvedProps = resolveVariableReferences(layer.props, variables, variableValues);
+    const resolvedProps = resolveVariableReferences(layer.props, effectiveVariables, variableValues);
     const childProps: Record<string, any> = { ...resolvedProps };
     if (hasLayerChildren(layer) && layer.children.length > 0) {
       childProps.children = layer.children.map((child) => (
@@ -61,6 +64,7 @@ export const RenderLayer: React.FC<{
           key={child.id}
           componentRegistry={componentRegistry}
           layer={child}
+          variables={variables}
           variableValues={variableValues}
           editorConfig={
             editorConfig

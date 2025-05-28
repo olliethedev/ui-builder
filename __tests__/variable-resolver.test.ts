@@ -1,5 +1,5 @@
 import { isVariableReference, resolveVariableReferences } from '@/lib/ui-builder/utils/variable-resolver';
-import { Variable } from '@/lib/ui-builder/store/layer-store';
+import { Variable } from '@/components/ui/ui-builder/types';
 
 describe('Variable Resolver', () => {
   const mockVariables: Variable[] = [

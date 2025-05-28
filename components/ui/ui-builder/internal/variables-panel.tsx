@@ -1,21 +1,23 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Plus, Edit2, Check, X } from "lucide-react";
-import { useLayerStore, Variable } from "@/lib/ui-builder/store/layer-store";
+import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { Variable } from '@/components/ui/ui-builder/types';
 import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 
 interface VariablesPanelProps {
   className?: string;
+  editVariables?: boolean;
 }
 
-export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => {
+export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className, editVariables = true }) => {
   const { variables, addVariable, updateVariable, removeVariable } = useLayerStore();
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,17 +32,19 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
     <div className={cn("flex flex-col gap-4 p-4", className)}>
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Variables</h3>
-        <Button
-          size="sm"
-          onClick={() => setIsAdding(true)}
-          disabled={isAdding}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Variable
-        </Button>
+        {editVariables && (
+          <Button
+            size="sm"
+            onClick={() => setIsAdding(true)}
+            disabled={isAdding}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Variable
+          </Button>
+        )}
       </div>
 
-      {isAdding && (
+      {isAdding && editVariables && (
         <AddVariableForm
           onSave={(name, type, defaultValue) => {
             addVariable(name, type, defaultValue);
@@ -63,13 +67,17 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className }) => 
             }}
             onCancel={() => setEditingId(null)}
             onDelete={() => handleRemoveVariable(variable.id)}
+            editVariables={editVariables}
           />
         ))}
       </div>
 
       {variables.length === 0 && !isAdding && (
         <div className="text-center text-muted-foreground py-8">
-          No variables defined. Click &quot;Add Variable&quot; to create one.
+          {editVariables 
+            ? 'No variables defined. Click "Add Variable" to create one.'
+            : 'No variables defined.'
+          }
         </div>
       )}
     </div>
@@ -199,6 +207,7 @@ interface VariableCardProps {
   onSave: (updates: Partial<Omit<Variable, 'id'>>) => void;
   onCancel: () => void;
   onDelete: () => void;
+  editVariables: boolean;
 }
 
 const VariableCard: React.FC<VariableCardProps> = ({
@@ -208,6 +217,7 @@ const VariableCard: React.FC<VariableCardProps> = ({
   onSave,
   onCancel,
   onDelete,
+  editVariables,
 }) => {
   const [name, setName] = useState(variable.name);
   const [type, setType] = useState(variable.type);
@@ -331,14 +341,16 @@ const VariableCard: React.FC<VariableCardProps> = ({
               {String(variable.defaultValue)}
             </div>
           </div>
-          <div className="flex gap-1">
-            <Button size="sm" variant="ghost" onClick={onEdit}>
-              <Edit2 className="h-4 w-4" />
-            </Button>
-            <Button size="sm" variant="ghost" onClick={onDelete}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          {editVariables && (
+            <div className="flex gap-1">
+              <Button size="sm" variant="ghost" onClick={onEdit}>
+                <Edit2 className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="ghost" onClick={onDelete}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -19,6 +19,13 @@ export type ComponentLayer = {
     children: ComponentLayer[] | string;
 };
 
+export interface Variable {
+  id: string;
+  name: string;
+  type: 'string' | 'number' | 'boolean';
+  defaultValue: any;
+}
+
 export interface RegistryEntry<T extends ReactComponentType<any>> {
   component?: T;
   schema: ZodObject<any>;

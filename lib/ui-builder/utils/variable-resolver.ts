@@ -1,4 +1,4 @@
-import { Variable } from '@/lib/ui-builder/store/layer-store';
+import { Variable } from '@/components/ui/ui-builder/types';
 
 /**
  * Checks if a value is a variable reference

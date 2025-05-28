@@ -2,7 +2,7 @@
 
 import { pageLayerToCode, generateLayerCode, generatePropsString } from "../components/ui/ui-builder/internal/templates";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
-import { Variable } from '@/lib/ui-builder/store/layer-store';
+import { Variable } from '@/components/ui/ui-builder/types';
 import template from "lodash/template";
 import { normalizeSchema } from "./test-utils";
 import { z } from "zod";

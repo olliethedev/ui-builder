@@ -108,6 +108,13 @@ describe('VariablesPanel', () => {
       expect(screen.getByText('Add Variable')).toBeInTheDocument();
     });
 
+    it('should hide add button when editVariables is false', () => {
+      render(<VariablesPanel editVariables={false} />);
+      
+      expect(screen.getByText('Variables')).toBeInTheDocument();
+      expect(screen.queryByText('Add Variable')).not.toBeInTheDocument();
+    });
+
     it('should display existing variables', () => {
       render(<VariablesPanel />);
       
@@ -130,6 +137,32 @@ describe('VariablesPanel', () => {
       render(<VariablesPanel />);
       
       expect(screen.getByText(/No variables defined/)).toBeInTheDocument();
+    });
+
+    it('should show appropriate empty state when editing is disabled', () => {
+      mockedUseLayerStore.mockReturnValue({
+        variables: [],
+        addVariable: mockAddVariable,
+        updateVariable: mockUpdateVariable,
+        removeVariable: mockRemoveVariable,
+      });
+
+      render(<VariablesPanel editVariables={false} />);
+      
+      expect(screen.getByText('No variables defined.')).toBeInTheDocument();
+      expect(screen.queryByText(/Click "Add Variable"/)).not.toBeInTheDocument();
+    });
+
+    it('should hide edit and delete buttons when editVariables is false', () => {
+      render(<VariablesPanel editVariables={false} />);
+      
+      // Variables should still be displayed
+      expect(screen.getByText('userName')).toBeInTheDocument();
+      expect(screen.getByText('userAge')).toBeInTheDocument();
+      
+      // But edit and delete buttons should not be present
+      expect(screen.queryByText('✎')).not.toBeInTheDocument();
+      expect(screen.queryByText('🗑')).not.toBeInTheDocument();
     });
   });
 

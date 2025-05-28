@@ -24,6 +24,7 @@ import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import {
   ComponentRegistry,
   ComponentLayer,
+  Variable
 } from "@/components/ui/ui-builder/types";
 import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
@@ -56,9 +57,12 @@ interface PanelConfig {
 interface UIBuilderProps {
   initialLayers?: ComponentLayer[];
   onChange?: (pages: ComponentLayer[]) => void;
+  initialVariables?: Variable[];
+  onVariablesChange?: (variables: Variable[]) => void;
   componentRegistry: ComponentRegistry;
   panelConfig?: PanelConfig;
   persistLayerStore?: boolean;
+  editVariables?: boolean;
 }
 
 /**
@@ -70,9 +74,12 @@ interface UIBuilderProps {
 const UIBuilder = ({
   initialLayers,
   onChange,
+  initialVariables,
+  onVariablesChange,
   componentRegistry,
   panelConfig: userPanelConfig,
   persistLayerStore = true,
+  editVariables = true,
 }: UIBuilderProps) => {
   const layerStore = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
@@ -80,7 +87,7 @@ const UIBuilder = ({
   const [editorStoreInitialized, setEditorStoreInitialized] = useState(false);
   const [layerStoreInitialized, setLayerStoreInitialized] = useState(false);
 
-  const memoizedDefaultTabsContent = useMemo(() => defaultConfigTabsContent(), []);
+  const memoizedDefaultTabsContent = useMemo(() => defaultConfigTabsContent(editVariables), [editVariables]);
 
   const currentPanelConfig = useMemo(() => {
     const effectiveTabsContent = userPanelConfig?.pageConfigPanelTabsContent || memoizedDefaultTabsContent;
@@ -111,7 +118,7 @@ const UIBuilder = ({
   useEffect(() => {
     if (layerStore && editorStore) {
       if (initialLayers && !layerStoreInitialized) {
-        layerStore.initialize(initialLayers);
+        layerStore.initialize(initialLayers, undefined, undefined, initialVariables);
         setLayerStoreInitialized(true);
         const { clear } = useLayerStore.temporal.getState();
         clear();
@@ -124,6 +131,7 @@ const UIBuilder = ({
     editorStore,
     componentRegistry,
     initialLayers,
+    initialVariables,
     layerStoreInitialized,
   ]);
 
@@ -133,6 +141,13 @@ const UIBuilder = ({
       onChange(layerStore.pages);
     }
   }, [layerStore?.pages, onChange, layerStoreInitialized]);
+
+  // Effect 4: Handle onVariablesChange callback when variables change
+  useEffect(() => {
+    if (onVariablesChange && layerStore?.variables && layerStoreInitialized) {
+      onVariablesChange(layerStore.variables);
+    }
+  }, [layerStore?.variables, onVariablesChange, layerStoreInitialized]);
 
   const isLoading = !layerStoreInitialized || !editorStoreInitialized;
   const layout = isLoading ? (
@@ -279,9 +294,10 @@ export function PageConfigPanel({
 /**
  * Returns the default tab content configuration for the page config panel.
  *
+ * @param {boolean} editVariables - Whether to allow editing variables.
  * @returns {TabsContentConfig} The default tabs content configuration.
  */
-export function defaultConfigTabsContent() {
+export function defaultConfigTabsContent(editVariables: boolean = true) {
   return {
     layers: { title: "Layers", content: <LayersPanel /> },
     appearance: { title: "Appearance", content: (
@@ -291,7 +307,7 @@ export function defaultConfigTabsContent() {
         </div>
       ),
     },
-    data: { title: "Data", content: <VariablesPanel /> }
+    data: { title: "Data", content: <VariablesPanel editVariables={editVariables} /> }
   }
 }
 

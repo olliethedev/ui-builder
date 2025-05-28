@@ -8,14 +8,7 @@ import isDeepEqual from 'fast-deep-equal';
 import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3 } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
-
-export interface Variable {
-  id: string;
-  name: string;
-  type: 'string' | 'number' | 'boolean';
-  defaultValue: any;
-}
+import { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
 
 const DEFAULT_PAGE_PROPS = {
   className: "p-4 flex flex-col gap-2",
@@ -26,7 +19,7 @@ export interface LayerStore {
   selectedLayerId: string | null;
   selectedPageId: string;
   variables: Variable[];
-  initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string) => void;
+  initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string, variables?: Variable[]) => void;
   addComponentLayer: (layerType: string, parentId: string, parentPosition?: number) => void;
   addPageLayer: (pageId: string) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
@@ -61,8 +54,8 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
     variables: [],
     selectedLayerId: null,
     selectedPageId: '1',
-    initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string) => {
-      set({ pages, selectedPageId: selectedPageId || pages[0].id, selectedLayerId: selectedLayerId || null });
+    initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string, variables?: Variable[]) => {
+      set({ pages, selectedPageId: selectedPageId || pages[0].id, selectedLayerId: selectedLayerId || null, variables: variables || [] });
     },
     findLayerById: (layerId: string | null) => {
       const { selectedPageId, findLayersForPageId, pages } = get();
