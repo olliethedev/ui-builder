@@ -152,7 +152,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
 
   const onParsedValuesChange = useCallback(
     (parsedValues: z.infer<typeof schema> & { children?: string | { layerType: string, addPosition: number } }) => {
-      console.log({parsedValues});
       const { children, ...dataProps } = parsedValues;
       
       // Preserve variable references by merging with original props
