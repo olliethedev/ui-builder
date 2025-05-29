@@ -4,11 +4,11 @@
 
 UI Builder is a shadcn/ui package that adds a Figma‑style editor to your own product, letting non‑developers compose pages, emails, dashboards, and white‑label views with the exact React components you already ship. 
 
-Layouts are saved as plain JSON for easy versioning and can be rendered instantly allowing:
+Layouts are saved as plain JSON for easy versioning and can be rendered instantly with dynamic data allowing:
 
 - your marketing team to update a landing page without waiting on engineering.
-- a customer to tweak a branded portal.
-- a product manager to modify email templates.
+- a customer to tweak a branded portal with their own content and branding.
+- a product manager to modify email templates but parts of the content is dynamic for each user.
 - add a visual "head" to your headless CMS, connecting your content API with your component library.
 
 
@@ -17,6 +17,7 @@ How it unlocks novel product features:
 - Give users no‑code superpowers — add a full visual builder to your SaaS with one install.
 - Design with components you already ship — nothing new to build or maintain.
 - Store layouts as human‑readable JSON — render inside your product to ship changes immediately.
+- **Create dynamic, data-driven interfaces** — bind component properties to variables for personalized content.
 
 See the [docs site](https://uibuilder.app/) for more information.
 
@@ -120,12 +121,13 @@ Note: fieldOverrides is optional, they provide the ability to customize the auto
 
 ### Example with initial state and onChange callback
 
-You can initialize the UI with initial layers from a database and use the onChange callback to persist the state to a database.
+You can initialize the UI with initial layers from a database and use the onChange callback to persist the state to a database. Variables make your pages dynamic by allowing you to bind component properties to data that can change at runtime.
 
 ```tsx
 import React from "react";
 import UIBuilder from "@/components/ui/ui-builder";
 import { ComponentLayer, ComponentRegistry } from "@/components/ui/ui-builder/types";
+import { Variable } from '@/components/ui/ui-builder/types';
 
 const myComponentRegistry: ComponentRegistry = {...}; // Your component registry
 
@@ -175,10 +177,38 @@ const initialLayers: ComponentLayer[] = [
   },
 ];
 
+// Define variables to make your pages dynamic and reusable
+// Variables can be bound to component properties for personalized content
+const initialVariables: Variable[] = [
+  {
+    id: "var1",
+    name: "userName",
+    type: "string",
+    defaultValue: "John Doe"
+  },
+  {
+    id: "var2",
+    name: "userAge",
+    type: "number",
+    defaultValue: 25
+  },
+  {
+    id: "var3",
+    name: "isActive",
+    type: "boolean",
+    defaultValue: true
+  }
+];
+
 const App = () => {
   const handleLayersChange = (updatedLayers: ComponentLayer[]) => {
     // Here you can send the updated layers to the backend
     console.log("Layers updated:", updatedLayers);
+  };
+
+  const handleVariablesChange = (updatedVariables: Variable[]) => {
+    // Here you can send the updated variables to the backend
+    console.log("Variables updated:", updatedVariables);
   };
 
   return (
@@ -186,6 +216,8 @@ const App = () => {
       <UIBuilder
         initialLayers={initialLayers}
         onChange={handleLayersChange}
+        initialVariables={initialVariables}
+        onVariablesChange={handleVariablesChange}
         componentRegistry={myComponentRegistry}
       />
     </div>
@@ -195,32 +227,76 @@ const App = () => {
 export default App;
 
 ```
+Note: Variables are optional, but they are a powerful way to make your pages dynamic and reusable. Read more about variables in the [Understanding Variables](#understanding-variables) section.
+
 
 ### UIBuilder Props
 - `componentRegistry`: **Required**. An object mapping component type names to their definitions (component, schema, import path, etc.).
 - `initialLayers`: Optional prop to set up initial pages and layers. Useful for setting the initial state of the builder, from a database for example.
 - `onChange`: Optional callback triggered when the editor state changes, providing the updated pages. Can be used to persist the state to a database.
+- `initialVariables`: Optional prop to set up initial variables. Useful for setting the initial variable state of the builder, from a database for example. Variables enable dynamic content binding.
+- `onVariablesChange`: Optional callback triggered when the variables change, providing the updated variables. Can be used to persist the variable state to a database.
 - `panelConfig`: Optional. An object to customize the different panels of the UI Builder (e.g., nav bar, editor panel, props panel). If not provided, a default configuration is used. This allows for fine-grained control over the editor's appearance and layout.
 - `persistLayerStore`: Optional boolean (defaults to `true`). Determines whether the editor's state (layers and their configurations) is persisted in the browser's local storage across sessions. Set to `false` to disable local storage persistence, useful if you are managing state entirely through `initialLayers` and `onChange`.
+- `editVariables`: Optional boolean (defaults to `true`). Controls whether users can edit variables in the Variables panel. When `true`, users can add, edit, and delete variables. When `false`, the Variables panel becomes read-only, hiding the "Add Variable" button and the edit/delete buttons on individual variables. Useful when you want to provide a read-only variables experience or manage variables entirely through `initialVariables`.
 
 
 ## Rendering from Serialized Layer Data
 
-You can also render the page layer without editor functionality by using the LayerRenderer component:
+You can also render the page layer without editor functionality by using the LayerRenderer component. This is where variables become powerful - you can override variable values at runtime to create personalized, dynamic content.
 
 ```tsx
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { ComponentLayer } from "@/components/ui/ui-builder/types";
 import { ComponentRegistry } from "@/components/ui/ui-builder/types";
+import { Variable } from '@/components/ui/ui-builder/types';
 
 const myComponentRegistry: ComponentRegistry = {...}; // Your component registry
 
 const page: ComponentLayer = {...} // Fetch or define your page layer
 
+// Define variables for the page
+const variables: Variable[] = [
+  {
+    id: "var1",
+    name: "userName",
+    type: "string",
+    defaultValue: "John Doe"
+  },
+  {
+    id: "var2",
+    name: "userAge", 
+    type: "number",
+    defaultValue: 25
+  }
+];
+
+// Override variable values at runtime for personalized content
+// This is where the magic happens - same page structure, different data!
+const variableValues = {
+  var1: "Jane Smith", // Override userName
+  var2: 30 // Override userAge
+};
+
 export function MyPage() {
-  return <LayerRenderer page={page} componentRegistry={myComponentRegistry} />;
+  return (
+    <LayerRenderer 
+      page={page} 
+      componentRegistry={myComponentRegistry}
+      variables={variables}
+      variableValues={variableValues}
+    />
+  );
 }
 ```
+
+### LayerRenderer Props
+- `page`: **Required**. The page layer to render.
+- `componentRegistry`: **Required**. An object mapping component type names to their definitions.
+- `className`: Optional. CSS class name for the root container.
+- `editorConfig`: Optional. Configuration for editor-specific functionality (usually not needed for rendering).
+- `variables`: Optional. Array of variable definitions available for binding in the page. These define the structure and types of dynamic data.
+- `variableValues`: Optional. Object mapping variable IDs to their runtime values, overriding default values. This is how you inject real data into your templates.
 
 ## Add your custom components to the registry
 
@@ -329,14 +405,69 @@ UI Builder empowers you to visually construct and modify user interfaces by leve
 
 *   **Dynamic Props Editing**: Each component in the registry is defined with a Zod schema that outlines its props, their types, and default values. UI Builder utilizes this schema to automatically generate a properties panel (using [Auto-Form](https://github.com/vantezzen/autoform/tree/pure-shadcn)). This allows users to configure component instances in real-time, with changes immediately reflected on the canvas.
 
-*   **Flexible State Management**: By default, the editor's state (the arrangement and configuration of layers) is persisted in the browser's local storage for convenience across sessions. For more robust or backend-integrated solutions, you can provide `initialLayers` to seed the editor (e.g., from a database) and use the `onChange` callback to capture state changes and persist them as needed.
+*   **Variable-Driven Dynamic Content**: Variables transform static designs into dynamic, data-driven interfaces. Users can define typed variables (string, number, boolean) and bind them to component properties. This enables:
+    *   **Personalized content** that adapts to user data
+    *   **Reusable templates** that work across different contexts
+    *   **Multi-tenant applications** with customized branding per client
+    *   **A/B testing** and feature flags through boolean variables
+    *   **Content management** where non-technical users can update dynamic content
 
-*   **React Code Generation**: A key feature is the ability to export the visually designed page structure as clean, readable React code. This process uses the import paths (`from` property) specified in your component registry, ensuring the generated code correctly references your components.
+*   **Flexible State Management**: By default, the editor's state (the arrangement and configuration of layers, plus variables) is persisted in the browser's local storage for convenience across sessions. For more robust or backend-integrated solutions, you can provide `initialLayers` and `initialVariables` to seed the editor (e.g., from a database) and use the `onChange` and `onVariablesChange` callbacks to capture state changes and persist them as needed.
+
+*   **React Code Generation**: A key feature is the ability to export the visually designed page structure as clean, readable React code. This process uses the import paths (`from` property) specified in your component registry, ensuring the generated code correctly references your components. Variable bindings are converted to proper TypeScript interfaces and prop references.
+
+*   **Runtime Variable Resolution**: When rendering pages with the `LayerRenderer`, you can provide `variableValues` to override default variable values with real data from APIs, databases, or user input. This separation of structure and content enables powerful use cases like personalized dashboards, white-label applications, and dynamic email templates.
 
 *   **Extensibility and Customization**: The system is designed for deep integration with your project:
     *   Customize the properties form for each component using `fieldOverrides` to enhance the editing experience (e.g., custom labels, input types, or conditional visibility).
+    *   Enable variable binding for specific component properties to make them dynamic.
     *   Provide custom React components via the `panelConfig` prop to provide custom components for the editor panels.
-    *   If you only need to display a UI Builder page without the editor, the `LayerRenderer` component can render it using the same `componentRegistry` and serialized page data.
+    *   If you only need to display a UI Builder page without the editor, the `LayerRenderer` component can render it using the same `componentRegistry`, serialized page data, and variable values.
+
+## Understanding Variables
+
+**Variables are the key to creating dynamic, data-driven interfaces with UI Builder.** Instead of hardcoding static values into your components, variables allow you to bind component properties to dynamic data that can change at runtime.
+
+### What are Variables?
+
+Variables in UI Builder are typed data containers that can be bound to component properties. They support three types:
+- **String**: For text content, names, descriptions, etc.
+- **Number**: For counts, ages, prices, quantities, etc.  
+- **Boolean**: For feature flags, visibility toggles, active states, etc.
+
+### Why Use Variables?
+
+Variables unlock powerful use cases that transform static designs into dynamic applications:
+
+#### 1. **Personalized Content**
+Bind user-specific data to create personalized experiences:
+```tsx
+// Variable: userName = "Jane Smith"
+// Button text becomes "Welcome, Jane Smith!"
+```
+
+#### 2. **Reusable Templates**
+Create one design that works for multiple contexts:
+- **Marketing teams** can create landing page templates with variables for product names, pricing, and features
+- **Customer portals** can use the same layout with different branding variables per client
+- **Email templates** can have variables for recipient names, company info, and dynamic content
+
+#### 3. **Multi-tenant Applications**
+Build white-label solutions where each customer gets customized interfaces:
+```tsx
+// Variables: companyName, brandColor, logoUrl
+// Same page structure, different branding per tenant
+```
+
+#### 4. **A/B Testing & Feature Flags**
+Use boolean variables to control feature visibility:
+```tsx
+// Variable: showNewFeature = true/false
+// Conditionally show/hide components based on feature flags
+```
+
+#### 5. **Content Management**
+Separate content from structure, allowing non-technical users to update dynamic content without touching the layout.
 
 ---
 
@@ -382,14 +513,16 @@ npm run test
 
 ## Roadmap
 
-- [ ] Add data variables to editor (foundation for all the fun data binding features). Update the Renderer component to accept data variables
+- [ ] Documentation site for UI Builder with more hands-on examples
+- [ ] Configurable Tailwind Class subset for things like React-Email components
 - [ ] Drag and drop component in the editor panel and not just in the layers panel
+- [ ] Add string templates for variable-bound props. (ex, "Hello {name}" in a span)
 - [ ] Update to React 19
 - [ ] Update to latest Shadcn/ui + Tailwind CSS v4
 - [ ] Add Blocks. Reusable component blocks that can be used in multiple pages
 - [ ] Move component schemas to separate shadcn registry to keep main registry light
 - [ ] Move prop form field components (overrides) to separate shadcn registry to keep main registry light
-- [ ] Add data sources (functions) to component layers (ex, getUser() binds prop user.name)
+- [ ] Add data sources (functions) to component layers (ex, getUser() binds prop user.name) - Connect variables to live data sources
 - [ ] Add visual data model editor + code gen for backend code for CRUD operations
 - [ ] Add event handlers to component layers (onClick, onSubmit, etc)
 - [ ] Update to new AutoForm when stable

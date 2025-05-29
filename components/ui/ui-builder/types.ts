@@ -19,6 +19,13 @@ export type ComponentLayer = {
     children: ComponentLayer[] | string;
 };
 
+export interface Variable {
+  id: string;
+  name: string;
+  type: 'string' | 'number' | 'boolean';
+  defaultValue: any;
+}
+
 export interface RegistryEntry<T extends ReactComponentType<any>> {
   component?: T;
   schema: ZodObject<any>;
@@ -28,7 +35,7 @@ export interface RegistryEntry<T extends ReactComponentType<any>> {
   fieldOverrides?: Record<string, FieldConfigFunction>;
 }
 
-export type FieldConfigFunction = (layer: ComponentLayer) => FieldConfigItem;
+export type FieldConfigFunction = (layer: ComponentLayer, allowVariableBinding?: boolean ) => FieldConfigItem;
 
 export type ComponentRegistry = Record<
     string, RegistryEntry<ReactComponentType<any>>

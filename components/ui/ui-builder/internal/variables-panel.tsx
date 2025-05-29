@@ -1,0 +1,371 @@
+"use client";
+
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Trash2, Plus, Edit2, Check, X } from "lucide-react";
+import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { Variable } from '@/components/ui/ui-builder/types';
+import { cn } from "@/lib/utils";
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
+
+interface VariablesPanelProps {
+  className?: string;
+  editVariables?: boolean;
+}
+
+export const VariablesPanel: React.FC<VariablesPanelProps> = ({ className, editVariables = true }) => {
+  const { variables, addVariable, updateVariable, removeVariable } = useLayerStore();
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const incrementRevision = useEditorStore((state) => state.incrementRevision);
+
+  const handleRemoveVariable = (id: string) => {
+    removeVariable(id);
+    incrementRevision();
+  };
+
+  return (
+    <div className={cn("flex flex-col gap-4 p-4", className)}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Variables</h3>
+        {editVariables && (
+          <Button
+            size="sm"
+            onClick={() => setIsAdding(true)}
+            disabled={isAdding}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Variable
+          </Button>
+        )}
+      </div>
+
+      {isAdding && editVariables && (
+        <AddVariableForm
+          onSave={(name, type, defaultValue) => {
+            addVariable(name, type, defaultValue);
+            setIsAdding(false);
+          }}
+          onCancel={() => setIsAdding(false)}
+        />
+      )}
+
+      <div className="space-y-2">
+        {variables.map((variable) => (
+          <VariableCard
+            key={variable.id}
+            variable={variable}
+            isEditing={editingId === variable.id}
+            onEdit={() => setEditingId(variable.id)}
+            onSave={(updates) => {
+              updateVariable(variable.id, updates);
+              setEditingId(null);
+            }}
+            onCancel={() => setEditingId(null)}
+            onDelete={() => handleRemoveVariable(variable.id)}
+            editVariables={editVariables}
+          />
+        ))}
+      </div>
+
+      {variables.length === 0 && !isAdding && (
+        <div className="text-center text-muted-foreground py-8">
+          {editVariables 
+            ? 'No variables defined. Click "Add Variable" to create one.'
+            : 'No variables defined.'
+          }
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface AddVariableFormProps {
+  onSave: (name: string, type: Variable['type'], defaultValue: any) => void;
+  onCancel: () => void;
+}
+
+const AddVariableForm: React.FC<AddVariableFormProps> = ({ onSave, onCancel }) => {
+  const [name, setName] = useState("");
+  const [type, setType] = useState<Variable['type']>("string");
+  const [defaultValue, setDefaultValue] = useState("");
+  const [errors, setErrors] = useState<{ name?: string; defaultValue?: string }>({});
+
+  const validateForm = () => {
+    const newErrors: { name?: string; defaultValue?: string } = {};
+    
+    if (!name.trim()) {
+      newErrors.name = "Name is required";
+    }
+    
+    if (!defaultValue.trim()) {
+      newErrors.defaultValue = "Preview value is required";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = () => {
+    if (!validateForm()) return;
+    
+    let parsedValue: any = defaultValue;
+    try {
+      if (type === "number") {
+        parsedValue = parseFloat(defaultValue) || 0;
+      } else if (type === "boolean") {
+        parsedValue = defaultValue.toLowerCase() === "true";
+      }
+    } catch (e) {
+      // Keep as string if parsing fails
+    }
+
+    onSave(name, type, parsedValue);
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm">Add New Variable</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div>
+          <Label htmlFor="var-name">
+            Name <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="var-name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (errors.name) setErrors(prev => ({ ...prev, name: undefined }));
+            }}
+            placeholder="variableName"
+            className={errors.name ? "border-red-500" : ""}
+          />
+          {errors.name && (
+            <p className="text-sm text-red-500 mt-1">{errors.name}</p>
+          )}
+        </div>
+        
+        <div>
+          <Label htmlFor="var-type">Type</Label>
+          <Select value={type} onValueChange={(value) => setType(value as Variable['type'])}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="string">String</SelectItem>
+              <SelectItem value="number">Number</SelectItem>
+              <SelectItem value="boolean">Boolean</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="var-default">
+            Preview Value <span className="text-red-500">*</span>
+          </Label>
+          <Input
+            id="var-default"
+            value={defaultValue}
+            onChange={(e) => {
+              setDefaultValue(e.target.value);
+              if (errors.defaultValue) setErrors(prev => ({ ...prev, defaultValue: undefined }));
+            }}
+            placeholder={getPlaceholderForType(type)}
+            className={errors.defaultValue ? "border-red-500" : ""}
+          />
+          {errors.defaultValue && (
+            <p className="text-sm text-red-500 mt-1">{errors.defaultValue}</p>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <Button size="sm" onClick={handleSave}>
+            <Check className="h-4 w-4 mr-2" />
+            Save
+          </Button>
+          <Button size="sm" variant="outline" onClick={onCancel}>
+            <X className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+interface VariableCardProps {
+  variable: Variable;
+  isEditing: boolean;
+  onEdit: () => void;
+  onSave: (updates: Partial<Omit<Variable, 'id'>>) => void;
+  onCancel: () => void;
+  onDelete: () => void;
+  editVariables: boolean;
+}
+
+const VariableCard: React.FC<VariableCardProps> = ({
+  variable,
+  isEditing,
+  onEdit,
+  onSave,
+  onCancel,
+  onDelete,
+  editVariables,
+}) => {
+  const [name, setName] = useState(variable.name);
+  const [type, setType] = useState(variable.type);
+  const [defaultValue, setDefaultValue] = useState(
+    String(variable.defaultValue)
+  );
+  const [errors, setErrors] = useState<{ name?: string; defaultValue?: string }>({});
+
+  const validateForm = () => {
+    const newErrors: { name?: string; defaultValue?: string } = {};
+    
+    if (!name.trim()) {
+      newErrors.name = "Name is required";
+    }
+    
+    if (!defaultValue.trim()) {
+      newErrors.defaultValue = "Preview value is required";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSave = () => {
+    if (!validateForm()) return;
+    
+    let parsedValue: any = defaultValue;
+    try {
+      if (type === "number") {
+        parsedValue = parseFloat(defaultValue) || 0;
+      } else if (type === "boolean") {
+        parsedValue = defaultValue.toLowerCase() === "true";
+      }
+    } catch (e) {
+      // Keep as string if parsing fails
+    }
+
+    onSave({ name, type, defaultValue: parsedValue });
+  };
+
+  if (isEditing) {
+    return (
+      <Card>
+        <CardContent className="pt-4 space-y-3">
+          <div>
+            <Label htmlFor={`edit-name-${variable.id}`}>
+              Name <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id={`edit-name-${variable.id}`}
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (errors.name) setErrors(prev => ({ ...prev, name: undefined }));
+              }}
+              className={errors.name ? "border-red-500" : ""}
+            />
+            {errors.name && (
+              <p className="text-sm text-red-500 mt-1">{errors.name}</p>
+            )}
+          </div>
+          
+          <div>
+            <Label htmlFor={`edit-type-${variable.id}`}>Type</Label>
+            <Select value={type} onValueChange={(value) => setType(value as Variable['type'])}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="string">String</SelectItem>
+                <SelectItem value="number">Number</SelectItem>
+                <SelectItem value="boolean">Boolean</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor={`edit-default-${variable.id}`}>
+              Preview Value <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id={`edit-default-${variable.id}`}
+              value={defaultValue}
+              onChange={(e) => {
+                setDefaultValue(e.target.value);
+                if (errors.defaultValue) setErrors(prev => ({ ...prev, defaultValue: undefined }));
+              }}
+              placeholder={getPlaceholderForType(type)}
+              className={errors.defaultValue ? "border-red-500" : ""}
+            />
+            {errors.defaultValue && (
+              <p className="text-sm text-red-500 mt-1">{errors.defaultValue}</p>
+            )}
+          </div>
+
+          <div className="flex gap-2">
+            <Button size="sm" onClick={handleSave}>
+              <Check className="h-4 w-4 mr-2" />
+              Save
+            </Button>
+            <Button size="sm" variant="outline" onClick={onCancel}>
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="pt-4">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{variable.name}</span>
+              <span className="text-xs bg-muted px-2 py-1 rounded">{variable.type}</span>
+            </div>
+            <div className="text-sm text-muted-foreground mt-1">
+              {String(variable.defaultValue)}
+            </div>
+          </div>
+          {editVariables && (
+            <div className="flex gap-1">
+              <Button size="sm" variant="ghost" onClick={onEdit}>
+                <Edit2 className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="ghost" onClick={onDelete}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+function getPlaceholderForType(type: Variable['type']): string {
+  switch (type) {
+    case "string":
+      return "Enter text...";
+    case "number":
+      return "0";
+    case "boolean":
+      return "true";
+    default:
+      return "";
+  }
+} 

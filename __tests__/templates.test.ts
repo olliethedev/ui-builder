@@ -2,6 +2,7 @@
 
 import { pageLayerToCode, generateLayerCode, generatePropsString } from "../components/ui/ui-builder/internal/templates";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import { Variable } from '@/components/ui/ui-builder/types';
 import template from "lodash/template";
 import { normalizeSchema } from "./test-utils";
 import { z } from "zod";
@@ -47,11 +48,34 @@ const componentRegistry = {
   },
 };
 
+const mockVariables: Variable[] = [
+  {
+    id: 'var1',
+    name: 'userName',
+    type: 'string',
+    defaultValue: 'John Doe'
+  },
+  {
+    id: 'var2',
+    name: 'userAge',
+    type: 'number',
+    defaultValue: 25
+  },
+  {
+    id: 'var3',
+    name: 'isActive',
+    type: 'boolean',
+    defaultValue: true
+  }
+];
+
 // Mock lodash/template
 jest.mock("lodash/template", () => {
   return jest.fn().mockImplementation((str: string) => (data: any) => {
     return str
       .replace("<%= imports %>", data.imports)
+      .replace("<%= variablePropsInterface %>", data.variablePropsInterface || "")
+      .replace("<%= variablePropsParam %>", data.variablePropsParam || "()")
       .replace("<%= pageProps %>", data.pageProps)
       .replace("<%= children %>", data.children);
   });
@@ -60,115 +84,107 @@ jest.mock("lodash/template", () => {
 describe("templates.ts", () => {
 
   describe("generatePropsString", () => {
-    it("should return an empty string when no props are provided", () => {
+    it("should generate correct props string for string values", () => {
+      const props = { className: "button-class", id: "button-id" };
+      const expected = ` className="button-class" id="button-id"`;
+      expect(generatePropsString(props)).toBe(expected);
+    });
+
+    it("should generate correct props string for number values", () => {
+      const props = { width: 100, height: 50 };
+      const expected = ` width={100} height={50}`;
+      expect(generatePropsString(props)).toBe(expected);
+    });
+
+    it("should generate correct props string for object values", () => {
+      const props = { style: { color: "red", fontSize: 16 } };
+      const expected = ` style={{"color":"red","fontSize":16}}`;
+      expect(generatePropsString(props)).toBe(expected);
+    });
+
+    it("should filter out undefined values", () => {
+      const props = { className: "button-class", id: undefined, width: 100 };
+      const expected = ` className="button-class" width={100}`;
+      expect(generatePropsString(props)).toBe(expected);
+    });
+
+    it("should return empty string for empty props", () => {
       const props = {};
-      expect(generatePropsString(props)).toBe("");
+      const expected = "";
+      expect(generatePropsString(props)).toBe(expected);
     });
 
-    it("should generate props string correctly for various prop types", () => {
-      const props = {
-        id: "main",
-        disabled: true,
-        count: 5,
-        style: { color: "red" },
-        undefinedProp: undefined,
+    it("should handle variable references correctly", () => {
+      const props = { 
+        className: "button-class", 
+        label: { __variableRef: 'var1' },
+        count: { __variableRef: 'var2' }
       };
-      expect(generatePropsString(props)).toBe(
-        ' id="main" disabled={true} count={5} style={{\"color\":\"red\"}}'
-      );
+      const expected = ` className="button-class" label={variables.userName} count={variables.userAge}`;
+      expect(generatePropsString(props, mockVariables)).toBe(expected);
     });
 
-    it("should exclude props with undefined values", () => {
-      const props = {
-        visible: true,
-        hidden: undefined,
+    it("should handle missing variable references", () => {
+      const props = { 
+        className: "button-class", 
+        label: { __variableRef: 'nonexistent' }
       };
-      expect(generatePropsString(props)).toBe(' visible={true}');
-    });
-
-    it("should handle boolean and null values correctly", () => {
-      const props = {
-        isActive: false,
-        data: null,
-      };
-      expect(generatePropsString(props)).toBe(' isActive={false} data={null}');
-    });
-
-    it("should handle nested objects and arrays", () => {
-      const props = {
-        config: {
-          theme: "dark",
-          layout: {
-            header: true,
-            footer: false
-          }
-        },
-        items: [1, 2, 3],
-      };
-      expect(normalizeSchema(generatePropsString(props))).toBe(normalizeSchema(' config={{\"theme\":\"dark\",\"layout\":{\"header\":true,\"footer\":false}}} items={[1,2,3]}'));
+      const expected = ` className="button-class" label={undefined}`;
+      expect(generatePropsString(props, mockVariables)).toBe(expected);
     });
   });
 
   describe("generateLayerCode", () => {
-
-    it("should generate self-closing tag for layers without children", () => {
+    it("should generate correct code for a simple layer without children", () => {
       const layer: ComponentLayer = {
         id: "button1",
         type: "Button",
-        props: { 
-            className: "button-class"
-        },
+        props: { className: "button-class" },
         children: [],
       };
-      const expected = `  <Button className="button-class" />`;
-      expect(generateLayerCode(layer, 1)).toBe(expected);
+      const expected = `<Button className="button-class" />`;
+      expect(generateLayerCode(layer)).toBe(expected);
     });
 
-    it("should generate nested layers correctly", () => {
+    it("should generate correct code for a layer with string children", () => {
+      const layer: ComponentLayer = {
+        id: "span1",
+        type: "span",
+        props: { className: "text-class" },
+        children: "Hello World",
+      };
+      const expected = `<span className="text-class">\n  {"Hello World"}\n</span>`;
+      expect(generateLayerCode(layer)).toBe(expected);
+    });
+
+    it("should generate correct code for a layer with component children", () => {
       const layer: ComponentLayer = {
         id: "container1",
         type: "Container",
-        props: { id: "container1" },
+        props: { className: "container-class" },
         children: [
           {
             id: "button1",
             type: "Button",
-            props: { 
-                className: "button-class"
-             },
+            props: { className: "button-class" },
             children: [],
-          },
-          {
-            id: "text1",
-            type: "span",
-            props: { className: "text-inside" },
-            children: "Click me",
           },
         ],
       };
-      const expected = `  <Container id="container1">
-        <Button className="button-class" />
-        <span className="text-inside"> {"Click me"} </span>
-      </Container>`;
-      expect(normalizeSchema(generateLayerCode(layer, 1))).toBe(normalizeSchema(expected));
+      const expected = `<Container className="container-class">\n  <Button className="button-class" />\n</Container>`;
+      expect(generateLayerCode(layer)).toBe(expected);
     });
 
-    it("should handle layers with complex children structures", () => {
+    it("should handle proper indentation for nested layers", () => {
       const layer: ComponentLayer = {
-        id: "layout1",
-        type: "Layout",
-        props: { layoutType: "grid" },
+        id: "container1",
+        type: "Container",
+        props: { className: "container-class" },
         children: [
           {
-            id: "header1",
-            type: "Header",
-            props: { title: "Welcome" },
-            children: [],
-          },
-          {
-            id: "content1",
-            type: "Content",
-            props: {},
+            id: "nested-container",
+            type: "Container",
+            props: { className: "nested-container-class" },
             children: [
               {
                 id: "button1",
@@ -180,13 +196,22 @@ describe("templates.ts", () => {
           },
         ],
       };
-      const expected = `  <Layout layoutType="grid">
-        <Header title="Welcome" />
-        <Content>
-          <Button className="button-class" />
-        </Content>
-      </Layout>`;
-      expect(normalizeSchema(generateLayerCode(layer, 1))).toBe(normalizeSchema(expected));
+      const expected = `<Container className="container-class">\n  <Container className="nested-container-class">\n    <Button className="button-class" />\n  </Container>\n</Container>`;
+      expect(generateLayerCode(layer)).toBe(expected);
+    });
+
+    it("should generate correct code with variable references", () => {
+      const layer: ComponentLayer = {
+        id: "button1",
+        type: "Button",
+        props: { 
+          className: "button-class",
+          label: { __variableRef: 'var1' }
+        },
+        children: [],
+      };
+      const expected = `<Button className="button-class" label={variables.userName} />`;
+      expect(generateLayerCode(layer, 0, mockVariables)).toBe(expected);
     });
   });
 
@@ -195,7 +220,7 @@ describe("templates.ts", () => {
 import React from "react";
 <%= imports %>
 
-const Page = () => {
+<%= variablePropsInterface %>const Page = (<%= variablePropsParam %>) => {
   return (
     <div<%= pageProps %>>
 <%= children %>
@@ -210,6 +235,8 @@ export default Page;
       (template as jest.Mock).mockImplementation(() => (data: any) => {
         return mockTemplate
           .replace("<%= imports %>", data.imports)
+          .replace("<%= variablePropsInterface %>", data.variablePropsInterface || "")
+          .replace("<%= variablePropsParam %>", data.variablePropsParam || "()")
           .replace("<%= pageProps %>", data.pageProps)
           .replace("<%= children %>", data.children);
       });
@@ -237,38 +264,35 @@ export default Page;
       expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
     });
 
-    it("should include imports for markdown and components", () => {
+    it("should generate correct code for a page layer with components", () => {
       const page: ComponentLayer = {
         id: "page1",
         type: "_page_",
-        props: { id: "page1" },
+        props: {},
         children: [
           {
-            id: "markdown1",
-            type: "span",
-            props: { id: "md1" },
-            children: "# Hello",
+            id: "header1",
+            type: "Header",
+            props: { title: "Welcome" },
+            children: [],
           },
           {
-            id: "button1",
-            type: "Button",
-            props: { 
-                className: "button-class"
-             },
+            id: "footer1",
+            type: "Footer",
+            props: { year: 2023 },
             children: [],
           },
         ],
       };
-      const expectedImports = `import { Button } from "../components/ui/Button";`;
-      const expectedChildren = `    <span id="md1"> {"# Hello"} </span>
-    <Button className="button-class" />`;
+      const expectedImports = `import { Header } from "../components/ui/Header";\nimport { Footer } from "../components/ui/Footer";`;
+      const expectedChildren = `    <Header title="Welcome" />\n    <Footer year={2023} />`;
       const expected = `
 import React from "react";
 ${expectedImports}
 
 const Page = () => {
   return (
-    <div id="page1">
+    <div>
 ${expectedChildren}
   </div>
     );
@@ -279,55 +303,62 @@ export default Page;
       expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
     });
 
-    it("should handle nested layers and generate all necessary imports", () => {
+    it("should generate correct code with page props", () => {
       const page: ComponentLayer = {
         id: "page1",
         type: "_page_",
-        props: { className: "main-page" },
+        props: { className: "page-class", id: "main-page" },
         children: [
           {
-            id: "container1",
-            type: "Container",
-            props: { id: "container1" },
-            children: [
-              {
-                id: "button1",
-                type: "Button",
-                props: { 
-                    className: "button-class"
-                },
-                children: [],
-              },
-              {
-                id: "text1",
-                type: "span",
-                props: { className: "text-inside" },
-                children: "Click me",
-              },
-            ],
-          },
-          {
-            id: "markdown1",
-            type: "span",
-            props: { id: "md2" },
-            children: "## Subtitle",
+            id: "button1",
+            type: "Button",
+            props: { className: "button-class" },
+            children: [],
           },
         ],
       };
-      const expectedImports = `import { Container } from "../components/ui/Container";
-import { Button } from "../components/ui/Button";`;
-      const expectedChildren = `    <Container id="container1">
-      <Button className="button-class" />
-      <span className="text-inside"> {"Click me"} </span>
-    </Container>
-    <span id="md2"> {"## Subtitle"} </span>`;
+      const expectedImports = `import { Button } from "../components/ui/Button";`;
+      const expectedChildren = `    <Button className="button-class" />`;
       const expected = `
 import React from "react";
 ${expectedImports}
 
 const Page = () => {
   return (
-    <div className="main-page">
+    <div className="page-class" id="main-page">
+${expectedChildren}
+  </div>
+    );
+};
+
+export default Page;
+      `;
+      expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
+    });
+
+    it("should handle default export components correctly", () => {
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "defaultComponent1",
+            type: "DefaultExportComponent",
+            props: { text: "Hello" },
+            children: [],
+          },
+        ],
+      };
+      const expectedImports = `import DefaultExportComponent from "../components/ui/DefaultExportComponent";`;
+      const expectedChildren = `    <DefaultExportComponent text="Hello" />`;
+      const expected = `
+import React from "react";
+${expectedImports}
+
+const Page = () => {
+  return (
+    <div>
 ${expectedChildren}
   </div>
     );
@@ -404,35 +435,39 @@ export default Page;
       expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
     });
 
-    it("should handle pages with no props and multiple children", () => {
+    it("should generate correct code with variables", () => {
       const page: ComponentLayer = {
         id: "page1",
         type: "_page_",
         props: {},
         children: [
           {
-            id: "header1",
-            type: "Header",
-            props: { title: "Home" },
-            children: [],
-          },
-          {
-            id: "footer1",
-            type: "Footer",
-            props: { year: 2023 },
+            id: "button1",
+            type: "Button",
+            props: { 
+              className: "button-class",
+              label: { __variableRef: 'var1' }
+            },
             children: [],
           },
         ],
       };
-      const expectedImports = `import { Header } from "../components/ui/Header";
-import { Footer } from "../components/ui/Footer";`;
-      const expectedChildren = `    <Header title="Home" />
-    <Footer year={2023} />`;
+      const expectedImports = `import { Button } from "../components/ui/Button";`;
+      const expectedChildren = `    <Button className="button-class" label={variables.userName} />`;
+      const expectedInterface = `interface PageProps {
+  variables: {
+    userName: string;
+    userAge: number;
+    isActive: boolean;
+  };
+}
+
+`;
       const expected = `
 import React from "react";
 ${expectedImports}
 
-const Page = () => {
+${expectedInterface}const Page = ({ variables }: PageProps) => {
   return (
     <div>
 ${expectedChildren}
@@ -442,25 +477,25 @@ ${expectedChildren}
 
 export default Page;
       `;
-      expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
+      expect(normalizeSchema(pageLayerToCode(page, componentRegistry, mockVariables))).toBe(normalizeSchema(expected));
     });
 
-    it("should handle default exports correctly", () => {
+    it("should generate correct code without variables interface when no variables", () => {
       const page: ComponentLayer = {
         id: "page1",
         type: "_page_",
         props: {},
         children: [
           {
-            id: "defaultExport1",
-            type: "DefaultExportComponent",
-            props: { text: "Hello from default export" },
+            id: "button1",
+            type: "Button",
+            props: { className: "button-class" },
             children: [],
           },
         ],
       };
-      const expectedImports = `import DefaultExportComponent from "../components/ui/DefaultExportComponent";`;
-      const expectedChildren = `    <DefaultExportComponent text="Hello from default export" />`;
+      const expectedImports = `import { Button } from "../components/ui/Button";`;
+      const expectedChildren = `    <Button className="button-class" />`;
       const expected = `
 import React from "react";
 ${expectedImports}
@@ -475,7 +510,7 @@ ${expectedChildren}
 
 export default Page;
       `;
-      expect(normalizeSchema(pageLayerToCode(page, componentRegistry))).toBe(normalizeSchema(expected));
+      expect(normalizeSchema(pageLayerToCode(page, componentRegistry, []))).toBe(normalizeSchema(expected));
     });
   });
 });

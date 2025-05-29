@@ -113,14 +113,18 @@ describe("PropsPanel", () => {
     duplicateLayer: mockDuplicateLayer,
     updateLayer: mockUpdateLayer,
     addComponentLayer: mockAddComponentLayer,
+    variables: [],
   };
 
   const mockEditorState = {
     registry: mockRegistry,
     getComponentDefinition: mockGetComponentDefinition,
+    revisionCounter: 0,
   };
 
   beforeAll(() => {
+    (useLayerStore as any).getState = jest.fn(() => mockLayerState);
+    
     mockedUseLayerStore.mockImplementation((selector) => {
       if (typeof selector === "function") {
         return selector(mockLayerState);
@@ -143,6 +147,8 @@ describe("PropsPanel", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (useLayerStore as any).getState = jest.fn(() => mockLayerState);
+    
     mockedUseLayerStore.mockImplementation((selector) => {
       if (typeof selector === "function") {
         return selector(mockLayerState);
@@ -302,13 +308,18 @@ describe("PropsPanel", () => {
 
   describe("when no layer is selected", () => {
     beforeEach(() => {
-      mockedUseLayerStore.mockImplementation((selector) => selector({
+      const noLayerState = {
         selectedLayerId: null,
         findLayerById: jest.fn().mockReturnValue(null),
         removeLayer: mockRemoveLayer,
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
-      }));
+        variables: [],
+      };
+      
+      (useLayerStore as any).getState = jest.fn(() => noLayerState);
+      
+      mockedUseLayerStore.mockImplementation((selector) => selector(noLayerState));
       mockedUseEditorStore.mockImplementation((selector) => selector(mockEditorState));
       renderPropsPanel();
     });
@@ -384,13 +395,18 @@ describe("PropsPanel", () => {
   describe("edge cases", () => {
     it("should handle undefined selectedLayer gracefully", () => {
       mockFindLayerById.mockReturnValue(undefined);
-      mockedUseLayerStore.mockImplementation((selector) => selector({
+      const undefinedLayerState = {
         selectedLayerId: "non-existent-layer",
         findLayerById: mockFindLayerById,
         removeLayer: mockRemoveLayer,
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
-      }));
+        variables: [],
+      };
+      
+      (useLayerStore as any).getState = jest.fn(() => undefinedLayerState);
+      
+      mockedUseLayerStore.mockImplementation((selector) => selector(undefinedLayerState));
       mockedUseEditorStore.mockImplementation((selector) => selector(mockEditorState));
       renderPropsPanel();
 
@@ -420,13 +436,18 @@ describe("PropsPanel", () => {
       });
       
       // Reset layer store mock to use the updated findLayerById
-      mockedUseLayerStore.mockImplementation((selector) => selector({
+      const unknownComponentState = {
         selectedLayerId: "layer-unknown",
         findLayerById: mockFindLayerById,
         removeLayer: mockRemoveLayer,
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
-      }));
+        variables: [], // Add variables for consistency
+      };
+      
+      (useLayerStore as any).getState = jest.fn(() => unknownComponentState);
+      
+      mockedUseLayerStore.mockImplementation((selector) => selector(unknownComponentState));
       mockedUseEditorStore.mockImplementation((selector) => selector(mockEditorState));
 
       renderPropsPanel();
@@ -469,6 +490,201 @@ describe("PropsPanel", () => {
           label: "Type Fastest",
           className: "fast-button-class",
         }, undefined);
+      });
+    });
+  });
+
+  describe("Variable Functionality", () => {
+    const mockVariables = [
+      { id: 'var1', name: 'userName', type: 'string', defaultValue: 'John Doe' },
+      { id: 'var2', name: 'userAge', type: 'number', defaultValue: 25 },
+      { id: 'var3', name: 'isActive', type: 'boolean', defaultValue: true },
+    ];
+
+    beforeEach(() => {
+      // Update the layer state to include variables
+      const layerStateWithVariables = {
+        ...mockLayerState,
+        variables: mockVariables,
+      };
+      
+      (useLayerStore as any).getState = jest.fn(() => layerStateWithVariables);
+      
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(layerStateWithVariables);
+        }
+        if (selector === undefined) {
+          return layerStateWithVariables;
+        }
+        throw new Error("useLayerStore called with invalid argument");
+      });
+    });
+
+    it("should preserve variable references when updating other props", async () => {
+      const componentLayer: ComponentLayer = {
+        id: "layer-with-vars",
+        type: "Button",
+        name: "Variable Button",
+        props: { 
+          label: { __variableRef: 'var1' }, // Variable reference
+          className: "button-class" // Regular prop
+        },
+        children: [],
+      };
+
+      mockFindLayerById.mockReturnValue(componentLayer);
+      const { container } = renderPropsPanel();
+
+      // Wait for form to render
+      let classNameInput: HTMLElement | null = null;
+      await waitFor(() => {
+        classNameInput = container.querySelector('input[name="className"]');
+        expect(classNameInput).toBeInTheDocument();
+      });
+
+      // Update the className (non-variable prop)
+      await userEvent.clear(classNameInput!);
+      await userEvent.type(classNameInput!, "updated-class", { delay: 0 });
+
+      await waitFor(() => {
+        // Should preserve the variable reference for label
+        expect(mockUpdateLayer).toHaveBeenLastCalledWith("layer-with-vars", {
+          label: { __variableRef: 'var1' }, // Variable reference preserved
+          className: "updated-class", // Regular prop updated
+        }, undefined);
+      });
+    });
+
+    it("should resolve variable references for display in form", async () => {
+      const componentLayer: ComponentLayer = {
+        id: "layer-with-vars",
+        type: "Button",
+        name: "Variable Button",
+        props: { 
+          label: { __variableRef: 'var1' }, // Should resolve to 'John Doe'
+          className: "button-class"
+        },
+        children: [],
+      };
+
+      mockFindLayerById.mockReturnValue(componentLayer);
+      const { container } = renderPropsPanel();
+
+      // Wait for form to render and check that variable is resolved for display
+      await waitFor(() => {
+        const labelInput = container.querySelector('input[name="label"]') as HTMLInputElement;
+        expect(labelInput).toBeInTheDocument();
+        // The form should display the resolved value, not the variable reference
+        expect(labelInput.value).toBe('John Doe');
+      });
+    });
+
+    it("should handle missing variable references gracefully", async () => {
+      const componentLayer: ComponentLayer = {
+        id: "layer-with-missing-var",
+        type: "Button",
+        name: "Missing Variable Button",
+        props: { 
+          label: { __variableRef: 'nonexistent' }, // Missing variable
+          className: "button-class"
+        },
+        children: [],
+      };
+
+      mockFindLayerById.mockReturnValue(componentLayer);
+      const { container } = renderPropsPanel();
+
+      // Should handle missing variable gracefully
+      await waitFor(() => {
+        const labelInput = container.querySelector('input[name="label"]') as HTMLInputElement;
+        expect(labelInput).toBeInTheDocument();
+        // Should show empty or undefined value for missing variable
+        expect(labelInput.value).toBe('');
+      });
+    });
+
+    it("should handle nested variable references", async () => {
+      const componentLayer: ComponentLayer = {
+        id: "layer-with-nested-vars",
+        type: "Button",
+        name: "Nested Variable Button",
+        props: { 
+          config: {
+            user: {
+              name: { __variableRef: 'var1' },
+              age: { __variableRef: 'var2' }
+            },
+            active: { __variableRef: 'var3' }
+          },
+          className: "button-class"
+        },
+        children: [],
+      };
+
+      mockFindLayerById.mockReturnValue(componentLayer);
+      renderPropsPanel();
+
+      // The component should handle nested variable resolution without errors
+      await waitFor(() => {
+        expect(screen.queryByText("Nested Variable Button Properties")).toBeInTheDocument();
+      });
+    });
+
+    it("should not override variable references when form values change", async () => {
+      const componentLayer: ComponentLayer = {
+        id: "layer-protected-vars",
+        type: "Button", 
+        name: "Protected Variable Button",
+        props: { 
+          label: { __variableRef: 'var1' }, // This should be protected
+          className: "original-class"
+        },
+        children: [],
+      };
+
+      mockFindLayerById.mockReturnValue(componentLayer);
+      const { container } = renderPropsPanel();
+
+      // Try to update className
+      let classNameInput: HTMLElement | null = null;
+      await waitFor(() => {
+        classNameInput = container.querySelector('input[name="className"]');
+        expect(classNameInput).toBeInTheDocument();
+      });
+
+      await userEvent.clear(classNameInput!);
+      await userEvent.type(classNameInput!, "new-class", { delay: 0 });
+
+      await waitFor(() => {
+        // Variable reference should be preserved, only className should change
+        expect(mockUpdateLayer).toHaveBeenLastCalledWith("layer-protected-vars", {
+          label: { __variableRef: 'var1' }, // Still a variable reference
+          className: "new-class", // Updated value
+        }, undefined);
+      });
+    });
+
+    it("should handle different variable types correctly", async () => {
+      const componentLayer: ComponentLayer = {
+        id: "layer-multi-type-vars",
+        type: "Button",
+        name: "Multi Type Variables",
+        props: { 
+          label: { __variableRef: 'var1' }, // string
+          count: { __variableRef: 'var2' }, // number  
+          enabled: { __variableRef: 'var3' }, // boolean
+          className: "static-class"
+        },
+        children: [],
+      };
+
+      mockFindLayerById.mockReturnValue(componentLayer);
+      renderPropsPanel();
+
+      // Should render without errors and preserve all variable types
+      await waitFor(() => {
+        expect(screen.queryByText("Multi Type Variables Properties")).toBeInTheDocument();
       });
     });
   });

@@ -81,7 +81,7 @@ export const CodeBlock = memo(function CodeBlock({
   );
 
   return (
-    <div className="codeblock relative w-full bg-zinc-950 font-sans">
+    <div className="codeblock relative w-full bg-zinc-950 font-sans" data-testid={`codeblock-${language}`}>
       <div className="flex w-full items-center justify-between bg-background px-6 py-2 pr-4 text-foreground border-b border-border">
         <span className="text-xs lowercase">{language}</span>
         <div className="flex items-center space-x-1">

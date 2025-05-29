@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -105,7 +104,7 @@ export const BreakpointClassNameControl = ({
 
   return (
     <div className="w-full border rounded-lg" data-testid="breakpoint-classname-control">
-      <TooltipProvider>
+     
         <Tabs
           value={tab}
           onValueChange={(val) => setTab(val as "base" | "md")}
@@ -162,7 +161,6 @@ export const BreakpointClassNameControl = ({
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-      </TooltipProvider>
     </div>
   );
 };

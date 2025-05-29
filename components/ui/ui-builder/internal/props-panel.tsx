@@ -1,16 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useMemo } from "react";
 import { z } from "zod";
-import {
-  useLayerStore,
-} from "@/lib/ui-builder/store/layer-store";
+import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
-import { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
+import {
+  ComponentRegistry,
+  ComponentLayer,
+} from "@/components/ui/ui-builder/types";
 import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
 import { generateFieldOverrides } from "@/lib/ui-builder/store/editor-utils";
 import { addDefaultValues } from "@/lib/ui-builder/store/schema-utils";
 import { getBaseType } from "@/components/ui/auto-form/utils";
+import { isVariableReference } from "@/lib/ui-builder/utils/variable-resolver";
+import { resolveVariableReferences } from "@/lib/ui-builder/utils/variable-resolver";
 
 interface PropsPanelProps {
   className?: string;
@@ -26,9 +29,12 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
   const componentRegistry = useEditorStore((state) => state.registry);
   const selectedLayer = findLayerById(selectedLayerId);
 
-  const handleAddComponentLayer = useCallback((layerType: string, parentLayerId: string, addPosition?: number) => {
-    addComponentLayer(layerType, parentLayerId, addPosition);
-  }, [addComponentLayer]);
+  const handleAddComponentLayer = useCallback(
+    (layerType: string, parentLayerId: string, addPosition?: number) => {
+      addComponentLayer(layerType, parentLayerId, addPosition);
+    },
+    [addComponentLayer]
+  );
 
   const handleDeleteLayer = useCallback(
     (layerId: string) => {
@@ -101,8 +107,16 @@ interface ComponentPropsAutoFormProps {
   componentRegistry: ComponentRegistry;
   removeLayer: (id: string) => void;
   duplicateLayer: (id: string) => void;
-  updateLayer: (id: string, props: Record<string, any>, rest?: Partial<Omit<ComponentLayer, "props">>) => void;
-  addComponentLayer: (layerType: string, parentLayerId: string, addPosition?: number) => void;
+  updateLayer: (
+    id: string,
+    props: Record<string, any>,
+    rest?: Partial<Omit<ComponentLayer, "props">>
+  ) => void;
+  addComponentLayer: (
+    layerType: string,
+    parentLayerId: string,
+    addPosition?: number
+  ) => void;
 }
 
 const EMPTY_ZOD_SCHEMA = z.object({});
@@ -120,6 +134,14 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
   const revisionCounter = useEditorStore((state) => state.revisionCounter);
   const selectedLayer = findLayerById(selectedLayerId) as ComponentLayer | undefined;
   
+  // Retrieve the appropriate schema from componentRegistry
+  const { schema } = useMemo(() => {
+    if (selectedLayer && componentRegistry[selectedLayer.type as keyof typeof componentRegistry]) {
+      return componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
+    }
+    return { schema: EMPTY_ZOD_SCHEMA }; // Fallback schema
+  }, [selectedLayer, componentRegistry]);
+
   const handleDeleteLayer = useCallback(() => {
     removeLayer(selectedLayerId);
   }, [removeLayer, selectedLayerId]);
@@ -131,48 +153,87 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
   const onParsedValuesChange = useCallback(
     (parsedValues: z.infer<typeof schema> & { children?: string | { layerType: string, addPosition: number } }) => {
       const { children, ...dataProps } = parsedValues;
+      
+      // Preserve variable references by merging with original props
+      const preservedProps: Record<string, any> = {};
+      if (selectedLayer) {
+        // Start with all original props to preserve any that aren't in the form update
+        Object.assign(preservedProps, selectedLayer.props);
+        
+        // Then update only the props that came from the form, preserving variable references
+        Object.keys(dataProps as Record<string, any>).forEach(key => {
+          const originalValue = selectedLayer.props[key];
+          const newValue = (dataProps as Record<string, any>)[key];
+          const fieldDef = schema?.shape?.[key];
+          const baseType = fieldDef ? getBaseType(fieldDef as z.ZodAny) : undefined;
+          // If the original value was a variable reference, preserve it
+          if (isVariableReference(originalValue)) {
+            // Keep the variable reference - the form should not override variable bindings
+            preservedProps[key] = originalValue;
+          } else {
+            // Handle date serialization
+            if (baseType === z.ZodFirstPartyTypeKind.ZodDate && newValue instanceof Date) {
+              preservedProps[key] = newValue.toISOString();
+            } else {
+              preservedProps[key] = newValue;
+            }
+          }
+        });
+      }
+      
       if(typeof children === "string") {
-        updateLayer(selectedLayerId, dataProps, { children: children  });
+        updateLayer(selectedLayerId, preservedProps, { children: children  });
       }else if(children && children.layerType) {
-        updateLayer(selectedLayerId, dataProps, { children: selectedLayer?.children });
+        updateLayer(selectedLayerId, preservedProps, { children: selectedLayer?.children });
         addComponentLayer(children.layerType, selectedLayerId, children.addPosition)
       }else{
-        updateLayer(selectedLayerId, dataProps);
+        updateLayer(selectedLayerId, preservedProps);
       }
     },
-    [updateLayer, selectedLayerId, selectedLayer, addComponentLayer]
+    [updateLayer, selectedLayerId, selectedLayer, addComponentLayer, schema]
   );
-
-  // Retrieve the appropriate schema from componentRegistry
-  const { schema } = useMemo(() => {
-    if (selectedLayer && componentRegistry[selectedLayer.type as keyof typeof componentRegistry]) {
-      return componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
-    }
-    return { schema: EMPTY_ZOD_SCHEMA }; // Fallback schema
-  }, [selectedLayer, componentRegistry]);
 
   // Prepare values for AutoForm, converting enum values to strings as select elements only accept string values
   const formValues = useMemo(() => {
     if (!selectedLayer) return EMPTY_FORM_VALUES;
 
+    const variables = useLayerStore.getState().variables;
+    
+    // First resolve variable references to get display values
+    const resolvedProps = resolveVariableReferences(selectedLayer.props, variables);
+    
     const transformedProps: Record<string, any> = {};
     const schemaShape = schema?.shape as z.ZodRawShape | undefined; // Get shape from the memoized schema
     
     if (schemaShape) {
-      for (const [key, value] of Object.entries(selectedLayer.props)) {
+      for (const [key, value] of Object.entries(resolvedProps)) {
         const fieldDef = schemaShape[key];
-        // Check if the field definition exists and if its base type is ZodEnum
-        if (fieldDef && getBaseType(fieldDef as z.ZodAny) === z.ZodFirstPartyTypeKind.ZodEnum) {
-          // Convert enum value to string if it's not already a string
-          transformedProps[key] = typeof value === 'string' ? value : String(value);
+        if (fieldDef) {
+          const baseType = getBaseType(fieldDef as z.ZodAny);
+          if (baseType === z.ZodFirstPartyTypeKind.ZodEnum) {
+            // Convert enum value to string if it's not already a string
+            transformedProps[key] = typeof value === 'string' ? value : String(value);
+          } else if (baseType === z.ZodFirstPartyTypeKind.ZodDate) {
+            // Convert string to Date if necessary
+            if (value instanceof Date) {
+              transformedProps[key] = value;
+            } else if (typeof value === 'string' || typeof value === 'number') {
+              const date = new Date(value);
+              transformedProps[key] = isNaN(date.getTime()) ? undefined : date;
+            } else {
+              transformedProps[key] = undefined;
+            }
+          } else {
+            transformedProps[key] = value;
+          }
         } else {
           transformedProps[key] = value;
         }
       }
       
     } else {
-       // Fallback if schema shape isn't available: copy props as is
-       Object.assign(transformedProps, selectedLayer.props);
+       // Fallback if schema shape isn't available: copy resolved props as is
+       Object.assign(transformedProps, resolvedProps);
     }
 
     return { ...transformedProps, children: selectedLayer.children };
@@ -193,7 +254,10 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
     return `${selectedLayerId}-${revisionCounter}`;
   }, [selectedLayerId, revisionCounter]);
 
-  if (!selectedLayer || !componentRegistry[selectedLayer.type as keyof typeof componentRegistry]) {
+  if (
+    !selectedLayer ||
+    !componentRegistry[selectedLayer.type as keyof typeof componentRegistry]
+  ) {
     return null;
   }
 
@@ -233,13 +297,13 @@ const nameForLayer = (layer: ComponentLayer) => {
   return layer.name || layer.type.replaceAll("_", "");
 };
 
-const Title =() =>{
+const Title = () => {
   const { selectedLayerId } = useLayerStore();
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const selectedLayer = findLayerById(selectedLayerId);
   return (
     <h2 className="text-xl font-semibold mb-2">
-        {selectedLayer ? nameForLayer(selectedLayer): ""} Properties
+      {selectedLayer ? nameForLayer(selectedLayer) : ""} Properties
     </h2>
-  )
-}
+  );
+};
