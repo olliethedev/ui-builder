@@ -42,6 +42,16 @@ export const RenderLayer: React.FC<{
     const prevLayer = useRef(layer);
 
     if (!componentDefinition) {
+      console.error(
+        `[UIBuilder] Component definition not found in registry:`, 
+        {
+          layerType: layer.type,
+          layerId: layer.id,
+          layerName: layer.name,
+          availableComponents: Object.keys(componentRegistry),
+          layer: layer
+        }
+      );
       return null;
     }
 
