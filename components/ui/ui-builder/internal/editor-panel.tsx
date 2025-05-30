@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { Plus } from "lucide-react";
 import {
   countLayers,
@@ -36,23 +36,23 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
 
   const layers = selectedPage.children;
 
-  const onSelectElement = (layerId: string) => {
+  const onSelectElement = useCallback((layerId: string) => {
     selectLayer(layerId);
-  };
+  }, [selectLayer]);
 
-  const handleDeleteLayer = () => {
+  const handleDeleteLayer = useCallback(() => {
     if (selectedLayer) {
       removeLayer(selectedLayer.id);
     }
-  };
+  }, [selectedLayer, removeLayer]);
 
-  const handleDuplicateLayer = () => {
+  const handleDuplicateLayer = useCallback(() => {
     if (selectedLayer) {
       duplicateLayer(selectedLayer.id);
     }
-  };
+  }, [selectedLayer, duplicateLayer]);
 
-  const editorConfig = {
+  const editorConfig = useMemo(() => ({
     zIndex: 1,
     totalLayers: countLayers(layers),
     selectedLayer: selectedLayer,
@@ -60,15 +60,24 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
     handleDuplicateLayer: handleDuplicateLayer,
     handleDeleteLayer: handleDeleteLayer,
     usingCanvas: useCanvas,
-  };
+  }), [layers, selectedLayer, onSelectElement, handleDuplicateLayer, handleDeleteLayer, useCanvas]);
 
   const isMobileScreen = window.innerWidth < 768;
 
-  const renderer = (
+  const renderer = useMemo(() => (
     <div id="editor-panel-container" className="overflow-visible pt-3 pb-10 pr-20">
       <LayerRenderer page={selectedPage} editorConfig={editorConfig} componentRegistry={componentRegistry} />
     </div>
-  );
+  ), [selectedPage, editorConfig, componentRegistry]);
+
+  const widthClass = useMemo(() => {
+    return {
+      responsive: "w-full",
+      mobile: "w-[390px]",
+      tablet: "w-[768px]",
+      desktop: "w-[1440px]",
+    }[previewMode]
+  }, [previewMode]);
 
   return (
     <div
@@ -89,15 +98,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
             key={previewMode}
             frameId="editor-panel-frame"
             resizable={previewMode === "responsive" && layers.length > 0}
-            className={cn(
-              `block`,
-              {
-                responsive: "w-full",
-                mobile: "w-[390px]",
-                tablet: "w-[768px]",
-                desktop: "w-[1440px]",
-              }[previewMode]
-            )}
+            className={cn(`block`, widthClass)}
           >
             {renderer}
           </IframeWrapper>

@@ -237,6 +237,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
     }
 
     return { ...transformedProps, children: selectedLayer.children };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLayer, schema, revisionCounter]); // Include revisionCounter to detect undo/redo changes
 
   const autoFormSchema = useMemo(() => {
@@ -269,7 +270,6 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
       onParsedValuesChange={onParsedValuesChange}
       fieldConfig={autoFormFieldConfig}
       className="space-y-4 mt-4"
-      onSubmit={() => {}} // Optional: no-op or remove if not needed
     >
       <Button
         type="button"

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { baseColors } from "@/components/ui/ui-builder/internal/base-colors";
@@ -68,6 +68,8 @@ export function ThemeAwareDropdownOption({
   };
 
   const resolvedColor = getResolvedColor(color);
+
+  const style = useMemo(() => ({ backgroundColor: resolvedColor }), [resolvedColor]);
   
 
   return (
@@ -79,7 +81,7 @@ export function ThemeAwareDropdownOption({
             // Use resolved color as inline style if available, otherwise fall back to class
             !resolvedColor && color
           )}
-          style={resolvedColor ? { backgroundColor: resolvedColor } : undefined}
+          style={resolvedColor ? style : undefined}
         />
       )}
       <span className="text-xs text-muted-foreground">{children}</span>

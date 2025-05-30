@@ -5,7 +5,7 @@
 
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import LayersPanel from "@/components/ui/ui-builder/internal/layers-panel";
 import EditorPanel from "@/components/ui/ui-builder/internal/editor-panel";
 import PropsPanel from "@/components/ui/ui-builder/internal/props-panel";
@@ -194,6 +194,12 @@ function MainLayout({ panelConfig }: { panelConfig: PanelConfig }) {
   );
 
   const [selectedPanel, setSelectedPanel] = useState(mainPanels[1]);
+
+  const handlePanelClickById = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const panelIndex = parseInt(e.currentTarget.dataset.panelIndex || "0");
+    setSelectedPanel(mainPanels[panelIndex]);
+  }, [mainPanels]);
+
   return (
     <div
       data-testid="component-editor"
@@ -225,7 +231,7 @@ function MainLayout({ panelConfig }: { panelConfig: PanelConfig }) {
         {selectedPanel.content}
         <div className="absolute bottom-4 left-4 right-4 z-50">
           <div className="flex justify-center rounded-full bg-primary p-2 shadow-lg">
-            {mainPanels.map((panel) => (
+            {mainPanels.map((panel, index) => (
               <Button
                 key={panel.title}
                 variant={
@@ -233,7 +239,8 @@ function MainLayout({ panelConfig }: { panelConfig: PanelConfig }) {
                 }
                 size="sm"
                 className="flex-1"
-                onClick={() => setSelectedPanel(panel)}
+                data-panel-index={index}
+                onClick={handlePanelClickById}
               >
                 {panel.title}
               </Button>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
   createUseGesture,
   pinchAction,
@@ -34,7 +34,8 @@ export function InteractiveCanvas({
     : window;
 
   const [scale, setScale] = useState(0.98);
-  const [translation, setTranslation] = useState({ x: 0, y: 0 });
+  const initialTranslation = useMemo(() => ({ x: 0, y: 0 }), []);
+  const [translation, setTranslation] = useState(initialTranslation);
   const containerRef = useRef<HTMLDivElement>(null);
   const previewMode = useEditorStore((state) => state.previewMode);
 
@@ -78,11 +79,11 @@ export function InteractiveCanvas({
     }
   }, [previewMode]);
 
-  const useGestureHook = createUseGesture([wheelAction, pinchAction, dragAction]);
+  const useGestureHook = useMemo(() => createUseGesture([wheelAction, pinchAction, dragAction]), []);
 
-  const bind = useGestureHook(
-    {
-      onWheel: ({ event, delta }) => {
+  const gestureHandlers = useMemo(() => {
+    return {
+      onWheel: ({ event, delta }: { event: WheelEvent; delta: [number, number] }) => {
         // Normalize deltaY for different deltaModes
         let deltaY = delta[1];
         if (event.deltaMode === 1) {
@@ -104,17 +105,20 @@ export function InteractiveCanvas({
           }));
         }
       },
-      onPinch: ({ delta: [d] }) => {
+      onPinch: ({ delta: [d] }: { delta: [number] }) => {
         zoom(d / 200);
       },
-      onDrag: ({ movement: [x, y] }) => {
+      onDrag: ({ movement: [x, y] }: { movement: [number, number] }) => {
         setTranslation((prev) => ({
           x: clamp(prev.x + x, -MAX_TRANSLATION, MAX_TRANSLATION),
           y: clamp(prev.y + y, -MAX_TRANSLATION, MAX_TRANSLATION),
         }));
       },
-    },
-    {
+    };
+  }, [zoom, setTranslation]);
+
+  const gestureOptions = useMemo(() => {
+    return {
       window: windowFrame || window,
 
       wheel: {
@@ -135,7 +139,12 @@ export function InteractiveCanvas({
         eventOptions: { passive: false, capture: true },
         enabled: !disableDrag,
       },
-    }
+    };
+  }, [windowFrame, containerRef, disableWheel, disablePinch, disableDrag]);
+
+  const bind = useGestureHook(
+    gestureHandlers as any,
+    gestureOptions
   );
 
   const transformStyle = useCallback(() => {
@@ -145,13 +154,13 @@ export function InteractiveCanvas({
     };
   }, [translation.x, translation.y, scale]);
 
-  const handleZoomIn = () => {
+  const handleZoomIn = useCallback(() => {
     zoom(0.05);
-  };
+  }, [zoom]);
 
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     zoom(-0.05);
-  };
+  }, [zoom]);
 
   return (
     <div

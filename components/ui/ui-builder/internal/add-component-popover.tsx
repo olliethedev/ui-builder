@@ -1,4 +1,4 @@
-import React, { ReactNode, useMemo } from "react";
+import React, { ReactNode, useCallback, useMemo } from "react";
 
 import {
   Command,
@@ -90,6 +90,7 @@ export function AddComponentsPopover({
       setOpen(false);
       onOpenChange?.(false);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       addComponentLayer,
       parentLayerId,
@@ -100,16 +101,23 @@ export function AddComponentsPopover({
     ]
   );
 
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      setOpen(open);
+      onOpenChange?.(open);
+    },
+    [onOpenChange]
+  );
+
   const content = useMemo(() => {
     return Object.entries(groupedOptions).map(([group, components]) => (
       <CommandGroup key={group} heading={group}>
         {components.map((component) => (
-          <CommandItem
+          <GroupedComponentItem
             key={component.value}
-            onSelect={() => handleSelect(component.value)}
-          >
-            {component.label}
-          </CommandItem>
+            component={component}
+            onClick={handleSelect}
+          />
         ))}
       </CommandGroup>
     ));
@@ -117,13 +125,7 @@ export function AddComponentsPopover({
 
   return (
     <div className={cn("relative flex justify-center", className)}>
-      <Popover
-        open={open}
-        onOpenChange={(open) => {
-          setOpen(open);
-          onOpenChange?.(open);
-        }}
-      >
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>{children}</PopoverTrigger>
         <PopoverContent className="w-[300px] p-0">
           <Command>
@@ -141,5 +143,23 @@ export function AddComponentsPopover({
         </PopoverContent>
       </Popover>
     </div>
+  );
+}
+
+function GroupedComponentItem({
+  component,
+  onClick,
+}: {
+  component: { value: string; label: string };
+  onClick: (value: string) => void;
+}) {
+  const handleSelect = useCallback(() => {
+    onClick(component.value);
+  }, [onClick, component.value]);
+
+  return (
+    <CommandItem key={component.value} onSelect={handleSelect}>
+      {component.label}
+    </CommandItem>
   );
 }

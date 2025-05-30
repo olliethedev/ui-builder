@@ -107,10 +107,10 @@ export const CONFIG: ConfigType = {
         tooltip: "Fixed (w-*)",
         icon: <FixedIcon />,
         dropdown: {
-          items: [...TAILWIND_FIXED_WIDTH_CLASSES].map((cls) => ({
+          items: TAILWIND_FIXED_WIDTH_CLASSES.map((cls) => ({
             value: cls,
             label: cls.replace("w-", "") as ReactNode,
-          })),
+          }))
         },
       },
       {

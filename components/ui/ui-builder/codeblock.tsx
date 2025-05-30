@@ -1,5 +1,5 @@
 "use client";
-import React, { memo, useMemo } from "react";
+import React, { memo, useCallback, useMemo } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { coldarkDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
 import { CopyIcon, CheckIcon } from "lucide-react";
@@ -49,10 +49,24 @@ export const CodeBlock = memo(function CodeBlock({
 }: CodeBlockProps) {
   const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 });
 
-  const onCopy = () => {
+  const onCopy = useCallback(() => {
     if (isCopied) return;
     copyToClipboard(value);
-  };
+  }, [isCopied, copyToClipboard, value]);
+
+  const customStyle = useMemo(() => ({
+    margin: 0,
+    width: "100%",
+    background: "transparent",
+    padding: "1.5rem 1rem",
+  }), []);
+
+  const codeTagProps = useMemo(() => ({
+    style: {
+      fontSize: "0.9rem",
+      fontFamily: "var(--font-mono)",
+    },
+  }), []);
 
   const highlighted = useMemo(
     () => (
@@ -61,23 +75,13 @@ export const CodeBlock = memo(function CodeBlock({
         style={coldarkDark}
         PreTag="div"
         showLineNumbers
-        customStyle={{
-          margin: 0,
-          width: "100%",
-          background: "transparent",
-          padding: "1.5rem 1rem",
-        }}
-        codeTagProps={{
-          style: {
-            fontSize: "0.9rem",
-            fontFamily: "var(--font-mono)",
-          },
-        }}
+        customStyle={customStyle}
+        codeTagProps={codeTagProps}
       >
         {value}
       </SyntaxHighlighter>
     ),
-    [language, value]
+    [language, value, customStyle, codeTagProps]
   );
 
   return (
