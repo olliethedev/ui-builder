@@ -130,7 +130,7 @@ export default function AutoFormObject<
 
         return (
           <FormField
-            control={form.control}
+            control={form.control as any}
             name={key}
             key={key}
             render={({ field }) => {

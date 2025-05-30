@@ -1,4 +1,4 @@
-import React, { useCallback, useState, memo } from "react";
+import React, { useCallback, useState, memo, useMemo } from "react";
 import { NodeAttrs } from "he-tree-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -197,14 +197,20 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
 TreeRowNode.displayName = "TreeRowNode";
 
 const RowOffset = ({ level }: { level: number }) => {
+
+  const style = useMemo(() => ({
+    width: level * 20,
+  }), [level]);
+  
+
+  const arr = useMemo(() => Array.from({ length: level }), [level]);
+
   return (
     <div
       className="z-[-1] left-0 pointer-events-none absolute flex flex-row bottom-[20px] h-full"
-      style={{
-        width: level * 20,
-      }}
+      style={style}
     >
-      {Array.from({ length: level }).map((_, index) => (
+      {arr.map((_, index) => (
         <div
           key={index}
           className={cn(

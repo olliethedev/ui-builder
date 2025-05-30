@@ -2,6 +2,9 @@ import { CONFIG, ConfigItem, StateType } from "@/components/ui/ui-builder/intern
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
+import { useMemo, useCallback } from "react";
+
+const EMPTY_OBJECT = {};
 
 type ClassNameGroupControlProps = {
     groupConfig: ConfigItem;
@@ -26,6 +29,27 @@ type ClassNameGroupControlProps = {
     handleGroupKeySelect,
     selectedKey,
   }: ClassNameGroupControlProps) {
+    
+    // Memoize the conditional spread props
+    const spreadProps = useMemo(() => 
+      "multiple" in groupConfig 
+        ? { multiple: groupConfig.multiple }
+        : EMPTY_OBJECT,
+      [groupConfig]
+    );
+
+    // Memoize the change handler
+    const handleChange = useCallback((value: string | string[] | null) => 
+      handleStateChange(selectedKey as keyof StateType, value),
+      [handleStateChange, selectedKey]
+    );
+
+    // Memoize the dropdown click handler
+    const handleDropdownClick = useCallback((key: string) => 
+      () => handleGroupKeySelect(group.label, key),
+      [handleGroupKeySelect, group.label]
+    );
+
     return (
       <>
         <span className="text-xs font-medium text-muted-foreground">
@@ -35,14 +59,10 @@ type ClassNameGroupControlProps = {
           <div>
             <groupConfig.component
               {...groupConfig}
-              {...("multiple" in groupConfig
-                ? { multiple: groupConfig.multiple }
-                : {})}
+              {...spreadProps}
               hideLabel={true}
               value={state[selectedKey as keyof StateType]}
-              onChange={(value: string | string[] | null) =>
-                handleStateChange(selectedKey as keyof StateType, value)
-              }
+              onChange={handleChange}
             />
           </div>
           <DropdownMenu>
@@ -55,7 +75,7 @@ type ClassNameGroupControlProps = {
               {group.keys.map((key) => (
                 <DropdownMenuItem
                   key={String(key)}
-                  onClick={() => handleGroupKeySelect(group.label, String(key))}
+                  onClick={handleDropdownClick(String(key))}
                   className={
                     selectedKey === String(key)
                       ? "bg-secondary-foreground/10"

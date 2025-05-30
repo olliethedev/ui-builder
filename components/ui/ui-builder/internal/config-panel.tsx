@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 import { z } from "zod";
 import {
   useLayerStore,
@@ -78,9 +78,10 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
   updateLayerProps,
   allowDelete,
 }) => {
-  const schema = z.object({
+
+  const schema = useMemo(() => z.object({
     name: z.string().min(1, "Name is required"),
-  });
+  }), []);
 
   const handleSetValues = useCallback(
     (data: Partial<z.infer<typeof schema>>) => {
@@ -95,29 +96,43 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
     [selectedLayer, updateLayerProps]
   );
 
+  const formSchema = useMemo(() => addDefaultValues(schema, {
+    name: selectedLayer.name,
+  }), [selectedLayer, schema]);
+
+  const values = useMemo(() => ({
+    name: selectedLayer.name,
+  }), [selectedLayer]);
+
+  const fieldConfig = useMemo(() => ({
+    name: {
+      inputProps: {
+        value: selectedLayer.name,
+        // defaultValue: selectedLayer.name,
+      },
+    },
+  }), [selectedLayer]);
+
+  const handleDuplicateLayer = useCallback(() => {
+    duplicateLayer(selectedLayer.id);
+  }, [selectedLayer, duplicateLayer]);
+
+  const handleRemoveLayer = useCallback(() => {
+    removeLayer(selectedLayer.id);
+  }, [selectedLayer, removeLayer]);
+
   return (
     <AutoForm
-      formSchema={addDefaultValues(schema, {
-        name: selectedLayer.name,
-      })}
+      formSchema={formSchema}
       onValuesChange={handleSetValues}
-      values={{
-        name: selectedLayer.name,
-      }}
-      fieldConfig={{
-        name: {
-          inputProps: {
-            value: selectedLayer.name,
-            // defaultValue: selectedLayer.name,
-          },
-        },
-      }}
+      values={values}
+      fieldConfig={fieldConfig}
     >
       <Button
         type="button"
         variant="secondary"
         className="mt-4 w-full"
-        onClick={() => duplicateLayer(selectedLayer.id)}
+        onClick={handleDuplicateLayer}
       >
         Duplicate Page
       </Button>
@@ -126,7 +141,7 @@ const PageLayerForm: React.FC<PageLayerFormProps> = ({
           type="button"
           variant="destructive"
           className="mt-4 w-full"
-          onClick={() => removeLayer(selectedLayer.id)}
+          onClick={handleRemoveLayer}
         >
           Delete Page
         </Button>

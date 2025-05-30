@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { memo, Suspense, useRef } from "react";
+import React, { memo, Suspense, useMemo, useRef } from "react";
 import isDeepEqual from "fast-deep-equal";
 
 import { ClickableWrapper } from "@/components/ui/ui-builder/internal/clickable-wrapper";
@@ -41,16 +41,30 @@ export const RenderLayer: React.FC<{
 
     const prevLayer = useRef(layer);
 
+    const infoData = useMemo(() => ({
+      layerType: layer.type,
+      layerId: layer.id,
+      layerName: layer.name,
+      availableComponents: Object.keys(componentRegistry),
+      layer: layer
+    }), [layer, componentRegistry]);
+
+
+    // Resolve variable references in props
+    const resolvedProps = resolveVariableReferences(layer.props, effectiveVariables, variableValues);
+    const childProps: Record<string, any> = useMemo(() => ({ ...resolvedProps }), [resolvedProps]);
+    
+    // Memoize child editor config to avoid creating objects in JSX
+    const childEditorConfig = useMemo(() => {
+      return editorConfig
+        ? { ...editorConfig, zIndex: editorConfig.zIndex + 1, parentUpdated: editorConfig.parentUpdated || !isDeepEqual(prevLayer.current, layer) }
+        : undefined;
+    }, [editorConfig, layer]);
+
     if (!componentDefinition) {
       console.error(
         `[UIBuilder] Component definition not found in registry:`, 
-        {
-          layerType: layer.type,
-          layerId: layer.id,
-          layerName: layer.name,
-          availableComponents: Object.keys(componentRegistry),
-          layer: layer
-        }
+        infoData
       );
       return null;
     }
@@ -63,11 +77,11 @@ export const RenderLayer: React.FC<{
       isPrimitive = true;
     }
 
+    ;
+
     if (!Component) return null;
 
-    // Resolve variable references in props
-    const resolvedProps = resolveVariableReferences(layer.props, effectiveVariables, variableValues);
-    const childProps: Record<string, any> = { ...resolvedProps };
+    
     if (hasLayerChildren(layer) && layer.children.length > 0) {
       childProps.children = layer.children.map((child) => (
         <RenderLayer
@@ -76,11 +90,7 @@ export const RenderLayer: React.FC<{
           layer={child}
           variables={variables}
           variableValues={variableValues}
-          editorConfig={
-            editorConfig
-              ? { ...editorConfig, zIndex: editorConfig.zIndex + 1, parentUpdated: editorConfig.parentUpdated || !isDeepEqual(prevLayer.current, layer) }
-              : undefined
-          }
+          editorConfig={childEditorConfig}
         />
       ));
     } else if (typeof layer.children === "string") {
@@ -149,9 +159,18 @@ RenderLayer.displayName = "RenderLayer";
 const ErrorSuspenseWrapper: React.FC<{
   id: string;
   children: React.ReactNode;
-}> = ({ children }) => (
-  <ErrorBoundary fallbackRender={ErrorFallback}>
-    <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-  </ErrorBoundary>
+}> = ({ children }) => {
+  const loadingFallback = useMemo(() => <LoadingComponent />, []);
+  
+  return (
+    <ErrorBoundary fallbackRender={ErrorFallback}>
+      <Suspense fallback={loadingFallback}>{children}</Suspense>
+    </ErrorBoundary>
+  );
+};
+
+
+const LoadingComponent: React.FC = () => (
+  <div>Loading...</div>
 );
 

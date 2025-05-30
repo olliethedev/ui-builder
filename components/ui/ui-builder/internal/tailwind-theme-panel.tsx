@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   baseColors,
   BaseColor,
@@ -14,6 +14,13 @@ import {
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { Toggle } from "@/components/ui/toggle";
 
+const RESET_THEME_PROPS = {
+  style: undefined,
+  "data-mode": undefined,
+  "data-color-theme": undefined,
+  "data-border-radius": undefined,
+} as const;
+
 export function TailwindThemePanel() {
   const {
     selectedPageId,
@@ -27,19 +34,19 @@ export function TailwindThemePanel() {
   //if not isCustomTheme we delete the themeColors from the pageLayer
   useEffect(() => {
     if (!isCustomTheme) {
-      updateLayerProps(selectedPageId, {
-        style: undefined,
-        "data-mode": undefined,
-        "data-color-theme": undefined,
-        "data-border-radius": undefined,
-      });
+      updateLayerProps(selectedPageId, RESET_THEME_PROPS);
     }
-  }, [isCustomTheme, updateLayerProps, selectedPageId]);
+  }, [isCustomTheme, selectedPageId, updateLayerProps]);
+
+  const handleOnToggle = useCallback(() => {
+    setIsCustomTheme(!isCustomTheme);
+  }, [isCustomTheme]);
+
   return (
     <div className="flex flex-col gap-4 mt-4">
       <Toggle
         variant="outline"
-        onPressedChange={() => setIsCustomTheme(!isCustomTheme)}
+        onPressedChange={handleOnToggle}
         aria-label="Toggle italic"
       >
         {isCustomTheme ? "Use Default Theme" : "Use Custom Theme"}
@@ -104,73 +111,38 @@ function ThemePicker({
     }
   }, [pageLayer.id, updateLayerProps, colorTheme, borderRadius, mode, isDisabled]);
 
-  const colorOptions = baseColors.map((color: BaseColor) => {
+  const colorOptions = useMemo(() => baseColors.map((color: BaseColor) => {
     return (
-      <Button
+      <ThemeColorOption
         key={color.name}
-        variant="outline"
-        size="sm"
-        className={cn(
-          "gap-2",
-          color.name === colorTheme && "border-primary border-2"
-        )}
-        onClick={() => setColorTheme(color.name)}
-      >
-        <div
-          className="size-4 rounded-full"
-          style={{
-            backgroundColor: `hsl(${
-              color.activeColor[mode === "dark" ? "dark" : "light"]
-            })`,
-          }}
-        >
-          {color.name === colorTheme && <CheckIcon className="size-4" />}
-        </div>
-        {color.label}
-      </Button>
+        color={color}
+        colorTheme={colorTheme}
+        mode={mode}
+        onClick={setColorTheme}
+      />
     );
-  });
-  const borderRadiusOptions = [0.0, 0.15, 0.3, 0.5, 0.75, 1.0].map((radius) => {
+  }), [colorTheme, mode]);
+  const borderRadiusOptions = useMemo(() => [0.0, 0.15, 0.3, 0.5, 0.75, 1.0].map((radius) => {
     return (
-      <Button
-        key={radius}
-        variant="outline"
-        size="sm"
-        className={cn(
-          "gap-2",
-          radius === borderRadius && "border-primary border-2"
-        )}
-        onClick={() => setBorderRadius(radius)}
-      >
-        <div className="size-6 rounded-sm bg-secondary overflow-hidden">
-          <div
-            className="size-10 ml-2 mt-2 border-2 border-secondary-foreground"
-            style={{ borderRadius: `${radius}rem` }}
-          />
-        </div>
-        {radius}
-      </Button>
+     <ThemeBorderRadiusOption
+      key={radius}
+      radius={radius}
+      borderRadius={borderRadius}
+      onClick={setBorderRadius}
+     />
     );
-  });
+  }), [borderRadius, setBorderRadius]);
 
-  const modeOptions = (["light", "dark"] as const).map((modeOption) => {
+  const modeOptions = useMemo(() => (["light", "dark"] as const).map((modeOption) => {
     return (
-      <Button
+      <ThemeModeOption
         key={modeOption}
-        variant="outline"
-        size="sm"
-        onClick={() => setMode(modeOption)}
-        className={cn(mode === modeOption && "border-2 border-primary")}
-      >
-        {modeOption === "light" ? (
-          <SunIcon className="mr-1 -translate-x-1" />
-        ) : (
-          <MoonIcon className="mr-1 -translate-x-1" />
-        )}
-        {modeOption}
-      </Button>
+        mode={modeOption}
+        modeOption={mode}
+        onClick={setMode}
+      />
     );
-  });
+  }), [mode, setMode]);
 
   return (
     <div
@@ -189,6 +161,97 @@ function ThemePicker({
     </div>
   );
 }
+
+function ThemeColorOption({ color, colorTheme, mode, onClick }: { color: BaseColor, colorTheme: string, mode: "light" | "dark", onClick: (name: BaseColor["name"]) => void }) {
+
+  const handleOnClick = useCallback(() => {
+    onClick(color.name);
+  }, [onClick, color.name]);
+
+  const style = useMemo(() => ({
+    backgroundColor: `hsl(${
+      color.activeColor[mode === "dark" ? "dark" : "light"]
+    })`,
+  }), [color.activeColor, mode]);
+
+  return (
+    <Button
+        key={color.name}
+        variant="outline"
+        size="sm"
+        className={cn(
+          "gap-2",
+          color.name === colorTheme && "border-primary border-2"
+        )}
+        onClick={handleOnClick}
+      >
+        <div
+          className="size-4 rounded-full"
+          style={style}
+        >
+          {color.name === colorTheme && <CheckIcon className="size-4" />}
+        </div>
+        {color.label}
+      </Button>
+  );
+}
+
+function ThemeBorderRadiusOption({ radius, borderRadius, onClick }: { radius: number, borderRadius: number, onClick: (radius: number) => void }) {
+
+  const handleOnClick = useCallback(() => {
+    onClick(radius);
+  }, [onClick, radius]);
+
+  const style = useMemo(() => ({
+    borderRadius: `${radius}rem`,
+  }), [radius]);
+
+  return (
+    <Button
+    key={radius}
+    variant="outline"
+    size="sm"
+    className={cn(
+      "gap-2",
+      radius === borderRadius && "border-primary border-2"
+    )}
+    onClick={handleOnClick}
+  >
+    <div className="size-6 rounded-sm bg-secondary overflow-hidden">
+      <div
+        className="size-10 ml-2 mt-2 border-2 border-secondary-foreground"
+        style={style}
+      />
+    </div>
+    {radius}
+  </Button>
+  );
+}
+
+function ThemeModeOption({modeOption, mode, onClick}: {modeOption: "light" | "dark", mode: "light" | "dark", onClick: (mode: "light" | "dark") => void}){
+
+  const handleOnClick = useCallback(() => {
+    onClick(modeOption);
+  }, [onClick, modeOption]);
+
+  return (
+    <Button
+        key={modeOption}
+        variant="outline"
+        size="sm"
+        onClick={handleOnClick}
+        className={cn(mode === modeOption && "border-2 border-primary")}
+      >
+        {modeOption === "light" ? (
+          <SunIcon className="mr-1 -translate-x-1" />
+        ) : (
+          <MoonIcon className="mr-1 -translate-x-1" />
+        )}
+        {modeOption}
+      </Button>
+  );
+}
+
 
 function themeToStyleVars(
   colors:

@@ -72,7 +72,7 @@ import z from "zod";
 import UIBuilder from "@/components/ui/ui-builder";
 import { Button } from "@/components/ui/button";
 import { ComponentRegistry, ComponentLayer } from "@/components/ui/ui-builder/types";
-import { commonFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { commonFieldOverrides, classNameFieldOverrides, childrenAsTextareaFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 
 // Define your component registry
@@ -105,7 +105,18 @@ const myComponentRegistry: ComponentRegistry = {
             } satisfies ComponentLayer,
         ],
         fieldOverrides: commonFieldOverrides()
-    }
+    },
+    span: {
+        schema: z.object({
+            className: z.string().optional(),
+            children: z.any().optional(),
+        }),
+        fieldOverrides: {
+            className:(layer)=> classNameFieldOverrides(layer),
+            children: (layer)=> childrenAsTextareaFieldOverrides(layer)
+        },
+        defaultChildren: "Text"
+    },
 };
 
 export function App() {
@@ -118,6 +129,19 @@ export function App() {
 ```
 
 Note: fieldOverrides is optional, they provide the ability to customize the auto-generated form fields for the component's properties in the editor's sidebar. In the above example we are using the commonFieldOverrides to provide custom form fields for children, className props. Read more about fieldOverrides in the [Add your custom components to the registry](#add-your-custom-components-to-the-registry) section.
+
+**Important:** Make sure to include definitions for all component types referenced in your `defaultChildren` or `initialLayers`. In this example, the Button component's `defaultChildren` references a `span` component, so we need to include `span` in our component registry. For a more complete setup, you can use the pre-built component definitions:
+
+```tsx
+import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
+import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
+
+const myComponentRegistry: ComponentRegistry = {
+    ...primitiveComponentDefinitions, // Includes span, div, img, etc.
+    ...complexComponentDefinitions,   // Includes Button, Badge, Card, etc.
+    // Your custom components...
+};
+```
 
 ### Example with initial state and onChange callback
 

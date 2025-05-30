@@ -60,7 +60,10 @@ import {
   EditorStore,
   useEditorStore,
 } from "@/lib/ui-builder/store/editor-store";
-import { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
+import {
+  ComponentRegistry,
+  ComponentLayer,
+} from "@/components/ui/ui-builder/types";
 import {
   Tooltip,
   TooltipContent,
@@ -83,10 +86,16 @@ export function NavBar({ useCanvas }: NavBarProps) {
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const componentRegistry = useEditorStore((state) => state.registry);
   const incrementRevision = useEditorStore((state) => state.incrementRevision);
-  
+
   // Fix: Subscribe to temporal state changes using useStoreWithEqualityFn
-  const pastStates = useStore(useLayerStore.temporal, (state) => state.pastStates);
-  const futureStates = useStore(useLayerStore.temporal, (state) => state.futureStates);
+  const pastStates = useStore(
+    useLayerStore.temporal,
+    (state) => state.pastStates
+  );
+  const futureStates = useStore(
+    useLayerStore.temporal,
+    (state) => state.futureStates
+  );
   const { undo, redo } = useLayerStore.temporal.getState();
 
   const page = findLayerById(selectedPageId) as ComponentLayer;
@@ -148,62 +157,70 @@ export function NavBar({ useCanvas }: NavBarProps) {
 
   useKeyboardShortcuts(keyCombinations);
 
+  const handleOpenPreview = useCallback(() => {
+    setIsPreviewModalOpen(true);
+  }, []);
+  const handleOpenExport = useCallback(() => {
+    setIsExportModalOpen(true);
+  }, []);
+
+  const style = useMemo(() => ({ zIndex: Z_INDEX }), []);
+
   return (
     <div
       className="flex items-center justify-between bg-background px-2 md:px-6 py-4 border-b"
-      style={{ zIndex: Z_INDEX }}
+      style={style}
     >
-      
-        <div className="flex items-center gap-2">
-          <h1 className="block text-lg md:text-2xl font-bold whitespace-nowrap">
-            UI Builder
-          </h1>
-          <div className="flex h-10 w-px bg-border"></div>
-          <PagesPopover />
-          {useCanvas && <PreviewModeToggle />}
+      <div className="flex items-center gap-2">
+        <h1 className="block text-lg md:text-2xl font-bold whitespace-nowrap">
+          UI Builder
+        </h1>
+        <div className="flex h-10 w-px bg-border"></div>
+        <PagesPopover />
+        {useCanvas && <PreviewModeToggle />}
+      </div>
+
+      <div className="w-full flex items-center justify-end gap-2">
+        {/* Action Buttons for Larger Screens */}
+        <div className="hidden md:flex space-x-2">
+          <ActionButtons
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onOpenPreview={handleOpenPreview}
+            onOpenExport={handleOpenExport}
+          />
+          <div className="h-10 flex w-px bg-border"></div>
         </div>
 
-        <div className="w-full flex items-center justify-end gap-2">
-          {/* Action Buttons for Larger Screens */}
-          <div className="hidden md:flex space-x-2">
-            <ActionButtons
-              canUndo={canUndo}
-              canRedo={canRedo}
-              onUndo={handleUndo}
-              onRedo={handleRedo}
-              onOpenPreview={() => setIsPreviewModalOpen(true)}
-              onOpenExport={() => setIsExportModalOpen(true)}
-            />
-            <div className="h-10 flex w-px bg-border"></div>
-          </div>
+        <ModeToggle />
 
-          <ModeToggle />
-
-          {/* Dropdown for Smaller Screens */}
-          <div className="flex md:hidden space-x-2">
-            <div className="h-10 flex w-px bg-border"></div>
-            <ResponsiveDropdown
-              canUndo={canUndo}
-              canRedo={canRedo}
-              onUndo={handleUndo}
-              onRedo={handleRedo}
-              onOpenPreview={() => setIsPreviewModalOpen(true)}
-              onOpenExport={() => setIsExportModalOpen(true)}
-            />
-          </div>
+        {/* Dropdown for Smaller Screens */}
+        <div className="flex md:hidden space-x-2">
+          <div className="h-10 flex w-px bg-border"></div>
+          <ResponsiveDropdown
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onOpenPreview={handleOpenPreview}
+            onOpenExport={handleOpenExport}
+          />
         </div>
+      </div>
 
-        {/* **Dialogs Controlled by NavBar State** */}
-        <PreviewDialog
-          isOpen={isPreviewModalOpen}
-          onOpenChange={setIsPreviewModalOpen}
-          page={page}
-          componentRegistry={componentRegistry}
-        />
-        <CodeDialog
-          isOpen={isExportModalOpen}
-          onOpenChange={setIsExportModalOpen}
-        />
+      {/* **Dialogs Controlled by NavBar State** */}
+      <PreviewDialog
+        isOpen={isPreviewModalOpen}
+        onOpenChange={setIsPreviewModalOpen}
+        page={page}
+        componentRegistry={componentRegistry}
+      />
+      <CodeDialog
+        isOpen={isExportModalOpen}
+        onOpenChange={setIsExportModalOpen}
+      />
     </div>
   );
 }
@@ -335,6 +352,8 @@ const ResponsiveDropdown: React.FC<ResponsiveDropdownProps> = ({
   onOpenPreview,
   onOpenExport,
 }) => {
+  const style = useMemo(() => ({ zIndex: Z_INDEX + 1 }), []);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -343,13 +362,21 @@ const ResponsiveDropdown: React.FC<ResponsiveDropdownProps> = ({
           <MoreVertical className="w-4 h-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" style={{ zIndex: Z_INDEX + 1 }}>
-        <DropdownMenuItem className="gap-2" onClick={onUndo} disabled={!canUndo}>
+      <DropdownMenuContent align="end" style={style}>
+        <DropdownMenuItem
+          className="gap-2"
+          onClick={onUndo}
+          disabled={!canUndo}
+        >
           <Undo className="w-4 h-4" />
           Undo
           <span className="ml-auto text-xs text-muted-foreground">⌘Z</span>
         </DropdownMenuItem>
-        <DropdownMenuItem className="gap-2" onClick={onRedo} disabled={!canRedo}>
+        <DropdownMenuItem
+          className="gap-2"
+          onClick={onRedo}
+          disabled={!canRedo}
+        >
           <Redo className="w-4 h-4" />
           Redo
           <span className="ml-auto text-xs text-muted-foreground">⌘+⇧+Z</span>
@@ -386,22 +413,29 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
   page,
   componentRegistry,
 }) => {
-  useKeyboardShortcuts([
-    {
-      keys: { metaKey: true, shiftKey: true },
-      key: "p",
-      handler: () => {
-        onOpenChange(true);
+  const style = useMemo(() => ({ zIndex: Z_INDEX + 1 }), []);
+
+  const shortcuts = useMemo(
+    () => [
+      {
+        keys: { metaKey: true, shiftKey: true },
+        key: "p",
+        handler: () => {
+          onOpenChange(true);
+        },
       },
-    },
-  ]);
+    ],
+    [onOpenChange]
+  );
+
+  useKeyboardShortcuts(shortcuts);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger />
       <DialogContentWithZIndex
         className="max-w-[calc(100dvw)] max-h-[calc(100dvh)] overflow-auto p-0 gap-0"
-        style={{ zIndex: Z_INDEX + 1 }}
+        style={style}
       >
         <DialogHeader>
           <DialogTitle className="py-3 bg-yellow-600 text-center">
@@ -427,22 +461,29 @@ interface CodeDialogProps {
 }
 
 const CodeDialog: React.FC<CodeDialogProps> = ({ isOpen, onOpenChange }) => {
-  useKeyboardShortcuts([
-    {
-      keys: { metaKey: true, shiftKey: true },
-      key: "e",
-      handler: () => {
-        onOpenChange(true);
+  const style = useMemo(() => ({ zIndex: Z_INDEX + 1 }), []);
+
+  const shortcuts = useMemo(
+    () => [
+      {
+        keys: { metaKey: true, shiftKey: true },
+        key: "e",
+        handler: () => {
+          onOpenChange(true);
+        },
       },
-    },
-  ]);
+    ],
+    [onOpenChange]
+  );
+
+  useKeyboardShortcuts(shortcuts);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger />
       <DialogContentWithZIndex
         className="sm:max-w-[625px] max-h-[625px]"
-        style={{ zIndex: Z_INDEX + 1 }}
+        style={style}
       >
         <DialogHeader>
           <DialogTitle>Generated Code</DialogTitle>
@@ -455,6 +496,18 @@ const CodeDialog: React.FC<CodeDialogProps> = ({ isOpen, onOpenChange }) => {
 
 function ModeToggle() {
   const { setTheme } = useTheme();
+
+  const style = useMemo(() => ({ zIndex: Z_INDEX + 1 }), []);
+
+  const handleSetLightTheme = useCallback(() => {
+    setTheme("light");
+  }, [setTheme]);
+  const handleSetDarkTheme = useCallback(() => {
+    setTheme("dark");
+  }, [setTheme]);
+  const handleSetSystemTheme = useCallback(() => {
+    setTheme("system");
+  }, [setTheme]);
 
   return (
     <DropdownMenu>
@@ -470,14 +523,10 @@ function ModeToggle() {
         </DropdownMenuTrigger>
         <TooltipContent>Toggle theme</TooltipContent>
       </Tooltip>
-      <DropdownMenuContent align="end" style={{ zIndex: Z_INDEX + 1 }}>
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          Light
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
+      <DropdownMenuContent align="end" style={style}>
+        <DropdownMenuItem onClick={handleSetLightTheme}>Light</DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSetDarkTheme}>Dark</DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSetSystemTheme}>
           System
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -499,37 +548,59 @@ function PagesPopover() {
     return pages.find((page) => page.id === selectedPageId);
   }, [pages, selectedPageId]);
 
-  const handleSelect = (pageId: string) => {
-    setSelectedPage(pageId);
-    selectPage(pageId);
-    setOpen(false);
-  };
+  const handleSelect = useCallback(
+    (pageId: string) => {
+      setSelectedPage(pageId);
+      selectPage(pageId);
+      setOpen(false);
+    },
+    [selectPage, setOpen]
+  );
 
-  const handleAddPageLayer = (pageName: string) => {
-    addPageLayer(pageName);
-    setTextInputValue("");
-  };
+  const handleAddPageLayer = useCallback(
+    (pageName: string) => {
+      addPageLayer(pageName);
+      setTextInputValue("");
+    },
+    [addPageLayer, setTextInputValue]
+  );
 
-  const textInputForm = (
-    <form
-      className="w-full"
-      onSubmit={(e) => {
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      handleAddPageLayer(textInputValue);
+    },
+    [handleAddPageLayer, textInputValue]
+  );
+
+  const handleTextInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setTextInputValue(e.target.value);
+    },
+    [setTextInputValue]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
         e.preventDefault();
         handleAddPageLayer(textInputValue);
-      }}
-    >
+      }
+    },
+    [handleAddPageLayer, textInputValue]
+  );
+
+  const style = useMemo(() => ({ zIndex: Z_INDEX + 1 }), []);
+
+  const textInputForm = (
+    <form className="w-full" onSubmit={handleSubmit}>
       <div className="w-full flex items-center space-x-2">
         <Input
           className="w-full flex-grow"
           placeholder="New page name..."
           value={textInputValue}
-          onChange={(e) => setTextInputValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              handleAddPageLayer(textInputValue);
-            }
-          }}
+          onChange={handleTextInputChange}
+          onKeyDown={handleKeyDown}
         />
         <Button type="submit" variant="secondary">
           <PlusIcon className="w-4 h-4" />
@@ -554,10 +625,7 @@ function PagesPopover() {
           </PopoverTrigger>
           <TooltipContent>Select page</TooltipContent>
         </Tooltip>
-        <PopoverContent
-          className="w-[300px] p-0"
-          style={{ zIndex: Z_INDEX + 1 }}
-        >
+        <PopoverContent className="w-[300px] p-0" style={style}>
           <Command>
             <CommandInput
               placeholder="Select page or create new..."
@@ -570,17 +638,12 @@ function PagesPopover() {
                 {textInputForm}
               </CommandEmpty>
               {pages.map((page) => (
-                <CommandItem
+                <PageItem
                   key={page.id}
-                  value={page.name}
-                  onSelect={() => handleSelect(page.id)}
-                  className={cn(selectedPageId === page.id && "font-bold")}
-                >
-                  {selectedPageId === page.id ? (
-                    <CheckIcon className="w-4 h-4 mr-2" />
-                  ) : null}
-                  {page.name}
-                </CommandItem>
+                  selectedPageId={selectedPageId}
+                  page={page}
+                  onSelect={handleSelect}
+                />
               ))}
               <CommandSeparator />
               <CommandGroup heading="Create new page">
@@ -594,36 +657,91 @@ function PagesPopover() {
   );
 }
 
+const PageItem = ({
+  selectedPageId,
+  page,
+  onSelect,
+}: {
+  selectedPageId: string;
+  page: ComponentLayer;
+  onSelect: (pageId: string) => void;
+}) => {
+  const handleSelect = useCallback(() => {
+    onSelect(page.id);
+  }, [onSelect, page.id]);
+
+  return (
+    <CommandItem
+      value={page.name}
+      onSelect={handleSelect}
+      className={cn(selectedPageId === page.id && "font-bold")}
+    >
+      {selectedPageId === page.id ? (
+        <CheckIcon className="w-4 h-4 mr-2" />
+      ) : null}
+      {page.name}
+    </CommandItem>
+  );
+};
+
 const DialogContentWithZIndex = forwardRef<
   React.ElementRef<typeof DialogContent>,
   React.ComponentPropsWithoutRef<typeof DialogContent>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay style={{ zIndex: Z_INDEX + 1 }} />
-    <DialogContent
-      ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-        className
-      )}
-      {...props}
-    >
-      {children}
-      <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-4 w-4 rounded-full p-1" />
-        <span className="sr-only">Close</span>
-      </DialogClose>
-    </DialogContent>
-  </DialogPortal>
-));
+>(({ className, children, ...props }, ref) => {
+  const style = useMemo(() => ({ zIndex: Z_INDEX + 1 }), []);
+  return (
+    <DialogPortal>
+      <DialogOverlay style={style} />
+      <DialogContent
+        ref={ref}
+        className={cn(
+          "fixed left-[50%] top-[50%] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+          <X className="h-4 w-4 rounded-full p-1" />
+          <span className="sr-only">Close</span>
+        </DialogClose>
+      </DialogContent>
+    </DialogPortal>
+  );
+});
+
 DialogContentWithZIndex.displayName = "DialogContentWithZIndex";
 
 const PreviewModeToggle = () => {
   const { previewMode, setPreviewMode } = useEditorStore();
 
-  const handleSelect = (mode: EditorStore["previewMode"]) => {
+  const handleSelect = useCallback((mode: EditorStore["previewMode"]) => {
     setPreviewMode(mode);
-  };
+  }, [setPreviewMode]);
+
+  const style = useMemo(() => ({ zIndex: Z_INDEX + 1 }), []);
+
+  const previewModeIcon = useMemo(() => {
+    return {
+      mobile: <Smartphone className="h-4 w-4" />,
+      tablet: <Tablet className="h-4 w-4" />,
+      desktop: <Monitor className="h-4 w-4" />,
+      responsive: <Maximize className="h-4 w-4" />,
+    }[previewMode];
+  }, [previewMode]);
+
+  const handleSelectMobile = useCallback(() => {
+    handleSelect("mobile");
+  }, [handleSelect]);
+  const handleSelectTablet = useCallback(() => {
+    handleSelect("tablet");
+  }, [handleSelect]);
+  const handleSelectDesktop = useCallback(() => {
+    handleSelect("desktop");
+  }, [handleSelect]);
+  const handleSelectResponsive = useCallback(() => {
+    handleSelect("responsive");
+  }, [handleSelect]);
 
   return (
     <DropdownMenu>
@@ -631,23 +749,16 @@ const PreviewModeToggle = () => {
         <DropdownMenuTrigger asChild>
           <TooltipTrigger asChild>
             <Button variant="outline" size="icon">
-              {
-                {
-                  mobile: <Smartphone className="h-4 w-4" />,
-                  tablet: <Tablet className="h-4 w-4" />,
-                  desktop: <Monitor className="h-4 w-4" />,
-                  responsive: <Maximize className="h-4 w-4" />,
-                }[previewMode]
-              }
+              {previewModeIcon}
               <span className="sr-only">Select screen size</span>
             </Button>
           </TooltipTrigger>
         </DropdownMenuTrigger>
         <TooltipContent>Select screen size</TooltipContent>
       </Tooltip>
-      <DropdownMenuContent align="end" style={{ zIndex: Z_INDEX + 1 }}>
+      <DropdownMenuContent align="end" style={style}>
         <DropdownMenuItem
-          onSelect={() => handleSelect("mobile")}
+          onSelect={handleSelectMobile}
           className={
             previewMode === "mobile"
               ? "bg-secondary text-secondary-foreground"
@@ -658,7 +769,7 @@ const PreviewModeToggle = () => {
           <span>Mobile</span>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onSelect={() => handleSelect("tablet")}
+          onSelect={handleSelectTablet}
           className={
             previewMode === "tablet"
               ? "bg-secondary text-secondary-foreground"
@@ -669,7 +780,7 @@ const PreviewModeToggle = () => {
           <span>Tablet</span>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onSelect={() => handleSelect("desktop")}
+          onSelect={handleSelectDesktop}
           className={
             previewMode === "desktop"
               ? "bg-secondary text-secondary-foreground"
@@ -680,7 +791,7 @@ const PreviewModeToggle = () => {
           <span>Desktop</span>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onSelect={() => handleSelect("responsive")}
+          onSelect={handleSelectResponsive}
           className={
             previewMode === "responsive"
               ? "bg-secondary text-secondary-foreground"

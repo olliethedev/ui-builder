@@ -1,8 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import isDeepEqual from "fast-deep-equal";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import { ComponentLayer } from "@/components/ui/ui-builder/types";
 import { cn } from "@/lib/utils";
 import {
   findAllParentLayersRecursive,
@@ -36,6 +42,8 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
 
   const pageLayer = findLayerById(selectedPageId);
 
+  const layers = useMemo(() => [pageLayer as ComponentLayer], [pageLayer]);
+
   if (!pageLayer) {
     return null;
   }
@@ -43,7 +51,7 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
   return (
     <LayersTree
       className={className}
-      layers={[pageLayer]}
+      layers={layers}
       selectedPageId={selectedPageId}
       selectedLayerId={selectedLayerId}
       updateLayer={updateLayer}
@@ -96,63 +104,95 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
       });
     }, []);
 
-    const handleChange = useCallback((newLayers: unknown) => {
-      if (Array.isArray(newLayers) && newLayers.length > 0) {
-        const updatedPageLayer = newLayers[0] as ComponentLayer;
-        const updatedChildren = hasLayerChildren(updatedPageLayer) ? updatedPageLayer.children : [];
-        updateLayer(selectedPageId, {}, { children: updatedChildren });
-      } else {
-        console.error("LayersTree onChange: Invalid newLayers structure received", newLayers);
-      }
-    }, [updateLayer, selectedPageId]);
+    const handleChange = useCallback(
+      (newLayers: unknown) => {
+        if (Array.isArray(newLayers) && newLayers.length > 0) {
+          const updatedPageLayer = newLayers[0] as ComponentLayer;
+          const updatedChildren = hasLayerChildren(updatedPageLayer)
+            ? updatedPageLayer.children
+            : [];
+          updateLayer(selectedPageId, {}, { children: updatedChildren });
+        } else {
+          console.error(
+            "LayersTree onChange: Invalid newLayers structure received",
+            newLayers
+          );
+        }
+      },
+      [updateLayer, selectedPageId]
+    );
 
-    const handleDragOpen = useCallback((stat: { node: ComponentLayer; id: Id; }) => {
-      if (hasLayerChildren(stat.node)) {
-        handleNodeToggle(stat.id, true);
-      }
-    }, [handleNodeToggle]);
+    const handleDragOpen = useCallback(
+      (stat: { node: ComponentLayer; id: Id }) => {
+        if (hasLayerChildren(stat.node)) {
+          handleNodeToggle(stat.id, true);
+        }
+      },
+      [handleNodeToggle]
+    );
 
-    const canNodeDrop = useCallback((layer: { node: ComponentLayer; }) => {
+    const canNodeDrop = useCallback((layer: { node: ComponentLayer }) => {
       const isDroppable = hasLayerChildren(layer.node);
       return isDroppable;
     }, []);
 
-    const renderNode = useCallback(({ stat, attrs, isPlaceholder }: any) => {
-      return isPlaceholder ? (
-        <TreeRowPlaceholder
-          key={`placeholder-${attrs.key}`}
-          nodeAttributes={attrs}
-        />
-      ) : (
-        <TreeRowNode
-          key={attrs.key}
-          nodeAttributes={attrs}
-          node={stat.node}
-          id={stat.id}
-          open={stat.open}
-          draggable={stat.draggable}
-          onToggle={handleNodeToggle}
-          level={stat.level}
-          selectedLayerId={selectedLayerId}
-          selectLayer={selectLayer}
-          removeLayer={removeLayer}
-          duplicateLayer={duplicateLayer}
-          updateLayer={updateLayer}
-        />
-      );
-    }, [handleNodeToggle, selectedLayerId, selectLayer, removeLayer, duplicateLayer, updateLayer]);
+    const renderNode = useCallback(
+      ({ stat, attrs, isPlaceholder }: any) => {
+        return isPlaceholder ? (
+          <TreeRowPlaceholder
+            key={`placeholder-${attrs.key}`}
+            nodeAttributes={attrs}
+          />
+        ) : (
+          <TreeRowNode
+            key={attrs.key}
+            nodeAttributes={attrs}
+            node={stat.node}
+            id={stat.id}
+            open={stat.open}
+            draggable={stat.draggable}
+            onToggle={handleNodeToggle}
+            level={stat.level}
+            selectedLayerId={selectedLayerId}
+            selectLayer={selectLayer}
+            removeLayer={removeLayer}
+            duplicateLayer={duplicateLayer}
+            updateLayer={updateLayer}
+          />
+        );
+      },
+      [
+        handleNodeToggle,
+        selectedLayerId,
+        selectLayer,
+        removeLayer,
+        duplicateLayer,
+        updateLayer,
+      ]
+    );
 
-    const { renderTree, scrollToNode } = useHeTree<ComponentLayer>({
-      data: layers,
-      dataType: "tree",
-      childrenKey: "children",
-      openIds: Array.from(openIds),
-      dragOpen: true,
-      onChange: handleChange,
-      renderNodeBox: renderNode,
-      onDragOpen: handleDragOpen,
-      canDrop: canNodeDrop,
-    });
+    const data = useMemo(() => {
+      return {
+        data: layers,
+        dataType: "tree" as const,
+        childrenKey: "children",
+        openIds: Array.from(openIds),
+        dragOpen: true,
+        onChange: handleChange,
+        renderNodeBox: renderNode,
+        onDragOpen: handleDragOpen,
+        canDrop: canNodeDrop,
+      };
+    }, [
+      layers,
+      openIds,
+      handleChange,
+      renderNode,
+      handleDragOpen,
+      canNodeDrop,
+    ]);
+
+    const { renderTree, scrollToNode } = useHeTree<ComponentLayer>(data);
 
     useLayoutEffect(() => {
       if (selectedLayerId) {
@@ -177,6 +217,13 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
         }
       }
     }, [scrollToNode, selectedLayerId]);
+
+    const buttonClass = useMemo(() => {
+      return cn(
+        buttonVariants({ variant: "default", size: "sm" }),
+        "cursor-pointer w-full"
+      );
+    }, []);
 
     return (
       <DevProfiler id="LayersPanel" threshold={40}>
@@ -209,10 +256,7 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
               className="w-full mt-4"
             >
               <div
-                className={cn(
-                  buttonVariants({ variant: "default", size: "sm" }),
-                  "cursor-pointer w-full"
-                )}
+                className={buttonClass}
               >
                 <span className="sr-only">Add Component</span>
                 <Plus className="h-5 w-5" />

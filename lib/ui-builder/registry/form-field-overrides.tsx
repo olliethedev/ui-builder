@@ -158,6 +158,7 @@ export const childrenAsTipTapFieldOverrides: FieldConfigFunction = (
           editable={true}
           value={layer.children as string}
           editorClassName="focus:outline-none px-4 py-2 h-full"
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop
           onChange={(content) => {
             console.log({ content });
             //if string call field.onChange
@@ -216,6 +217,7 @@ export const textInputFieldOverrides = (
       >
         <Input
           value={field.value as string}
+          // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop
           onChange={(e) => field.onChange(e.target.value)}
           {...fieldProps}
         />
@@ -269,6 +271,7 @@ export function VariableBindingWrapper({
     incrementRevision();
   };
 
+  // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop
   const handleUnbind = () => {
     // Use the new unbind function which sets default value from schema
     unbindPropFromVariable(selectedLayer.id, propName);
@@ -338,6 +341,7 @@ export function VariableBindingWrapper({
                   variables.map((variable) => (
                     <DropdownMenuItem
                       key={variable.id}
+                      // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop
                       onClick={() => handleBindToVariable(variable.id)}
                       className="flex flex-col items-start p-3"
                     >

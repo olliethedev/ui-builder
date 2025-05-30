@@ -38,17 +38,27 @@ jest.mock('@/components/ui/card', () => ({
   CardContent: ({ children, ...props }: any) => <div data-testid="card-content" {...props}>{children}</div>,
 }));
 
-jest.mock('@/components/ui/select', () => ({
-  Select: ({ children, value, onValueChange }: any) => (
-    <select value={value} onChange={(e) => onValueChange?.(e.target.value)}>
-      {children}
-    </select>
-  ),
-  SelectTrigger: ({ children }: any) => <div>{children}</div>,
-  SelectValue: () => <span />,
-  SelectContent: ({ children }: any) => <>{children}</>,
-  SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
-}));
+jest.mock('@/components/ui/select', () => {
+  const SelectComponent = ({ children, value, onValueChange }: any) => {
+    const handleChange = React.useCallback((e: any) => {
+      onValueChange?.(e.target.value);
+    }, [onValueChange]);
+    
+    return (
+      <select value={value} onChange={handleChange}>
+        {children}
+      </select>
+    );
+  };
+  
+  return {
+    Select: SelectComponent,
+    SelectTrigger: ({ children }: any) => <div>{children}</div>,
+    SelectValue: () => <span />,
+    SelectContent: ({ children }: any) => <>{children}</>,
+    SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
+  };
+});
 
 // Mock icons
 jest.mock('lucide-react', () => ({
@@ -226,16 +236,15 @@ describe('VariablesPanel', () => {
       const nameInput = screen.getByLabelText(/Name/);
       const valueInput = screen.getByLabelText(/Preview Value/);
       
-      await userEvent.type(nameInput, 'testVar');
-      await userEvent.type(valueInput, 'test value');
+      fireEvent.change(nameInput, { target: { value: 'testVar' } });
+      fireEvent.change(valueInput, { target: { value: 'test value' } });
       
       // Save
       const saveButton = screen.getByText('✓');
       fireEvent.click(saveButton);
       
-      await waitFor(() => {
-        expect(mockAddVariable).toHaveBeenCalledWith('testVar', 'string', 'test value');
-      });
+      expect(mockAddVariable).toHaveBeenCalledWith('testVar', 'string', 'test value');
+      expect(mockIncrementRevision).toHaveBeenCalled();
     });
 
     it('should handle number type conversion', async () => {
@@ -248,17 +257,16 @@ describe('VariablesPanel', () => {
       const typeSelect = screen.getByRole('combobox');
       const valueInput = screen.getByLabelText(/Preview Value/);
       
-      await userEvent.type(nameInput, 'numVar');
+      fireEvent.change(nameInput, { target: { value: 'numVar' } });
       fireEvent.change(typeSelect, { target: { value: 'number' } });
-      await userEvent.type(valueInput, '42');
+      fireEvent.change(valueInput, { target: { value: '42' } });
       
       // Save
       const saveButton = screen.getByText('✓');
       fireEvent.click(saveButton);
       
-      await waitFor(() => {
-        expect(mockAddVariable).toHaveBeenCalledWith('numVar', 'number', 42);
-      });
+      expect(mockAddVariable).toHaveBeenCalledWith('numVar', 'number', 42);
+      expect(mockIncrementRevision).toHaveBeenCalled();
     });
 
     it('should handle boolean type conversion', async () => {
@@ -271,18 +279,16 @@ describe('VariablesPanel', () => {
       const typeSelect = screen.getByRole('combobox');
       const valueInput = screen.getByLabelText(/Preview Value/);
       
-      await userEvent.type(nameInput, 'boolVar');
+      fireEvent.change(nameInput, { target: { value: 'boolVar' } });
       fireEvent.change(typeSelect, { target: { value: 'boolean' } });
-      await userEvent.clear(valueInput);
-      await userEvent.type(valueInput, 'true');
+      fireEvent.change(valueInput, { target: { value: 'true' } });
       
       // Save
       const saveButton = screen.getByText('✓');
       fireEvent.click(saveButton);
       
-      await waitFor(() => {
-        expect(mockAddVariable).toHaveBeenCalledWith('boolVar', 'boolean', true);
-      });
+      expect(mockAddVariable).toHaveBeenCalledWith('boolVar', 'boolean', true);
+      expect(mockIncrementRevision).toHaveBeenCalled();
     });
 
     it('should cancel add form when cancel button is clicked', () => {

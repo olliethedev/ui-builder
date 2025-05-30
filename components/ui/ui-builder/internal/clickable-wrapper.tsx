@@ -1,5 +1,12 @@
-import React, { useState, useRef, useEffect, memo } from "react";
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  memo,
+  useCallback,
+  useMemo,
+} from "react";
+import { ComponentLayer } from "@/components/ui/ui-builder/types";
 import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
 import { cn } from "@/lib/utils";
 import { getScrollParent } from "@/lib/ui-builder/utils/get-scroll-parent";
@@ -23,7 +30,7 @@ interface ClickableWrapperProps {
 /**
  * ClickableWrapper gives a layer a bounding box that can be clicked. And provides a context menu for the layer.
  */
-const _ClickableWrapper: React.FC<ClickableWrapperProps> = ({
+const InternalClickableWrapper: React.FC<ClickableWrapperProps> = ({
   layer,
   isSelected,
   zIndex,
@@ -42,7 +49,6 @@ const _ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   } | null>(null);
   const wrapperRef = useRef<HTMLSpanElement | null>(null);
 
-
   // listen to resize and position changes
   useEffect(() => {
     // update bounding rect on page resize and scroll
@@ -55,16 +61,17 @@ const _ClickableWrapper: React.FC<ClickableWrapperProps> = ({
     const updateBoundingRect = () => {
       const rect = element.getBoundingClientRect();
       // Prevent unnecessary re-renders if the rect is the same
-      setBoundingRect(prevRect => {
-        if (prevRect && 
-            rect.x === prevRect.x &&
-            rect.y === prevRect.y &&
-            rect.width === prevRect.width &&
-            rect.height === prevRect.height &&
-            rect.top === prevRect.top &&
-            rect.left === prevRect.left &&
-            rect.right === prevRect.right &&
-            rect.bottom === prevRect.bottom
+      setBoundingRect((prevRect) => {
+        if (
+          prevRect &&
+          rect.x === prevRect.x &&
+          rect.y === prevRect.y &&
+          rect.width === prevRect.width &&
+          rect.height === prevRect.height &&
+          rect.top === prevRect.top &&
+          rect.left === prevRect.left &&
+          rect.right === prevRect.right &&
+          rect.bottom === prevRect.bottom
         ) {
           return prevRect;
         }
@@ -112,7 +119,6 @@ const _ClickableWrapper: React.FC<ClickableWrapperProps> = ({
     };
   }, [isSelected, layer.id, children, listenToScrollParent, observeMutations]);
 
-
   // listen to window resize
   useEffect(() => {
     const element = wrapperRef.current?.firstElementChild as HTMLElement | null;
@@ -123,16 +129,17 @@ const _ClickableWrapper: React.FC<ClickableWrapperProps> = ({
 
     const updateBoundingRect = () => {
       const currentRect = element.getBoundingClientRect();
-      setBoundingRect(prevRect => {
-        if (prevRect && 
-            currentRect.x === prevRect.x &&
-            currentRect.y === prevRect.y &&
-            currentRect.width === prevRect.width &&
-            currentRect.height === prevRect.height &&
-            currentRect.top === prevRect.top &&
-            currentRect.left === prevRect.left &&
-            currentRect.right === prevRect.right &&
-            currentRect.bottom === prevRect.bottom
+      setBoundingRect((prevRect) => {
+        if (
+          prevRect &&
+          currentRect.x === prevRect.x &&
+          currentRect.y === prevRect.y &&
+          currentRect.width === prevRect.width &&
+          currentRect.height === prevRect.height &&
+          currentRect.top === prevRect.top &&
+          currentRect.left === prevRect.left &&
+          currentRect.right === prevRect.right &&
+          currentRect.bottom === prevRect.bottom
         ) {
           return prevRect;
         }
@@ -142,11 +149,9 @@ const _ClickableWrapper: React.FC<ClickableWrapperProps> = ({
 
     window.addEventListener("resize", updateBoundingRect);
     return () => {
-      
       window.removeEventListener("resize", updateBoundingRect);
     };
   }, []);
-
 
   // listen to panel size changes
   useEffect(() => {
@@ -162,16 +167,17 @@ const _ClickableWrapper: React.FC<ClickableWrapperProps> = ({
       if (element) {
         const rect = element.getBoundingClientRect();
         // Prevent unnecessary re-renders if the rect is the same
-        setBoundingRect(prevRect => {
-          if (prevRect && 
-              rect.x === prevRect.x &&
-              rect.y === prevRect.y &&
-              rect.width === prevRect.width &&
-              rect.height === prevRect.height &&
-              rect.top === prevRect.top &&
-              rect.left === prevRect.left &&
-              rect.right === prevRect.right &&
-              rect.bottom === prevRect.bottom
+        setBoundingRect((prevRect) => {
+          if (
+            prevRect &&
+            rect.x === prevRect.x &&
+            rect.y === prevRect.y &&
+            rect.width === prevRect.width &&
+            rect.height === prevRect.height &&
+            rect.top === prevRect.top &&
+            rect.left === prevRect.left &&
+            rect.right === prevRect.right &&
+            rect.bottom === prevRect.bottom
           ) {
             return prevRect;
           }
@@ -188,11 +194,14 @@ const _ClickableWrapper: React.FC<ClickableWrapperProps> = ({
     };
   }, [isSelected, layer.id, children]);
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    onSelectElement(layer.id);
-  };
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      onSelectElement(layer.id);
+    },
+    [onSelectElement, layer.id]
+  );
 
   // const handleDoubleClick = (e: React.MouseEvent) => {
   //   e.stopPropagation();
@@ -221,6 +230,59 @@ const _ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   //     targetElement.dispatchEvent(newEvent);
   //   }
   // };
+
+  const style = useMemo(() => {
+    if (!boundingRect) return {};
+    return {
+      top:
+        boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
+          ? boundingRect.top - MIN_SIZE
+          : boundingRect.top,
+      left:
+        boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
+          ? boundingRect.left - MIN_SIZE
+          : boundingRect.left,
+      width: Math.max(boundingRect.width, MIN_SIZE),
+      height: Math.max(boundingRect.height, MIN_SIZE),
+      zIndex: zIndex,
+    };
+  }, [boundingRect, zIndex]);
+
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    const scrollParent = getScrollParent(e.target as HTMLElement);
+    if (scrollParent) {
+      scrollParent.scrollLeft += e.deltaX;
+      scrollParent.scrollTop += e.deltaY;
+    }
+  }, []);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    setTouchPosition({
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    });
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    if (touchPosition) {
+      const deltaX = touchPosition.x - e.touches[0].clientX;
+      const deltaY = touchPosition.y - e.touches[0].clientY;
+      const scrollParent = getScrollParent(e.target as HTMLElement);
+      if (scrollParent) {
+        scrollParent.scrollLeft += deltaX;
+        scrollParent.scrollTop += deltaY;
+      }
+      setTouchPosition({
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      });
+    }
+  }, [touchPosition]);
+
+  const handleTouchEnd = useCallback(() => {
+    setTouchPosition(null);
+  }, []);
 
   return (
     <>
@@ -253,55 +315,18 @@ const _ClickableWrapper: React.FC<ClickableWrapperProps> = ({
             "fixed box-border hover:border-blue-300 hover:border-2",
             isSelected ? "border-2 border-blue-500 hover:border-blue-500" : ""
           )}
-          onWheel={(e) => {
-            const scrollParent = getScrollParent(e.target as HTMLElement);
-            if (scrollParent) {
-              scrollParent.scrollLeft += e.deltaX;
-              scrollParent.scrollTop += e.deltaY;
-            }
-          }}
-          onTouchStart={(e) => {
-            setTouchPosition({
-              x: e.touches[0].clientX,
-              y: e.touches[0].clientY,
-            });
-          }}
-          onTouchMove={(e) => {
-            if (touchPosition) {
-              const deltaX = touchPosition.x - e.touches[0].clientX;
-              const deltaY = touchPosition.y - e.touches[0].clientY;
-              const scrollParent = getScrollParent(e.target as HTMLElement);
-              if (scrollParent) {
-                scrollParent.scrollLeft += deltaX;
-                scrollParent.scrollTop += deltaY;
-              }
-              setTouchPosition({
-                x: e.touches[0].clientX,
-                y: e.touches[0].clientY,
-              });
-            }
-          }}
-          onTouchEnd={() => {
-            setTouchPosition(null);
-          }}
-          style={{
-            top:
-              boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
-                ? boundingRect.top - MIN_SIZE
-                : boundingRect.top,
-            left:
-              boundingRect.width < MIN_SIZE && boundingRect.height < MIN_SIZE
-                ? boundingRect.left - MIN_SIZE
-                : boundingRect.left,
-            width: Math.max(boundingRect.width, MIN_SIZE),
-            height: Math.max(boundingRect.height, MIN_SIZE),
-            zIndex: zIndex,
-          }}
+          onWheel={handleWheel}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={style}
         >
           {/* {small label with layer type floating above the bounding box} */}
           {isSelected && (
             <span className="absolute top-[-16px] left-[-2px] text-xs text-white bg-blue-500 px-[1px] whitespace-nowrap">
-              {layer.name?.toLowerCase().startsWith(layer.type.toLowerCase())?layer.type.replaceAll("_", ""):`${layer.name} (${layer.type.replaceAll("_", "")})`}
+              {layer.name?.toLowerCase().startsWith(layer.type.toLowerCase())
+                ? layer.type.replaceAll("_", "")
+                : `${layer.name} (${layer.type.replaceAll("_", "")})`}
             </span>
           )}
         </div>
@@ -310,28 +335,32 @@ const _ClickableWrapper: React.FC<ClickableWrapperProps> = ({
   );
 };
 
-const ClickableWrapper = memo(_ClickableWrapper, (prevProps, nextProps) => {
-  if (prevProps.isSelected !== nextProps.isSelected) return false;
-  if (prevProps.zIndex !== nextProps.zIndex) return false;
-  if (prevProps.totalLayers !== nextProps.totalLayers) return false;
-  if (!isDeepEqual(prevProps.layer, nextProps.layer)) return false;
-  if (prevProps.listenToScrollParent !== nextProps.listenToScrollParent) return false;
-  if (prevProps.observeMutations !== nextProps.observeMutations) return false;
+const ClickableWrapper = memo(
+  InternalClickableWrapper,
+  (prevProps, nextProps) => {
+    if (prevProps.isSelected !== nextProps.isSelected) return false;
+    if (prevProps.zIndex !== nextProps.zIndex) return false;
+    if (prevProps.totalLayers !== nextProps.totalLayers) return false;
+    if (!isDeepEqual(prevProps.layer, nextProps.layer)) return false;
+    if (prevProps.listenToScrollParent !== nextProps.listenToScrollParent)
+      return false;
+    if (prevProps.observeMutations !== nextProps.observeMutations) return false;
 
-  // Assuming functions are memoized by parent and don't change unless necessary
-  if (prevProps.onSelectElement !== nextProps.onSelectElement) return false;
-  if (prevProps.onDuplicateLayer !== nextProps.onDuplicateLayer) return false;
-  if (prevProps.onDeleteLayer !== nextProps.onDeleteLayer) return false;
-  
-  // Children comparison can be tricky. If children are simple ReactNodes or are memoized,
-  // a shallow compare might be okay. If they are complex and change frequently, this might
-  // still cause re-renders or hide necessary ones. For now, let's do a shallow compare.
-  if (prevProps.children !== nextProps.children) return false;
+    // Assuming functions are memoized by parent and don't change unless necessary
+    if (prevProps.onSelectElement !== nextProps.onSelectElement) return false;
+    if (prevProps.onDuplicateLayer !== nextProps.onDuplicateLayer) return false;
+    if (prevProps.onDeleteLayer !== nextProps.onDeleteLayer) return false;
 
-  return true; // Props are equal
-});
+    // Children comparison can be tricky. If children are simple ReactNodes or are memoized,
+    // a shallow compare might be okay. If they are complex and change frequently, this might
+    // still cause re-renders or hide necessary ones. For now, let's do a shallow compare.
+    if (prevProps.children !== nextProps.children) return false;
 
-_ClickableWrapper.displayName = "ClickableWrapperBase"; // Give the base component a unique displayName
+    return true; // Props are equal
+  }
+);
+
+InternalClickableWrapper.displayName = "ClickableWrapperBase"; // Give the base component a unique displayName
 ClickableWrapper.displayName = "ClickableWrapper"; // The memoized component gets the original displayName
 
 export { ClickableWrapper };

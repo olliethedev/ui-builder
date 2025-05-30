@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { CONFIG, LAYOUT_GROUPS, LAYOUT_ORDER, StateType } from "@/components/ui/ui-builder/internal/classname-control/config";
 import { ClassNameGroupControl } from "@/components/ui/ui-builder/internal/classname-control/classname-group-control";
 import { cn } from "@/lib/utils";
@@ -113,7 +113,7 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
     };
   
     // Handler for UI changes (toggles, dropdowns, etc.)
-    const handleStateChange = (
+    const handleStateChange = useCallback((
       key: keyof StateType,
       value: string | string[] | null
     ) => {
@@ -158,7 +158,13 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
   
         return newState;
       });
-    };
+    }, []);
+  
+    // Helper to create bound change handlers
+    const createChangeHandler = useCallback((key: keyof StateType) => 
+      (value: string | string[] | null) => handleStateChange(key, value),
+      [handleStateChange]
+    );
   
     // Handler for group key selection
     const handleGroupKeySelect = (groupLabel: string, key: string) => {
@@ -244,9 +250,7 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
                       ? { multiple: ungroupedConfig.multiple }
                       : {})}
                     value={state[configKey]}
-                    onChange={(value: string | string[] | null) =>
-                      handleStateChange(configKey, value)
-                    }
+                    onChange={createChangeHandler(configKey)}
                   />
                 </div>
               );

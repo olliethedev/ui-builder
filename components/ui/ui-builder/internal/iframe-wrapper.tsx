@@ -1,8 +1,10 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { GripVertical } from "lucide-react";
-import { useDrag } from "@use-gesture/react";
+import { DragConfig, useDrag } from "@use-gesture/react";
 import { cn } from "@/lib/utils";
+
+const initialSize = { width: 0 };
 
 interface IframeWrapperProps extends React.HTMLAttributes<HTMLIFrameElement> {
   children: React.ReactNode;
@@ -19,14 +21,24 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
     );
     const [isMounted, setIsMounted] = useState<boolean>(false); // State to track mount node readiness
 
+
+
     // Ref to store the initial size at the start of dragging
-    const initialSizeRef = useRef<{ width: number }>({ width: 0 });
+    const initialSizeRef = useRef<{ width: number }>(initialSize);
 
     const updateIframeHeight = () => {
       if (!iframeRef.current || !mountNodeRef.current) return;
       const newHeight = mountNodeRef.current.scrollHeight;
       iframeRef.current.style.height = `${newHeight}px`;
     };
+
+    const dragConfig = useMemo(() => {
+      return {
+        axis: "x",
+        from: () => [0, 0],
+        filterTaps: true,
+      } as DragConfig
+    }, []);
 
     // Handle resizing using useDrag
     const bindResizer = useDrag(
@@ -45,11 +57,7 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
           });
         }
       },
-      {
-        axis: "x",
-        from: () => [0, 0],
-        filterTaps: true,
-      }
+      dragConfig as any
     );
 
     useLayoutEffect(() => {
@@ -151,12 +159,34 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
       };
     }, [children]);
 
+
+    const resizerStyle = useMemo(() => {
+      return {
+        left: iframeSize?.width ? `${iframeSize.width}px` : undefined
+      }
+    }, [iframeSize]);
+
+    const iframeStyle = useMemo(() => {
+      return {
+        width: resizable
+          ? iframeSize
+            ? `${iframeSize.width}px`
+            : "100%"
+          : undefined,
+        opacity: isMounted ? 1 : 0,
+        transition: "opacity 0.5s ease-in",
+        ...style,
+      }
+    }, [iframeSize, resizable, isMounted, style]);
+
+    const bindResizerValues = useMemo(() => {
+      return typeof bindResizer === 'function' ? bindResizer() : {};
+    }, [bindResizer]);
+
     return (
       <div className="relative block">
         {resizable && (
-          <Resizer {...bindResizer()} className="absolute top-0 right-[-7px]" style={{
-            left: iframeSize?.width ? `${iframeSize.width}px` : undefined
-          }}>
+          <Resizer {...bindResizerValues} className="absolute top-0 right-[-7px]" style={resizerStyle}>
             <GripVertical className="w-4 h-4" />
           </Resizer>
         )}
@@ -165,27 +195,16 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
           id={frameId}
           ref={iframeRef}
           {...props}
-          style={{
-            width: resizable
-              ? iframeSize
-                ? `${iframeSize.width}px`
-                : "100%"
-              : undefined,
-            opacity: isMounted ? 1 : 0,
-            transition: "opacity 0.5s ease-in",
-            ...style,
-          }}
+          style={iframeStyle}
         />
         {isMounted &&
           mountNodeRef.current &&
           ReactDOM.createPortal(children, mountNodeRef.current)}
         {resizable && (
           <Resizer
-            {...bindResizer()}
+            {...bindResizerValues}
             className="absolute bottom-7 right-[-7px] "
-            style={{
-              left: iframeSize?.width ? `${iframeSize.width}px` : undefined
-            }}
+            style={resizerStyle}
           >
             <GripVertical className="w-4 h-4" />
           </Resizer>
@@ -202,17 +221,20 @@ const Resizer = ({
   children,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+  }, []);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+  }, []);
+
   return (
     <div
       data-testid="resizer"
-      onMouseDown={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-      }}
-      onTouchStart={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-      }}
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       className={cn(
         "flex items-center justify-center w-4 h-4 cursor-ew-resize rounded-sm border bg-border hover:bg-muted touch-none",
         className
