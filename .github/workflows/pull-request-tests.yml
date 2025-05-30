@@ -22,7 +22,7 @@ jobs:
         run: npm ci
 
       - name: Lint code
-        run: npx eslint components/ui/ui-builder
+        run: npx eslint components/ui/ui-builder/ lib/ --max-warnings 0
 
       - name: Run tests
         run: npm run test:ci 
