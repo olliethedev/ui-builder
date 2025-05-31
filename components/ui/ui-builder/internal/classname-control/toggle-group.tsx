@@ -51,18 +51,16 @@ export function ToggleGroup({
   hideLabel = false,
   multiple = false,
 }: ToggleGroupProps) {
-  // Helper to normalize value to array for multi-select - optimized with useMemo
-  const valueArray = useMemo(() => {
-    return multiple
-      ? Array.isArray(value)
-        ? value
-        : value
-        ? [value]
-        : []
-      : value;
-  }, [multiple, value]);
+  // Helper to normalize value to array for multi-select
+  const valueArray = useMemo(() => multiple
+    ? Array.isArray(value)
+      ? value
+      : value
+      ? [value]
+      : []
+    : value, [multiple, value]);
 
-  const getIsSelected = (option: ToggleOption) => {
+  const getIsSelected = useCallback((option: ToggleOption) => {
     if (option.dropdown) {
       if (multiple) {
         return option.dropdown.items.some((item) =>
@@ -81,9 +79,9 @@ export function ToggleGroup({
       return (valueArray as string[]).includes(option.value);
     }
     return value === option.value;
-  };
+  }, [multiple, valueArray, value]);
 
-  const handleToggleClick = (option: ToggleOption) => {
+  const handleToggleClick = useCallback((option: ToggleOption) => {
     if (multiple) {
       let newValue: string[] = Array.isArray(valueArray) ? [...valueArray] : [];
       if (option.dropdown) {
@@ -127,39 +125,52 @@ export function ToggleGroup({
         onChange?.(option.value);
       }
     }
-  };
+  }, [multiple, valueArray, allowDeselect, onChange, getIsSelected]);
 
-  const handleDropdownSelect = useCallback(
-    (optionValue: string, dropdownValue: string) => {
-      if (multiple) {
-        let newValue: string[] = Array.isArray(valueArray)
-          ? [...valueArray]
-          : [];
-        // Remove all values from this dropdown's set
-        const dropdownValues =
-          options
-            .find((opt) => opt.value === optionValue)
-            ?.dropdown?.items.map((item) =>
-              typeof item.value === "string" ? item.value : ""
-            ) || [];
-        newValue = newValue.filter((v) => !dropdownValues.includes(v));
-        // Add the selected value
-        if (!newValue.includes(dropdownValue)) {
-          newValue.push(dropdownValue);
-        }
-        onChange?.(newValue.length ? newValue : null);
-      } else {
-        onChange?.(dropdownValue);
+  const handleDropdownSelect = useCallback((optionValue: string, dropdownValue: string) => {
+    if (multiple) {
+      let newValue: string[] = Array.isArray(valueArray) ? [...valueArray] : [];
+      // Remove all values from this dropdown's set
+      const dropdownValues =
+        options
+          .find((opt) => opt.value === optionValue)
+          ?.dropdown?.items.map((item) =>
+            typeof item.value === "string" ? item.value : ""
+          ) || [];
+      newValue = newValue.filter((v) => !dropdownValues.includes(v));
+      // Add the selected value
+      if (!newValue.includes(dropdownValue)) {
+        newValue.push(dropdownValue);
       }
-    },
-    [multiple, valueArray, options, onChange]
-  );
+      onChange?.(newValue.length ? newValue : null);
+    } else {
+      onChange?.(dropdownValue);
+    }
+  }, [multiple, valueArray, options, onChange]);
 
   const selectedClass = "bg-background font-semibold shadow-sm";
 
-  const handleDropdownCloseAutoFocus = useCallback((e: Event) => {
-    e.preventDefault();
-  }, []);
+  // Single event handlers that use data attributes to avoid creating functions on each render
+  const handleToggleClickEvent = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const optionValue = e.currentTarget.dataset.optionValue;
+    const option = options.find(opt => opt.value === optionValue);
+    if (option) {
+      handleToggleClick(option);
+    }
+  }, [options, handleToggleClick]);
+
+  const handleDropdownSelectEvent = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const optionValue = e.currentTarget.dataset.optionValue;
+    const dropdownValue = e.currentTarget.dataset.dropdownValue;
+    if (optionValue && dropdownValue) {
+      handleDropdownSelect(optionValue, dropdownValue);
+    }
+  }, [handleDropdownSelect]);
+
+  const handleCloseAutoFocus = useCallback((e: Event) => e.preventDefault(), []);
+
+  // Memoized style object
+  const minWidthStyle = useMemo(() => ({ minWidth: 0 }), []);
 
   return (
     <div>
@@ -199,21 +210,59 @@ export function ToggleGroup({
                   <TooltipTrigger asChild>
                     <div className="flex items-center">
                       <DropdownMenuTrigger asChild>
-                        <OptionButton
-                          isSelected={isSelected}
-                          selectedClass={selectedClass}
-                          onClick={handleToggleClick}
-                          option={option}
-                          selectedDropdownItem={selectedDropdownItem}
-                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "gap-px p-1 min-w-8 h-8 flex items-center justify-between rounded-r-none",
+                            isSelected && selectedClass
+                          )}
+                          onClick={handleToggleClickEvent}
+                          data-option-value={option.value}
+                          aria-label={
+                            option.tooltip || option.label || option.value
+                          }
+                          aria-pressed={isSelected}
+                        >
+                          <span
+                            className="flex flex-row items-center gap-1"
+                            style={minWidthStyle}
+                          >
+                            {option.icon ? (
+                              <div className="contents text-muted-foreground">
+                                {option.icon}
+                              </div>
+                            ) : (
+                              <div className="text-muted-foreground text-xs leading-3 font-normal">
+                                {option.label}{isSelected && ":"}
+                              </div>
+                            )}
+                            {isSelected && option.dropdown && (
+                              <DropdownOption>
+                                {selectedDropdownItem?.label ||
+                                  option.dropdown.defaultValue ||
+                                  ""}
+                              </DropdownOption>
+                            )}
+                          </span>
+                          <ChevronDown className="!size-3 ml-1 text-muted-foreground/60 shrink-0" />
+                        </Button>
                       </DropdownMenuTrigger>
                       {/* X icon to clear selection, outside the trigger */}
                       {isSelected && option.dropdown && (
-                        <DropdownOptionButton
-                          selectedClass={selectedClass}
-                          onClick={handleToggleClick}
-                          option={option}
-                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "h-8 px-1 focus:outline-none cursor-pointer rounded-l-none rounded-r-md border-l-border border-l",
+                            selectedClass
+                          )}
+                          aria-label="Clear selection"
+                          onClick={handleToggleClickEvent}
+                          data-option-value={option.value}
+                        >
+                          <XIcon className="!size-3 text-muted-foreground" />
+                        </Button>
                       )}
                     </div>
                   </TooltipTrigger>
@@ -221,7 +270,7 @@ export function ToggleGroup({
                 </Tooltip>
                 <DropdownMenuContent
                   align="end"
-                  onCloseAutoFocus={handleDropdownCloseAutoFocus}
+                  onCloseAutoFocus={handleCloseAutoFocus}
                   className={cn(
                     "max-h-96 overflow-y-auto",
                     option.dropdown.dropdownDisplay === "grid"
@@ -230,15 +279,43 @@ export function ToggleGroup({
                   )}
                 >
                   {option.dropdown.items.map((item) => (
-                    <DropdownOptionMenuItem
-                      key={item.value}
-                      item={item}
-                      multiple={multiple}
-                      valueArray={valueArray}
-                      value={value}
-                      selectedClass={selectedClass}
-                      handleDropdownSelect={handleDropdownSelect}
-                    />
+                    <DropdownMenuItem
+                      key={
+                        typeof item.value === "string" ? item.value : undefined
+                      }
+                      className={
+                        (
+                          multiple
+                            ? (valueArray as string[]).includes(
+                                typeof item.value === "string" ? item.value : ""
+                              )
+                            : value ===
+                              (typeof item.value === "string"
+                                ? item.value
+                                : undefined)
+                        )
+                          ? selectedClass
+                          : ""
+                      }
+                      onClick={handleDropdownSelectEvent}
+                      data-option-value={option.value}
+                      data-dropdown-value={typeof item.value === "string" ? item.value : ""}
+                      aria-label={
+                        typeof item.label === "string" ? item.label : undefined
+                      }
+                      aria-selected={
+                        multiple
+                          ? (valueArray as string[]).includes(
+                              typeof item.value === "string" ? item.value : ""
+                            )
+                          : value ===
+                            (typeof item.value === "string"
+                              ? item.value
+                              : undefined)
+                      }
+                    >
+                      {item.label}
+                    </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -248,12 +325,40 @@ export function ToggleGroup({
           return (
             <Tooltip key={option.value}>
               <TooltipTrigger asChild>
-                <ToggleButton
-                  isSelected={isSelected}
-                  selectedClass={selectedClass}
-                  handleToggleClick={handleToggleClick}
-                  option={option}
-                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "gap-px p-1 min-w-8 h-8 text-xs flex items-center justify-between",
+                    isSelected && selectedClass
+                  )}
+                  onClick={handleToggleClickEvent}
+                  data-option-value={option.value}
+                  aria-label={option.tooltip || option.label || option.value}
+                  aria-pressed={isSelected}
+                >
+                  <span
+                    className={cn(
+                      "text-sx text-muted-foreground",
+                      option.icon
+                        ? "flex flex-row items-center gap-1"
+                        : "flex flex-col items-center justify-center flex-1"
+                    )}
+                    style={minWidthStyle}
+                  >
+                    {option.icon}
+                    {option.label && (
+                      <span
+                        className={cn(
+                          option.icon && "ml-2",
+                          !isSelected && "font-normal"
+                        )}
+                      >
+                        {option.label}
+                      </span>
+                    )}
+                  </span>
+                </Button>
               </TooltipTrigger>
               <TooltipContent>{option.tooltip}</TooltipContent>
             </Tooltip>
@@ -283,195 +388,5 @@ export function DropdownOption({
       )}
       <span className="text-xs text-muted-foreground">{children}</span>
     </div>
-  );
-}
-
-function OptionButton({
-  isSelected,
-  selectedClass,
-  onClick,
-  option,
-  selectedDropdownItem,
-}: {
-  isSelected: boolean;
-  selectedClass: string;
-  onClick: (option: ToggleOption) => void;
-  option: ToggleOption;
-  selectedDropdownItem: { label: ReactNode } | undefined;
-}) {
-  const handleClick = useCallback(() => {
-    onClick(option);
-  }, [onClick, option]);
-
-  const style = useMemo(
-    () => ({
-      minWidth: 0,
-    }),
-    []
-  );
-
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className={cn(
-        "gap-px p-1 min-w-8 h-8 flex items-center justify-between rounded-r-none",
-        isSelected && selectedClass
-      )}
-      onClick={handleClick}
-      aria-label={option.tooltip || option.label || option.value}
-      aria-pressed={isSelected}
-    >
-      <span className="flex flex-row items-center gap-1" style={style}>
-        {option.icon ? (
-          <div className="contents text-muted-foreground">{option.icon}</div>
-        ) : (
-          <div className="text-muted-foreground text-xs leading-3 font-normal">
-            {option.label}
-            {isSelected && ":"}
-          </div>
-        )}
-        {isSelected && option.dropdown && (
-          <DropdownOption>
-            {selectedDropdownItem?.label || option.dropdown.defaultValue || ""}
-          </DropdownOption>
-        )}
-      </span>
-      <ChevronDown className="!size-3 ml-1 text-muted-foreground/60 shrink-0" />
-    </Button>
-  );
-}
-
-function DropdownOptionButton({
-  selectedClass,
-  onClick,
-  option,
-}: {
-  selectedClass: string;
-  onClick: (option: ToggleOption) => void;
-  option: ToggleOption;
-}) {
-  const handleClick = useCallback(() => {
-    onClick(option);
-  }, [onClick, option]);
-
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className={cn(
-        "h-8 px-1 focus:outline-none cursor-pointer rounded-l-none rounded-r-md border-l-border border-l",
-        selectedClass
-      )}
-      aria-label="Clear selection"
-      onClick={handleClick}
-    >
-      <XIcon className="!size-3 text-muted-foreground" />
-    </Button>
-  );
-}
-
-function DropdownOptionMenuItem({
-  item,
-  multiple,
-  valueArray,
-  value,
-  selectedClass,
-  handleDropdownSelect,
-}: {
-  item: { value: string; label: ReactNode };
-  multiple: boolean;
-  valueArray: string | string[] | null;
-  value: string | string[] | null;
-  selectedClass: string;
-  handleDropdownSelect: (optionValue: string, dropdownValue: string) => void;
-}) {
-  const handleClick = useCallback(() => {
-    handleDropdownSelect(
-      item.value,
-      typeof item.value === "string" ? item.value : ""
-    );
-  }, [handleDropdownSelect, item.value]);
-
-  return (
-    <DropdownMenuItem
-      key={typeof item.value === "string" ? item.value : undefined}
-      className={
-        (
-          multiple
-            ? (valueArray as string[]).includes(
-                typeof item.value === "string" ? item.value : ""
-              )
-            : value ===
-              (typeof item.value === "string" ? item.value : undefined)
-        )
-          ? selectedClass
-          : ""
-      }
-      onClick={handleClick}
-      aria-label={typeof item.label === "string" ? item.label : undefined}
-      aria-selected={
-        multiple
-          ? (valueArray as string[]).includes(
-              typeof item.value === "string" ? item.value : ""
-            )
-          : value === (typeof item.value === "string" ? item.value : undefined)
-      }
-    >
-      {item.label}
-    </DropdownMenuItem>
-  );
-}
-
-function ToggleButton({
-  isSelected,
-  selectedClass,
-  handleToggleClick,
-  option,
-}: {
-  isSelected: boolean;
-  selectedClass: string;
-  handleToggleClick: (option: ToggleOption) => void;
-  option: ToggleOption;
-}) {
-  const handleClick = useCallback(() => {
-    handleToggleClick(option);
-  }, [handleToggleClick, option]);
-
-  const minWidthStyle = useMemo(() => ({
-    minWidth: 0,
-  }), []);
-
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className={cn(
-        "gap-px p-1 min-w-8 h-8 text-xs flex items-center justify-between",
-        isSelected && selectedClass
-      )}
-      onClick={handleClick}
-      aria-label={option.tooltip || option.label || option.value}
-      aria-pressed={isSelected}
-    >
-      <span
-        className={cn(
-          "text-sx text-muted-foreground",
-          option.icon
-            ? "flex flex-row items-center gap-1"
-            : "flex flex-col items-center justify-center flex-1"
-        )}
-        style={minWidthStyle}
-      >
-        {option.icon}
-        {option.label && (
-          <span
-            className={cn(option.icon && "ml-2", !isSelected && "font-normal")}
-          >
-            {option.label}
-          </span>
-        )}
-      </span>
-    </Button>
   );
 }
