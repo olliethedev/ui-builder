@@ -11,7 +11,7 @@ jest.mock("../components/ui/ui-builder/codeblock", () => {
   };
 });
 
-it("App Router: Works with Server Components", async () => {
+it("Main Component", async () => {
   render(<Page />);
   const mainPage = await screen.findByTestId("main-page");
   expect(mainPage).toBeInTheDocument();

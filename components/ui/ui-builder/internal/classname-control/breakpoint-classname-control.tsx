@@ -183,7 +183,7 @@ export const BreakpointClassNameControl = ({
       >
         <AccordionItem
           value="classes"
-          className="border-t border-b-0 px-4"
+          className="border-t border-b-0 px-4 [&_#accordion-content[data-state=open]]:overflow-visible [&_#accordion-content[data-state=closed]]:overflow-hidden"
           data-testid="classes-accordion-item"
         >
           <AccordionTrigger
@@ -192,7 +192,10 @@ export const BreakpointClassNameControl = ({
           >
             Edit Classes
           </AccordionTrigger>
-          <AccordionContent data-testid="classes-accordion-content">
+            <AccordionContent
+              data-testid="classes-accordion-content"
+              id="accordion-content"
+            >
             <ClassNameMultiselect
               value={classString}
               onChange={handleMultiselectChange}
