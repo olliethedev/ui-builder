@@ -1,4 +1,10 @@
-import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import ReactDOM from "react-dom";
 import { GripVertical } from "lucide-react";
 import { DragConfig, useDrag } from "@use-gesture/react";
@@ -61,12 +67,12 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
     );
 
     useLayoutEffect(() => {
-        if (resizable && iframeRef.current) {
-          setIframeSize({
-            width: iframeRef.current.parentElement?.offsetWidth || 600, // Fallback to 600px or any default width
-          });
-        }
-      }, [resizable]);
+      if (resizable && iframeRef.current) {
+        setIframeSize({
+          width: iframeRef.current.parentElement?.offsetWidth || 600, // Fallback to 600px or any default width
+        });
+      }
+    }, [resizable]);
 
     useLayoutEffect(() => {
       const iframe = iframeRef.current;
@@ -85,6 +91,32 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
           mountNodeRef.current = mountNode;
 
           iframeDoc.body.style.backgroundColor = "transparent";
+
+          // Copy font variables and classes from parent to iframe
+          const parentBody = document.body;
+          const parentHtml = document.documentElement;
+          const parentComputedStyle = window.getComputedStyle(parentHtml);
+
+          // Copy all CSS custom properties (variables) from parent html element
+          for (let i = 0; i < parentComputedStyle.length; i++) {
+            const property = parentComputedStyle[i];
+            if (property.startsWith("--")) {
+              const value = parentComputedStyle.getPropertyValue(property);
+              iframeDoc.documentElement.style.setProperty(property, value);
+              iframeDoc.body.style.setProperty(property, value);
+            }
+          }
+
+          // Copy font-related classes from parent body
+          parentBody.classList.forEach((className) => {
+            if (
+              className.includes("font-") ||
+              className === "antialiased" ||
+              className.includes("__variable")
+            ) {
+              iframeDoc.body.classList.add(className);
+            }
+          });
 
           // Function to inject stylesheets into the iframe
           const injectStylesheets = () => {

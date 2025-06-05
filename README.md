@@ -25,10 +25,11 @@ See the [docs site](https://uibuilder.app/) for more information.
 
 ---
 
-## Tailwind 4, React 19 Support and latest Shadcn/ui
+## Compatibility Notes
 
-Migration will be coming soon. Some 3rd party shadcn component dependencies are not yet compatible with the latest versions of Tailwind, so we are waiting for the latest versions of these components to be stable.
-If you are having issues with latest shadcn/ui cli you can try using older version in the command like `npx shadcn@2.1.8 add ...`
+**Tailwind 4 + React 19**: Migration coming soon. Currently blocked by 3rd party component compatibility. If using latest shadcn/ui CLI fails, try: `npx shadcn@2.1.8 add ...`
+
+**Server Components**: Not supported. RSC can't be re-rendered client-side for live preview. A separate RSC renderer for final page rendering is possible — open an issue if you have a use case.
 
 
 # Quick Start
@@ -496,7 +497,7 @@ Separate content from structure, allowing non-technical users to update dynamic 
 ---
 
 
-## Changelog
+## Breaking Changes
 
 ### v1.0.0
 - Removed _page_ layer type in favor of using any component type (like `div`, `main`, or custom containers) as the root page layer. This enhances flexibility, enabling use cases like building react-email templates directly. You should migrate any layers stored in the database to use a standard component type as the root. The [migrateV2ToV3](lib/ui-builder/store/layer-utils.ts) function in `layer-utils.ts` can assist with this migration.
@@ -537,6 +538,9 @@ npm run test
 
 ## Roadmap
 
+- [ ] Config options to make pages and variables immutable
+- [ ] Add variable binding to layer children and not just props
+- [ ] Improve DX. End to end type safety.
 - [ ] Documentation site for UI Builder with more hands-on examples
 - [ ] Configurable Tailwind Class subset for things like React-Email components
 - [ ] Drag and drop component in the editor panel and not just in the layers panel
@@ -546,8 +550,7 @@ npm run test
 - [ ] Add Blocks. Reusable component blocks that can be used in multiple pages
 - [ ] Move component schemas to separate shadcn registry to keep main registry light
 - [ ] Move prop form field components (overrides) to separate shadcn registry to keep main registry light
-- [ ] Add data sources (functions) to component layers (ex, getUser() binds prop user.name) - Connect variables to live data sources
-- [ ] Add visual data model editor + code gen for backend code for CRUD operations
+- [ ] Add visual data model editor + code gen for backend code for CRUD operations. (ex Zenstack schema editor)
 - [ ] Add event handlers to component layers (onClick, onSubmit, etc)
 - [ ] Update to new AutoForm when stable
 - [ ] Update to Zod v4 (when stable) for native json schema conversion to enforce safety in layer props
