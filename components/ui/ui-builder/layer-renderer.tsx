@@ -3,7 +3,7 @@ import React from "react";
 import { EditorConfig, RenderLayer } from "@/components/ui/ui-builder/internal/render-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
 
-import { Variable, ComponentLayer, ComponentRegistry } from '@/components/ui/ui-builder/types';
+import { Variable, ComponentLayer, ComponentRegistry, PropValue } from '@/components/ui/ui-builder/types';
 
 interface LayerRendererProps {
   className?: string;
@@ -13,7 +13,7 @@ interface LayerRendererProps {
   /** Optional variable definitions */
   variables?: Variable[];
   /** Optional variable values to override defaults */
-  variableValues?: Record<string, any>;
+  variableValues?: Record<string, PropValue>;
 }
 
 const LayerRenderer: React.FC<LayerRendererProps> = ({

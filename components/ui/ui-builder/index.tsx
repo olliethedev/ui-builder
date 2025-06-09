@@ -24,7 +24,9 @@ import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import {
   ComponentRegistry,
   ComponentLayer,
-  Variable
+  Variable,
+  LayerChangeHandler,
+  VariableChangeHandler
 } from "@/components/ui/ui-builder/types";
 import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
@@ -56,9 +58,9 @@ interface PanelConfig {
  */
 interface UIBuilderProps {
   initialLayers?: ComponentLayer[];
-  onChange?: (pages: ComponentLayer[]) => void;
+  onChange?: LayerChangeHandler;
   initialVariables?: Variable[];
-  onVariablesChange?: (variables: Variable[]) => void;
+  onVariablesChange?: VariableChangeHandler;
   componentRegistry: ComponentRegistry;
   panelConfig?: PanelConfig;
   persistLayerStore?: boolean;

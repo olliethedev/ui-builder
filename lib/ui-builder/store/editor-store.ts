@@ -3,8 +3,6 @@ import { create, StateCreator } from 'zustand';
 import { ComponentType as ReactComponentType } from "react";
 import { RegistryEntry, ComponentRegistry } from '@/components/ui/ui-builder/types';
 
-
-
 export interface EditorStore {
     previewMode: 'mobile' | 'tablet' | 'desktop' | 'responsive';
     setPreviewMode: (mode: 'mobile' | 'tablet' | 'desktop' | 'responsive') => void;
@@ -12,7 +10,7 @@ export interface EditorStore {
     registry: ComponentRegistry;
 
     initialize: (registry: ComponentRegistry, persistLayerStoreConfig: boolean) => void;
-    getComponentDefinition: (type: string) => RegistryEntry<ReactComponentType<any>> | undefined;
+    getComponentDefinition: (type: string) => RegistryEntry | undefined;
 
     persistLayerStoreConfig: boolean;
     setPersistLayerStoreConfig: (shouldPersist: boolean) => void;

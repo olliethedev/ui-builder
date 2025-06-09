@@ -1,11 +1,4 @@
-import { Variable } from '@/components/ui/ui-builder/types';
-
-/**
- * Checks if a value is a variable reference
- */
-export function isVariableReference(value: any): value is { __variableRef: string } {
-  return typeof value === 'object' && value !== null && '__variableRef' in value;
-}
+import { Variable, VariableReference, ComponentProps, PropValue, isVariableReference } from '@/components/ui/ui-builder/types';
 
 /**
  * Resolves variable references in props using provided variable values
@@ -15,11 +8,11 @@ export function isVariableReference(value: any): value is { __variableRef: strin
  * @returns Props with variable references resolved
  */
 export function resolveVariableReferences(
-  props: Record<string, any>,
+  props: ComponentProps,
   variables: Variable[],
-  variableValues?: Record<string, any>
-): Record<string, any> {
-  const resolved: Record<string, any> = {};
+  variableValues?: Record<string, PropValue>
+): ComponentProps {
+  const resolved: ComponentProps = {};
 
   for (const [key, value] of Object.entries(props)) {
     if (isVariableReference(value)) {
@@ -28,12 +21,12 @@ export function resolveVariableReferences(
         // Use provided value or fall back to default value
         resolved[key] = variableValues?.[variable.id] ?? variable.defaultValue;
       } else {
-        // Variable not found, use default value or undefined
+        // Variable not found, use undefined
         resolved[key] = undefined;
       }
     } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       // Recursively resolve nested objects
-      resolved[key] = resolveVariableReferences(value, variables, variableValues);
+      resolved[key] = resolveVariableReferences(value as ComponentProps, variables, variableValues);
     } else {
       // Regular value, keep as is
       resolved[key] = value;

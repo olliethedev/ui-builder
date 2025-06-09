@@ -12,7 +12,7 @@ import AutoForm from "@/components/ui/auto-form";
 import { generateFieldOverrides } from "@/lib/ui-builder/store/editor-utils";
 import { addDefaultValues } from "@/lib/ui-builder/store/schema-utils";
 import { getBaseType } from "@/components/ui/auto-form/utils";
-import { isVariableReference } from "@/lib/ui-builder/utils/variable-resolver";
+import { isVariableReference } from "@/components/ui/ui-builder/types";
 import { resolveVariableReferences } from "@/lib/ui-builder/utils/variable-resolver";
 
 interface PropsPanelProps {
