@@ -5,9 +5,9 @@ import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
 
 import { Variable, ComponentLayer, ComponentRegistry, PropValue } from '@/components/ui/ui-builder/types';
 
-interface LayerRendererProps {
+interface LayerRendererProps<T extends ComponentLayer = ComponentLayer> {
   className?: string;
-  page: ComponentLayer;
+  page: T;
   editorConfig?: EditorConfig;
   componentRegistry: ComponentRegistry;
   /** Optional variable definitions */
@@ -16,14 +16,14 @@ interface LayerRendererProps {
   variableValues?: Record<string, PropValue>;
 }
 
-const LayerRenderer: React.FC<LayerRendererProps> = ({
+const LayerRenderer = <T extends ComponentLayer = ComponentLayer>({
   className,
   page,
   editorConfig,
   componentRegistry,
   variables,
   variableValues,
-}: LayerRendererProps) => {
+}: LayerRendererProps<T>) => {
 
   return (
     <DevProfiler id="LayerRenderer" threshold={30}>

@@ -81,7 +81,7 @@ export const RenderLayer: React.FC<{
     if (!Component) return null;
 
     
-    if (hasLayerChildren(layer) && layer.children.length > 0) {
+    if (hasLayerChildren(layer) && Array.isArray(layer.children) && layer.children.length > 0) {
       childProps.children = layer.children.map((child) => (
         <RenderLayer
           key={child.id}
@@ -92,7 +92,7 @@ export const RenderLayer: React.FC<{
           editorConfig={childEditorConfig}
         />
       ));
-    } else if (typeof layer.children === "string") {
+    } else if (typeof layer.children === "string" || React.isValidElement(layer.children)) {
       childProps.children = layer.children;
     }
 

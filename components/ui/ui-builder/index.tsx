@@ -26,7 +26,10 @@ import {
   ComponentLayer,
   Variable,
   LayerChangeHandler,
-  VariableChangeHandler
+  VariableChangeHandler,
+  TypedLayerChangeHandler,
+  TypedVariableChangeHandler,
+  VariableCollection
 } from "@/components/ui/ui-builder/types";
 import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
@@ -54,14 +57,17 @@ interface PanelConfig {
 }
 
 /**
- * UIBuilderProps defines the props for the UIBuilder component.
+ * Enhanced UIBuilderProps with type inference from component registry
  */
-interface UIBuilderProps {
+interface UIBuilderProps<
+  TRegistry extends ComponentRegistry = ComponentRegistry,
+  TVariables extends VariableCollection = VariableCollection
+> {
   initialLayers?: ComponentLayer[];
-  onChange?: LayerChangeHandler;
+  onChange?: LayerChangeHandler | TypedLayerChangeHandler<TRegistry>;
   initialVariables?: Variable[];
-  onVariablesChange?: VariableChangeHandler;
-  componentRegistry: ComponentRegistry;
+  onVariablesChange?: VariableChangeHandler | TypedVariableChangeHandler<TVariables>;
+  componentRegistry: TRegistry;
   panelConfig?: PanelConfig;
   persistLayerStore?: boolean;
   editVariables?: boolean;

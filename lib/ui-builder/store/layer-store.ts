@@ -8,7 +8,15 @@ import isDeepEqual from 'fast-deep-equal';
 import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3 } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
-import { ComponentLayer, Variable, ComponentProps, VariableValue, LayerSelectHandler } from '@/components/ui/ui-builder/types';
+import { 
+  ComponentLayer, 
+  Variable, 
+  ComponentProps, 
+  VariableValue,
+  VariableValueType,
+  LayerSelectHandler,
+  PropValue 
+} from '@/components/ui/ui-builder/types';
 
 const DEFAULT_PAGE_PROPS: ComponentProps = {
   className: "p-4 flex flex-col gap-2",
@@ -30,7 +38,7 @@ export interface LayerStore {
   findLayerById: (layerId: string | null) => ComponentLayer | undefined;
   findLayersForPageId: (pageId: string) => ComponentLayer[];
 
-  addVariable: (name: string, type: Variable['type'], defaultValue: VariableValue) => void;
+  addVariable: <T extends VariableValueType>(name: string, type: T, defaultValue: VariableValue<T>) => void;
   updateVariable: (variableId: string, updates: Partial<Omit<Variable, 'id'>>) => void;
   removeVariable: (variableId: string) => void;
   bindPropToVariable: (layerId: string, propName: string, variableId: string) => void;
@@ -288,7 +296,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
     })),
 
     // Add a new variable
-    addVariable: (name, type, defaultValue) => set(produce((state: LayerStore) => {
+    addVariable: <T extends VariableValueType>(name: string, type: T, defaultValue: VariableValue<T>) => set(produce((state: LayerStore) => {
       state.variables.push({ id: createId(), name, type, defaultValue });
     })),
 

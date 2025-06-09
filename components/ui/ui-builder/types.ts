@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ZodObject, ZodRawShape } from "zod";
+import { ZodObject, ZodRawShape, ZodType, infer as ZodInfer } from "zod";
 import { ComponentType as ReactComponentType, ReactNode } from 'react';
 import {
     FieldConfigItem,
@@ -10,62 +10,120 @@ export type {
     FieldConfigItem,
   } from "@/components/ui/auto-form/types";
 
-// More specific type for variable values based on their type
-export type VariableValue = string | number | boolean;
+// Support any valid React type for prop values
+export type PropValue = ReactNode;
 
 // Type for variable reference objects
 export interface VariableReference {
   __variableRef: string;
 }
 
-// Union type for prop values that can be primitives, variable references, or objects
-export type PropValue = 
-  | VariableValue
-  | VariableReference
-  | Record<string, unknown>
-  | PropValue[]
-  | ReactNode
-  | null
-  | undefined;
+// Generic component props that can be any valid React props
+export type ComponentProps<T = Record<string, PropValue>> = T;
 
-// More strongly typed props object
-export type ComponentProps = Record<string, PropValue>;
+// Basic variable value types
+export type VariableValueType = 'string' | 'number' | 'boolean' | 'object' | 'array';
 
-export type ComponentLayer = {
-    id: string;
-    name?: string;
-    type: string;
-    props: ComponentProps;
-    children: ComponentLayer[] | string;
-};
+// Variable value based on type
+export type VariableValue<T extends VariableValueType = VariableValueType> = 
+  T extends 'string' ? string :
+  T extends 'number' ? number :
+  T extends 'boolean' ? boolean :
+  T extends 'object' ? Record<string, unknown> :
+  T extends 'array' ? unknown[] :
+  unknown;
 
-export interface Variable {
+// Generic variable interface with type inference
+export interface Variable<T extends VariableValueType = VariableValueType> {
   id: string;
   name: string;
-  type: 'string' | 'number' | 'boolean';
-  defaultValue: VariableValue;
+  type: T;
+  defaultValue: VariableValue<T>;
 }
 
-// More specific registry entry with better generic constraints
-export interface RegistryEntry<T extends ReactComponentType<any> = ReactComponentType<any>> {
-  component?: T;
-  schema: ZodObject<ZodRawShape>;
+// Extract prop types from Zod schema
+export type InferPropsFromSchema<T extends ZodObject<ZodRawShape>> = ZodInfer<T>;
+
+// Generic component layer with type inference
+export interface ComponentLayer<
+  TProps extends Record<string, PropValue> = Record<string, PropValue>
+> {
+  id: string;
+  name?: string;
+  type: string;
+  props: ComponentProps<TProps>;
+  children: ComponentLayer[] | ReactNode;
+}
+
+// Enhanced registry entry with better generics
+export interface RegistryEntry<
+  TComponent extends ReactComponentType<any> = ReactComponentType<any>,
+  TSchema extends ZodObject<ZodRawShape> = ZodObject<ZodRawShape>
+> {
+  component?: TComponent;
+  schema: TSchema;
   from?: string;
   isFromDefaultExport?: boolean;
-  defaultChildren?: ComponentLayer[] | string;
+  defaultChildren?: ComponentLayer[] | ReactNode;
   fieldOverrides?: Record<string, FieldConfigFunction>;
 }
 
-export type FieldConfigFunction = (layer: ComponentLayer, allowVariableBinding?: boolean) => FieldConfigItem;
-
+// Generic component registry with type mapping
 export type ComponentRegistry = Record<string, RegistryEntry>;
+
+// Enhanced field config function with generic layer
+export type FieldConfigFunction = <T extends ComponentLayer>(
+  layer: T, 
+  allowVariableBinding?: boolean
+) => FieldConfigItem;
+
+// Type-safe callback handlers with inference
+export type LayerChangeHandler<T extends ComponentLayer[] = ComponentLayer[]> = (layers: T) => void;
+
+export type VariableChangeHandler<T extends Variable[] = Variable[]> = (variables: T) => void;
+
+export type LayerSelectHandler = (layerId: string) => void;
+
+// Helper type to extract component props from registry
+export type ExtractComponentProps<
+  TRegistry extends ComponentRegistry,
+  TKey extends keyof TRegistry
+> = TRegistry[TKey] extends RegistryEntry<any, infer TSchema> 
+  ? TSchema extends ZodObject<ZodRawShape>
+    ? InferPropsFromSchema<TSchema>
+    : Record<string, PropValue>
+  : Record<string, PropValue>;
+
+// Helper type to create typed layer for specific component
+export type TypedComponentLayer<
+  TRegistry extends ComponentRegistry,
+  TKey extends keyof TRegistry
+> = ComponentLayer<ExtractComponentProps<TRegistry, TKey>>;
+
+// Variable collection with type safety - supports both arrays and records
+export type VariableCollection<T = Variable[]> = T extends Variable[] 
+  ? T 
+  : T extends Record<string, Variable> 
+  ? T 
+  : Variable[];
+
+// Extract variable values with proper typing - handle both arrays and records
+export type ExtractVariableValues<T extends VariableCollection> = 
+  T extends Variable[] 
+    ? { [K in keyof T]: T[K] extends Variable<infer VType> ? VariableValue<VType> : unknown }
+    : T extends Record<string, Variable>
+    ? { [K in keyof T]: T[K] extends Variable<infer VType> ? VariableValue<VType> : unknown }
+    : Record<string, unknown>;
 
 // Type guards for better runtime type checking
 export function isVariableReference(value: unknown): value is VariableReference {
   return typeof value === 'object' && value !== null && '__variableRef' in value;
 }
 
-export function isValidVariableValue(value: unknown, type: Variable['type']): value is VariableValue {
+export function isValidVariableValue<T extends VariableValueType>(
+  value: unknown, 
+  type: T
+): value is VariableValue<T> {
   switch (type) {
     case 'string':
       return typeof value === 'string';
@@ -73,15 +131,55 @@ export function isValidVariableValue(value: unknown, type: Variable['type']): va
       return typeof value === 'number';
     case 'boolean':
       return typeof value === 'boolean';
+    case 'object':
+      return typeof value === 'object' && value !== null && !Array.isArray(value);
+    case 'array':
+      return Array.isArray(value);
     default:
       return false;
   }
 }
 
-// Helper types for callbacks
-export type LayerChangeHandler = (layers: ComponentLayer[]) => void;
-export type VariableChangeHandler = (variables: Variable[]) => void;
-export type LayerSelectHandler = (layerId: string) => void;
+// Helper to create typed variable
+export function createVariable<T extends VariableValueType>(
+  id: string,
+  name: string,
+  type: T,
+  defaultValue: VariableValue<T>
+): Variable<T> {
+  return { id, name, type, defaultValue };
+}
+
+// Helper to create typed layer
+export function createTypedLayer<
+  TRegistry extends ComponentRegistry,
+  TKey extends keyof TRegistry
+>(
+  id: string,
+  type: TKey,
+  props: ExtractComponentProps<TRegistry, TKey>,
+  children: ComponentLayer[] | ReactNode = [],
+  name?: string
+): TypedComponentLayer<TRegistry, TKey> {
+  return {
+    id,
+    name,
+    type: type as string,
+    props,
+    children
+  } as TypedComponentLayer<TRegistry, TKey>;
+}
+
+// Enhanced callback types with better inference
+export type TypedLayerChangeHandler<
+  TRegistry extends ComponentRegistry = ComponentRegistry
+> = <T extends keyof TRegistry>(
+  layers: TypedComponentLayer<TRegistry, T>[]
+) => void;
+
+export type TypedVariableChangeHandler<
+  TVariables extends VariableCollection = VariableCollection
+> = (variables: TVariables) => void;
 
 
 
