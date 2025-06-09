@@ -2,8 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import template from "lodash.template";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
-import { ComponentRegistry, ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
-import { isVariableReference } from '@/lib/ui-builder/utils/variable-resolver';
+import { ComponentLayer, ComponentRegistry, Variable, RegistryEntry, VariableReference, isVariableReference } from '@/components/ui/ui-builder/types';
 
 // Helper function to convert display name to valid JavaScript identifier
 const toValidIdentifier = (input: string): string => {

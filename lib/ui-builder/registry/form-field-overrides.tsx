@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useLayerStore } from "../store/layer-store";
-import { isVariableReference } from "../utils/variable-resolver";
+import { isVariableReference } from "@/components/ui/ui-builder/types";
 import { Link, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {

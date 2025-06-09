@@ -1,4 +1,5 @@
-import { isVariableReference, resolveVariableReferences } from '@/lib/ui-builder/utils/variable-resolver';
+import { resolveVariableReferences } from '@/lib/ui-builder/utils/variable-resolver';
+import { isVariableReference } from '@/components/ui/ui-builder/types';
 import { Variable } from '@/components/ui/ui-builder/types';
 
 describe('Variable Resolver', () => {
