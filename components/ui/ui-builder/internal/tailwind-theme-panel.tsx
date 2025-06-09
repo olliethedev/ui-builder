@@ -75,39 +75,39 @@ function ThemePicker({
   const { updateLayer: updateLayerProps } = useLayerStore();
 
   const [colorTheme, setColorTheme] = useState<BaseColor["name"]>(
-    pageLayer.props?.["data-color-theme"] || "red"
+    (pageLayer.props?.["data-color-theme"] as BaseColor["name"]) || "red"
   );
   const [borderRadius, setBorderRadius] = useState(
     pageLayer.props?.["data-border-radius"] || 0.3
   );
   const [mode, setMode] = useState<"light" | "dark">(
-    pageLayer.props?.["data-mode"] || "light"
+    (pageLayer.props?.["data-mode"] as "light" | "dark") || "light"
   );
 
   useEffect(() => {
-    if (isDisabled) return;
-
-    const colorData = baseColors.find((color) => color.name === colorTheme);
-    if (colorData) {
-      const colorDataWithBorder = {
-        ...colorData,
-        cssVars: {
-          ...colorData.cssVars,
-          [mode]: {
-            ...colorData.cssVars[mode],
-            radius: `${borderRadius}rem`,
+    if (!isDisabled) {
+      const colorData = baseColors.find((color) => color.name === colorTheme);
+      if (colorData) {
+        const colorDataWithBorder = {
+          ...colorData,
+          cssVars: {
+            ...colorData.cssVars,
+            [mode]: {
+              ...colorData.cssVars[mode],
+              radius: `${borderRadius}rem`,
+            },
           },
-        },
-      } as const;
+        } as const;
 
-      const themeStyle = themeToStyleVars(colorDataWithBorder.cssVars[mode]);
+        const themeStyle = themeToStyleVars(colorDataWithBorder.cssVars[mode]);
 
-      updateLayerProps(pageLayer.id, {
-        style: themeStyle,
-        "data-mode": mode,
-        "data-color-theme": colorTheme,
-        "data-border-radius": borderRadius,
-      });
+        updateLayerProps(pageLayer.id, {
+          style: themeStyle as any,
+          "data-mode": mode,
+          "data-color-theme": colorTheme,
+          "data-border-radius": borderRadius,
+        });
+      }
     }
   }, [pageLayer.id, updateLayerProps, colorTheme, borderRadius, mode, isDisabled]);
 
@@ -125,13 +125,13 @@ function ThemePicker({
   const borderRadiusOptions = useMemo(() => [0.0, 0.15, 0.3, 0.5, 0.75, 1.0].map((radius) => {
     return (
      <ThemeBorderRadiusOption
-      key={radius}
-      radius={radius}
-      borderRadius={borderRadius}
-      onClick={setBorderRadius}
+       key={radius}
+       radius={radius}
+       borderRadius={borderRadius as number}
+       onClick={setBorderRadius}
      />
     );
-  }), [borderRadius, setBorderRadius]);
+  }), [borderRadius]);
 
   const modeOptions = useMemo(() => (["light", "dark"] as const).map((modeOption) => {
     return (

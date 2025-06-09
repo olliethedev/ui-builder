@@ -10,15 +10,24 @@ export type {
     FieldConfigItem,
   } from "@/components/ui/auto-form/types";
 
-// Support any valid React type for prop values
-export type PropValue = ReactNode;
+// More permissive prop value type that supports all existing use cases
+export type PropValue = 
+  | ReactNode
+  | VariableReference
+  | Record<string, any>
+  | any[]
+  | string
+  | number
+  | boolean
+  | null
+  | undefined;
 
 // Type for variable reference objects
 export interface VariableReference {
   __variableRef: string;
 }
 
-// Generic component props that can be any valid React props
+// Generic component props that can be any valid props
 export type ComponentProps<T = Record<string, PropValue>> = T;
 
 // Basic variable value types
@@ -44,7 +53,7 @@ export interface Variable<T extends VariableValueType = VariableValueType> {
 // Extract prop types from Zod schema
 export type InferPropsFromSchema<T extends ZodObject<ZodRawShape>> = ZodInfer<T>;
 
-// Generic component layer with type inference
+// Generic component layer with better children typing
 export interface ComponentLayer<
   TProps extends Record<string, PropValue> = Record<string, PropValue>
 > {
@@ -52,7 +61,7 @@ export interface ComponentLayer<
   name?: string;
   type: string;
   props: ComponentProps<TProps>;
-  children: ComponentLayer[] | ReactNode;
+  children: ComponentLayer[] | string;  // Keep existing type structure
 }
 
 // Enhanced registry entry with better generics
@@ -64,7 +73,7 @@ export interface RegistryEntry<
   schema: TSchema;
   from?: string;
   isFromDefaultExport?: boolean;
-  defaultChildren?: ComponentLayer[] | ReactNode;
+  defaultChildren?: ComponentLayer[] | string;
   fieldOverrides?: Record<string, FieldConfigFunction>;
 }
 
@@ -158,7 +167,7 @@ export function createTypedLayer<
   id: string,
   type: TKey,
   props: ExtractComponentProps<TRegistry, TKey>,
-  children: ComponentLayer[] | ReactNode = [],
+  children: ComponentLayer[] | string = [],
   name?: string
 ): TypedComponentLayer<TRegistry, TKey> {
   return {

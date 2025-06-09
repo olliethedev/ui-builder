@@ -88,7 +88,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       const { registry } = useEditorStore.getState();
       const defaultProps = getDefaultProps(registry[layerType].schema);
       const defaultChildrenRaw = registry[layerType].defaultChildren;
-      const defaultChildren = typeof defaultChildrenRaw === "string" ? defaultChildrenRaw : (defaultChildrenRaw?.map(child => duplicateWithNewIdsAndName(child, false)) || []);
+      const defaultChildren = typeof defaultChildrenRaw === "string" ? defaultChildrenRaw : (Array.isArray(defaultChildrenRaw) ? defaultChildrenRaw.map((child: ComponentLayer) => duplicateWithNewIdsAndName(child, false)) : []);
 
       const initialProps = Object.entries(defaultProps).reduce((acc, [key, propDef]) => {
         if (key !== "children") {
@@ -320,7 +320,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
         
         // Check each prop for variable references
         Object.entries(updatedProps).forEach(([propName, propValue]) => {
-          if (propValue && typeof propValue === 'object' && propValue.__variableRef === variableId) {
+          if (propValue && typeof propValue === 'object' && (propValue as any).__variableRef === variableId) {
             // This prop references the variable being removed
             // Get the default value from the schema
             const layerSchema = registry[layer.type]?.schema;
@@ -348,7 +348,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
     // Bind a component prop to a variable reference
     bindPropToVariable: (layerId, propName, variableId) => {
       // Store a special object as prop to indicate binding
-      get().updateLayer(layerId, { [propName]: { __variableRef: variableId } });
+      get().updateLayer(layerId, { [propName]: { __variableRef: variableId } as any });
     },
 
     // Unbind a component prop from a variable reference and set default value from schema

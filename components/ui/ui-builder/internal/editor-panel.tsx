@@ -34,7 +34,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
   const selectedLayer = findLayerById(selectedLayerId) as ComponentLayer;
   const selectedPage = findLayerById(selectedPageId) as ComponentLayer;
 
-  const layers = selectedPage.children;
+  const layers = selectedPage?.children;
+  const layersArray = Array.isArray(layers) ? layers : [];
 
   const onSelectElement = useCallback((layerId: string) => {
     selectLayer(layerId);
@@ -54,29 +55,36 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
 
   const editorConfig = useMemo(() => ({
     zIndex: 1,
-    totalLayers: countLayers(layers),
+    totalLayers: countLayers(layersArray),
     selectedLayer: selectedLayer,
     onSelectElement: onSelectElement,
     handleDuplicateLayer: handleDuplicateLayer,
     handleDeleteLayer: handleDeleteLayer,
     usingCanvas: useCanvas,
-  }), [layers, selectedLayer, onSelectElement, handleDuplicateLayer, handleDeleteLayer, useCanvas]);
+  }), [layersArray, selectedLayer, onSelectElement, handleDuplicateLayer, handleDeleteLayer, useCanvas]);
 
   const isMobileScreen = window.innerWidth < 768;
 
-  const renderer = useMemo(() => (
-    <div id="editor-panel-container" className="overflow-visible pt-3 pb-10 pr-20">
-      <LayerRenderer page={selectedPage} editorConfig={editorConfig} componentRegistry={componentRegistry} />
-    </div>
-  ), [selectedPage, editorConfig, componentRegistry]);
+  const renderer = selectedPage && <LayerRenderer 
+    key={selectedPage.id} 
+    page={selectedPage} 
+    componentRegistry={componentRegistry} 
+    editorConfig={editorConfig}
+  />;
 
   const widthClass = useMemo(() => {
-    return {
-      responsive: "w-full",
-      mobile: "w-[390px]",
-      tablet: "w-[768px]",
-      desktop: "w-[1440px]",
-    }[previewMode]
+    switch (previewMode) {
+      case 'mobile':
+        return 'w-[375px]';
+      case 'tablet':
+        return 'w-[768px]';
+      case 'desktop':
+        return 'w-[960px]';
+      case 'responsive':
+        return 'w-full max-w-[960px]';
+      default:
+        return 'w-[960px]';
+    }
   }, [previewMode]);
 
   return (
@@ -87,36 +95,40 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
         className
       )}
     >
-      {useCanvas ? (
-        <InteractiveCanvas
-          frameId="editor-panel-frame"
-          disableWheel={layers.length === 0}
-          disablePinch={layers.length === 0}
-          disableDrag={!isMobileScreen}
-        >
-          <IframeWrapper
-            key={previewMode}
+      <div className="h-full flex-1 overflow-y-auto">
+        {useCanvas ? (
+          <InteractiveCanvas
             frameId="editor-panel-frame"
-            resizable={previewMode === "responsive" && layers.length > 0}
-            className={cn(`block`, widthClass)}
+            disableWheel={layersArray.length === 0}
+            disablePinch={layersArray.length === 0}
+            disableDrag={!isMobileScreen}
           >
+            <IframeWrapper
+              key={previewMode}
+              frameId="editor-panel-frame"
+              resizable={previewMode === "responsive" && layersArray.length > 0}
+              className={cn(`block`, widthClass)}
+            >
+              {renderer}
+            </IframeWrapper>
+          </InteractiveCanvas>
+        ) : (
+          <div className="bg-center bg-transparent grid justify-center h-full w-full overflow-auto p-8">
             {renderer}
-          </IframeWrapper>
-        </InteractiveCanvas>
-      ) : (
-        renderer
-      )}
-      <AddComponentsPopover
-        parentLayerId={selectedPageId}
-      >
-        <Button
-          variant="secondary"
-          size="icon"
-          className="absolute bottom-2 md:left-2 left-4 flex items-center rounded-full bg-secondary md:p-4 p-6 shadow"
-        >
-          <Plus className="h-5 w-5 text-secondary-foreground" />
-        </Button>
-      </AddComponentsPopover>
+          </div>
+        )}
+      </div>
+      <aside className="flex p-1 gap-1 bg-accent">
+        <AddComponentsPopover parentLayerId={selectedPageId}>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="flex items-center rounded-full bg-secondary p-4 shadow"
+          >
+            <Plus className="h-5 w-5 text-secondary-foreground" />
+          </Button>
+        </AddComponentsPopover>
+      </aside>
     </div>
   );
 };

@@ -164,7 +164,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
         Object.keys(dataProps as Record<string, any>).forEach(key => {
           const originalValue = selectedLayer.props[key];
           const newValue = (dataProps as Record<string, any>)[key];
-          const fieldDef = schema?.shape?.[key];
+          const fieldDef = (schema?.shape as any)?.[key];
           const baseType = fieldDef ? getBaseType(fieldDef as z.ZodAny) : undefined;
           // If the original value was a variable reference, preserve it
           if (isVariableReference(originalValue)) {

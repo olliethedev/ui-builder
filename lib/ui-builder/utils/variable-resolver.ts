@@ -33,7 +33,7 @@ export function resolveVariableReferences<T extends ComponentProps>(
       Object.prototype.toString.call(value) === '[object Object]'
     ) {
       // Recursively resolve nested plain objects only
-      (resolved as any)[key] = resolveVariableReferences(value as ComponentProps, variables, variableValues);
+      (resolved as any)[key] = resolveVariableReferences(value as Record<string, PropValue>, variables, variableValues);
     } else {
       // Regular value, keep as is (including React elements, arrays, etc.)
       (resolved as any)[key] = value;
