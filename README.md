@@ -263,7 +263,9 @@ Note: Variables are optional, but they are a powerful way to make your pages dyn
 - `onVariablesChange`: Optional callback triggered when the variables change, providing the updated variables. Can be used to persist the variable state to a database.
 - `panelConfig`: Optional. An object to customize the different panels of the UI Builder (e.g., nav bar, editor panel, props panel). If not provided, a default configuration is used. This allows for fine-grained control over the editor's appearance and layout.
 - `persistLayerStore`: Optional boolean (defaults to `true`). Determines whether the editor's state (layers and their configurations) is persisted in the browser's local storage across sessions. Set to `false` to disable local storage persistence, useful if you are managing state entirely through `initialLayers` and `onChange`.
-- `editVariables`: Optional boolean (defaults to `true`). Controls whether users can edit variables in the Variables panel. When `true`, users can add, edit, and delete variables. When `false`, the Variables panel becomes read-only, hiding the "Add Variable" button and the edit/delete buttons on individual variables. Useful when you want to provide a read-only variables experience or manage variables entirely through `initialVariables`.
+- `allowVariableEditing`: Optional boolean (defaults to `true`). Controls whether users can edit variables in the Variables panel. When `true`, users can add, edit, and delete variables. When `false`, the Variables panel becomes read-only, hiding the "Add Variable" button and the edit/delete buttons on individual variables. Useful when you want to provide a read-only variables experience or manage variables entirely through `initialVariables`.
+- `allowPagesCreation`: Optional boolean (defaults to `true`). Controls whether users can create new pages in the editor. When `true`, users can add new pages to the editor. When `false`, the Pages panel becomes read-only, hiding the "Add Page" button. Useful when you want to provide a read-only pages experience or manage pages entirely through `initialLayers`.
+- `allowPagesDeletion`: Optional boolean (defaults to `true`). Controls whether users can delete pages in the editor. When `true`, users can delete pages from the editor. When `false`, the Pages panel becomes read-only, hiding the "Delete Page" button. Useful when you want to provide a read-only pages experience or manage pages entirely through `initialLayers`.
 
 
 ## Rendering from Serialized Layer Data
@@ -538,7 +540,6 @@ npm run test
 
 ## Roadmap
 
-- [ ] Config options to make pages and variables immutable
 - [ ] Add variable binding to layer children and not just props
 - [ ] Improve DX. End to end type safety.
 - [ ] Documentation site for UI Builder with more hands-on examples

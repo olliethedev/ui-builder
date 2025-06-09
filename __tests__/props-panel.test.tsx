@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PropsPanel from "@/components/ui/ui-builder/internal/props-panel";
 import {
@@ -114,12 +114,15 @@ describe("PropsPanel", () => {
     updateLayer: mockUpdateLayer,
     addComponentLayer: mockAddComponentLayer,
     variables: [],
+    isLayerAPage: jest.fn().mockReturnValue(false),
   };
 
   const mockEditorState = {
     registry: mockRegistry,
     getComponentDefinition: mockGetComponentDefinition,
     revisionCounter: 0,
+    allowPagesCreation: true,
+    allowPagesDeletion: true,
   };
 
   beforeAll(() => {
@@ -315,6 +318,7 @@ describe("PropsPanel", () => {
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
         variables: [],
+        isLayerAPage: jest.fn().mockReturnValue(false),
       };
       
       (useLayerStore as any).getState = jest.fn(() => noLayerState);
@@ -363,32 +367,176 @@ describe("PropsPanel", () => {
 
     it("should display the duplicate and delete buttons", () => {
       expect(
-        screen.getByTestId("button-Duplicate Component")
+        screen.getByTestId("button-Duplicate ,Component")
       ).toBeInTheDocument();
-      expect(screen.getByTestId("button-Delete Component")).toBeInTheDocument();
+      expect(screen.getByTestId("button-Delete ,Component")).toBeInTheDocument();
     });
 
-    it("should update layer properties on form change", async () => {
-      const { container } = renderPropsPanel();
-      let labelInput: HTMLElement | null = null;
-      await waitFor(() => {
-        labelInput = container.querySelector('input[name="label"]');
-        expect(labelInput).toBeInTheDocument();
+    it("should update layer properties on form change", () => {
+      const labelInput = screen.getByDisplayValue("Click Me");
+      
+      fireEvent.change(labelInput, { target: { value: "New Label" } });
+      
+      // Allow for either 2 or 3 parameters (the third being undefined)
+      expect(mockUpdateLayer).toHaveBeenCalledWith("layer-1", {
+        label: "New Label",
+        className: "button-class",
+      }, undefined);
+    });
+
+    it("should hide delete button when allowPagesDeletion is false for page layers", () => {
+      // Mock isLayerAPage to return true (this is a page layer)
+      const pageLayerState = {
+        ...mockLayerState,
+        isLayerAPage: jest.fn().mockReturnValue(true),
+      };
+      
+      // Mock editor state with allowPagesDeletion: false
+      const restrictedEditorState = {
+        ...mockEditorState,
+        allowPagesDeletion: false,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => pageLayerState);
+      
+      // Fix the selector pattern implementation
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(pageLayerState);
+        }
+        return pageLayerState;
+      });
+      
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(restrictedEditorState);
+        }
+        return restrictedEditorState;
       });
 
-      userEvent.clear(labelInput!);
-      userEvent.type(labelInput!, "New Label", { delay: 0 });
+      renderPropsPanel();
 
-      await waitFor(() => {
-        expect(mockUpdateLayer).toHaveBeenLastCalledWith(
-          "layer-1",
-          {
-            label: "New Label",
-            className: "button-class",
-          },
-          undefined
-        );
+      // Duplicate button should still be visible (allowPagesCreation is still true)
+      expect(screen.getByTestId("button-Duplicate ,Page")).toBeInTheDocument();
+      // Delete button should be hidden
+      expect(screen.queryByTestId("button-Delete ,Page")).not.toBeInTheDocument();
+    });
+
+    it("should hide duplicate button when allowPagesCreation is false for page layers", () => {
+      // Mock isLayerAPage to return true (this is a page layer)
+      const pageLayerState = {
+        ...mockLayerState,
+        isLayerAPage: jest.fn().mockReturnValue(true),
+      };
+      
+      // Mock editor state with allowPagesCreation: false
+      const restrictedEditorState = {
+        ...mockEditorState,
+        allowPagesCreation: false,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => pageLayerState);
+      
+      // Fix the selector pattern implementation
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(pageLayerState);
+        }
+        return pageLayerState;
       });
+      
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(restrictedEditorState);
+        }
+        return restrictedEditorState;
+      });
+
+      renderPropsPanel();
+
+      // Delete button should still be visible (allowPagesDeletion is still true)
+      expect(screen.getByTestId("button-Delete ,Page")).toBeInTheDocument();
+      // Duplicate button should be hidden
+      expect(screen.queryByTestId("button-Duplicate ,Page")).not.toBeInTheDocument();
+    });
+
+    it("should hide both buttons when both permissions are false for page layers", () => {
+      // Mock isLayerAPage to return true (this is a page layer)
+      const pageLayerState = {
+        ...mockLayerState,
+        isLayerAPage: jest.fn().mockReturnValue(true),
+      };
+      
+      // Mock editor state with both permissions false
+      const restrictedEditorState = {
+        ...mockEditorState,
+        allowPagesCreation: false,
+        allowPagesDeletion: false,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => pageLayerState);
+      
+      // Fix the selector pattern implementation
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(pageLayerState);
+        }
+        return pageLayerState;
+      });
+      
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(restrictedEditorState);
+        }
+        return restrictedEditorState;
+      });
+
+      renderPropsPanel();
+
+      // Both buttons should be hidden
+      expect(screen.queryByTestId("button-Duplicate ,Page")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("button-Delete ,Page")).not.toBeInTheDocument();
+    });
+
+    it("should show both buttons when permissions are false but layer is not a page", () => {
+      // Clean up any previous renders
+      cleanup();
+      
+      // Mock isLayerAPage to return false (this is not a page layer)
+      const nonPageLayerState = {
+        ...mockLayerState,
+        isLayerAPage: jest.fn().mockReturnValue(false),
+      };
+      
+      // Mock editor state with both permissions false
+      const restrictedEditorState = {
+        ...mockEditorState,
+        allowPagesCreation: false,
+        allowPagesDeletion: false,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => nonPageLayerState);
+      
+      // Fix the selector pattern implementation
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(nonPageLayerState);
+        }
+        return nonPageLayerState;
+      });
+      
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(restrictedEditorState);
+        }
+        return restrictedEditorState;
+      });
+
+      renderPropsPanel();
+
+      // Both buttons should be visible for non-page layers regardless of page permissions
+      expect(screen.getByTestId("button-Duplicate ,Component")).toBeInTheDocument();
+      expect(screen.getByTestId("button-Delete ,Component")).toBeInTheDocument();
     });
   });
 
@@ -402,6 +550,7 @@ describe("PropsPanel", () => {
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
         variables: [],
+        isLayerAPage: jest.fn().mockReturnValue(false),
       };
       
       (useLayerStore as any).getState = jest.fn(() => undefinedLayerState);
@@ -443,6 +592,7 @@ describe("PropsPanel", () => {
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
         variables: [], // Add variables for consistency
+        isLayerAPage: jest.fn().mockReturnValue(false), // Add missing function
       };
       
       (useLayerStore as any).getState = jest.fn(() => unknownComponentState);
@@ -456,8 +606,8 @@ describe("PropsPanel", () => {
       expect(screen.queryByText("Unknown Test Component Properties")).not.toBeInTheDocument();
       expect(screen.queryByText("Type: UnknownComponent")).not.toBeInTheDocument();
       expect(screen.queryByTestId("auto-form")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("button-Duplicate Component")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("button-Delete Component")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("button-Duplicate ,Component")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("button-Delete ,Component")).not.toBeInTheDocument();
     });
 
     it("should handle rapid consecutive updates correctly", async () => {
@@ -506,6 +656,7 @@ describe("PropsPanel", () => {
       const layerStateWithVariables = {
         ...mockLayerState,
         variables: mockVariables,
+        isLayerAPage: jest.fn().mockReturnValue(false),
       };
       
       (useLayerStore as any).getState = jest.fn(() => layerStateWithVariables);

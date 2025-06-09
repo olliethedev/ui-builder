@@ -543,6 +543,9 @@ function PagesPopover() {
     selectedPageId
   );
   const [textInputValue, setTextInputValue] = useState("");
+  const allowPagesCreation = useEditorStore(
+    (state) => state.allowPagesCreation
+  );
 
   const selectedPageData = useMemo(() => {
     return pages.find((page) => page.id === selectedPageId);
@@ -635,7 +638,7 @@ function PagesPopover() {
             <CommandList>
               <CommandEmpty>
                 No pages found
-                {textInputForm}
+                {allowPagesCreation && textInputForm}
               </CommandEmpty>
               {pages.map((page) => (
                 <PageItem
@@ -646,9 +649,11 @@ function PagesPopover() {
                 />
               ))}
               <CommandSeparator />
-              <CommandGroup heading="Create new page">
-                <CommandItem>{textInputForm}</CommandItem>
-              </CommandGroup>
+              {allowPagesCreation && (
+                <CommandGroup heading="Create new page">
+                  <CommandItem>{textInputForm}</CommandItem>
+                </CommandGroup>
+              )}
             </CommandList>
           </Command>
         </PopoverContent>

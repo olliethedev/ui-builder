@@ -62,7 +62,9 @@ interface UIBuilderProps {
   componentRegistry: ComponentRegistry;
   panelConfig?: PanelConfig;
   persistLayerStore?: boolean;
-  editVariables?: boolean;
+  allowVariableEditing?: boolean;
+  allowPagesCreation?: boolean;
+  allowPagesDeletion?: boolean;
 }
 
 /**
@@ -79,7 +81,9 @@ const UIBuilder = ({
   componentRegistry,
   panelConfig: userPanelConfig,
   persistLayerStore = true,
-  editVariables = true,
+  allowVariableEditing = true,
+  allowPagesCreation = true,
+  allowPagesDeletion = true,
 }: UIBuilderProps) => {
   const layerStore = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
@@ -87,7 +91,7 @@ const UIBuilder = ({
   const [editorStoreInitialized, setEditorStoreInitialized] = useState(false);
   const [layerStoreInitialized, setLayerStoreInitialized] = useState(false);
 
-  const memoizedDefaultTabsContent = useMemo(() => defaultConfigTabsContent(editVariables), [editVariables]);
+  const memoizedDefaultTabsContent = useMemo(() => defaultConfigTabsContent(), []);
 
   const currentPanelConfig = useMemo(() => {
     const effectiveTabsContent = userPanelConfig?.pageConfigPanelTabsContent || memoizedDefaultTabsContent;
@@ -104,7 +108,7 @@ const UIBuilder = ({
   // Effect 1: Initialize Editor Store with registry and page form props
   useEffect(() => {
     if (editorStore && componentRegistry && !editorStoreInitialized) {
-      editorStore.initialize(componentRegistry, persistLayerStore);
+      editorStore.initialize(componentRegistry, persistLayerStore, allowPagesCreation, allowPagesDeletion, allowVariableEditing);
       setEditorStoreInitialized(true);
     }
   }, [
@@ -112,6 +116,9 @@ const UIBuilder = ({
     componentRegistry,
     editorStoreInitialized,
     persistLayerStore,
+    allowPagesCreation,
+    allowPagesDeletion,
+    allowVariableEditing,
   ]);
 
   // Effect 2: Conditionally initialize Layer Store *after* Editor Store is initialized
@@ -304,7 +311,7 @@ export function PageConfigPanel({
  * @param {boolean} editVariables - Whether to allow editing variables.
  * @returns {TabsContentConfig} The default tabs content configuration.
  */
-export function defaultConfigTabsContent(editVariables: boolean = true) {
+export function defaultConfigTabsContent() {
   return {
     layers: { title: "Layers", content: <LayersPanel /> },
     appearance: { title: "Appearance", content: (
@@ -314,7 +321,7 @@ export function defaultConfigTabsContent(editVariables: boolean = true) {
         </div>
       ),
     },
-    data: { title: "Data", content: <VariablesPanel editVariables={editVariables} /> }
+    data: { title: "Data", content: <VariablesPanel /> }
   }
 }
 

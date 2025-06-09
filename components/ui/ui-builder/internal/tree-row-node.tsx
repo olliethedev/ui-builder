@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { NameEdit } from "@/components/ui/ui-builder/internal/name-edit";
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
+import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 
 interface TreeRowNodeProps {
   node: ComponentLayer;
@@ -59,6 +61,15 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
   const [isRenaming, setIsRenaming] = useState(false);
 
   const [popoverOrMenuOpen, setPopoverOrMenuOpen] = useState(false);
+
+  const isPage = useLayerStore((state) => state.isLayerAPage(node.id));
+
+  const allowPagesCreation = useEditorStore(
+    (state) => state.allowPagesCreation
+  );
+  const allowPagesDeletion = useEditorStore(
+    (state) => state.allowPagesDeletion
+  );
 
   const handleOpen = useCallback(() => {
     onToggle(id, !open);
@@ -184,10 +195,14 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
           <DropdownMenuItem onClick={handleRenameClick}>
             Rename
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDuplicate}>
-            Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleRemove}>Remove</DropdownMenuItem>
+          {allowPagesCreation && (
+            <DropdownMenuItem onClick={handleDuplicate}>
+              Duplicate
+            </DropdownMenuItem>
+          )}
+          {allowPagesDeletion && (
+            <DropdownMenuItem onClick={handleRemove}>Remove</DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

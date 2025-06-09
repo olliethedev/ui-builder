@@ -33,6 +33,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
   const componentRegistry = useEditorStore((state) => state.registry);
   const selectedLayer = findLayerById(selectedLayerId) as ComponentLayer;
   const selectedPage = findLayerById(selectedPageId) as ComponentLayer;
+  const isLayerAPage = useLayerStore((state) => state.isLayerAPage(selectedLayerId || ""));
+  const allowPagesCreation = useEditorStore((state) => state.allowPagesCreation);
+  const allowPagesDeletion = useEditorStore((state) => state.allowPagesDeletion);
 
   const layers = selectedPage.children;
 
@@ -41,26 +44,26 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
   }, [selectLayer]);
 
   const handleDeleteLayer = useCallback(() => {
-    if (selectedLayer) {
+    if (selectedLayer && !isLayerAPage) {
       removeLayer(selectedLayer.id);
     }
-  }, [selectedLayer, removeLayer]);
+  }, [selectedLayer, removeLayer, isLayerAPage]);
 
   const handleDuplicateLayer = useCallback(() => {
-    if (selectedLayer) {
+    if (selectedLayer && !isLayerAPage) {
       duplicateLayer(selectedLayer.id);
     }
-  }, [selectedLayer, duplicateLayer]);
+  }, [selectedLayer, duplicateLayer, isLayerAPage]);
 
   const editorConfig = useMemo(() => ({
     zIndex: 1,
     totalLayers: countLayers(layers),
     selectedLayer: selectedLayer,
     onSelectElement: onSelectElement,
-    handleDuplicateLayer: handleDuplicateLayer,
-    handleDeleteLayer: handleDeleteLayer,
+    handleDuplicateLayer: allowPagesCreation ? handleDuplicateLayer : undefined,
+    handleDeleteLayer: allowPagesDeletion ? handleDeleteLayer : undefined,
     usingCanvas: useCanvas,
-  }), [layers, selectedLayer, onSelectElement, handleDuplicateLayer, handleDeleteLayer, useCanvas]);
+  }), [layers, selectedLayer, onSelectElement, handleDuplicateLayer, handleDeleteLayer, useCanvas, allowPagesCreation, allowPagesDeletion]);
 
   const isMobileScreen = window.innerWidth < 768;
 

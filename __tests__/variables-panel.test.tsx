@@ -97,6 +97,7 @@ describe('VariablesPanel', () => {
     mockedUseEditorStore.mockImplementation((selector) => {
       const state = { 
         incrementRevision: mockIncrementRevision,
+        allowVariableEditing: true,
         // Add other required properties to satisfy TypeScript
         previewMode: false,
         setPreviewMode: jest.fn(),
@@ -115,11 +116,36 @@ describe('VariablesPanel', () => {
       render(<VariablesPanel />);
       
       expect(screen.getByText('Variables')).toBeInTheDocument();
-      expect(screen.getByText('Add Variable')).toBeInTheDocument();
+      
+      // Debug: Let's try to find the button by its role instead
+      const addButton = screen.queryByRole('button', { name: /add variable/i });
+      if (!addButton) {
+        // If button not found, let's see what buttons are rendered
+        const allButtons = screen.queryAllByRole('button');
+        console.log('All buttons found:', allButtons.map(btn => btn.textContent));
+      }
+      
+      expect(addButton).toBeInTheDocument();
     });
 
     it('should hide add button when editVariables is false', () => {
-      render(<VariablesPanel editVariables={false} />);
+      // Mock allowVariableEditing to false for this test
+      mockedUseEditorStore.mockImplementation((selector) => {
+        const state = { 
+          incrementRevision: mockIncrementRevision,
+          allowVariableEditing: false, // Set to false for this test
+          previewMode: false,
+          setPreviewMode: jest.fn(),
+          registry: {},
+          initialize: jest.fn(),
+          getComponentDefinition: jest.fn(),
+          revisionCounter: 0,
+          setRevisionCounter: jest.fn(),
+        } as any;
+        return selector(state);
+      });
+      
+      render(<VariablesPanel />);
       
       expect(screen.getByText('Variables')).toBeInTheDocument();
       expect(screen.queryByText('Add Variable')).not.toBeInTheDocument();
@@ -157,14 +183,46 @@ describe('VariablesPanel', () => {
         removeVariable: mockRemoveVariable,
       });
 
-      render(<VariablesPanel editVariables={false} />);
+      // Mock allowVariableEditing to false for this test
+      mockedUseEditorStore.mockImplementation((selector) => {
+        const state = { 
+          incrementRevision: mockIncrementRevision,
+          allowVariableEditing: false, // Set to false for this test
+          previewMode: false,
+          setPreviewMode: jest.fn(),
+          registry: {},
+          initialize: jest.fn(),
+          getComponentDefinition: jest.fn(),
+          revisionCounter: 0,
+          setRevisionCounter: jest.fn(),
+        } as any;
+        return selector(state);
+      });
+
+      render(<VariablesPanel />);
       
       expect(screen.getByText('No variables defined.')).toBeInTheDocument();
       expect(screen.queryByText(/Click "Add Variable"/)).not.toBeInTheDocument();
     });
 
     it('should hide edit and delete buttons when editVariables is false', () => {
-      render(<VariablesPanel editVariables={false} />);
+      // Mock allowVariableEditing to false for this test
+      mockedUseEditorStore.mockImplementation((selector) => {
+        const state = { 
+          incrementRevision: mockIncrementRevision,
+          allowVariableEditing: false, // Set to false for this test
+          previewMode: false,
+          setPreviewMode: jest.fn(),
+          registry: {},
+          initialize: jest.fn(),
+          getComponentDefinition: jest.fn(),
+          revisionCounter: 0,
+          setRevisionCounter: jest.fn(),
+        } as any;
+        return selector(state);
+      });
+      
+      render(<VariablesPanel />);
       
       // Variables should still be displayed
       expect(screen.getByText('userName')).toBeInTheDocument();

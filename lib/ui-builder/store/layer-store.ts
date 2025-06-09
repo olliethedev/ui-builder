@@ -29,6 +29,7 @@ export interface LayerStore {
   selectPage: (pageId: string) => void;
   findLayerById: (layerId: string | null) => ComponentLayer | undefined;
   findLayersForPageId: (pageId: string) => ComponentLayer[];
+  isLayerAPage: (layerId: string) => boolean;
 
   addVariable: (name: string, type: Variable['type'], defaultValue: any) => void;
   updateVariable: (variableId: string, updates: Partial<Omit<Variable, 'id'>>) => void;
@@ -74,6 +75,11 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
         return page?.children || [];
       }
       return  [];
+    },
+
+    isLayerAPage: (layerId: string) => {
+      const { pages } = get();
+      return pages.some(page => page.id === layerId);
     },
 
     addComponentLayer: (layerType: string, parentId: string, parentPosition?: number) => set(produce((state: LayerStore) => {

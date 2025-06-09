@@ -22,26 +22,17 @@ const EMPTY_OBJECT = {};
 
 interface VariablesPanelProps {
   className?: string;
-  editVariables?: boolean;
 }
 
 export const VariablesPanel: React.FC<VariablesPanelProps> = ({
   className,
-  editVariables = true,
 }) => {
   const { variables, addVariable, updateVariable, removeVariable } =
     useLayerStore();
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const incrementRevision = useEditorStore((state) => state.incrementRevision);
-
-  const handleRemoveVariable = useCallback(
-    (id: string) => {
-      removeVariable(id);
-      incrementRevision();
-    },
-    [removeVariable, incrementRevision]
-  );
+  const allowVariableEditing = useEditorStore((state) => state.allowVariableEditing);
 
   const handleAddVariable = useCallback(
     (name: string, type: Variable["type"], defaultValue: any) => {
@@ -83,7 +74,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({
     <div className={cn("flex flex-col gap-4 p-4", className)}>
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Variables</h3>
-        {editVariables && (
+        {allowVariableEditing && (
           <Button size="sm" onClick={handleSetIsAdding} disabled={isAdding}>
             <Plus className="h-4 w-4 mr-2" />
             Add Variable
@@ -91,7 +82,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({
         )}
       </div>
 
-      {isAdding && editVariables && (
+      {isAdding && allowVariableEditing && (
         <AddVariableForm
           onSave={handleAddVariable}
           onCancel={handleSetIsNotAdding}
@@ -108,14 +99,14 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({
             onSave={handleOnSave}
             onCancel={handleOnCancel}
             onDelete={handleOnDelete}
-            editVariables={editVariables}
+            editVariables={allowVariableEditing}
           />
         ))}
       </div>
 
       {variables.length === 0 && !isAdding && (
         <div className="text-center text-muted-foreground py-8">
-          {editVariables
+          {allowVariableEditing
             ? 'No variables defined. Click "Add Variable" to create one.'
             : "No variables defined."}
         </div>

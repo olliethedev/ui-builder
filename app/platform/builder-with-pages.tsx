@@ -981,12 +981,14 @@ const initialLayers: ComponentLayer[] = [{
   ]
 }]
 
-export const BuilderWithPages = () => {
+export const BuilderWithPages = ({fixedPages = false}: {fixedPages?: boolean}) => {
   return <UIBuilder 
     initialLayers={initialLayers}
     componentRegistry={{
         ...complexComponentDefinitions,
         ...primitiveComponentDefinitions,
     }}
+    allowPagesCreation={!fixedPages}
+    allowPagesDeletion={!fixedPages}
     />;
 };
