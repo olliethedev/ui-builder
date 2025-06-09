@@ -7,6 +7,7 @@ import {
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
 import { RegistryEntry, ComponentLayer } from '@/components/ui/ui-builder/types';
+import { textInputFieldOverrides } from '@/lib/ui-builder/registry/form-field-overrides';
 import { z } from "zod";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 
@@ -51,6 +52,26 @@ jest.mock("@/components/ui/textarea", () => ({
   ),
 }));
 
+jest.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: any) => children,
+  TooltipTrigger: ({ children }: any) => children,
+  TooltipContent: ({ children }: any) => <div>{children}</div>,
+}));
+
+jest.mock("@/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: any) => <div>{children}</div>,
+  DropdownMenuTrigger: ({ children }: any) => children,
+  DropdownMenuContent: ({ children }: any) => <div>{children}</div>,
+  DropdownMenuItem: ({ children, onClick }: any) => (
+    <div onClick={onClick}>{children}</div>
+  ),
+}));
+
+jest.mock("@/components/ui/card", () => ({
+  Card: ({ children }: any) => <div>{children}</div>,
+  CardContent: ({ children }: any) => <div>{children}</div>,
+}));
+
 describe("PropsPanel", () => {
   const mockedUseLayerStore = useLayerStore as unknown as jest.Mock;
   const mockedUseEditorStore = useEditorStore as unknown as jest.Mock;
@@ -74,6 +95,9 @@ describe("PropsPanel", () => {
           {children}
         </button>
       ),
+      fieldOverrides: {
+        label: (layer: ComponentLayer) => textInputFieldOverrides(layer, true, 'label'),
+      },
     },
     Input: {
       schema: z.object({
@@ -106,6 +130,10 @@ describe("PropsPanel", () => {
     },
   };
 
+  const mockBindPropToVariable = jest.fn();
+  const mockUnbindPropFromVariable = jest.fn();
+  const mockIsBindingImmutable = jest.fn().mockReturnValue(false);
+
   const mockLayerState = {
     selectedLayerId: "layer-1",
     findLayerById: mockFindLayerById,
@@ -113,13 +141,19 @@ describe("PropsPanel", () => {
     duplicateLayer: mockDuplicateLayer,
     updateLayer: mockUpdateLayer,
     addComponentLayer: mockAddComponentLayer,
+    bindPropToVariable: mockBindPropToVariable,
+    unbindPropFromVariable: mockUnbindPropFromVariable,
+    isBindingImmutable: mockIsBindingImmutable,
     variables: [],
     isLayerAPage: jest.fn().mockReturnValue(false),
   };
 
+  const mockIncrementRevision = jest.fn();
+
   const mockEditorState = {
     registry: mockRegistry,
     getComponentDefinition: mockGetComponentDefinition,
+    incrementRevision: mockIncrementRevision,
     revisionCounter: 0,
     allowPagesCreation: true,
     allowPagesDeletion: true,
@@ -150,6 +184,10 @@ describe("PropsPanel", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockBindPropToVariable.mockClear();
+    mockUnbindPropFromVariable.mockClear();
+    mockIsBindingImmutable.mockReturnValue(false);
+    mockIncrementRevision.mockClear();
     (useLayerStore as any).getState = jest.fn(() => mockLayerState);
     
     mockedUseLayerStore.mockImplementation((selector) => {
@@ -720,14 +758,14 @@ describe("PropsPanel", () => {
       };
 
       mockFindLayerById.mockReturnValue(componentLayer);
-      const { container } = renderPropsPanel();
+      renderPropsPanel();
 
       // Wait for form to render and check that variable is resolved for display
       await waitFor(() => {
-        const labelInput = container.querySelector('input[name="label"]') as HTMLInputElement;
-        expect(labelInput).toBeInTheDocument();
-        // The form should display the resolved value, not the variable reference
-        expect(labelInput.value).toBe('John Doe');
+        // When a variable is bound, it shows the variable name and resolved value, not an input field
+        expect(screen.getByText('userName')).toBeInTheDocument();
+        expect(screen.getByText('John Doe')).toBeInTheDocument();
+        expect(screen.getByText('string')).toBeInTheDocument();
       });
     });
 
@@ -744,14 +782,14 @@ describe("PropsPanel", () => {
       };
 
       mockFindLayerById.mockReturnValue(componentLayer);
-      const { container } = renderPropsPanel();
+      renderPropsPanel();
 
-      // Should handle missing variable gracefully
+      // Should handle missing variable gracefully by falling back to normal input
       await waitFor(() => {
-        const labelInput = container.querySelector('input[name="label"]') as HTMLInputElement;
-        expect(labelInput).toBeInTheDocument();
-        // Should show empty or undefined value for missing variable
-        expect(labelInput.value).toBe('');
+        expect(screen.queryByText("Missing Variable Button Properties")).toBeInTheDocument();
+        // Should render the form without crashing
+        const classNameInput = screen.getByDisplayValue('button-class');
+        expect(classNameInput).toBeInTheDocument();
       });
     });
 
@@ -837,6 +875,101 @@ describe("PropsPanel", () => {
       await waitFor(() => {
         expect(screen.queryByText("Multi Type Variables Properties")).toBeInTheDocument();
       });
+    });
+
+    it('should show immutable indicator and hide unbind button for immutable bindings', () => {
+      const testLayer: ComponentLayer = {
+        id: 'test-layer',
+        type: 'Button',
+        name: 'Test Button',
+        props: {
+          label: { __variableRef: 'var1' },
+          className: 'test-class'
+        },
+        children: [],
+      };
+
+      const layerStateWithImmutableBinding = {
+        ...mockLayerState,
+        variables: mockVariables,
+        selectedLayerId: 'test-layer',
+        findLayerById: jest.fn().mockReturnValue(testLayer),
+        isBindingImmutable: jest.fn().mockImplementation((layerId: string, propName: string) => 
+          layerId === 'test-layer' && propName === 'label'
+        ),
+        isLayerAPage: jest.fn().mockReturnValue(false),
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => layerStateWithImmutableBinding);
+
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(layerStateWithImmutableBinding);
+        }
+        return layerStateWithImmutableBinding;
+      });
+
+      render(<PropsPanel />);
+
+      // The label field should show as bound to a variable
+      expect(screen.getByText('userName')).toBeInTheDocument();
+      
+      // Should show the immutable indicator
+      expect(screen.getByText('Immutable')).toBeInTheDocument();
+      
+      // Should not show the unbind button for immutable bindings
+      const unbindButtons = screen.queryAllByRole('button');
+      const unlinkButton = unbindButtons.find(button => 
+        button.querySelector('svg[class*="lucide-unlink"]')
+      );
+      expect(unlinkButton).toBeUndefined();
+    });
+
+    it('should show unbind button for mutable bindings', () => {
+      const testLayer: ComponentLayer = {
+        id: 'test-layer',
+        type: 'Button',
+        name: 'Test Button',
+        props: {
+          label: { __variableRef: 'var1' },
+          className: 'test-class'
+        },
+        children: [],
+      };
+
+      const layerStateWithMutableBinding = {
+        ...mockLayerState,
+        variables: mockVariables,
+        selectedLayerId: 'test-layer',
+        findLayerById: jest.fn().mockReturnValue(testLayer),
+        isBindingImmutable: jest.fn().mockReturnValue(false), // All bindings are mutable
+        isLayerAPage: jest.fn().mockReturnValue(false),
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => layerStateWithMutableBinding);
+
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(layerStateWithMutableBinding);
+        }
+        return layerStateWithMutableBinding;
+      });
+
+      render(<PropsPanel />);
+
+      // The label field should show as bound to a variable
+      expect(screen.getByText('userName')).toBeInTheDocument();
+      
+      // Should not show the immutable indicator
+      expect(screen.queryByText('Immutable')).not.toBeInTheDocument();
+      
+      // Should show the unbind button for mutable bindings
+      const unbindButtons = screen.queryAllByRole('button');
+      const unlinkButton = unbindButtons.find(button => 
+        button.querySelector('svg[class*="lucide-unlink"]')
+      );
+      expect(unlinkButton).toBeDefined();
+      expect(unlinkButton).toBeInTheDocument();
     });
   });
 });

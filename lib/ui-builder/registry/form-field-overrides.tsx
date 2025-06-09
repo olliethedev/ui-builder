@@ -247,6 +247,7 @@ export function VariableBindingWrapper({
   const variables = useLayerStore((state) => state.variables);
   const selectedLayerId = useLayerStore((state) => state.selectedLayerId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
+  const isBindingImmutable = useLayerStore((state) => state.isBindingImmutable);
   const incrementRevision = useEditorStore((state) => state.incrementRevision);
   const unbindPropFromVariable = useLayerStore(
     (state) => state.unbindPropFromVariable
@@ -265,6 +266,7 @@ export function VariableBindingWrapper({
   const boundVariable = isCurrentlyBound
     ? variables.find((v) => v.id === currentValue.__variableRef)
     : null;
+  const isImmutable = isBindingImmutable(selectedLayer.id, propName);
 
   const handleBindToVariable = (variableId: string) => {
     bindPropToVariable(selectedLayer.id, propName, variableId);
@@ -295,6 +297,11 @@ export function VariableBindingWrapper({
                       <span className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">
                         {boundVariable.type}
                       </span>
+                      {isImmutable && (
+                        <span className="px-1.5 py-0.5 bg-orange-100 text-orange-800 rounded text-xs font-medium">
+                          Immutable
+                        </span>
+                      )}
                     </div>
                     <span className="text-xs text-muted-foreground truncate">
                       {String(boundVariable.defaultValue)}
@@ -303,18 +310,20 @@ export function VariableBindingWrapper({
                 </div>
               </CardContent>
             </Card>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  onClick={handleUnbind}
-                  className="px-3 h-10"
-                >
-                  <Unlink className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Unbind Variable</TooltipContent>
-            </Tooltip>
+            {!isImmutable && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={handleUnbind}
+                    className="px-3 h-10"
+                  >
+                    <Unlink className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Unbind Variable</TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
       ) : (

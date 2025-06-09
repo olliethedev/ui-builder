@@ -19,6 +19,7 @@ export interface LayerStore {
   selectedLayerId: string | null;
   selectedPageId: string;
   variables: Variable[];
+  immutableBindings: Record<string, Record<string, boolean>>; // layerId -> propName -> isImmutable
   initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string, variables?: Variable[]) => void;
   addComponentLayer: (layerType: string, parentId: string, parentPosition?: number) => void;
   addPageLayer: (pageId: string) => void;
@@ -36,6 +37,8 @@ export interface LayerStore {
   removeVariable: (variableId: string) => void;
   bindPropToVariable: (layerId: string, propName: string, variableId: string) => void;
   unbindPropFromVariable: (layerId: string, propName: string) => void;
+  isBindingImmutable: (layerId: string, propName: string) => boolean;
+  setImmutableBinding: (layerId: string, propName: string, isImmutable: boolean) => void; // Test helper
 }
 
 const store: StateCreator<LayerStore, [], []> = (set, get) => (
@@ -53,6 +56,8 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
 
     // Variables available for binding
     variables: [],
+    // Track immutable bindings: layerId -> propName -> isImmutable
+    immutableBindings: {},
     selectedLayerId: null,
     selectedPageId: '1',
     initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string, variables?: Variable[]) => {
@@ -87,6 +92,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       const defaultProps = getDefaultProps(registry[layerType].schema);
       const defaultChildrenRaw = registry[layerType].defaultChildren;
       const defaultChildren = typeof defaultChildrenRaw === "string" ? defaultChildrenRaw : (defaultChildrenRaw?.map(child => duplicateWithNewIdsAndName(child, false)) || []);
+      const defaultVariableBindings = registry[layerType].defaultVariableBindings || [];
 
       const initialProps = Object.entries(defaultProps).reduce((acc, [key, propDef]) => {
         if (key !== "children") {
@@ -103,12 +109,27 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
         children: defaultChildren,
       };
 
+      // Apply default variable bindings
+      for (const binding of defaultVariableBindings) {
+        const variable = state.variables.find(v => v.id === binding.variableId);
+        if (variable) {
+          // Set the variable reference in the props
+          newLayer.props[binding.propName] = { __variableRef: binding.variableId };
+          
+          // Track immutable bindings
+          if (binding.immutable) {
+            if (!state.immutableBindings[newLayer.id]) {
+              state.immutableBindings[newLayer.id] = {};
+            }
+            state.immutableBindings[newLayer.id][binding.propName] = true;
+          }
+        }
+      }
+
       // Traverse and update the pages to add the new layer
       const updatedPages = addLayer(state.pages, newLayer, parentId, parentPosition);
-      return {
-        ...state,
-        pages: updatedPages
-      };
+      // Directly mutate the state instead of returning a new object
+      state.pages = updatedPages;
     })),
 
     addPageLayer: (pageName: string) => set(produce((state: LayerStore) => {
@@ -351,6 +372,12 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
 
     // Unbind a component prop from a variable reference and set default value from schema
     unbindPropFromVariable: (layerId, propName) => {
+      // Check if the binding is immutable
+      if (get().isBindingImmutable(layerId, propName)) {
+        console.warn(`Cannot unbind immutable variable binding for ${propName} on layer ${layerId}`);
+        return;
+      }
+
       const { registry } = useEditorStore.getState();
       const layer = get().findLayerById(layerId);
       
@@ -374,6 +401,22 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       }
 
       get().updateLayer(layerId, { [propName]: defaultValue });
+    },
+
+    // Check if a binding is immutable
+    isBindingImmutable: (layerId: string, propName: string) => {
+      const { immutableBindings } = get();
+      return immutableBindings[layerId]?.[propName] === true;
+    },
+
+    // Test helper
+    setImmutableBinding: (layerId: string, propName: string, isImmutable: boolean) => {
+      set(produce((state: LayerStore) => {
+        if (!state.immutableBindings[layerId]) {
+          state.immutableBindings[layerId] = {};
+        }
+        state.immutableBindings[layerId][propName] = isImmutable;
+      }));
     },
   }
 )
@@ -413,7 +456,7 @@ const useLayerStore = create(persist(temporal<LayerStore>(store,
   }
 ), {
   name: "layer-store",
-  version: 4,
+  version: 5,
   storage: createJSONStorage(() => conditionalLocalStorage),
   migrate: (persistedState: unknown, version: number) => {
     /* istanbul ignore if*/
@@ -423,7 +466,10 @@ const useLayerStore = create(persist(temporal<LayerStore>(store,
       return migrateV2ToV3(persistedState as LayerStore);
     } else if (version === 3) {
       // New variable support: ensure variables array exists
-      return { ...(persistedState as LayerStore), variables: [] as Variable[] } as LayerStore;
+      return { ...(persistedState as LayerStore), variables: [] as Variable[], immutableBindings: {} } as LayerStore;
+    } else if (version === 4) {
+      // New immutable bindings support: ensure immutableBindings object exists
+      return { ...(persistedState as LayerStore), immutableBindings: {} } as LayerStore;
     }
     return persistedState;
   }
