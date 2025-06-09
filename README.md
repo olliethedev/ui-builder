@@ -62,6 +62,138 @@ npm install -D @types/lodash.template @tailwindcss/typography @types/react-synta
 
 And that's it! You have a UI Builder that you can use to build your UI.
 
+# 🎯 TypeScript Type Safety
+
+**UI Builder now features comprehensive TypeScript type safety with full type inference from your component definitions!** This means you get compile-time validation, rich IntelliSense, and automatic type checking throughout the entire system.
+
+## Enhanced Type System Features
+
+### ✅ **Type Inference from Component Definitions**
+Component props are automatically inferred from your Zod schemas:
+
+```tsx
+import { ExtractComponentProps, TypedLayerChangeHandler } from "@/components/ui/ui-builder/types";
+
+// 🎯 Automatic type extraction from your registry
+type ButtonProps = ExtractComponentProps<typeof myRegistry, 'Button'>;
+// Result: { label: string; variant: 'primary' | 'secondary'; disabled: boolean; ... }
+
+// 🎯 Type-safe callbacks with full inference
+const handleLayerChange: TypedLayerChangeHandler<typeof myRegistry> = (layers) => {
+  layers.forEach(layer => {
+    if (layer.type === 'Button') {
+      // ✅ TypeScript knows layer.props is ButtonProps
+      console.log(layer.props.variant); // ✅ Autocomplete + validation
+      console.log(layer.props.label);   // ✅ Type-safe access
+    }
+  });
+};
+```
+
+### ✅ **Strongly Typed Variables**
+Variables maintain their type constraints throughout the system:
+
+```tsx
+import { createVariable, Variable } from "@/components/ui/ui-builder/types";
+
+// 🎯 Type-safe variable creation
+const stringVar = createVariable('id1', 'title', 'string', 'Default Title');
+const numberVar = createVariable('id2', 'count', 'number', 42);
+const boolVar = createVariable('id3', 'enabled', 'boolean', true);
+
+// ✅ TypeScript correctly infers types:
+// stringVar.defaultValue is string
+// numberVar.defaultValue is number  
+// boolVar.defaultValue is boolean
+```
+
+### ✅ **Enhanced UIBuilder Props**
+The UIBuilder component now supports enhanced type inference:
+
+```tsx
+interface UIBuilderProps<
+  TRegistry extends ComponentRegistry = ComponentRegistry,
+  TVariables extends VariableCollection = VariableCollection
+> {
+  componentRegistry: TRegistry;
+  onChange?: TypedLayerChangeHandler<TRegistry>;
+  onVariablesChange?: TypedVariableChangeHandler<TVariables>;
+  // ... other props
+}
+```
+
+### ✅ **Type-Safe Helper Functions**
+Create components and layers with full type safety:
+
+```tsx
+import { createTypedLayer } from "@/components/ui/ui-builder/types";
+
+// 🎯 Create layers with compile-time validation
+const buttonLayer = createTypedLayer(
+  'btn-1',
+  'Button',
+  {
+    label: 'Save Changes',    // ✅ TypeScript validates string
+    variant: 'primary',       // ✅ TypeScript validates enum values
+    disabled: false,          // ✅ TypeScript validates boolean
+    // variant: 'invalid'     // ❌ TypeScript error - invalid value
+  }
+);
+```
+
+## Developer Experience Benefits
+
+### 🎯 **Rich IntelliSense & Autocomplete**
+- Component prop suggestions based on Zod schemas
+- Variable type validation at compile time
+- Callback parameter typing with full inference
+- Error detection before runtime
+
+### 🛡️ **Compile-Time Safety** 
+- Eliminated `any` types throughout the codebase
+- Type errors caught at compile time instead of runtime
+- Automatic validation of prop assignments and variable types
+
+### 🔄 **Full React Type Support**
+- Support for any valid React prop and children types
+- ReactNode, function components, elements, strings, arrays
+- Event handlers and complex nested structures
+- No restrictions on valid React patterns
+
+### 📊 **Self-Documenting Code**
+Types serve as documentation, making the codebase more maintainable and easier to understand for new developers.
+
+## Migration Guide
+
+**✅ No Breaking Changes**: The enhanced type system is fully backward compatible. Existing code will continue to work without modifications.
+
+**🎯 Opt-in Enhancement**: You can gradually adopt the new typed patterns:
+
+```tsx
+// Old approach (still works)
+const handleChange = (layers: ComponentLayer[]) => {
+  // Basic handling
+};
+
+// New typed approach (recommended)
+const handleChange: TypedLayerChangeHandler<typeof myRegistry> = (layers) => {
+  // Full type safety and inference
+};
+```
+
+**🚀 Progressive Enhancement**: Start using the new helper functions and types in new code:
+
+```tsx
+// Use new type-safe helpers
+import { 
+  createVariable, 
+  createTypedLayer, 
+  ExtractComponentProps 
+} from "@/components/ui/ui-builder/types";
+```
+
+For a comprehensive example of the new type system in action, see `examples/type-safe-ui-builder.ts`.
+
 ## Usage
 
 ### Basic Example
