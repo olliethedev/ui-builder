@@ -409,4 +409,94 @@ describe('Layer Store - Variables', () => {
       expect(result.current.variables).toHaveLength(1);
     });
   });
+
+  describe('Immutable Bindings', () => {
+    it('should prevent unbinding immutable variable bindings', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add a layer and variable
+      act(() => {
+        result.current.addComponentLayer('Button', result.current.selectedPageId!);
+        result.current.addVariable('userName', 'string', 'John Doe');
+      });
+
+      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
+      const variableId = result.current.variables[0].id;
+
+      // Bind the label prop to the variable and mark as immutable
+      act(() => {
+        result.current.bindPropToVariable(layerId, 'label', variableId);
+        // Set immutable binding using the test helper
+        result.current.setImmutableBinding(layerId, 'label', true);
+      });
+
+      const layer = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layer.props.label).toEqual({ __variableRef: variableId });
+      expect(result.current.isBindingImmutable(layerId, 'label')).toBe(true);
+
+      // Try to unbind immutable binding (should fail)
+      act(() => {
+        result.current.unbindPropFromVariable(layerId, 'label');
+      });
+
+      // Binding should still exist
+      const layerAfterUnbind = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layerAfterUnbind.props.label).toEqual({ __variableRef: variableId });
+    });
+
+    it('should allow unbinding mutable variable bindings', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add a layer and variable
+      act(() => {
+        result.current.addComponentLayer('Button', result.current.selectedPageId!);
+        result.current.addVariable('userName', 'string', 'John Doe');
+      });
+
+      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
+      const variableId = result.current.variables[0].id;
+
+      // Bind the label prop to the variable (mutable by default)
+      act(() => {
+        result.current.bindPropToVariable(layerId, 'label', variableId);
+      });
+
+      const layer = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layer.props.label).toEqual({ __variableRef: variableId });
+      expect(result.current.isBindingImmutable(layerId, 'label')).toBe(false);
+
+      // Unbind mutable binding (should succeed)
+      act(() => {
+        result.current.unbindPropFromVariable(layerId, 'label');
+      });
+
+      // Binding should be removed and default value set
+      const layerAfterUnbind = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layerAfterUnbind.props.label).toBe('Click me'); // Default from schema
+    });
+
+    it('should correctly track immutable bindings across layer operations', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add a layer and variable
+      act(() => {
+        result.current.addComponentLayer('Button', result.current.selectedPageId!);
+        result.current.addVariable('userName', 'string', 'John Doe');
+      });
+
+      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
+      const variableId = result.current.variables[0].id;
+
+      // Bind and mark as immutable
+      act(() => {
+        result.current.bindPropToVariable(layerId, 'label', variableId);
+        // Set immutable binding using the test helper
+        result.current.setImmutableBinding(layerId, 'label', true);
+      });
+
+      expect(result.current.isBindingImmutable(layerId, 'label')).toBe(true);
+      expect(result.current.isBindingImmutable(layerId, 'nonExistentProp')).toBe(false);
+      expect(result.current.isBindingImmutable('nonExistentLayer', 'label')).toBe(false);
+    });
+  });
 }); 

@@ -263,7 +263,9 @@ Note: Variables are optional, but they are a powerful way to make your pages dyn
 - `onVariablesChange`: Optional callback triggered when the variables change, providing the updated variables. Can be used to persist the variable state to a database.
 - `panelConfig`: Optional. An object to customize the different panels of the UI Builder (e.g., nav bar, editor panel, props panel). If not provided, a default configuration is used. This allows for fine-grained control over the editor's appearance and layout.
 - `persistLayerStore`: Optional boolean (defaults to `true`). Determines whether the editor's state (layers and their configurations) is persisted in the browser's local storage across sessions. Set to `false` to disable local storage persistence, useful if you are managing state entirely through `initialLayers` and `onChange`.
-- `editVariables`: Optional boolean (defaults to `true`). Controls whether users can edit variables in the Variables panel. When `true`, users can add, edit, and delete variables. When `false`, the Variables panel becomes read-only, hiding the "Add Variable" button and the edit/delete buttons on individual variables. Useful when you want to provide a read-only variables experience or manage variables entirely through `initialVariables`.
+- `allowVariableEditing`: Optional boolean (defaults to `true`). Controls whether users can edit variables in the Variables panel. When `true`, users can add, edit, and delete variables. When `false`, the Variables panel becomes read-only, hiding the "Add Variable" button and the edit/delete buttons on individual variables. Useful when you want to provide a read-only variables experience or manage variables entirely through `initialVariables`.
+- `allowPagesCreation`: Optional boolean (defaults to `true`). Controls whether users can create new pages in the editor. When `true`, users can add new pages to the editor. When `false`, the Pages panel becomes read-only, hiding the "Add Page" button. Useful when you want to provide a read-only pages experience or manage pages entirely through `initialLayers`.
+- `allowPagesDeletion`: Optional boolean (defaults to `true`). Controls whether users can delete pages in the editor. When `true`, users can delete pages from the editor. When `false`, the Pages panel becomes read-only, hiding the "Delete Page" button. Useful when you want to provide a read-only pages experience or manage pages entirely through `initialLayers`.
 
 
 ## Rendering from Serialized Layer Data
@@ -373,6 +375,77 @@ export const myComponentRegistry: ComponentRegistry = {
 // <UIBuilder componentRegistry={myComponentRegistry} />
 ```
 
+### Example with Default Variable Bindings
+
+Here's a practical example showing how to use `defaultVariableBindings` to create components that automatically bind to system variables:
+
+```tsx
+import { z } from 'zod';
+import { UserProfile } from '@/components/ui/user-profile';
+import { BrandedButton } from '@/components/ui/branded-button';
+import { ComponentRegistry } from "@/components/ui/ui-builder/types";
+
+// First, define your variables (these would typically come from your app's state)
+const systemVariables = [
+  { id: 'user-id-var', name: 'currentUserId', type: 'string', defaultValue: 'user123' },
+  { id: 'user-name-var', name: 'currentUserName', type: 'string', defaultValue: 'John Doe' },
+  { id: 'brand-color-var', name: 'primaryBrandColor', type: 'string', defaultValue: '#3b82f6' },
+  { id: 'company-name-var', name: 'companyName', type: 'string', defaultValue: 'Acme Corp' },
+];
+
+// Define components with automatic variable bindings
+const myComponentRegistry: ComponentRegistry = {
+  UserProfile: {
+    component: UserProfile,
+    schema: z.object({
+      userId: z.string().default(''),
+      displayName: z.string().default('Anonymous'),
+      showAvatar: z.boolean().default(true),
+    }),
+    from: "@/components/ui/user-profile",
+    // Automatically bind user data when component is added
+    defaultVariableBindings: [
+      { propName: 'userId', variableId: 'user-id-var', immutable: true }, // System data - can't be changed
+      { propName: 'displayName', variableId: 'user-name-var', immutable: false }, // Can be overridden
+    ],
+  },
+  
+  BrandedButton: {
+    component: BrandedButton,
+    schema: z.object({
+      text: z.string().default('Click me'),
+      brandColor: z.string().default('#000000'),
+      companyName: z.string().default('Company'),
+    }),
+    from: "@/components/ui/branded-button",
+    // Automatically apply branding when component is added
+    defaultVariableBindings: [
+      { propName: 'brandColor', variableId: 'brand-color-var', immutable: true }, // Brand consistency
+      { propName: 'companyName', variableId: 'company-name-var', immutable: true }, // Brand consistency
+      // 'text' is not bound, allowing content editors to customize button text
+    ],
+  },
+};
+
+// Usage in your app
+const App = () => {
+  return (
+    <UIBuilder
+      componentRegistry={myComponentRegistry}
+      initialVariables={systemVariables}
+      // When users add UserProfile or BrandedButton components,
+      // they'll automatically be bound to the appropriate variables
+    />
+  );
+};
+```
+
+In this example:
+- **UserProfile** components automatically bind to current user data, with `userId` locked (immutable) for security
+- **BrandedButton** components automatically inherit brand colors and company name, ensuring visual consistency
+- Content editors can still customize the button text, but can't accidentally break branding
+- The immutable bindings prevent accidental unbinding of critical system or brand data
+
 **Component Definition Fields:**
 
 -   `component`: **Required**. The React component function or class.
@@ -391,6 +464,23 @@ export const myComponentRegistry: ComponentRegistry = {
         *   Implementing conditional logic (e.g., showing/hiding a field based on another prop's value).
     -   The example uses `classNameFieldOverrides` and `childrenFieldOverrides` from `@/lib/ui-builder/registry/form-field-overrides` to provide standardized handling for common props like `className` (using a auto suggest text input) and `children` (using a custom component). You can create your own override functions or objects.
 -   `defaultChildren`: Optional. Default children to use when a new instance of this component is added to the canvas. For example setting initial text on a span component.
+-   `defaultVariableBindings`: Optional. An array of default variable bindings to apply when a new instance of this component is added to the canvas. This enables automatic binding of component properties to variables, with optional immutability controls.
+    -   Each binding object contains:
+        *   `propName`: The name of the component property to bind
+        *   `variableId`: The ID of the variable to bind to this property
+        *   `immutable`: Optional boolean (defaults to `false`). When `true`, prevents users from unbinding this variable in the UI, ensuring the binding remains intact
+    -   **Use cases for immutable bindings:**
+        *   **System-level data**: Bind user ID, tenant ID, or other system variables that shouldn't be changed by content editors
+        *   **Branding consistency**: Lock brand colors, logos, or company names to maintain visual consistency
+        *   **Security**: Prevent modification of security-related variables like permissions or access levels
+        *   **Template integrity**: Ensure critical template variables remain bound in white-label or multi-tenant scenarios
+    -   Example:
+        ```tsx
+        defaultVariableBindings: [
+          { propName: 'userEmail', variableId: 'user-email-var', immutable: true },
+          { propName: 'welcomeMessage', variableId: 'welcome-msg-var', immutable: false }
+        ]
+        ```
 
 
 ### Customizing the Page Config Panel Tabs
@@ -538,7 +628,6 @@ npm run test
 
 ## Roadmap
 
-- [ ] Config options to make pages and variables immutable
 - [ ] Add variable binding to layer children and not just props
 - [ ] Improve DX. End to end type safety.
 - [ ] Documentation site for UI Builder with more hands-on examples

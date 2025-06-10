@@ -21,8 +21,8 @@ interface ClickableWrapperProps {
   totalLayers: number;
   onSelectElement: (layerId: string) => void;
   children: React.ReactNode;
-  onDuplicateLayer: () => void;
-  onDeleteLayer: () => void;
+  onDuplicateLayer?: () => void;
+  onDeleteLayer?: () => void;
   listenToScrollParent: boolean;
   observeMutations: boolean;
 }

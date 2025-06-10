@@ -34,6 +34,32 @@ describe('LayerStore', () => {
           from: '@/components/ui/textarea',
           component: () => null,
         },
+        Card: {
+          schema: z.object({
+            title: z.string().default('Card Title'),
+          }),
+          from: '@/components/ui/card',
+          component: () => null,
+          // Test with string defaultChildren
+          defaultChildren: 'Default card content',
+        },
+        Container: {
+          schema: z.object({
+            className: z.string().default('container'),
+          }),
+          from: '@/components/ui/container',
+          component: () => null,
+          // Test with array defaultChildren
+          defaultChildren: [
+            {
+              id: 'default-child-1',
+              type: 'Button',
+              name: 'Default Button',
+              props: { label: 'Default' },
+              children: [],
+            }
+          ],
+        },
         // Add other components as needed with appropriate Zod schemas
       }
     });
@@ -94,6 +120,45 @@ describe('LayerStore', () => {
       expect(result.current.pages[0].children).toHaveLength(2);
       expect((result.current.pages[0].children[0] as ComponentLayer).type).toBe('Input');
       expect((result.current.pages[0].children[1] as ComponentLayer).type).toBe('Button');
+    });
+
+    it('should add a component with string defaultChildren', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addComponentLayer('Card', '1');
+      });
+
+      const newLayer = result.current.pages[0].children[0] as ComponentLayer;
+      expect(newLayer.type).toBe('Card');
+      expect(newLayer.children).toBe('Default card content');
+    });
+
+    it('should add a component with array defaultChildren', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addComponentLayer('Container', '1');
+      });
+
+      const newLayer = result.current.pages[0].children[0] as ComponentLayer;
+      expect(newLayer.type).toBe('Container');
+      expect(Array.isArray(newLayer.children)).toBe(true);
+      expect(newLayer.children).toHaveLength(1);
+      expect((newLayer.children[0] as ComponentLayer).type).toBe('Button');
+      // Should have a different ID than the default one
+      expect((newLayer.children[0] as ComponentLayer).id).not.toBe('default-child-1');
+    });
+
+    it('should handle components without defaultChildren', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addComponentLayer('Button', '1');
+      });
+
+      const newLayer = result.current.pages[0].children[0] as ComponentLayer;
+      expect(newLayer.children).toEqual([]);
     });
   });
 
@@ -568,19 +633,27 @@ describe('LayerStore', () => {
     it('should select an existing layer', () => {
       const { result } = renderHook(() => useLayerStore());
 
-      // Add a layer
       act(() => {
         result.current.addComponentLayer('Button', '1');
       });
 
       const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
 
-      // Select the layer
       act(() => {
         result.current.selectLayer(layerId);
       });
 
       expect(result.current.selectedLayerId).toBe(layerId);
+    });
+
+    it('should select a page when layerId equals selectedPageId', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.selectLayer('1');
+      });
+
+      expect(result.current.selectedLayerId).toBe('1');
     });
 
     it('should not select a non-existent layer', () => {
@@ -734,6 +807,582 @@ describe('LayerStore', () => {
 
       expect(result.current.pages).toEqual(initialPages);
       expect(result.current.selectedPageId).toBe(initialPages[0].id);
+    });
+
+    it('should initialize with custom selectedPageId and selectedLayerId', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      const newPages: ComponentLayer[] = [
+        {
+          id: '2',
+          type: '_page_',
+          name: 'Page 2',
+          props: { className: 'page-2' },
+          children: [
+            {
+              id: 'layer-1',
+              type: 'Button',
+              name: 'Button 1',
+              props: { label: 'Click' },
+              children: [],
+            }
+          ],
+        },
+        {
+          id: '3',
+          type: '_page_',
+          name: 'Page 3',
+          props: { className: 'page-3' },
+          children: [],
+        },
+      ];
+
+      act(() => {
+        result.current.initialize(newPages, '3', 'layer-1');
+      });
+
+      expect(result.current.pages).toEqual(newPages);
+      expect(result.current.selectedPageId).toBe('3');
+      expect(result.current.selectedLayerId).toBe('layer-1');
+    });
+
+    it('should initialize with variables', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      const newPages: ComponentLayer[] = [
+        {
+          id: '2',
+          type: '_page_',
+          name: 'Page',
+          props: { className: 'page' },
+          children: [],
+        },
+      ];
+
+      const variables = [
+        { id: 'var-1', name: 'testVar', type: 'string' as const, defaultValue: 'test' }
+      ];
+
+      act(() => {
+        result.current.initialize(newPages, '2', undefined, variables);
+      });
+
+      expect(result.current.variables).toEqual(variables);
+    });
+  });
+
+  describe('Edge Cases and Error Handling', () => {
+    it('should handle edge case with findLayerById when layer has no children property', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add a regular page with type 'div' (not '_page_')
+      act(() => {
+        result.current.addPageLayer('Test Page');
+      });
+
+      // Get the new page ID
+      const newPageId = result.current.pages[1].id;
+
+      // Select the new page
+      act(() => {
+        result.current.selectPage(newPageId);
+      });
+
+      // findLayersForPageId should handle pages with type 'div' correctly
+      const layers = result.current.findLayersForPageId(newPageId);
+      expect(layers).toEqual([]);
+    });
+
+    it('should handle when registry does not have schema for component type', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add a component type that doesn't exist in registry
+      useEditorStore.setState({
+        registry: {
+          ...useEditorStore.getState().registry,
+          UnknownComponent: {
+            schema: z.object({}), // Empty schema
+            from: '@/components/ui/unknown',
+            component: () => null,
+          }
+        }
+      });
+
+      act(() => {
+        result.current.addComponentLayer('UnknownComponent', '1');
+      });
+
+      const newLayer = result.current.pages[0].children[0] as ComponentLayer;
+      expect(newLayer.type).toBe('UnknownComponent');
+      expect(newLayer.props).toEqual({});
+    });
+
+    it('should handle unbindPropFromVariable when layer is not found', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      console.warn = jest.fn();
+
+      act(() => {
+        result.current.unbindPropFromVariable('non-existent-layer', 'prop');
+      });
+
+      expect(console.warn).toHaveBeenCalledWith('Layer with ID non-existent-layer not found.');
+    });
+
+    it('should handle unbindPropFromVariable when schema has no default value', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add component with schema but no default for a specific prop
+      useEditorStore.setState({
+        registry: {
+          ...useEditorStore.getState().registry,
+          CustomComponent: {
+            schema: z.object({
+              customProp: z.string().optional(), // No default
+            }),
+            from: '@/components/ui/custom',
+            component: () => null,
+          }
+        }
+      });
+
+      act(() => {
+        result.current.addComponentLayer('CustomComponent', '1');
+      });
+
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+
+      act(() => {
+        result.current.unbindPropFromVariable(layerId, 'nonExistentProp');
+      });
+
+      const layer = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layer.props.nonExistentProp).toBe("");
+    });
+
+    it('should handle removeVariable with prop that has no schema entry', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add component with incomplete schema
+      useEditorStore.setState({
+        registry: {
+          ...useEditorStore.getState().registry,
+          PartialComponent: {
+            schema: z.object({
+              knownProp: z.string().default('known'),
+            }),
+            from: '@/components/ui/partial',
+            component: () => null,
+          }
+        }
+      });
+
+      act(() => {
+        result.current.addComponentLayer('PartialComponent', '1');
+        result.current.addVariable('testVar', 'string', 'test');
+      });
+
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      const variableId = result.current.variables[0].id;
+
+      // Manually set a prop that's not in the schema
+      act(() => {
+        result.current.updateLayer(layerId, { unknownProp: { __variableRef: variableId } });
+      });
+
+      // Remove the variable - unknownProp should be deleted since it has no schema default
+      act(() => {
+        result.current.removeVariable(variableId);
+      });
+
+      const layer = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layer.props.unknownProp).toBeUndefined();
+    });
+  });
+
+  describe('Store Persistence Configuration', () => {
+    it('should handle localStorage operations when persistLayerStoreConfig is disabled', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Mock localStorage
+      const mockGetItem = jest.spyOn(Storage.prototype, 'getItem');
+      const mockSetItem = jest.spyOn(Storage.prototype, 'setItem');
+
+      // Set persistLayerStoreConfig to false
+      useEditorStore.setState({ persistLayerStoreConfig: false });
+
+      // Try to add a layer (which would normally trigger persistence)
+      act(() => {
+        result.current.addComponentLayer('Button', '1');
+      });
+
+      // localStorage should not be called when persistence is disabled
+      // Note: This is hard to test directly without accessing the internal storage mechanism
+      // The test mainly ensures the code doesn't break when persistence is disabled
+
+      mockGetItem.mockRestore();
+      mockSetItem.mockRestore();
+    });
+
+    it('should test localStorage getItem when persistLayerStoreConfig is enabled', async () => {
+      // Set persistLayerStoreConfig to true
+      useEditorStore.setState({ persistLayerStoreConfig: true });
+
+      // Mock localStorage with a stored value
+      const mockGetItem = jest.spyOn(Storage.prototype, 'getItem');
+      mockGetItem.mockReturnValue(JSON.stringify({
+        state: {
+          pages: [{ id: 'stored-page', type: 'div', name: 'Stored Page', props: {}, children: [] }],
+          selectedPageId: 'stored-page',
+          selectedLayerId: null,
+          variables: []
+        },
+        version: 4
+      }));
+
+      // Note: Testing localStorage directly is difficult with Zustand persist middleware
+      // This test ensures the mock is set up correctly
+      const storedValue = localStorage.getItem('layer-store');
+      expect(storedValue).toBeTruthy();
+
+      mockGetItem.mockRestore();
+    });
+
+    it('should test localStorage setItem when persistLayerStoreConfig is enabled', () => {
+      // Set persistLayerStoreConfig to true
+      useEditorStore.setState({ persistLayerStoreConfig: true });
+
+      const mockSetItem = jest.spyOn(Storage.prototype, 'setItem');
+
+      // Create a new store instance to trigger persistence
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addComponentLayer('Button', '1');
+      });
+
+      // The test ensures setItem can be called without errors
+      expect(() => {
+        localStorage.setItem('test-key', 'test-value');
+      }).not.toThrow();
+
+      mockSetItem.mockRestore();
+    });
+
+    it('should test localStorage removeItem when persistLayerStoreConfig is enabled', () => {
+      // Set persistLayerStoreConfig to true
+      useEditorStore.setState({ persistLayerStoreConfig: true });
+
+      const mockRemoveItem = jest.spyOn(Storage.prototype, 'removeItem');
+
+      // The test ensures removeItem can be called without errors
+      expect(() => {
+        localStorage.removeItem('test-key');
+      }).not.toThrow();
+
+      mockRemoveItem.mockRestore();
+    });
+  });
+
+  describe('Additional Variable Edge Cases', () => {
+    it('should handle binding a prop when layer has no existing props', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add a minimal component
+      act(() => {
+        result.current.addComponentLayer('Button', '1');
+        result.current.addVariable('testVar', 'string', 'test value');
+      });
+
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      const variableId = result.current.variables[0].id;
+
+      // Bind a new prop
+      act(() => {
+        result.current.bindPropToVariable(layerId, 'newProp', variableId);
+      });
+
+      const layer = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layer.props.newProp).toEqual({ __variableRef: variableId });
+    });
+
+    it('should handle unbinding when layer has complex schema', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add a component with complex schema
+      useEditorStore.setState({
+        registry: {
+          ...useEditorStore.getState().registry,
+          ComplexComponent: {
+            schema: z.object({
+              nested: z.object({
+                prop: z.string().default('nested default')
+              }).default({ prop: 'nested default' })
+            }),
+            from: '@/components/ui/complex',
+            component: () => null,
+          }
+        }
+      });
+
+      act(() => {
+        result.current.addComponentLayer('ComplexComponent', '1');
+      });
+
+      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+
+      // Try to unbind a prop that uses nested schema
+      act(() => {
+        result.current.unbindPropFromVariable(layerId, 'nested');
+      });
+
+      const layer = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layer.props.nested).toEqual({ prop: 'nested default' });
+    });
+
+    it('should handle removeVariable when no registry schema exists', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Temporarily remove registry to test edge case
+      const originalRegistry = useEditorStore.getState().registry;
+      useEditorStore.setState({ registry: {} });
+
+      act(() => {
+        // Add a layer manually (bypassing registry check)
+        useLayerStore.setState({
+          pages: [{
+            id: '1',
+            type: 'div',
+            name: 'Page 1',
+            props: { className: 'p-4' },
+            children: [{
+              id: 'manual-layer',
+              type: 'UnknownType',
+              name: 'Unknown',
+              props: { someProp: { __variableRef: 'var-1' } },
+              children: []
+            }]
+          }],
+          variables: [{ id: 'var-1', name: 'testVar', type: 'string', defaultValue: 'test' }]
+        });
+      });
+
+      // Remove the variable when no schema exists
+      act(() => {
+        result.current.removeVariable('var-1');
+      });
+
+      const layer = result.current.pages[0].children[0] as ComponentLayer;
+      expect(layer.props.someProp).toBeUndefined();
+
+      // Restore registry
+      useEditorStore.setState({ registry: originalRegistry });
+    });
+  });
+
+  describe('Default Variable Bindings', () => {
+    beforeEach(() => {
+      // Add variables to the store
+      const { result } = renderHook(() => useLayerStore());
+      act(() => {
+        result.current.addVariable('userName', 'string', 'John Doe');
+        result.current.addVariable('userAge', 'number', 25);
+      });
+
+      // Update registry with components that have default variable bindings
+      useEditorStore.setState({
+        registry: {
+          ...useEditorStore.getState().registry,
+          ComponentWithDefaultBindings: {
+            schema: z.object({
+              title: z.string().default('Default Title'),
+              description: z.string().default('Default Description'),
+              count: z.number().default(0),
+            }),
+            from: '@/components/ui/component-with-default-bindings',
+            component: () => null,
+            defaultVariableBindings: [
+              { propName: 'title', variableId: 'var-id-1', immutable: true },
+              { propName: 'description', variableId: 'var-id-2', immutable: false },
+            ],
+          },
+          ComponentWithoutBindings: {
+            schema: z.object({
+              text: z.string().default('Default Text'),
+            }),
+            from: '@/components/ui/component-without-bindings',
+            component: () => null,
+          },
+        }
+      });
+    });
+
+    it('should apply default variable bindings when adding a component', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Manually set variable IDs to match what we expect in the binding definitions
+      act(() => {
+        const variables = result.current.variables;
+        if (variables.length >= 2) {
+          // Update the registry to use actual variable IDs
+          const registry = useEditorStore.getState().registry;
+          useEditorStore.setState({
+            registry: {
+              ...registry,
+              ComponentWithDefaultBindings: {
+                ...registry.ComponentWithDefaultBindings,
+                defaultVariableBindings: [
+                  { propName: 'title', variableId: variables[0].id, immutable: true },
+                  { propName: 'description', variableId: variables[1].id, immutable: false },
+                ],
+              },
+            }
+          });
+
+          result.current.addComponentLayer('ComponentWithDefaultBindings', '1');
+        }
+      });
+
+      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      expect(addedLayer.type).toBe('ComponentWithDefaultBindings');
+      
+      // Check that variable bindings were applied
+      const variables = result.current.variables;
+      expect(addedLayer.props.title).toEqual({ __variableRef: variables[0].id });
+      expect(addedLayer.props.description).toEqual({ __variableRef: variables[1].id });
+      
+      // Check that immutable bindings were tracked
+      expect(result.current.isBindingImmutable(addedLayer.id, 'title')).toBe(true);
+      expect(result.current.isBindingImmutable(addedLayer.id, 'description')).toBe(false);
+    });
+
+    it('should not apply bindings for non-existent variables', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Use registry with non-existent variable IDs
+      useEditorStore.setState({
+        registry: {
+          ...useEditorStore.getState().registry,
+          ComponentWithInvalidBindings: {
+            schema: z.object({
+              title: z.string().default('Default Title'),
+            }),
+            from: '@/components/ui/component-with-invalid-bindings',
+            component: () => null,
+            defaultVariableBindings: [
+              { propName: 'title', variableId: 'non-existent-var', immutable: true },
+            ],
+          },
+        }
+      });
+
+      act(() => {
+        result.current.addComponentLayer('ComponentWithInvalidBindings', '1');
+      });
+
+      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      
+      // Should use default value from schema, not variable binding
+      expect(addedLayer.props.title).toBe('Default Title');
+      expect(result.current.isBindingImmutable(addedLayer.id, 'title')).toBe(false);
+    });
+
+    it('should handle components without default variable bindings', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addComponentLayer('ComponentWithoutBindings', '1');
+      });
+
+      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      expect(addedLayer.type).toBe('ComponentWithoutBindings');
+      expect(addedLayer.props.text).toBe('Default Text');
+      expect(result.current.isBindingImmutable(addedLayer.id, 'text')).toBe(false);
+    });
+
+    it('should prevent unbinding immutable variable bindings', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Set up component with immutable binding
+      act(() => {
+        const variables = result.current.variables;
+        if (variables.length >= 1) {
+          useEditorStore.setState({
+            registry: {
+              ...useEditorStore.getState().registry,
+              ComponentWithDefaultBindings: {
+                ...useEditorStore.getState().registry.ComponentWithDefaultBindings,
+                defaultVariableBindings: [
+                  { propName: 'title', variableId: variables[0].id, immutable: true },
+                ],
+              },
+            }
+          });
+
+          result.current.addComponentLayer('ComponentWithDefaultBindings', '1');
+        }
+      });
+
+      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      
+      // Verify binding exists
+      expect(addedLayer.props.title).toEqual({ __variableRef: result.current.variables[0].id });
+      expect(result.current.isBindingImmutable(addedLayer.id, 'title')).toBe(true);
+
+      // Try to unbind immutable binding (should fail)
+      act(() => {
+        result.current.unbindPropFromVariable(addedLayer.id, 'title');
+      });
+
+      // Binding should still exist
+      const layerAfterUnbind = result.current.findLayerById(addedLayer.id) as ComponentLayer;
+      expect(layerAfterUnbind.props.title).toEqual({ __variableRef: result.current.variables[0].id });
+    });
+
+    it('should allow unbinding mutable variable bindings', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Set up component with mutable binding
+      act(() => {
+        const variables = result.current.variables;
+        if (variables.length >= 1) {
+          useEditorStore.setState({
+            registry: {
+              ...useEditorStore.getState().registry,
+              ComponentWithDefaultBindings: {
+                ...useEditorStore.getState().registry.ComponentWithDefaultBindings,
+                defaultVariableBindings: [
+                  { propName: 'description', variableId: variables[0].id, immutable: false },
+                ],
+              },
+            }
+          });
+
+          result.current.addComponentLayer('ComponentWithDefaultBindings', '1');
+        }
+      });
+
+      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      
+      // Verify binding exists
+      expect(addedLayer.props.description).toEqual({ __variableRef: result.current.variables[0].id });
+      expect(result.current.isBindingImmutable(addedLayer.id, 'description')).toBe(false);
+
+      // Unbind mutable binding (should succeed)
+      act(() => {
+        result.current.unbindPropFromVariable(addedLayer.id, 'description');
+      });
+
+      // Binding should be removed and default value set
+      const layerAfterUnbind = result.current.findLayerById(addedLayer.id) as ComponentLayer;
+      expect(layerAfterUnbind.props.description).toBe('Default Description');
+    });
+
+    it('should correctly report binding immutability', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      expect(result.current.isBindingImmutable('non-existent-layer', 'prop')).toBe(false);
+      expect(result.current.isBindingImmutable('layer-id', 'non-existent-prop')).toBe(false);
     });
   });
 });

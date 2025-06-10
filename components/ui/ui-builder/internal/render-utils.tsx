@@ -20,8 +20,8 @@ export interface EditorConfig {
   selectedLayer: ComponentLayer;
   parentUpdated?: boolean;
   onSelectElement: (layerId: string) => void;
-  handleDuplicateLayer: () => void;
-  handleDeleteLayer: () => void;
+  handleDuplicateLayer?: () => void;
+  handleDeleteLayer?: () => void;
   usingCanvas?: boolean;
 }
 

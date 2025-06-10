@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PropsPanel from "@/components/ui/ui-builder/internal/props-panel";
 import {
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
 import { RegistryEntry, ComponentLayer } from '@/components/ui/ui-builder/types';
+import { textInputFieldOverrides } from '@/lib/ui-builder/registry/form-field-overrides';
 import { z } from "zod";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 
@@ -51,6 +52,26 @@ jest.mock("@/components/ui/textarea", () => ({
   ),
 }));
 
+jest.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: any) => children,
+  TooltipTrigger: ({ children }: any) => children,
+  TooltipContent: ({ children }: any) => <div>{children}</div>,
+}));
+
+jest.mock("@/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: any) => <div>{children}</div>,
+  DropdownMenuTrigger: ({ children }: any) => children,
+  DropdownMenuContent: ({ children }: any) => <div>{children}</div>,
+  DropdownMenuItem: ({ children, onClick }: any) => (
+    <div onClick={onClick}>{children}</div>
+  ),
+}));
+
+jest.mock("@/components/ui/card", () => ({
+  Card: ({ children }: any) => <div>{children}</div>,
+  CardContent: ({ children }: any) => <div>{children}</div>,
+}));
+
 describe("PropsPanel", () => {
   const mockedUseLayerStore = useLayerStore as unknown as jest.Mock;
   const mockedUseEditorStore = useEditorStore as unknown as jest.Mock;
@@ -74,6 +95,9 @@ describe("PropsPanel", () => {
           {children}
         </button>
       ),
+      fieldOverrides: {
+        label: (layer: ComponentLayer) => textInputFieldOverrides(layer, true, 'label'),
+      },
     },
     Input: {
       schema: z.object({
@@ -106,6 +130,10 @@ describe("PropsPanel", () => {
     },
   };
 
+  const mockBindPropToVariable = jest.fn();
+  const mockUnbindPropFromVariable = jest.fn();
+  const mockIsBindingImmutable = jest.fn().mockReturnValue(false);
+
   const mockLayerState = {
     selectedLayerId: "layer-1",
     findLayerById: mockFindLayerById,
@@ -113,13 +141,22 @@ describe("PropsPanel", () => {
     duplicateLayer: mockDuplicateLayer,
     updateLayer: mockUpdateLayer,
     addComponentLayer: mockAddComponentLayer,
+    bindPropToVariable: mockBindPropToVariable,
+    unbindPropFromVariable: mockUnbindPropFromVariable,
+    isBindingImmutable: mockIsBindingImmutable,
     variables: [],
+    isLayerAPage: jest.fn().mockReturnValue(false),
   };
+
+  const mockIncrementRevision = jest.fn();
 
   const mockEditorState = {
     registry: mockRegistry,
     getComponentDefinition: mockGetComponentDefinition,
+    incrementRevision: mockIncrementRevision,
     revisionCounter: 0,
+    allowPagesCreation: true,
+    allowPagesDeletion: true,
   };
 
   beforeAll(() => {
@@ -147,6 +184,10 @@ describe("PropsPanel", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockBindPropToVariable.mockClear();
+    mockUnbindPropFromVariable.mockClear();
+    mockIsBindingImmutable.mockReturnValue(false);
+    mockIncrementRevision.mockClear();
     (useLayerStore as any).getState = jest.fn(() => mockLayerState);
     
     mockedUseLayerStore.mockImplementation((selector) => {
@@ -315,6 +356,7 @@ describe("PropsPanel", () => {
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
         variables: [],
+        isLayerAPage: jest.fn().mockReturnValue(false),
       };
       
       (useLayerStore as any).getState = jest.fn(() => noLayerState);
@@ -363,32 +405,176 @@ describe("PropsPanel", () => {
 
     it("should display the duplicate and delete buttons", () => {
       expect(
-        screen.getByTestId("button-Duplicate Component")
+        screen.getByTestId("button-Duplicate ,Component")
       ).toBeInTheDocument();
-      expect(screen.getByTestId("button-Delete Component")).toBeInTheDocument();
+      expect(screen.getByTestId("button-Delete ,Component")).toBeInTheDocument();
     });
 
-    it("should update layer properties on form change", async () => {
-      const { container } = renderPropsPanel();
-      let labelInput: HTMLElement | null = null;
-      await waitFor(() => {
-        labelInput = container.querySelector('input[name="label"]');
-        expect(labelInput).toBeInTheDocument();
+    it("should update layer properties on form change", () => {
+      const labelInput = screen.getByDisplayValue("Click Me");
+      
+      fireEvent.change(labelInput, { target: { value: "New Label" } });
+      
+      // Allow for either 2 or 3 parameters (the third being undefined)
+      expect(mockUpdateLayer).toHaveBeenCalledWith("layer-1", {
+        label: "New Label",
+        className: "button-class",
+      }, undefined);
+    });
+
+    it("should hide delete button when allowPagesDeletion is false for page layers", () => {
+      // Mock isLayerAPage to return true (this is a page layer)
+      const pageLayerState = {
+        ...mockLayerState,
+        isLayerAPage: jest.fn().mockReturnValue(true),
+      };
+      
+      // Mock editor state with allowPagesDeletion: false
+      const restrictedEditorState = {
+        ...mockEditorState,
+        allowPagesDeletion: false,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => pageLayerState);
+      
+      // Fix the selector pattern implementation
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(pageLayerState);
+        }
+        return pageLayerState;
+      });
+      
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(restrictedEditorState);
+        }
+        return restrictedEditorState;
       });
 
-      userEvent.clear(labelInput!);
-      userEvent.type(labelInput!, "New Label", { delay: 0 });
+      renderPropsPanel();
 
-      await waitFor(() => {
-        expect(mockUpdateLayer).toHaveBeenLastCalledWith(
-          "layer-1",
-          {
-            label: "New Label",
-            className: "button-class",
-          },
-          undefined
-        );
+      // Duplicate button should still be visible (allowPagesCreation is still true)
+      expect(screen.getByTestId("button-Duplicate ,Page")).toBeInTheDocument();
+      // Delete button should be hidden
+      expect(screen.queryByTestId("button-Delete ,Page")).not.toBeInTheDocument();
+    });
+
+    it("should hide duplicate button when allowPagesCreation is false for page layers", () => {
+      // Mock isLayerAPage to return true (this is a page layer)
+      const pageLayerState = {
+        ...mockLayerState,
+        isLayerAPage: jest.fn().mockReturnValue(true),
+      };
+      
+      // Mock editor state with allowPagesCreation: false
+      const restrictedEditorState = {
+        ...mockEditorState,
+        allowPagesCreation: false,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => pageLayerState);
+      
+      // Fix the selector pattern implementation
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(pageLayerState);
+        }
+        return pageLayerState;
       });
+      
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(restrictedEditorState);
+        }
+        return restrictedEditorState;
+      });
+
+      renderPropsPanel();
+
+      // Delete button should still be visible (allowPagesDeletion is still true)
+      expect(screen.getByTestId("button-Delete ,Page")).toBeInTheDocument();
+      // Duplicate button should be hidden
+      expect(screen.queryByTestId("button-Duplicate ,Page")).not.toBeInTheDocument();
+    });
+
+    it("should hide both buttons when both permissions are false for page layers", () => {
+      // Mock isLayerAPage to return true (this is a page layer)
+      const pageLayerState = {
+        ...mockLayerState,
+        isLayerAPage: jest.fn().mockReturnValue(true),
+      };
+      
+      // Mock editor state with both permissions false
+      const restrictedEditorState = {
+        ...mockEditorState,
+        allowPagesCreation: false,
+        allowPagesDeletion: false,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => pageLayerState);
+      
+      // Fix the selector pattern implementation
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(pageLayerState);
+        }
+        return pageLayerState;
+      });
+      
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(restrictedEditorState);
+        }
+        return restrictedEditorState;
+      });
+
+      renderPropsPanel();
+
+      // Both buttons should be hidden
+      expect(screen.queryByTestId("button-Duplicate ,Page")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("button-Delete ,Page")).not.toBeInTheDocument();
+    });
+
+    it("should show both buttons when permissions are false but layer is not a page", () => {
+      // Clean up any previous renders
+      cleanup();
+      
+      // Mock isLayerAPage to return false (this is not a page layer)
+      const nonPageLayerState = {
+        ...mockLayerState,
+        isLayerAPage: jest.fn().mockReturnValue(false),
+      };
+      
+      // Mock editor state with both permissions false
+      const restrictedEditorState = {
+        ...mockEditorState,
+        allowPagesCreation: false,
+        allowPagesDeletion: false,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => nonPageLayerState);
+      
+      // Fix the selector pattern implementation
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(nonPageLayerState);
+        }
+        return nonPageLayerState;
+      });
+      
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(restrictedEditorState);
+        }
+        return restrictedEditorState;
+      });
+
+      renderPropsPanel();
+
+      // Both buttons should be visible for non-page layers regardless of page permissions
+      expect(screen.getByTestId("button-Duplicate ,Component")).toBeInTheDocument();
+      expect(screen.getByTestId("button-Delete ,Component")).toBeInTheDocument();
     });
   });
 
@@ -402,6 +588,7 @@ describe("PropsPanel", () => {
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
         variables: [],
+        isLayerAPage: jest.fn().mockReturnValue(false),
       };
       
       (useLayerStore as any).getState = jest.fn(() => undefinedLayerState);
@@ -443,6 +630,7 @@ describe("PropsPanel", () => {
         duplicateLayer: mockDuplicateLayer,
         updateLayer: mockUpdateLayer,
         variables: [], // Add variables for consistency
+        isLayerAPage: jest.fn().mockReturnValue(false), // Add missing function
       };
       
       (useLayerStore as any).getState = jest.fn(() => unknownComponentState);
@@ -456,8 +644,8 @@ describe("PropsPanel", () => {
       expect(screen.queryByText("Unknown Test Component Properties")).not.toBeInTheDocument();
       expect(screen.queryByText("Type: UnknownComponent")).not.toBeInTheDocument();
       expect(screen.queryByTestId("auto-form")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("button-Duplicate Component")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("button-Delete Component")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("button-Duplicate ,Component")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("button-Delete ,Component")).not.toBeInTheDocument();
     });
 
     it("should handle rapid consecutive updates correctly", async () => {
@@ -506,6 +694,7 @@ describe("PropsPanel", () => {
       const layerStateWithVariables = {
         ...mockLayerState,
         variables: mockVariables,
+        isLayerAPage: jest.fn().mockReturnValue(false),
       };
       
       (useLayerStore as any).getState = jest.fn(() => layerStateWithVariables);
@@ -569,14 +758,14 @@ describe("PropsPanel", () => {
       };
 
       mockFindLayerById.mockReturnValue(componentLayer);
-      const { container } = renderPropsPanel();
+      renderPropsPanel();
 
       // Wait for form to render and check that variable is resolved for display
       await waitFor(() => {
-        const labelInput = container.querySelector('input[name="label"]') as HTMLInputElement;
-        expect(labelInput).toBeInTheDocument();
-        // The form should display the resolved value, not the variable reference
-        expect(labelInput.value).toBe('John Doe');
+        // When a variable is bound, it shows the variable name and resolved value, not an input field
+        expect(screen.getByText('userName')).toBeInTheDocument();
+        expect(screen.getByText('John Doe')).toBeInTheDocument();
+        expect(screen.getByText('string')).toBeInTheDocument();
       });
     });
 
@@ -593,14 +782,14 @@ describe("PropsPanel", () => {
       };
 
       mockFindLayerById.mockReturnValue(componentLayer);
-      const { container } = renderPropsPanel();
+      renderPropsPanel();
 
-      // Should handle missing variable gracefully
+      // Should handle missing variable gracefully by falling back to normal input
       await waitFor(() => {
-        const labelInput = container.querySelector('input[name="label"]') as HTMLInputElement;
-        expect(labelInput).toBeInTheDocument();
-        // Should show empty or undefined value for missing variable
-        expect(labelInput.value).toBe('');
+        expect(screen.queryByText("Missing Variable Button Properties")).toBeInTheDocument();
+        // Should render the form without crashing
+        const classNameInput = screen.getByDisplayValue('button-class');
+        expect(classNameInput).toBeInTheDocument();
       });
     });
 
@@ -686,6 +875,101 @@ describe("PropsPanel", () => {
       await waitFor(() => {
         expect(screen.queryByText("Multi Type Variables Properties")).toBeInTheDocument();
       });
+    });
+
+    it('should show immutable indicator and hide unbind button for immutable bindings', () => {
+      const testLayer: ComponentLayer = {
+        id: 'test-layer',
+        type: 'Button',
+        name: 'Test Button',
+        props: {
+          label: { __variableRef: 'var1' },
+          className: 'test-class'
+        },
+        children: [],
+      };
+
+      const layerStateWithImmutableBinding = {
+        ...mockLayerState,
+        variables: mockVariables,
+        selectedLayerId: 'test-layer',
+        findLayerById: jest.fn().mockReturnValue(testLayer),
+        isBindingImmutable: jest.fn().mockImplementation((layerId: string, propName: string) => 
+          layerId === 'test-layer' && propName === 'label'
+        ),
+        isLayerAPage: jest.fn().mockReturnValue(false),
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => layerStateWithImmutableBinding);
+
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(layerStateWithImmutableBinding);
+        }
+        return layerStateWithImmutableBinding;
+      });
+
+      render(<PropsPanel />);
+
+      // The label field should show as bound to a variable
+      expect(screen.getByText('userName')).toBeInTheDocument();
+      
+      // Should show the immutable indicator
+      expect(screen.getByTestId('immutable-badge')).toBeInTheDocument();
+      
+      // Should not show the unbind button for immutable bindings
+      const unbindButtons = screen.queryAllByRole('button');
+      const unlinkButton = unbindButtons.find(button => 
+        button.querySelector('svg[class*="lucide-unlink"]')
+      );
+      expect(unlinkButton).toBeUndefined();
+    });
+
+    it('should show unbind button for mutable bindings', () => {
+      const testLayer: ComponentLayer = {
+        id: 'test-layer',
+        type: 'Button',
+        name: 'Test Button',
+        props: {
+          label: { __variableRef: 'var1' },
+          className: 'test-class'
+        },
+        children: [],
+      };
+
+      const layerStateWithMutableBinding = {
+        ...mockLayerState,
+        variables: mockVariables,
+        selectedLayerId: 'test-layer',
+        findLayerById: jest.fn().mockReturnValue(testLayer),
+        isBindingImmutable: jest.fn().mockReturnValue(false), // All bindings are mutable
+        isLayerAPage: jest.fn().mockReturnValue(false),
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => layerStateWithMutableBinding);
+
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(layerStateWithMutableBinding);
+        }
+        return layerStateWithMutableBinding;
+      });
+
+      render(<PropsPanel />);
+
+      // The label field should show as bound to a variable
+      expect(screen.getByText('userName')).toBeInTheDocument();
+      
+      // Should not show the immutable indicator
+      expect(screen.queryByText('Immutable')).not.toBeInTheDocument();
+      
+      // Should show the unbind button for mutable bindings
+      const unbindButtons = screen.queryAllByRole('button');
+      const unlinkButton = unbindButtons.find(button => 
+        button.querySelector('svg[class*="lucide-unlink"]')
+      );
+      expect(unlinkButton).toBeDefined();
+      expect(unlinkButton).toBeInTheDocument();
     });
   });
 });

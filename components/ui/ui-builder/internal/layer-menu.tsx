@@ -14,8 +14,8 @@ interface MenuProps {
   width: number;
   height: number;
   zIndex: number;
-  handleDuplicateComponent: () => void;
-  handleDeleteComponent: () => void;
+  handleDuplicateComponent?: () => void;
+  handleDeleteComponent?: () => void;
 }
 
 export const LayerMenu: React.FC<MenuProps> = ({
@@ -28,15 +28,15 @@ export const LayerMenu: React.FC<MenuProps> = ({
 }) => {
   const [popoverOpen, setPopoverOpen] = useState(false);
   const selectedLayer = useLayerStore((state) => state.findLayerById(layerId));
+  const isLayerAPage = useLayerStore((state) => state.isLayerAPage(layerId));
 
   const componentRegistry = useEditorStore((state) => state.registry);
+  const allowPagesCreation = useEditorStore((state) => state.allowPagesCreation);
+  const allowPagesDeletion = useEditorStore((state) => state.allowPagesDeletion);
 
-  //const hasChildrenInSchema = schema.shape.children !== undefined;
-  const hasChildrenInSchema =
-    selectedLayer &&
-    hasLayerChildren(selectedLayer) &&
-    componentRegistry[selectedLayer.type as keyof typeof componentRegistry]
-      .schema.shape.children !== undefined;
+  // Check permissions for page operations
+  const canDuplicate = !isLayerAPage || allowPagesCreation;
+  const canDelete = !isLayerAPage || allowPagesDeletion;
 
   const style = useMemo(() => ({
     top: y,
@@ -48,7 +48,17 @@ export const LayerMenu: React.FC<MenuProps> = ({
     return buttonVariants({ variant: "ghost", size: "sm" });
   }, []);
 
-  
+  const canRenderAddChild = useMemo(() => {
+    if (!selectedLayer) return false;
+    
+    const componentDef = componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
+    if (!componentDef) return false;
+    
+    return (
+      hasLayerChildren(selectedLayer) &&
+      componentDef.schema.shape.children !== undefined
+    );
+  }, [selectedLayer, componentRegistry]);
 
   return (
     <>
@@ -75,7 +85,7 @@ export const LayerMenu: React.FC<MenuProps> = ({
               popoverOpen ? "max-w-xs" : ""
             )}
           >
-            {hasChildrenInSchema && (
+            {canRenderAddChild && (
               <AddComponentsPopover
                 parentLayerId={layerId}
                 className="flex-shrink w-min inline-flex"
@@ -92,26 +102,30 @@ export const LayerMenu: React.FC<MenuProps> = ({
                 </div>
               </AddComponentsPopover>
             )}
-            <div
-              className={cn(
-                buttonVariantsValues,
-                "cursor-pointer"
-              )}
-              onClick={handleDuplicateComponent}
-            >
-              <span className="sr-only">Duplicate</span>
-              <Copy className="h-5 w-5 text-secondary-foreground" />
-            </div>
-            <div
-              className={cn(
-                buttonVariantsValues,
-                "rounded-r-full mr-1 cursor-pointer"
-              )}
-              onClick={handleDeleteComponent}
-            >
-              <span className="sr-only">Delete</span>
-              <Trash className="h-5 w-5 text-secondary-foreground" />
-            </div>
+            {canDuplicate && (
+              <div
+                className={cn(
+                  buttonVariantsValues,
+                  "cursor-pointer"
+                )}
+                onClick={handleDuplicateComponent}
+              >
+                <span className="sr-only">Duplicate {isLayerAPage ? "Page" : "Component"}</span>
+                <Copy className="h-5 w-5 text-secondary-foreground" />
+              </div>
+            )}
+            {canDelete && (
+              <div
+                className={cn(
+                  buttonVariantsValues,
+                  "rounded-r-full mr-1 cursor-pointer"
+                )}
+                onClick={handleDeleteComponent}
+              >
+                <span className="sr-only">Delete {isLayerAPage ? "Page" : "Component"}</span>
+                <Trash className="h-5 w-5 text-secondary-foreground" />
+              </div>
+            )}
           </div>
         </span>
       </div>

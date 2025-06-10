@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useLayerStore } from "../store/layer-store";
 import { isVariableReference } from "../utils/variable-resolver";
-import { Link, Unlink } from "lucide-react";
+import { Link, LockKeyhole, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,6 +33,7 @@ import { useEditorStore } from "../store/editor-store";
 import { Card, CardContent } from "@/components/ui/card";
 import BreakpointClassNameControl from "@/components/ui/ui-builder/internal/classname-control";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 export const classNameFieldOverrides: FieldConfigFunction = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -247,6 +248,7 @@ export function VariableBindingWrapper({
   const variables = useLayerStore((state) => state.variables);
   const selectedLayerId = useLayerStore((state) => state.selectedLayerId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
+  const isBindingImmutable = useLayerStore((state) => state.isBindingImmutable);
   const incrementRevision = useEditorStore((state) => state.incrementRevision);
   const unbindPropFromVariable = useLayerStore(
     (state) => state.unbindPropFromVariable
@@ -265,6 +267,7 @@ export function VariableBindingWrapper({
   const boundVariable = isCurrentlyBound
     ? variables.find((v) => v.id === currentValue.__variableRef)
     : null;
+  const isImmutable = isBindingImmutable(selectedLayer.id, propName);
 
   const handleBindToVariable = (variableId: string) => {
     bindPropToVariable(selectedLayer.id, propName, variableId);
@@ -295,6 +298,11 @@ export function VariableBindingWrapper({
                       <span className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">
                         {boundVariable.type}
                       </span>
+                      {isImmutable && (
+                        <Badge data-testid="immutable-badge" className="rounded">
+                          <LockKeyhole strokeWidth={3} className="w-3 h-3" />
+                        </Badge>
+                      )}
                     </div>
                     <span className="text-xs text-muted-foreground truncate">
                       {String(boundVariable.defaultValue)}
@@ -303,18 +311,20 @@ export function VariableBindingWrapper({
                 </div>
               </CardContent>
             </Card>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  onClick={handleUnbind}
-                  className="px-3 h-10"
-                >
-                  <Unlink className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Unbind Variable</TooltipContent>
-            </Tooltip>
+            {!isImmutable && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={handleUnbind}
+                    className="px-3 h-10"
+                  >
+                    <Unlink className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Unbind Variable</TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
       ) : (

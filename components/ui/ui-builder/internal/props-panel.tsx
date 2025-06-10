@@ -132,12 +132,26 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
 }) => {
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const revisionCounter = useEditorStore((state) => state.revisionCounter);
-  const selectedLayer = findLayerById(selectedLayerId) as ComponentLayer | undefined;
-  
+  const selectedLayer = findLayerById(selectedLayerId) as
+    | ComponentLayer
+    | undefined;
+  const isPage = useLayerStore((state) => state.isLayerAPage(selectedLayerId));
+  const allowPagesCreation = useEditorStore(
+    (state) => state.allowPagesCreation
+  );
+  const allowPagesDeletion = useEditorStore(
+    (state) => state.allowPagesDeletion
+  );
+
   // Retrieve the appropriate schema from componentRegistry
   const { schema } = useMemo(() => {
-    if (selectedLayer && componentRegistry[selectedLayer.type as keyof typeof componentRegistry]) {
-      return componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
+    if (
+      selectedLayer &&
+      componentRegistry[selectedLayer.type as keyof typeof componentRegistry]
+    ) {
+      return componentRegistry[
+        selectedLayer.type as keyof typeof componentRegistry
+      ];
     }
     return { schema: EMPTY_ZOD_SCHEMA }; // Fallback schema
   }, [selectedLayer, componentRegistry]);
@@ -151,28 +165,37 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
   }, [duplicateLayer, selectedLayerId]);
 
   const onParsedValuesChange = useCallback(
-    (parsedValues: z.infer<typeof schema> & { children?: string | { layerType: string, addPosition: number } }) => {
+    (
+      parsedValues: z.infer<typeof schema> & {
+        children?: string | { layerType: string; addPosition: number };
+      }
+    ) => {
       const { children, ...dataProps } = parsedValues;
-      
+
       // Preserve variable references by merging with original props
       const preservedProps: Record<string, any> = {};
       if (selectedLayer) {
         // Start with all original props to preserve any that aren't in the form update
         Object.assign(preservedProps, selectedLayer.props);
-        
+
         // Then update only the props that came from the form, preserving variable references
-        Object.keys(dataProps as Record<string, any>).forEach(key => {
+        Object.keys(dataProps as Record<string, any>).forEach((key) => {
           const originalValue = selectedLayer.props[key];
           const newValue = (dataProps as Record<string, any>)[key];
           const fieldDef = schema?.shape?.[key];
-          const baseType = fieldDef ? getBaseType(fieldDef as z.ZodAny) : undefined;
+          const baseType = fieldDef
+            ? getBaseType(fieldDef as z.ZodAny)
+            : undefined;
           // If the original value was a variable reference, preserve it
           if (isVariableReference(originalValue)) {
             // Keep the variable reference - the form should not override variable bindings
             preservedProps[key] = originalValue;
           } else {
             // Handle date serialization
-            if (baseType === z.ZodFirstPartyTypeKind.ZodDate && newValue instanceof Date) {
+            if (
+              baseType === z.ZodFirstPartyTypeKind.ZodDate &&
+              newValue instanceof Date
+            ) {
               preservedProps[key] = newValue.toISOString();
             } else {
               preservedProps[key] = newValue;
@@ -180,13 +203,19 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
           }
         });
       }
-      
-      if(typeof children === "string") {
-        updateLayer(selectedLayerId, preservedProps, { children: children  });
-      }else if(children && children.layerType) {
-        updateLayer(selectedLayerId, preservedProps, { children: selectedLayer?.children });
-        addComponentLayer(children.layerType, selectedLayerId, children.addPosition)
-      }else{
+
+      if (typeof children === "string") {
+        updateLayer(selectedLayerId, preservedProps, { children: children });
+      } else if (children && children.layerType) {
+        updateLayer(selectedLayerId, preservedProps, {
+          children: selectedLayer?.children,
+        });
+        addComponentLayer(
+          children.layerType,
+          selectedLayerId,
+          children.addPosition
+        );
+      } else {
         updateLayer(selectedLayerId, preservedProps);
       }
     },
@@ -198,13 +227,16 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
     if (!selectedLayer) return EMPTY_FORM_VALUES;
 
     const variables = useLayerStore.getState().variables;
-    
+
     // First resolve variable references to get display values
-    const resolvedProps = resolveVariableReferences(selectedLayer.props, variables);
-    
+    const resolvedProps = resolveVariableReferences(
+      selectedLayer.props,
+      variables
+    );
+
     const transformedProps: Record<string, any> = {};
     const schemaShape = schema?.shape as z.ZodRawShape | undefined; // Get shape from the memoized schema
-    
+
     if (schemaShape) {
       for (const [key, value] of Object.entries(resolvedProps)) {
         const fieldDef = schemaShape[key];
@@ -212,12 +244,13 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
           const baseType = getBaseType(fieldDef as z.ZodAny);
           if (baseType === z.ZodFirstPartyTypeKind.ZodEnum) {
             // Convert enum value to string if it's not already a string
-            transformedProps[key] = typeof value === 'string' ? value : String(value);
+            transformedProps[key] =
+              typeof value === "string" ? value : String(value);
           } else if (baseType === z.ZodFirstPartyTypeKind.ZodDate) {
             // Convert string to Date if necessary
             if (value instanceof Date) {
               transformedProps[key] = value;
-            } else if (typeof value === 'string' || typeof value === 'number') {
+            } else if (typeof value === "string" || typeof value === "number") {
               const date = new Date(value);
               transformedProps[key] = isNaN(date.getTime()) ? undefined : date;
             } else {
@@ -230,14 +263,13 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
           transformedProps[key] = value;
         }
       }
-      
     } else {
-       // Fallback if schema shape isn't available: copy resolved props as is
-       Object.assign(transformedProps, resolvedProps);
+      // Fallback if schema shape isn't available: copy resolved props as is
+      Object.assign(transformedProps, resolvedProps);
     }
 
     return { ...transformedProps, children: selectedLayer.children };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLayer, schema, revisionCounter]); // Include revisionCounter to detect undo/redo changes
 
   const autoFormSchema = useMemo(() => {
@@ -271,22 +303,28 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
       fieldConfig={autoFormFieldConfig}
       className="space-y-4 mt-4"
     >
-      <Button
-        type="button"
-        variant="secondary"
-        className="mt-4 w-full"
-        onClick={handleDuplicateLayer}
-      >
-        Duplicate Component
-      </Button>
-      <Button
-        type="button"
-        variant="destructive"
-        className="mt-4 w-full"
-        onClick={handleDeleteLayer}
-      >
-        Delete Component
-      </Button>
+      {(!isPage || allowPagesCreation) && (
+        <Button
+          type="button"
+          variant="secondary"
+          className="mt-4 w-full"
+          onClick={handleDuplicateLayer}
+          data-testid={`button-Duplicate ,${isPage ? "Page" : "Component"}`}
+        >
+          Duplicate {isPage ? "Page" : "Component"}
+        </Button>
+      )}
+      {(!isPage || allowPagesDeletion) && (
+        <Button
+          type="button"
+          variant="destructive"
+          className="mt-4 w-full"
+          onClick={handleDeleteLayer}
+          data-testid={`button-Delete ,${isPage ? "Page" : "Component"}`}
+        >
+          Delete {isPage ? "Page" : "Component"}
+        </Button>
+      )}
     </AutoForm>
   );
 };

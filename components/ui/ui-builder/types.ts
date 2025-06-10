@@ -26,12 +26,19 @@ export interface Variable {
   defaultValue: any;
 }
 
+export interface DefaultVariableBinding {
+  propName: string;
+  variableId: string;
+  immutable?: boolean;
+}
+
 export interface RegistryEntry<T extends ReactComponentType<any>> {
   component?: T;
   schema: ZodObject<any>;
   from?: string;
   isFromDefaultExport?: boolean;
   defaultChildren?: (ComponentLayer)[] | string;
+  defaultVariableBindings?: DefaultVariableBinding[];
   fieldOverrides?: Record<string, FieldConfigFunction>;
 }
 
