@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useLayerStore } from "../store/layer-store";
 import { isVariableReference } from "../utils/variable-resolver";
-import { Link, Unlink } from "lucide-react";
+import { Link, LockKeyhole, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,6 +33,7 @@ import { useEditorStore } from "../store/editor-store";
 import { Card, CardContent } from "@/components/ui/card";
 import BreakpointClassNameControl from "@/components/ui/ui-builder/internal/classname-control";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 export const classNameFieldOverrides: FieldConfigFunction = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -298,9 +299,9 @@ export function VariableBindingWrapper({
                         {boundVariable.type}
                       </span>
                       {isImmutable && (
-                        <span className="px-1.5 py-0.5 bg-orange-100 text-orange-800 rounded text-xs font-medium">
-                          Immutable
-                        </span>
+                        <Badge data-testid="immutable-badge" className="rounded">
+                          <LockKeyhole strokeWidth={3} className="w-3 h-3" />
+                        </Badge>
                       )}
                     </div>
                     <span className="text-xs text-muted-foreground truncate">

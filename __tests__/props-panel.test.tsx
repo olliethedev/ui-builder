@@ -915,7 +915,7 @@ describe("PropsPanel", () => {
       expect(screen.getByText('userName')).toBeInTheDocument();
       
       // Should show the immutable indicator
-      expect(screen.getByText('Immutable')).toBeInTheDocument();
+      expect(screen.getByTestId('immutable-badge')).toBeInTheDocument();
       
       // Should not show the unbind button for immutable bindings
       const unbindButtons = screen.queryAllByRole('button');

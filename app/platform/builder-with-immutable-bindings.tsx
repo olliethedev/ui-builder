@@ -345,56 +345,10 @@ const initialVariables: Variable[] = [
   }
 ];
 
-// Helper to set up initial immutable bindings for the demo
-const setupInitialImmutableBindings = () => {
-  // This will be called when the store is initialized
-  // We need to set up the immutable bindings for our pre-defined components
-  return {
-    "user-profile-demo": {
-      "userId": true,
-      "email": true, 
-      "role": true,
-      "displayName": false
-    },
-    "primary-button-demo": {
-      "brandColor": true,
-      "companyName": true,
-      "text": false
-    },
-    "secondary-button-demo": {
-      "brandColor": true,
-      "companyName": true,
-      "text": false
-    },
-    "system-alert-demo": {
-      "systemVersion": true,
-      "maintenanceMode": true,
-      "message": false
-    }
-  };
-};
-
 export const BuilderWithImmutableBindings = () => {
   const handleChange = (updatedPages: ComponentLayer[]) => {
     console.log("🔄 Builder state changed:", updatedPages);
   };
-
-  // Set up initial immutable bindings after component mounts
-  React.useEffect(() => {
-    const unsubscribe = useLayerStore.subscribe((state) => {
-      // Only run this once when layers are first initialized
-      if (state.pages.length > 0 && Object.keys(state.immutableBindings).length === 0) {
-        const initialBindings = setupInitialImmutableBindings();
-        // Apply the bindings using the store's internal state
-        useLayerStore.setState((prev) => ({
-          ...prev,
-          immutableBindings: initialBindings
-        }));
-      }
-    });
-
-    return unsubscribe;
-  }, []);
 
   return (
     <UIBuilder 
@@ -408,6 +362,7 @@ export const BuilderWithImmutableBindings = () => {
       onChange={handleChange}
       allowPagesCreation={true}
       allowPagesDeletion={true}
+      allowVariableEditing={false}
     />
   );
 }; 
