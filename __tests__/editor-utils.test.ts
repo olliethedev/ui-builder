@@ -20,7 +20,7 @@ describe('Editor Utils', () => {
         component: () => null,
         fieldOverrides: {
           label: (layer: ComponentLayer) => ({
-            fieldType: 'text',
+            fieldType: 'fallback',
             label: `Label for ${layer.name}`,
             description: 'Custom label field',
           }),
@@ -77,7 +77,7 @@ describe('Editor Utils', () => {
 
       expect(overrides).toEqual({
         label: {
-          fieldType: 'text',
+          fieldType: 'fallback',
           label: 'Label for Test Button',
           description: 'Custom label field',
         },
@@ -184,7 +184,7 @@ describe('Editor Utils', () => {
           fieldOverrides: {
             prop1: () => undefined as any,
             prop2: (layer: ComponentLayer) => ({
-              fieldType: 'text',
+              fieldType: 'fallback',
               label: 'Valid Override',
               description: 'This override is valid',
             }),
@@ -205,7 +205,7 @@ describe('Editor Utils', () => {
       // Should only include the valid override, skip the undefined one
       expect(overrides).toEqual({
         prop2: {
-          fieldType: 'text',
+          fieldType: 'fallback',
           label: 'Valid Override',
           description: 'This override is valid',
         },
@@ -214,7 +214,7 @@ describe('Editor Utils', () => {
 
     it('should pass correct layer data to field override functions', () => {
       const mockOverrideFunction = jest.fn().mockReturnValue({
-        fieldType: 'text',
+        fieldType: 'fallback',
         label: 'Mock Label',
         description: 'Mock Description',
       });

@@ -27,5 +27,19 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-      - name: Run tests
-        run: npm run test:ci 
+      - name: Run tests with coverage
+        run: npm run test -- --coverage --coverageReporters=text-summary --coverageReporters=lcov
+
+      - name: Check coverage threshold
+        run: |
+          # Extract coverage percentage from the test output
+          COVERAGE=$(npm run test -- --coverage --coverageReporters=text-summary --silent | grep -o 'Lines.*: [0-9.]*%' | grep -o '[0-9.]*' | head -1)
+          echo "Current line coverage: ${COVERAGE}%"
+          
+          # Check if coverage is below 80%
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "❌ Coverage ($COVERAGE%) is below the required threshold of 80%"
+            exit 1
+          else
+            echo "✅ Coverage ($COVERAGE%) meets the required threshold of 80%"
+          fi
