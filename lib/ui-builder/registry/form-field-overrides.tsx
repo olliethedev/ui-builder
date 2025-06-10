@@ -161,7 +161,6 @@ export const childrenAsTipTapFieldOverrides: FieldConfigFunction = (
           editorClassName="focus:outline-none px-4 py-2 h-full"
           // eslint-disable-next-line react-perf/jsx-no-new-function-as-prop
           onChange={(content) => {
-            console.log({ content });
             //if string call field.onChange
             if (typeof content === "string") {
               field.onChange(content);

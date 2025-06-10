@@ -1,11 +1,5 @@
-import { Variable } from '@/components/ui/ui-builder/types';
-
-/**
- * Checks if a value is a variable reference
- */
-export function isVariableReference(value: any): value is { __variableRef: string } {
-  return typeof value === 'object' && value !== null && '__variableRef' in value;
-}
+import React from 'react';
+import { Variable, VariableReference, PropValue, isVariableReference } from '@/components/ui/ui-builder/types';
 
 /**
  * Resolves variable references in props using provided variable values
@@ -15,11 +9,11 @@ export function isVariableReference(value: any): value is { __variableRef: strin
  * @returns Props with variable references resolved
  */
 export function resolveVariableReferences(
-  props: Record<string, any>,
+  props: Record<string, PropValue>,
   variables: Variable[],
-  variableValues?: Record<string, any>
-): Record<string, any> {
-  const resolved: Record<string, any> = {};
+  variableValues?: Record<string, PropValue>
+): Record<string, PropValue> {
+  const resolved: Record<string, PropValue> = {};
 
   for (const [key, value] of Object.entries(props)) {
     if (isVariableReference(value)) {
@@ -31,9 +25,9 @@ export function resolveVariableReferences(
         // Variable not found, use default value or undefined
         resolved[key] = undefined;
       }
-    } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      // Recursively resolve nested objects
-      resolved[key] = resolveVariableReferences(value, variables, variableValues);
+    } else if (typeof value === 'object' && value !== null && !Array.isArray(value) && !React.isValidElement(value)) {
+      // Recursively resolve nested objects (but not React elements or arrays)
+      resolved[key] = resolveVariableReferences(value as Record<string, PropValue>, variables, variableValues);
     } else {
       // Regular value, keep as is
       resolved[key] = value;
@@ -42,3 +36,6 @@ export function resolveVariableReferences(
 
   return resolved;
 }
+
+// Export the isVariableReference function for backward compatibility
+export { isVariableReference };

@@ -629,7 +629,6 @@ npm run test
 ## Roadmap
 
 - [ ] Add variable binding to layer children and not just props
-- [ ] Improve DX. End to end type safety.
 - [ ] Documentation site for UI Builder with more hands-on examples
 - [ ] Configurable Tailwind Class subset for things like React-Email components
 - [ ] Drag and drop component in the editor panel and not just in the layers panel

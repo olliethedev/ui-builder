@@ -9,12 +9,11 @@ import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallbac
 import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
-import { ComponentRegistry, ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
+import { ComponentRegistry, ComponentLayer, Variable, PropValue } from '@/components/ui/ui-builder/types';
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { resolveVariableReferences } from "@/lib/ui-builder/utils/variable-resolver";
 
 export interface EditorConfig {
-  
   zIndex: number;
   totalLayers: number;
   selectedLayer: ComponentLayer;
@@ -30,7 +29,7 @@ export const RenderLayer: React.FC<{
   componentRegistry: ComponentRegistry;
   editorConfig?: EditorConfig;
   variables?: Variable[];
-  variableValues?: Record<string, any>;
+  variableValues?: Record<string, PropValue>;
 }> = memo(
   ({ layer, componentRegistry, editorConfig, variables, variableValues }) => {
     const storeVariables = useLayerStore((state) => state.variables);
@@ -52,7 +51,7 @@ export const RenderLayer: React.FC<{
 
     // Resolve variable references in props
     const resolvedProps = resolveVariableReferences(layer.props, effectiveVariables, variableValues);
-    const childProps: Record<string, any> = useMemo(() => ({ ...resolvedProps }), [resolvedProps]);
+    const childProps: Record<string, PropValue> = useMemo(() => ({ ...resolvedProps }), [resolvedProps]);
     
     // Memoize child editor config to avoid creating objects in JSX
     const childEditorConfig = useMemo(() => {

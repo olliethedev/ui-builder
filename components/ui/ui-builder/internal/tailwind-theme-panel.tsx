@@ -74,27 +74,35 @@ function ThemePicker({
 }) {
   const { updateLayer: updateLayerProps } = useLayerStore();
 
+  // Safely extract values with type checking
+  const colorThemeValue = pageLayer.props?.["data-color-theme"];
+  const modeValue = pageLayer.props?.["data-mode"];
+  const borderRadiusValue = pageLayer.props?.borderRadius;
+
   const [colorTheme, setColorTheme] = useState<BaseColor["name"]>(
-    pageLayer.props?.["data-color-theme"] || "red"
+    (typeof colorThemeValue === 'string' ? colorThemeValue : "red") as BaseColor["name"]
   );
   const [borderRadius, setBorderRadius] = useState(
-    pageLayer.props?.["data-border-radius"] || 0.3
+    typeof borderRadiusValue === 'number' ? borderRadiusValue : 0.5
   );
   const [mode, setMode] = useState<"light" | "dark">(
-    pageLayer.props?.["data-mode"] || "light"
+    (typeof modeValue === 'string' ? modeValue : "light") as "light" | "dark"
   );
+
+  
 
   useEffect(() => {
     if (isDisabled) return;
 
-    const colorData = baseColors.find((color) => color.name === colorTheme);
-    if (colorData) {
+    const colorThemeData = baseColors.find((color) => color.name === colorTheme);
+
+    if (colorThemeData) {
       const colorDataWithBorder = {
-        ...colorData,
+        ...colorThemeData,
         cssVars: {
-          ...colorData.cssVars,
+          ...colorThemeData.cssVars,
           [mode]: {
-            ...colorData.cssVars[mode],
+            ...colorThemeData.cssVars[mode],
             radius: `${borderRadius}rem`,
           },
         },

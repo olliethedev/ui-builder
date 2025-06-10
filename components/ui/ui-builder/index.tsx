@@ -24,7 +24,9 @@ import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import {
   ComponentRegistry,
   ComponentLayer,
-  Variable
+  Variable,
+  LayerChangeHandler,
+  VariableChangeHandler
 } from "@/components/ui/ui-builder/types";
 import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
@@ -52,14 +54,14 @@ interface PanelConfig {
 }
 
 /**
- * UIBuilderProps defines the props for the UIBuilder component.
+ * UIBuilderProps defines the props for the UIBuilder component with enhanced type safety.
  */
-interface UIBuilderProps {
+interface UIBuilderProps<TRegistry extends ComponentRegistry = ComponentRegistry> {
   initialLayers?: ComponentLayer[];
-  onChange?: (pages: ComponentLayer[]) => void;
+  onChange?: LayerChangeHandler<TRegistry>;
   initialVariables?: Variable[];
-  onVariablesChange?: (variables: Variable[]) => void;
-  componentRegistry: ComponentRegistry;
+  onVariablesChange?: VariableChangeHandler;
+  componentRegistry: TRegistry;
   panelConfig?: PanelConfig;
   persistLayerStore?: boolean;
   allowVariableEditing?: boolean;
@@ -73,7 +75,7 @@ interface UIBuilderProps {
  * @param {UIBuilderProps} props - The props for the UIBuilder component.
  * @returns {JSX.Element} The UIBuilder component wrapped in a ThemeProvider.
  */
-const UIBuilder = ({
+const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
   initialLayers,
   onChange,
   initialVariables,
@@ -84,7 +86,7 @@ const UIBuilder = ({
   allowVariableEditing = true,
   allowPagesCreation = true,
   allowPagesDeletion = true,
-}: UIBuilderProps) => {
+}: UIBuilderProps<TRegistry>) => {
   const layerStore = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
 
