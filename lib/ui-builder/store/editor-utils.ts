@@ -24,12 +24,12 @@ export const generateFieldOverrides = (registry: ComponentRegistry, layer: Compo
 
 }
 
-//Checking of component type, checked via from property, if undefined then its a primitive like <div/>, <img/>, etc
+//Checking of component type, checked via from property, if undefined or null then its a primitive like <div/>, <img/>, etc
 export function isPrimitiveComponent(component: RegistryEntry<ReactComponentType<any>>): boolean {
-    return component.from === undefined;
+    return component.from === undefined || component.from === null;
 }
 
-//Checking of component type, checked via from property, if defined then its a complex component like <Button/>, <Badge/>, etc
+//Checking of component type, checked via from property, if defined and not null then its a complex component like <Button/>, <Badge/>, etc
 export function isCustomComponent(component: RegistryEntry<ReactComponentType<any>>): boolean {
-    return component.from !== undefined;
+    return component.from !== undefined && component.from !== null;
 }

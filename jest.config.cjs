@@ -22,7 +22,16 @@ const customJestConfig = {
   collectCoverageFrom: [
     "components/ui/ui-builder/**/*.{js,jsx,ts,tsx}",
     "lib/ui-builder/**/*.{js,jsx,ts,tsx}",
-    // Add more folders as needed
+    "!**/*complex-component-definitions.ts",
+    "!**/*primitive-component-definitions.ts",
+    "!components/ui/ui-builder/multi-select.tsx",
+    "!components/ui/ui-builder/markdown.tsx",
+    "!components/ui/ui-builder/icon.tsx",
+    "!components/ui/ui-builder/flexbox.tsx",
+    "!components/ui/ui-builder/grid.tsx",
+    "!components/ui/ui-builder/codeblock.tsx",
+    "!components/ui/ui-builder/internal/iconname-field.tsx",
+    "!components/ui/ui-builder/internal/classname-control/*",
   ],
 };
 

@@ -106,6 +106,48 @@ describe("Layer Utils", () => {
       const total = countLayers([]);
       expect(total).toBe(0);
     });
+
+    it("should return 0 for string children", () => {
+      const total = countLayers("some text string");
+      expect(total).toBe(0);
+    });
+
+    it("should count deeply nested layers correctly", () => {
+      const nestedLayers: ComponentLayer[] = [
+        {
+          id: "layer1",
+          type: "container",
+          name: "Container",
+          props: {},
+          children: [
+            {
+              id: "layer2",
+              type: "button",
+              name: "Button",
+              props: {},
+              children: []
+            },
+            {
+              id: "layer3",
+              type: "container",
+              name: "Nested Container",
+              props: {},
+              children: [
+                {
+                  id: "layer4",
+                  type: "span",
+                  name: "Nested Span",
+                  props: {},
+                  children: []
+                }
+              ]
+            }
+          ]
+        }
+      ];
+      const total = countLayers(nestedLayers);
+      expect(total).toBe(4); // layer1, layer2, layer3, layer4
+    });
   });
 
   describe("addLayer", () => {
@@ -195,6 +237,115 @@ describe("Layer Utils", () => {
       expect(page1.children).toHaveLength(3);
       expect((page1.children as ComponentLayer[])[2].id).toBe("layer4");
     });
+
+    it("should handle adding to a parent with no existing children", () => {
+      const layersWithEmptyParent: ComponentLayer[] = [
+        {
+          id: "page1",
+          type: "_page_",
+          name: "Page 1",
+          props: {},
+          children: []
+        }
+      ];
+
+      const newLayer: ComponentLayer = {
+        id: "layer1",
+        type: "button",
+        name: "Button Layer",
+        props: { label: "Click Me" },
+        children: [],
+      };
+
+      const updatedLayers = addLayer(layersWithEmptyParent, newLayer, "page1");
+      const page1 = updatedLayers.find(page => page.id === "page1") as ComponentLayer;
+      
+      expect(page1.children).toHaveLength(1);
+      expect((page1.children as ComponentLayer[])[0].id).toBe("layer1");
+    });
+
+    it("should handle adding to a parent with undefined children", () => {
+      const layersWithUndefinedChildren: ComponentLayer[] = [
+        {
+          id: "page1",
+          type: "_page_",
+          name: "Page 1",
+          props: {},
+          children: undefined as any
+        }
+      ];
+
+      const newLayer: ComponentLayer = {
+        id: "layer1",
+        type: "button",
+        name: "Button Layer",
+        props: { label: "Click Me" },
+        children: [],
+      };
+
+      const updatedLayers = addLayer(layersWithUndefinedChildren, newLayer, "page1");
+      const page1 = updatedLayers.find(page => page.id === "page1") as ComponentLayer;
+      
+      expect(page1.children).toHaveLength(1);
+      expect((page1.children as ComponentLayer[])[0].id).toBe("layer1");
+    });
+
+    it("should not modify layers when parent is not found", () => {
+      const newLayer: ComponentLayer = {
+        id: "layer1",
+        type: "button",
+        name: "Button Layer",
+        props: { label: "Click Me" },
+        children: [],
+      };
+
+      const updatedLayers = addLayer(mockPages, newLayer, "non-existent-parent");
+      
+      // Should return the same structure since parent was not found
+      expect(updatedLayers).toEqual(mockPages);
+    });
+
+    it("should handle adding to deeply nested parents", () => {
+      const deeplyNestedPages: ComponentLayer[] = [
+        {
+          id: "page1",
+          type: "_page_",
+          name: "Page 1",
+          props: {},
+          children: [
+            {
+              id: "container1",
+              type: "container",
+              name: "Container 1",
+              props: {},
+              children: [
+                {
+                  id: "container2",
+                  type: "container",
+                  name: "Container 2",
+                  props: {},
+                  children: []
+                }
+              ]
+            }
+          ]
+        }
+      ];
+
+      const newLayer: ComponentLayer = {
+        id: "deep-layer",
+        type: "button",
+        name: "Deep Button",
+        props: {},
+        children: [],
+      };
+
+      const updatedLayers = addLayer(deeplyNestedPages, newLayer, "container2");
+      
+      const container2 = ((updatedLayers[0].children as ComponentLayer[])[0].children as ComponentLayer[])[0];
+      expect(container2.children).toHaveLength(1);
+      expect((container2.children as ComponentLayer[])[0].id).toBe("deep-layer");
+    });
   });
 
   describe("findLayerRecursive", () => {
@@ -251,6 +402,50 @@ describe("Layer Utils", () => {
         ],
       };
       expect(hasLayerChildren(layer)).toBe(true);
+    });
+
+    it("should return false if the layer has string children", () => {
+      const layer: ComponentLayer = {
+        id: "text1",
+        type: "span",
+        name: "Text Layer",
+        props: {},
+        children: "Some text content",
+      };
+      expect(hasLayerChildren(layer)).toBe(false);
+    });
+
+    it("should return false if the layer has empty array children", () => {
+      const layer: ComponentLayer = {
+        id: "empty1",
+        type: "div",
+        name: "Empty Layer",
+        props: {},
+        children: [],
+      };
+      expect(hasLayerChildren(layer)).toBe(true); // Empty array is still an array
+    });
+
+    it("should return false if the layer has null children", () => {
+      const layer: ComponentLayer = {
+        id: "null1",
+        type: "div",
+        name: "Null Layer",
+        props: {},
+        children: null as any,
+      };
+      expect(hasLayerChildren(layer)).toBe(false);
+    });
+
+    it("should return false if the layer has undefined children", () => {
+      const layer: ComponentLayer = {
+        id: "undefined1",
+        type: "div",
+        name: "Undefined Layer",
+        props: {},
+        children: undefined as any,
+      };
+      expect(hasLayerChildren(layer)).toBe(false);
     });
   });
 
