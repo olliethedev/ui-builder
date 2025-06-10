@@ -182,7 +182,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
         Object.keys(dataProps as Record<string, any>).forEach((key) => {
           const originalValue = selectedLayer.props[key];
           const newValue = (dataProps as Record<string, any>)[key];
-          const fieldDef = schema?.shape?.[key];
+          const fieldDef = ('shape' in schema && schema.shape) ? schema.shape[key] : undefined;
           const baseType = fieldDef
             ? getBaseType(fieldDef as z.ZodAny)
             : undefined;
@@ -235,7 +235,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
     );
 
     const transformedProps: Record<string, any> = {};
-    const schemaShape = schema?.shape as z.ZodRawShape | undefined; // Get shape from the memoized schema
+    const schemaShape = ('shape' in schema && schema.shape) ? schema.shape as z.ZodRawShape : undefined; // Get shape from the memoized schema
 
     if (schemaShape) {
       for (const [key, value] of Object.entries(resolvedProps)) {
@@ -273,7 +273,16 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
   }, [selectedLayer, schema, revisionCounter]); // Include revisionCounter to detect undo/redo changes
 
   const autoFormSchema = useMemo(() => {
-    return addDefaultValues(schema, formValues);
+    // Only pass ZodObject schemas to addDefaultValues, otherwise return the original schema
+    if ('shape' in schema && typeof schema.shape === 'object') {
+      try {
+        return addDefaultValues(schema as any, formValues);
+      } catch (error) {
+        console.warn('Failed to add default values to schema:', error);
+        return schema;
+      }
+    }
+    return schema;
   }, [schema, formValues]);
 
   const autoFormFieldConfig = useMemo(() => {

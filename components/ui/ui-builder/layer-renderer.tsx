@@ -3,27 +3,27 @@ import React from "react";
 import { EditorConfig, RenderLayer } from "@/components/ui/ui-builder/internal/render-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
 
-import { Variable, ComponentLayer, ComponentRegistry } from '@/components/ui/ui-builder/types';
+import { Variable, ComponentLayer, ComponentRegistry, PropValue } from '@/components/ui/ui-builder/types';
 
-interface LayerRendererProps {
+interface LayerRendererProps<TRegistry extends ComponentRegistry = ComponentRegistry> {
   className?: string;
   page: ComponentLayer;
   editorConfig?: EditorConfig;
-  componentRegistry: ComponentRegistry;
+  componentRegistry: TRegistry;
   /** Optional variable definitions */
   variables?: Variable[];
   /** Optional variable values to override defaults */
-  variableValues?: Record<string, any>;
+  variableValues?: Record<string, PropValue>;
 }
 
-const LayerRenderer: React.FC<LayerRendererProps> = ({
+const LayerRenderer = <TRegistry extends ComponentRegistry = ComponentRegistry>({
   className,
   page,
   editorConfig,
   componentRegistry,
   variables,
   variableValues,
-}: LayerRendererProps) => {
+}: LayerRendererProps<TRegistry>): JSX.Element => {
 
   return (
     <DevProfiler id="LayerRenderer" threshold={30}>

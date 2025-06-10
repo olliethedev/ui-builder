@@ -54,9 +54,14 @@ export const LayerMenu: React.FC<MenuProps> = ({
     const componentDef = componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
     if (!componentDef) return false;
     
+    // Safely check if schema has shape property (ZodObject) and children field
+    const hasChildrenField = 'shape' in componentDef.schema && 
+                            componentDef.schema.shape && 
+                            componentDef.schema.shape.children !== undefined;
+    
     return (
       hasLayerChildren(selectedLayer) &&
-      componentDef.schema.shape.children !== undefined
+      hasChildrenField
     );
   }, [selectedLayer, componentRegistry]);
 

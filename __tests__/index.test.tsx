@@ -106,17 +106,17 @@ it("UIBuilder: accepts both initialLayers and initialVariables", async () => {
   expect(componentEditor).toBeInTheDocument();
 });
 
-it("UIBuilder: hides Add Variable button when editVariables is false", async () => {
+it("UIBuilder: hides Add Variable button when allowVariableEditing is false", async () => {
   render(
     <UIBuilder 
       componentRegistry={componentRegistry} 
-      editVariables={false}
+      allowVariableEditing={false}
     />
   );
   const componentEditor = await screen.findByTestId("component-editor");
   expect(componentEditor).toBeInTheDocument();
   
-  // The editVariables prop should be passed through to the default config
+  // The allowVariableEditing prop should be passed through to the default config
   // We can verify this by checking that the prop was processed correctly
   expect(componentEditor).toBeInTheDocument();
 });
@@ -130,7 +130,7 @@ it("UIBuilder: shows Add Variable button by default", async () => {
   const componentEditor = await screen.findByTestId("component-editor");
   expect(componentEditor).toBeInTheDocument();
   
-  // The editVariables prop should default to true
+  // The allowVariableEditing prop should default to true
   // We can verify this by checking that the component renders without errors
   expect(componentEditor).toBeInTheDocument();
 });

@@ -8,7 +8,7 @@ import isDeepEqual from 'fast-deep-equal';
 import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3 } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
-import { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
+import { ComponentLayer, Variable, PropValue, VariableValueType } from '@/components/ui/ui-builder/types';
 
 const DEFAULT_PAGE_PROPS = {
   className: "p-4 flex flex-col gap-2",
@@ -25,14 +25,14 @@ export interface LayerStore {
   addPageLayer: (pageId: string) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
-  updateLayer: (layerId: string, newProps: Record<string, any>, layerRest?: Partial<Omit<ComponentLayer, 'props'>>) => void;
+  updateLayer: (layerId: string, newProps: Record<string, PropValue>, layerRest?: Partial<Omit<ComponentLayer, 'props'>>) => void;
   selectLayer: (layerId: string) => void;
   selectPage: (pageId: string) => void;
   findLayerById: (layerId: string | null) => ComponentLayer | undefined;
   findLayersForPageId: (pageId: string) => ComponentLayer[];
   isLayerAPage: (layerId: string) => boolean;
 
-  addVariable: (name: string, type: Variable['type'], defaultValue: any) => void;
+  addVariable: <T extends VariableValueType>(name: string, type: T, defaultValue: Variable<T>['defaultValue']) => void;
   updateVariable: (variableId: string, updates: Partial<Omit<Variable, 'id'>>) => void;
   removeVariable: (variableId: string) => void;
   bindPropToVariable: (layerId: string, propName: string, variableId: string) => void;
