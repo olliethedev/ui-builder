@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { ComponentLayer } from "@/components/ui/ui-builder/types";
 import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
+import { DragHandle } from "@/components/ui/ui-builder/internal/drag-handle";
 import { cn } from "@/lib/utils";
 import { getScrollParent } from "@/lib/ui-builder/utils/get-scroll-parent";
 import isDeepEqual from "fast-deep-equal";
@@ -25,6 +26,7 @@ interface ClickableWrapperProps {
   onDeleteLayer?: () => void;
   listenToScrollParent: boolean;
   observeMutations: boolean;
+  isPageLayer?: boolean;
 }
 
 /**
@@ -41,6 +43,7 @@ const InternalClickableWrapper: React.FC<ClickableWrapperProps> = ({
   onDeleteLayer,
   listenToScrollParent,
   observeMutations,
+  isPageLayer = false,
 }) => {
   const [boundingRect, setBoundingRect] = useState<DOMRect | null>(null);
   const [touchPosition, setTouchPosition] = useState<{
@@ -312,7 +315,7 @@ const InternalClickableWrapper: React.FC<ClickableWrapperProps> = ({
           onClick={handleClick}
           // onDoubleClick={handleDoubleClick}
           className={cn(
-            "fixed box-border hover:border-blue-300 hover:border-2",
+            "fixed box-border hover:border-blue-300 hover:border-2 group",
             isSelected ? "border-2 border-blue-500 hover:border-blue-500" : ""
           )}
           onWheel={handleWheel}
@@ -321,6 +324,14 @@ const InternalClickableWrapper: React.FC<ClickableWrapperProps> = ({
           onTouchEnd={handleTouchEnd}
           style={style}
         >
+          {/* Drag handle for non-page layers */}
+          {!isPageLayer && (
+            <DragHandle
+              layerId={layer.id}
+              layerType={layer.type}
+            />
+          )}
+
           {/* {small label with layer type floating above the bounding box} */}
           {isSelected && (
             <span className="absolute top-[-16px] left-[-2px] text-xs text-white bg-blue-500 px-[1px] whitespace-nowrap">
@@ -341,6 +352,7 @@ const ClickableWrapper = memo(
     if (prevProps.isSelected !== nextProps.isSelected) return false;
     if (prevProps.zIndex !== nextProps.zIndex) return false;
     if (prevProps.totalLayers !== nextProps.totalLayers) return false;
+    if (prevProps.isPageLayer !== nextProps.isPageLayer) return false;
     if (!isDeepEqual(prevProps.layer, nextProps.layer)) return false;
     if (prevProps.listenToScrollParent !== nextProps.listenToScrollParent)
       return false;

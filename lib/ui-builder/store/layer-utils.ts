@@ -314,3 +314,89 @@ export const createComponentLayer = (
   return newLayer;
 };
 
+/**
+ * Moves a layer from one position to another in the layer tree.
+ * This function supports moving layers between different parents and reordering within the same parent.
+ *
+ * @param layers - The array of root layers (pages)
+ * @param sourceLayerId - The ID of the layer to move
+ * @param targetParentId - The ID of the target parent layer
+ * @param targetPosition - The position in the target parent's children array (0-based index)
+ * @returns The updated layers array with the layer moved to its new position
+ */
+export const moveLayer = (
+  layers: ComponentLayer[],
+  sourceLayerId: string,
+  targetParentId: string,
+  targetPosition: number
+): ComponentLayer[] => {
+  let layerToMove: ComponentLayer | null = null;
+  let sourceParentId: string | null = null;
+  let sourcePosition: number = -1;
+
+  // Find the layer to move and its current parent
+  const findLayerAndParent = (layers: ComponentLayer[], parentId: string | null = null): boolean => {
+    for (let i = 0; i < layers.length; i++) {
+      const layer = layers[i];
+      if (layer.id === sourceLayerId) {
+        layerToMove = layer;
+        sourceParentId = parentId;
+        sourcePosition = i;
+        return true;
+      }
+      if (hasLayerChildren(layer)) {
+        if (findLayerAndParent(layer.children, layer.id)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  // Find the layer in the tree
+  findLayerAndParent(layers);
+
+  if (!layerToMove) {
+    console.warn(`Source layer with ID ${sourceLayerId} not found`);
+    return layers;
+  }
+
+  // Remove the layer from its current position
+  const layersWithoutSource = layers.map(page =>
+    visitLayer(page, null, (layer, parent) => {
+      if (hasLayerChildren(layer)) {
+        const updatedChildren = layer.children.filter(child => child.id !== sourceLayerId);
+        return { ...layer, children: updatedChildren };
+      }
+      return layer;
+    })
+  );
+
+  // Add the layer to its new position
+  const updatedLayers = addLayer(layersWithoutSource, layerToMove, targetParentId, targetPosition);
+
+  return updatedLayers;
+};
+
+/**
+ * Checks if a layer can accept children (has a children property that is an array)
+ *
+ * @param layer - The layer to check
+ * @param componentRegistry - The component registry to check schema
+ * @returns true if the layer can accept children
+ */
+export const canLayerAcceptChildren = (
+  layer: ComponentLayer,
+  componentRegistry: ComponentRegistry
+): boolean => {
+  const componentDef = componentRegistry[layer.type as keyof typeof componentRegistry];
+  if (!componentDef) return false;
+
+  // Safely check if schema has shape property (ZodObject) and children field
+  const hasChildrenField = 'shape' in componentDef.schema && 
+                          componentDef.schema.shape && 
+                          componentDef.schema.shape.children !== undefined;
+
+  return hasChildrenField && hasLayerChildren(layer);
+};
+

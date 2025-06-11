@@ -8,6 +8,7 @@ import {
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
+import { DndContextProvider } from "@/components/ui/ui-builder/internal/dnd-context";
 import { cn } from "@/lib/utils";
 import { IframeWrapper } from "@/components/ui/ui-builder/internal/iframe-wrapper";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
@@ -68,9 +69,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
   const isMobileScreen = window.innerWidth < 768;
 
   const renderer = useMemo(() => (
-    <div id="editor-panel-container" className="overflow-visible pt-3 pb-10 pr-20">
-      <LayerRenderer page={selectedPage} editorConfig={editorConfig} componentRegistry={componentRegistry} />
-    </div>
+    <DndContextProvider>
+      <div id="editor-panel-container" className="overflow-visible pt-3 pb-10 pr-20">
+        <LayerRenderer page={selectedPage} editorConfig={editorConfig} componentRegistry={componentRegistry} />
+      </div>
+    </DndContextProvider>
   ), [selectedPage, editorConfig, componentRegistry]);
 
   const widthClass = useMemo(() => {
