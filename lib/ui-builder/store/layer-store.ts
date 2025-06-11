@@ -61,7 +61,45 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
     selectedLayerId: null,
     selectedPageId: '1',
     initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string, variables?: Variable[]) => {
-      set({ pages, selectedPageId: selectedPageId || pages[0].id, selectedLayerId: selectedLayerId || null, variables: variables || [] });
+      set(produce((state: LayerStore) => {
+        // Set the basic state
+        state.pages = pages;
+        state.selectedPageId = selectedPageId || pages[0].id;
+        state.selectedLayerId = selectedLayerId || null;
+        state.variables = variables || [];
+        
+        // Initialize immutable bindings for existing layers
+        const { registry } = useEditorStore.getState();
+        
+        // Helper function to set up immutable bindings for layers
+        const setupImmutableBindings = (layer: ComponentLayer) => {
+          const componentDef = registry[layer.type];
+          const defaultVariableBindings = componentDef?.defaultVariableBindings || [];
+          
+          // Check each default variable binding to see if this layer has a matching variable reference
+          for (const binding of defaultVariableBindings) {
+            const propValue = layer.props[binding.propName];
+            
+            // If the prop has a variable reference and it matches the binding's variable ID
+            if (isVariableReference(propValue) && propValue.__variableRef === binding.variableId) {
+              // Set up immutable binding if specified
+              if (binding.immutable) {
+                if (!state.immutableBindings[layer.id]) {
+                  state.immutableBindings[layer.id] = {};
+                }
+                state.immutableBindings[layer.id][binding.propName] = true;
+              }
+            }
+          }
+          
+          return layer;
+        };
+        
+        // Process all pages and their layers to set up immutable bindings
+        state.pages = state.pages.map(page => 
+          visitLayer(page, null, setupImmutableBindings)
+        );
+      }));
     },
     findLayerById: (layerId: string | null) => {
       const { selectedPageId, findLayersForPageId, pages } = get();

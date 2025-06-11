@@ -365,4 +365,4 @@ export const BuilderWithImmutableBindings = () => {
       allowVariableEditing={false}
     />
   );
-}; 
+};
