@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
@@ -59,6 +59,13 @@ describe('LayerStore', () => {
               children: [],
             }
           ],
+        },
+        ComponentWithoutBindings: {
+          schema: z.object({
+            text: z.string().default('Default Text'),
+          }),
+          from: '@/components/ui/component-without-bindings',
+          component: () => null,
         },
         // Add other components as needed with appropriate Zod schemas
       }
@@ -868,6 +875,260 @@ describe('LayerStore', () => {
       });
 
       expect(result.current.variables).toEqual(variables);
+    });
+
+    it('should initialize immutable bindings for existing layers with variable references', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Create layers with existing variable references
+      const initialLayers: ComponentLayer[] = [
+        {
+          id: 'page1',
+          type: 'div',
+          name: 'Page 1',
+          props: { className: 'p-4' },
+          children: [
+            {
+              id: 'component-with-bindings',
+              type: 'ComponentWithDefaultBindings',
+              name: 'Test Component',
+              props: {
+                title: { __variableRef: 'var-id-1' }, // This should be immutable
+                description: { __variableRef: 'var-id-2' }, // This should be mutable
+                count: 42
+              },
+              children: []
+            }
+          ]
+        }
+      ];
+
+      const initialVariables: Variable[] = [
+        { id: 'var-id-1', name: 'Title Variable', type: 'string', defaultValue: 'Test Title' },
+        { id: 'var-id-2', name: 'Description Variable', type: 'string', defaultValue: 'Test Description' },
+      ];
+
+      // Update registry to use the correct variable IDs
+      useEditorStore.setState({
+        registry: {
+          ...useEditorStore.getState().registry,
+          ComponentWithDefaultBindings: {
+            schema: z.object({
+              title: z.string().default('Default Title'),
+              description: z.string().default('Default Description'),
+              count: z.number().default(0),
+            }),
+            from: '@/components/ui/component-with-default-bindings',
+            component: () => null,
+            defaultVariableBindings: [
+              { propName: 'title', variableId: 'var-id-1', immutable: true },
+              { propName: 'description', variableId: 'var-id-2', immutable: false },
+            ],
+          },
+        }
+      });
+
+      // Initialize with the layers that already have variable bindings
+      act(() => {
+        result.current.initialize(initialLayers, 'page1', undefined, initialVariables);
+      });
+
+      // Check that immutable bindings were properly set up during initialization
+      expect(result.current.isBindingImmutable('component-with-bindings', 'title')).toBe(true);
+      expect(result.current.isBindingImmutable('component-with-bindings', 'description')).toBe(false);
+      expect(result.current.isBindingImmutable('component-with-bindings', 'count')).toBe(false);
+
+      // Verify that the layer was initialized correctly
+      const component = result.current.findLayerById('component-with-bindings');
+      expect(component?.props.title).toEqual({ __variableRef: 'var-id-1' });
+      expect(component?.props.description).toEqual({ __variableRef: 'var-id-2' });
+      expect(component?.props.count).toBe(42);
+
+      // Test that immutable binding prevents unbinding
+      act(() => {
+        result.current.unbindPropFromVariable('component-with-bindings', 'title');
+      });
+
+      // Should still be bound (immutable)
+      const componentAfterUnbind = result.current.findLayerById('component-with-bindings');
+      expect(componentAfterUnbind?.props.title).toEqual({ __variableRef: 'var-id-1' });
+
+      // Test that mutable binding allows unbinding
+      act(() => {
+        result.current.unbindPropFromVariable('component-with-bindings', 'description');
+      });
+
+      // Should be unbound (mutable)
+      const componentAfterMutableUnbind = result.current.findLayerById('component-with-bindings');
+      expect(componentAfterMutableUnbind?.props.description).toBe('Default Description');
+    });
+
+    it('should apply default variable bindings when adding a component', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Manually set variable IDs to match what we expect in the binding definitions
+      act(() => {
+        const variables = result.current.variables;
+        if (variables.length >= 2) {
+          // Update the registry to use actual variable IDs
+          const registry = useEditorStore.getState().registry;
+          useEditorStore.setState({
+            registry: {
+              ...registry,
+              ComponentWithDefaultBindings: {
+                ...registry.ComponentWithDefaultBindings,
+                defaultVariableBindings: [
+                  { propName: 'title', variableId: variables[0].id, immutable: true },
+                  { propName: 'description', variableId: variables[1].id, immutable: false },
+                ],
+              },
+            }
+          });
+
+          result.current.addComponentLayer('ComponentWithDefaultBindings', '1');
+        }
+      });
+
+      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      expect(addedLayer.type).toBe('ComponentWithDefaultBindings');
+      
+      // Check that variable bindings were applied
+      const variables = result.current.variables;
+      expect(addedLayer.props.title).toEqual({ __variableRef: variables[0].id });
+      expect(addedLayer.props.description).toEqual({ __variableRef: variables[1].id });
+      
+      // Check that immutable bindings were tracked
+      expect(result.current.isBindingImmutable(addedLayer.id, 'title')).toBe(true);
+      expect(result.current.isBindingImmutable(addedLayer.id, 'description')).toBe(false);
+    });
+
+    it('should not apply bindings for non-existent variables', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Use registry with non-existent variable IDs
+      useEditorStore.setState({
+        registry: {
+          ...useEditorStore.getState().registry,
+          ComponentWithInvalidBindings: {
+            schema: z.object({
+              title: z.string().default('Default Title'),
+            }),
+            from: '@/components/ui/component-with-invalid-bindings',
+            component: () => null,
+            defaultVariableBindings: [
+              { propName: 'title', variableId: 'non-existent-var', immutable: true },
+            ],
+          },
+        }
+      });
+
+      act(() => {
+        result.current.addComponentLayer('ComponentWithInvalidBindings', '1');
+      });
+
+      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      
+      // Should use default value from schema, not variable binding
+      expect(addedLayer.props.title).toBe('Default Title');
+      expect(result.current.isBindingImmutable(addedLayer.id, 'title')).toBe(false);
+    });
+
+    it('should handle components without default variable bindings', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addComponentLayer('ComponentWithoutBindings', '1');
+      });
+
+      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      expect(addedLayer.type).toBe('ComponentWithoutBindings');
+      expect(addedLayer.props.text).toBe('Default Text');
+      expect(result.current.isBindingImmutable(addedLayer.id, 'text')).toBe(false);
+    });
+
+    it('should prevent unbinding immutable variable bindings', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Set up component with immutable binding
+      act(() => {
+        const variables = result.current.variables;
+        if (variables.length >= 1) {
+          useEditorStore.setState({
+            registry: {
+              ...useEditorStore.getState().registry,
+              ComponentWithDefaultBindings: {
+                ...useEditorStore.getState().registry.ComponentWithDefaultBindings,
+                defaultVariableBindings: [
+                  { propName: 'title', variableId: variables[0].id, immutable: true },
+                ],
+              },
+            }
+          });
+
+          result.current.addComponentLayer('ComponentWithDefaultBindings', '1');
+        }
+      });
+
+      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      
+      // Verify binding exists
+      expect(addedLayer.props.title).toEqual({ __variableRef: result.current.variables[0].id });
+      expect(result.current.isBindingImmutable(addedLayer.id, 'title')).toBe(true);
+
+      // Try to unbind immutable binding (should fail)
+      act(() => {
+        result.current.unbindPropFromVariable(addedLayer.id, 'title');
+      });
+
+      // Binding should still exist
+      const layerAfterUnbind = result.current.findLayerById(addedLayer.id) as ComponentLayer;
+      expect(layerAfterUnbind.props.title).toEqual({ __variableRef: result.current.variables[0].id });
+    });
+
+    it('should allow unbinding mutable variable bindings', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Set up component with mutable binding
+      act(() => {
+        const variables = result.current.variables;
+        if (variables.length >= 1) {
+          useEditorStore.setState({
+            registry: {
+              ...useEditorStore.getState().registry,
+              ComponentWithDefaultBindings: {
+                ...useEditorStore.getState().registry.ComponentWithDefaultBindings,
+                defaultVariableBindings: [
+                  { propName: 'description', variableId: variables[0].id, immutable: false },
+                ],
+              },
+            }
+          });
+
+          result.current.addComponentLayer('ComponentWithDefaultBindings', '1');
+        }
+      });
+
+      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      
+      // Verify binding exists
+      expect(addedLayer.props.description).toEqual({ __variableRef: result.current.variables[0].id });
+      expect(result.current.isBindingImmutable(addedLayer.id, 'description')).toBe(false);
+
+      // Unbind mutable binding (should succeed)
+      act(() => {
+        result.current.unbindPropFromVariable(addedLayer.id, 'description');
+      });
+
+      // Binding should be removed and default value set
+      const layerAfterUnbind = result.current.findLayerById(addedLayer.id) as ComponentLayer;
+      expect(layerAfterUnbind.props.description).toBe('Default Description');
+    });
+
+    it('should correctly report binding immutability', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      expect(result.current.isBindingImmutable('non-existent-layer', 'prop')).toBe(false);
+      expect(result.current.isBindingImmutable('layer-id', 'non-existent-prop')).toBe(false);
     });
   });
 
