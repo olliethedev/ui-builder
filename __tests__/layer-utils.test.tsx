@@ -9,9 +9,11 @@ import {
   hasLayerChildren,
   duplicateWithNewIdsAndName,
   migrateV1ToV2,
-  migrateV2ToV3
+  migrateV2ToV3,
+  createComponentLayer
 } from "../lib/ui-builder/store/layer-utils";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import { z } from 'zod';
 
 describe("Layer Utils", () => {
   let mockPages: ComponentLayer[];
@@ -1124,6 +1126,223 @@ describe("Layer Utils", () => {
         nested: true,
         value: 123,
       });
+    });
+  });
+
+  describe("createComponentLayer", () => {
+    let mockComponentRegistry: any;
+
+    beforeEach(() => {
+      mockComponentRegistry = {
+        Button: {
+          component: () => null,
+          name: 'Button',
+          schema: z.object({
+            label: z.string().default("Click me"),
+            disabled: z.boolean().default(false),
+            variant: z.string().default("default")
+          }),
+          defaultChildren: [],
+          defaultVariableBindings: [
+            { variableId: 'button-text', propName: 'label' }
+          ]
+        },
+        Card: {
+          component: () => null,
+          name: 'Card',
+          schema: z.object({
+            title: z.string().default("Card Title"),
+            padding: z.string().default("md")
+          }),
+          defaultChildren: [
+            {
+              id: 'child1',
+              type: 'div',
+              name: 'Card Content',
+              props: {},
+              children: []
+            }
+          ]
+        },
+        TextInput: {
+          component: () => null,
+          name: 'TextInput',
+          schema: z.object({
+            placeholder: z.string().default("Enter text...")
+          }),
+          defaultChildren: "Default text content"
+        },
+        SimpleComponent: {
+          component: () => null,
+          name: 'SimpleComponent',
+          schema: z.object({}) // No default values
+        }
+      };
+    });
+
+    it("should create a basic component layer with default props", () => {
+      const layer = createComponentLayer('Button', mockComponentRegistry);
+
+      expect(layer).toMatchObject({
+        type: 'Button',
+        name: 'Button',
+        props: {
+          label: "Click me",
+          disabled: false,
+          variant: "default"
+        },
+        children: []
+      });
+      expect(layer.id).toBeDefined();
+      expect(layer.id).toHaveLength(7); // Our createId function generates 7-char IDs
+    });
+
+    it("should create component with custom ID and name", () => {
+      const layer = createComponentLayer('Button', mockComponentRegistry, {
+        id: 'custom-id',
+        name: 'Custom Button'
+      });
+
+      expect(layer.id).toBe('custom-id');
+      expect(layer.name).toBe('Custom Button');
+      expect(layer.type).toBe('Button');
+    });
+
+    it("should handle component with array defaultChildren", () => {
+      const layer = createComponentLayer('Card', mockComponentRegistry);
+
+      expect(layer.children).toHaveLength(1);
+      expect(Array.isArray(layer.children)).toBe(true);
+      
+      const child = (layer.children as ComponentLayer[])[0];
+      expect(child.type).toBe('div');
+      expect(child.name).toBe('Card Content');
+      expect(child.id).not.toBe('child1'); // Should have new ID
+    });
+
+    it("should handle component with string defaultChildren", () => {
+      const layer = createComponentLayer('TextInput', mockComponentRegistry);
+
+      expect(layer.children).toBe("Default text content");
+      expect(layer.props.placeholder).toBe("Enter text...");
+    });
+
+    it("should handle component with no schema shape", () => {
+      const layer = createComponentLayer('SimpleComponent', mockComponentRegistry);
+
+      expect(layer.type).toBe('SimpleComponent');
+      expect(layer.name).toBe('SimpleComponent');
+      expect(layer.props).toEqual({});
+      expect(layer.children).toEqual([]);
+    });
+
+    it("should apply variable bindings when requested", () => {
+      const variables = [
+        { id: 'button-text', defaultValue: 'Dynamic Button' },
+        { id: 'other-var', defaultValue: 'Other Value' }
+      ];
+
+      const layer = createComponentLayer('Button', mockComponentRegistry, {
+        applyVariableBindings: true,
+        variables
+      });
+
+      expect(layer.props.label).toEqual({ __variableRef: 'button-text' });
+      expect(layer.props.disabled).toBe(false); // Non-bound props should retain defaults
+    });
+
+    it("should not apply variable bindings when variable not found", () => {
+      const variables = [
+        { id: 'non-matching-var', defaultValue: 'Value' }
+      ];
+
+      const layer = createComponentLayer('Button', mockComponentRegistry, {
+        applyVariableBindings: true,
+        variables
+      });
+
+      expect(layer.props.label).toBe("Click me"); // Should keep default value
+    });
+
+    it("should not apply variable bindings when not requested", () => {
+      const variables = [
+        { id: 'button-text', defaultValue: 'Dynamic Button' }
+      ];
+
+      const layer = createComponentLayer('Button', mockComponentRegistry, {
+        variables // applyVariableBindings defaults to false
+      });
+
+      expect(layer.props.label).toBe("Click me"); // Should keep default value
+    });
+
+    it("should throw error for non-existent component type", () => {
+      expect(() => {
+        createComponentLayer('NonExistentComponent', mockComponentRegistry);
+      }).toThrow('Component definition not found for type: NonExistentComponent');
+    });
+
+    it("should handle component with no defaultVariableBindings", () => {
+      const registryWithoutBindings = {
+        SimpleButton: {
+          component: () => null,
+          name: 'SimpleButton',
+          schema: z.object({
+            text: z.string().default("Simple")
+          }),
+          defaultChildren: []
+          // No defaultVariableBindings property
+        }
+      } as any;
+
+      const layer = createComponentLayer('SimpleButton', registryWithoutBindings, {
+        applyVariableBindings: true,
+        variables: [{ id: 'test-var', defaultValue: 'Test' }]
+      });
+
+      expect(layer.props.text).toBe("Simple"); // Should use default value
+    });
+
+    it("should exclude children prop from initialProps", () => {
+      const registryWithChildrenProp = {
+        ComponentWithChildren: {
+          component: () => null,
+          name: 'ComponentWithChildren',
+          schema: z.object({
+            title: z.string().default("Title"),
+            children: z.string().default("Default children")
+          }),
+          defaultChildren: "Actual children"
+        }
+      } as any;
+
+      const layer = createComponentLayer('ComponentWithChildren', registryWithChildrenProp);
+
+      expect(layer.props).toEqual({ title: "Title" });
+      expect(layer.props.children).toBeUndefined(); // Should not be in props
+      expect(layer.children).toBe("Actual children"); // Should use defaultChildren
+    });
+
+    it("should generate unique IDs for each component", () => {
+      const layer1 = createComponentLayer('Button', mockComponentRegistry);
+      const layer2 = createComponentLayer('Button', mockComponentRegistry);
+
+      expect(layer1.id).not.toBe(layer2.id);
+    });
+
+    it("should handle empty defaultChildren correctly", () => {
+      const registryWithEmptyChildren = {
+        EmptyComponent: {
+          component: () => null,
+          name: 'EmptyComponent',
+          schema: z.object({}),
+          defaultChildren: []
+        }
+      } as any;
+
+      const layer = createComponentLayer('EmptyComponent', registryWithEmptyChildren);
+
+      expect(layer.children).toEqual([]);
     });
   });
 });

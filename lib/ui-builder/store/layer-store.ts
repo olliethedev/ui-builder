@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import { temporal } from 'zundo';
 import isDeepEqual from 'fast-deep-equal';
 
-import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3 } from '@/lib/ui-builder/store/layer-utils';
+import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3, createComponentLayer } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 import { ComponentLayer, Variable, PropValue, VariableValueType, isVariableReference } from '@/components/ui/ui-builder/types';
@@ -127,43 +127,22 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
 
     addComponentLayer: (layerType: string, parentId: string, parentPosition?: number) => set(produce((state: LayerStore) => {
       const { registry } = useEditorStore.getState();
-      const schema = registry[layerType].schema;
       
-      // Safely check if schema has shape property (ZodObject)
-      const defaultProps = 'shape' in schema && schema.shape ? getDefaultProps(schema as any) : {};
-      const defaultChildrenRaw = registry[layerType].defaultChildren;
-      const defaultChildren = typeof defaultChildrenRaw === "string" ? defaultChildrenRaw : (defaultChildrenRaw?.map(child => duplicateWithNewIdsAndName(child, false)) || []);
+      // Create the new layer using the utility function
+      const newLayer = createComponentLayer(layerType, registry, {
+        applyVariableBindings: true,
+        variables: state.variables,
+      });
+
+      // Track immutable bindings for variable bindings
       const defaultVariableBindings = registry[layerType].defaultVariableBindings || [];
-
-      const initialProps = Object.entries(defaultProps).reduce((acc, [key, propDef]) => {
-        if (key !== "children") {
-          acc[key] = propDef;
-        }
-        return acc;
-      }, {} as Record<string, any>);
-
-      const newLayer: ComponentLayer = {
-        id: createId(),
-        type: layerType,
-        name: layerType,
-        props: initialProps,
-        children: defaultChildren,
-      };
-
-      // Apply default variable bindings
       for (const binding of defaultVariableBindings) {
         const variable = state.variables.find(v => v.id === binding.variableId);
-        if (variable) {
-          // Set the variable reference in the props
-          newLayer.props[binding.propName] = { __variableRef: binding.variableId };
-          
-          // Track immutable bindings
-          if (binding.immutable) {
-            if (!state.immutableBindings[newLayer.id]) {
-              state.immutableBindings[newLayer.id] = {};
-            }
-            state.immutableBindings[newLayer.id][binding.propName] = true;
+        if (variable && binding.immutable) {
+          if (!state.immutableBindings[newLayer.id]) {
+            state.immutableBindings[newLayer.id] = {};
           }
+          state.immutableBindings[newLayer.id][binding.propName] = true;
         }
       }
 

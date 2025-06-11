@@ -1,5 +1,6 @@
 import { LayerStore } from "@/lib/ui-builder/store/layer-store";
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import { ComponentLayer, ComponentRegistry } from '@/components/ui/ui-builder/types';
+import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 
 /**
  * Recursively visits each layer in the layer tree and applies the provided visitor function to each layer.
@@ -246,4 +247,70 @@ export function migrateV2ToV3(persistedState: unknown): LayerStore {
         pages: migratedPages,
       } satisfies LayerStore;
 }
+
+/**
+ * Creates a new component layer with default props and children initialized from the component registry.
+ * This utility function consolidates the layer initialization logic used across the application.
+ * 
+ * @param layerType - The type of component to create
+ * @param componentRegistry - The component registry containing component definitions
+ * @param options - Optional configuration for the layer
+ * @returns A new ComponentLayer with initialized props and children
+ */
+export const createComponentLayer = (
+  layerType: string,
+  componentRegistry: ComponentRegistry,
+  options: {
+    id?: string;
+    name?: string;
+    applyVariableBindings?: boolean;
+    variables?: Array<{ id: string; defaultValue: any }>;
+  } = {}
+): ComponentLayer => {
+  const { id, name, applyVariableBindings = false, variables = [] } = options;
+  
+  const componentDef = componentRegistry[layerType as keyof typeof componentRegistry];
+  if (!componentDef) {
+    throw new Error(`Component definition not found for type: ${layerType}`);
+  }
+
+  const schema = componentDef.schema;
+  
+  // Safely check if schema has shape property (ZodObject)
+  const defaultProps = 'shape' in schema && schema.shape ? getDefaultProps(schema as any) : {};
+  const defaultChildrenRaw = componentDef.defaultChildren;
+  const defaultChildren = typeof defaultChildrenRaw === "string" 
+    ? defaultChildrenRaw 
+    : (defaultChildrenRaw?.map(child => duplicateWithNewIdsAndName(child, false)) || []);
+
+  const initialProps = Object.entries(defaultProps).reduce((acc, [key, propDef]) => {
+    if (key !== "children") {
+      acc[key] = propDef;
+    }
+    return acc;
+  }, {} as Record<string, any>);
+
+  const newLayer: ComponentLayer = {
+    id: id || createId(),
+    type: layerType,
+    name: name || layerType,
+    props: initialProps,
+    children: defaultChildren,
+  };
+
+  // Apply default variable bindings if requested
+  if (applyVariableBindings) {
+    const defaultVariableBindings = componentDef.defaultVariableBindings || [];
+    
+    for (const binding of defaultVariableBindings) {
+      const variable = variables.find(v => v.id === binding.variableId);
+      if (variable) {
+        // Set the variable reference in the props
+        newLayer.props[binding.propName] = { __variableRef: binding.variableId };
+      }
+    }
+  }
+
+  return newLayer;
+};
 
