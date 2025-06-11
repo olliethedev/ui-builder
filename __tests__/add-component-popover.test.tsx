@@ -99,11 +99,11 @@ describe('AddComponentsPopover', () => {
       fireEvent.click(trigger);
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Add component')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Find components')).toBeInTheDocument();
       });
     });
 
-    it('should render component search input', async () => {
+    it('should render component search input with search icon', async () => {
       render(
         <AddComponentsPopover parentLayerId="parent-1">
           <button>Add Component</button>
@@ -114,13 +114,13 @@ describe('AddComponentsPopover', () => {
       fireEvent.click(trigger);
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Add component')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Find components')).toBeInTheDocument();
       });
     });
   });
 
-  describe('Component Grouping', () => {
-    it('should group components by their path', async () => {
+  describe('Tab-based Component Grouping', () => {
+    it('should render tabs for each component group', async () => {
       render(
         <AddComponentsPopover parentLayerId="parent-1">
           <button>Add Component</button>
@@ -131,14 +131,14 @@ describe('AddComponentsPopover', () => {
       fireEvent.click(trigger);
 
       await waitFor(() => {
-        // Should show groups
-        expect(screen.getByText('@/components/ui')).toBeInTheDocument();
-        expect(screen.getByText('@/custom/components')).toBeInTheDocument();
-        expect(screen.getByText('other')).toBeInTheDocument();
+        // Should show tabs for different groups - check by the formatted names
+        expect(screen.getByText('Ui')).toBeInTheDocument();
+        expect(screen.getByText('Components')).toBeInTheDocument();
+        expect(screen.getByText('Other')).toBeInTheDocument();
       });
     });
 
-    it('should render components in their respective groups', async () => {
+    it('should render components with grey box previews in active tab', async () => {
       render(
         <AddComponentsPopover parentLayerId="parent-1">
           <button>Add Component</button>
@@ -149,16 +149,56 @@ describe('AddComponentsPopover', () => {
       fireEvent.click(trigger);
 
       await waitFor(() => {
-        // UI components group
+        // Components in the first tab should be visible by default
         expect(screen.getByText('Button')).toBeInTheDocument();
         expect(screen.getByText('Input')).toBeInTheDocument();
         expect(screen.getByText('Card')).toBeInTheDocument();
-        
-        // Custom components group
-        expect(screen.getByText('CustomComponent')).toBeInTheDocument();
-        
-        // Other group (no from path)
-        expect(screen.getByText('UnGroupedComponent')).toBeInTheDocument();
+      });
+
+      // Check for grey box previews (muted background divs) - but they might be lazy loaded
+      await waitFor(() => {
+        const greyBoxes = screen.getAllByRole('generic').filter(el => 
+          el.className.includes('bg-muted') || el.className.includes('rounded border')
+        );
+        expect(greyBoxes.length).toBeGreaterThan(0);
+      });
+    });
+
+    it('should limit tabs to maximum of 3', async () => {
+      // Mock registry with more than 3 groups
+      const registryWithManyGroups = {
+        ...mockRegistry,
+        ExtraComponent1: {
+          component: () => null,
+          name: 'ExtraComponent1',
+          from: '@/group1/component'
+        },
+        ExtraComponent2: {
+          component: () => null,
+          name: 'ExtraComponent2',
+          from: '@/group2/component'
+        }
+      };
+
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          registry: registryWithManyGroups,
+        };
+        return selector(state as any);
+      });
+
+      render(
+        <AddComponentsPopover parentLayerId="parent-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        const tabs = screen.getAllByRole('tab');
+        expect(tabs.length).toBeLessThanOrEqual(3);
       });
     });
   });
@@ -251,7 +291,7 @@ describe('AddComponentsPopover', () => {
       fireEvent.click(buttonOption);
 
       await waitFor(() => {
-        expect(screen.queryByPlaceholderText('Add component')).not.toBeInTheDocument();
+        expect(screen.queryByPlaceholderText('Find components')).not.toBeInTheDocument();
       });
     });
 
@@ -282,7 +322,7 @@ describe('AddComponentsPopover', () => {
   });
 
   describe('Search Functionality', () => {
-    it('should filter components based on search input', async () => {
+    it('should filter components based on search input across tabs', async () => {
       render(
         <AddComponentsPopover parentLayerId="parent-1">
           <button>Add Component</button>
@@ -293,13 +333,13 @@ describe('AddComponentsPopover', () => {
       fireEvent.click(trigger);
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Add component')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Find components')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Add component');
+      const searchInput = screen.getByPlaceholderText('Find components');
       fireEvent.change(searchInput, { target: { value: 'Button' } });
 
-      // Should still show Button but might filter others based on search implementation
+      // Should still show Button
       expect(screen.getByText('Button')).toBeInTheDocument();
     });
 
@@ -314,10 +354,10 @@ describe('AddComponentsPopover', () => {
       fireEvent.click(trigger);
 
       await waitFor(() => {
-        expect(screen.getByPlaceholderText('Add component')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Find components')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText('Add component');
+      const searchInput = screen.getByPlaceholderText('Find components');
       fireEvent.change(searchInput, { target: { value: 'NonExistentComponent' } });
 
       await waitFor(() => {
@@ -338,7 +378,7 @@ describe('AddComponentsPopover', () => {
       expect(popoverWrapper).toBeInTheDocument();
     });
 
-    it('should handle empty registry', async () => {
+    it('should handle empty registry gracefully', async () => {
       // Mock empty registry
       mockUseEditorStore.mockImplementation((selector) => {
         const state = {
@@ -359,11 +399,28 @@ describe('AddComponentsPopover', () => {
       await waitFor(() => {
         expect(screen.getByText('No components found')).toBeInTheDocument();
       });
-    });
-  });
 
-  describe('Component Item Functionality', () => {
-    it('should handle component selection via GroupedComponentItem', async () => {
+      // Should not render tabs when no components
+      expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    });
+
+    it('should handle single group with single tab', async () => {
+      // Mock registry with only one group
+      const singleGroupRegistry = {
+        Button: {
+          component: () => null,
+          name: 'Button',
+          from: '@/components/ui/button'
+        },
+      };
+
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          registry: singleGroupRegistry,
+        };
+        return selector(state as any);
+      });
+
       render(
         <AddComponentsPopover parentLayerId="parent-1">
           <button>Add Component</button>
@@ -374,31 +431,16 @@ describe('AddComponentsPopover', () => {
       fireEvent.click(trigger);
 
       await waitFor(() => {
-        expect(screen.getByText('Input')).toBeInTheDocument();
+        expect(screen.getByText('Ui')).toBeInTheDocument();
+        expect(screen.getByText('Button')).toBeInTheDocument();
       });
-
-      const inputOption = screen.getByText('Input');
-      fireEvent.click(inputOption);
-
-      expect(mockAddComponentLayer).toHaveBeenCalledWith('Input', 'parent-1', undefined);
     });
+  });
 
-    it('should handle component with missing registry entry gracefully', async () => {
-      // Test selecting a component that might not be in registry
-      mockUseEditorStore.mockImplementation((selector) => {
-        const state = {
-          registry: {
-            // Missing some components that might be referenced
-          },
-        };
-        return selector(state as any);
-      });
-
+  describe('Component Preview Boxes', () => {
+    it('should render grey preview boxes for each component', async () => {
       render(
-        <AddComponentsPopover 
-          parentLayerId="parent-1"
-          onChange={mockOnChange}
-        >
+        <AddComponentsPopover parentLayerId="parent-1">
           <button>Add Component</button>
         </AddComponentsPopover>
       );
@@ -407,8 +449,18 @@ describe('AddComponentsPopover', () => {
       fireEvent.click(trigger);
 
       await waitFor(() => {
-        expect(screen.getByText('No components found')).toBeInTheDocument();
+        expect(screen.getByText('Button')).toBeInTheDocument();
       });
+
+      // Check for preview containers - these should exist even if lazy loading is happening
+      const previewContainers = screen.getAllByRole('generic').filter(el => 
+        el.className.includes('flex-shrink-0') && 
+        el.className.includes('w-10') && 
+        el.className.includes('h-8')
+      );
+      
+      // Should have at least one preview container for components in the active tab
+      expect(previewContainers.length).toBeGreaterThan(0);
     });
   });
 

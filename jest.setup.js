@@ -52,4 +52,30 @@ class ResizeObserver {
   }
 }
 
+class IntersectionObserver {
+  constructor(callback, options) {
+    this.callback = callback;
+    this.options = options;
+  }
+
+  observe() {
+    // Mock observe method - automatically trigger as visible for testing
+    this.callback([{ isIntersecting: true }]);
+  }
+
+  unobserve() {
+    // Mock unobserve method
+  }
+
+  disconnect() {
+    // Mock disconnect method
+  }
+
+  // Optionally, you can add a method to trigger the callback manually
+  trigger(entries) {
+    this.callback(entries);
+  }
+}
+
 global.ResizeObserver = ResizeObserver;
+global.IntersectionObserver = IntersectionObserver;
