@@ -39,8 +39,19 @@ export const countLayers = (layers: ComponentLayer[] | string): number => {
 export const addLayer = (layers: ComponentLayer[], newLayer: ComponentLayer, parentId?: string, parentPosition?: number): ComponentLayer[] => {
     const updatedPages = layers.map((page) =>
         visitLayer(page, null, (layer) => {
-            if (layer.id === parentId && hasLayerChildren(layer)) {
-                let updatedChildren = layer.children ? [...layer.children] : [];
+            if (layer.id === parentId) {
+                // Handle both layers with existing children and those with undefined/null children
+                let updatedChildren: ComponentLayer[] = [];
+                
+                if (hasLayerChildren(layer)) {
+                    updatedChildren = [...layer.children];
+                } else if (layer.children === undefined || layer.children === null || (Array.isArray(layer.children) && layer.children.length === 0)) {
+                    // Initialize children array for layers with undefined/null children or empty arrays
+                    updatedChildren = [];
+                } else {
+                    // For layers with string children or other non-array types, we can't add children
+                    return layer;
+                }
 
                 if (parentPosition !== undefined) {
                     if (parentPosition < 0) {
