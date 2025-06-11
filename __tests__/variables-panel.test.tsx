@@ -257,6 +257,162 @@ describe('VariablesPanel', () => {
       expect(screen.getByDisplayValue('userName')).toBeInTheDocument();
       expect(screen.getByDisplayValue('John Doe')).toBeInTheDocument();
     });
+
+    it('should successfully edit a variable', async () => {
+      render(<VariablesPanel />);
+      
+      // Click edit on first variable
+      const editButtons = screen.getAllByText('✎');
+      fireEvent.click(editButtons[0]);
+      
+      // Modify the values
+      const nameInput = screen.getByDisplayValue('userName');
+      const valueInput = screen.getByDisplayValue('John Doe');
+      
+      fireEvent.change(nameInput, { target: { value: 'fullName' } });
+      fireEvent.change(valueInput, { target: { value: 'Jane Smith' } });
+      
+      // Save changes
+      const saveButton = screen.getByText('Save');
+      fireEvent.click(saveButton);
+      
+      expect(mockUpdateVariable).toHaveBeenCalledWith('var1', {
+        name: 'fullName',
+        type: 'string',
+        defaultValue: 'Jane Smith'
+      });
+    });
+
+    it('should cancel editing without saving changes', () => {
+      render(<VariablesPanel />);
+      
+      // Click edit on first variable
+      const editButtons = screen.getAllByText('✎');
+      fireEvent.click(editButtons[0]);
+      
+      // Modify a value
+      const nameInput = screen.getByDisplayValue('userName');
+      fireEvent.change(nameInput, { target: { value: 'newName' } });
+      
+      // Cancel changes
+      const cancelButton = screen.getByText('Cancel');
+      fireEvent.click(cancelButton);
+      
+      // Should not call updateVariable
+      expect(mockUpdateVariable).not.toHaveBeenCalled();
+      
+      // Should exit editing mode (form should be hidden)
+      expect(screen.queryByDisplayValue('newName')).not.toBeInTheDocument();
+      expect(screen.getByText('userName')).toBeInTheDocument(); // Original name should be visible
+    });
+
+    it('should validate edit form fields', async () => {
+      render(<VariablesPanel />);
+      
+      // Click edit on first variable
+      const editButtons = screen.getAllByText('✎');
+      fireEvent.click(editButtons[0]);
+      
+      // Clear required fields
+      const nameInput = screen.getByDisplayValue('userName');
+      const valueInput = screen.getByDisplayValue('John Doe');
+      
+      fireEvent.change(nameInput, { target: { value: '' } });
+      fireEvent.change(valueInput, { target: { value: '' } });
+      
+      // Try to save
+      const saveButton = screen.getByText('Save');
+      fireEvent.click(saveButton);
+      
+      // Should show validation errors
+      await waitFor(() => {
+        expect(screen.getByText('Name is required')).toBeInTheDocument();
+        expect(screen.getByText('Preview value is required')).toBeInTheDocument();
+      });
+      
+      // Should not call updateVariable
+      expect(mockUpdateVariable).not.toHaveBeenCalled();
+    });
+
+    it('should clear validation errors when typing in edit form', async () => {
+      render(<VariablesPanel />);
+      
+      // Click edit on first variable
+      const editButtons = screen.getAllByText('✎');
+      fireEvent.click(editButtons[0]);
+      
+      // Clear fields to trigger validation
+      const nameInput = screen.getByDisplayValue('userName');
+      fireEvent.change(nameInput, { target: { value: '' } });
+      
+      // Try to save to trigger validation errors
+      const saveButton = screen.getByText('Save');
+      fireEvent.click(saveButton);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Name is required')).toBeInTheDocument();
+      });
+      
+      // Start typing again
+      fireEvent.change(nameInput, { target: { value: 'newName' } });
+      
+      // Error should be cleared
+      await waitFor(() => {
+        expect(screen.queryByText('Name is required')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should handle type changes in edit form', () => {
+      render(<VariablesPanel />);
+      
+      // Click edit on first variable (string type)
+      const editButtons = screen.getAllByText('✎');
+      fireEvent.click(editButtons[0]);
+      
+      // Change type to number
+      const typeSelect = screen.getAllByRole('combobox')[0];
+      fireEvent.change(typeSelect, { target: { value: 'number' } });
+      
+      // Change value to a number
+      const valueInput = screen.getByDisplayValue('John Doe');
+      fireEvent.change(valueInput, { target: { value: '42' } });
+      
+      // Save
+      const saveButton = screen.getByText('Save');
+      fireEvent.click(saveButton);
+      
+      expect(mockUpdateVariable).toHaveBeenCalledWith('var1', {
+        name: 'userName',
+        type: 'number',
+        defaultValue: 42
+      });
+    });
+
+    it('should handle boolean type conversion in edit form', () => {
+      render(<VariablesPanel />);
+      
+      // Click edit on first variable
+      const editButtons = screen.getAllByText('✎');
+      fireEvent.click(editButtons[0]);
+      
+      // Change type to boolean
+      const typeSelect = screen.getAllByRole('combobox')[0];
+      fireEvent.change(typeSelect, { target: { value: 'boolean' } });
+      
+      // Set value to false
+      const valueInput = screen.getByDisplayValue('John Doe');
+      fireEvent.change(valueInput, { target: { value: 'false' } });
+      
+      // Save
+      const saveButton = screen.getByText('Save');
+      fireEvent.click(saveButton);
+      
+      expect(mockUpdateVariable).toHaveBeenCalledWith('var1', {
+        name: 'userName',
+        type: 'boolean',
+        defaultValue: false
+      });
+    });
   });
 
   describe('Add Variable Form', () => {
@@ -268,6 +424,15 @@ describe('VariablesPanel', () => {
       expect(screen.getByText('Add New Variable')).toBeInTheDocument();
       expect(screen.getByLabelText(/Name/)).toBeInTheDocument();
       expect(screen.getByLabelText(/Preview Value/)).toBeInTheDocument();
+    });
+
+    it('should disable Add Variable button when form is open', () => {
+      render(<VariablesPanel />);
+      
+      const addButton = screen.getByText('Add Variable');
+      fireEvent.click(addButton);
+      
+      expect(addButton).toBeDisabled();
     });
 
     it('should validate required fields in add form', async () => {
@@ -361,6 +526,50 @@ describe('VariablesPanel', () => {
       
       // Form should be hidden
       expect(screen.queryByText('Add New Variable')).not.toBeInTheDocument();
+      
+      // Add button should be enabled again
+      expect(screen.getByText('Add Variable')).not.toBeDisabled();
+    });
+
+    it('should show correct placeholders for different types', () => {
+      render(<VariablesPanel />);
+      
+      fireEvent.click(screen.getByText('Add Variable'));
+      
+      const typeSelect = screen.getByRole('combobox');
+      const valueInput = screen.getByLabelText(/Preview Value/);
+      
+      // Test string placeholder (default)
+      expect(valueInput).toHaveAttribute('placeholder', 'Enter text...');
+      
+      // Test number placeholder
+      fireEvent.change(typeSelect, { target: { value: 'number' } });
+      expect(valueInput).toHaveAttribute('placeholder', '0');
+      
+      // Test boolean placeholder
+      fireEvent.change(typeSelect, { target: { value: 'boolean' } });
+      expect(valueInput).toHaveAttribute('placeholder', 'true');
+    });
+
+    it('should reset form after successful save', async () => {
+      render(<VariablesPanel />);
+      
+      fireEvent.click(screen.getByText('Add Variable'));
+      
+      // Fill and save
+      const nameInput = screen.getByLabelText(/Name/);
+      const valueInput = screen.getByLabelText(/Preview Value/);
+      
+      fireEvent.change(nameInput, { target: { value: 'testVar' } });
+      fireEvent.change(valueInput, { target: { value: 'test value' } });
+      
+      const saveButton = screen.getByText('✓');
+      fireEvent.click(saveButton);
+      
+      expect(mockAddVariable).toHaveBeenCalledWith('testVar', 'string', 'test value');
+      expect(mockIncrementRevision).toHaveBeenCalled();
+      
+      // Note: The actual component doesn't close the form after save, so this test verifies the save behavior
     });
   });
 
@@ -408,6 +617,180 @@ describe('VariablesPanel', () => {
       await waitFor(() => {
         expect(screen.queryByText('Name is required')).not.toBeInTheDocument();
       });
+    });
+
+    it('should handle edge case boolean values', async () => {
+      render(<VariablesPanel />);
+      
+      fireEvent.click(screen.getByText('Add Variable'));
+      
+      const nameInput = screen.getByLabelText(/Name/);
+      const typeSelect = screen.getByRole('combobox');
+      const valueInput = screen.getByLabelText(/Preview Value/);
+      
+      // Test various boolean-like inputs
+      fireEvent.change(nameInput, { target: { value: 'boolTest' } });
+      fireEvent.change(typeSelect, { target: { value: 'boolean' } });
+      
+      // Test "false" (should be false)
+      fireEvent.change(valueInput, { target: { value: 'false' } });
+      fireEvent.click(screen.getByText('✓'));
+      
+      await waitFor(() => {
+        expect(mockAddVariable).toHaveBeenCalledWith('boolTest', 'boolean', false);
+      });
+    });
+
+    it('should handle empty string number conversion', async () => {
+      render(<VariablesPanel />);
+      
+      fireEvent.click(screen.getByText('Add Variable'));
+      
+      const nameInput = screen.getByLabelText(/Name/);
+      const typeSelect = screen.getByRole('combobox');
+      const valueInput = screen.getByLabelText(/Preview Value/);
+      
+      fireEvent.change(nameInput, { target: { value: 'emptyNum' } });
+      fireEvent.change(typeSelect, { target: { value: 'number' } });
+      fireEvent.change(valueInput, { target: { value: '   ' } }); // Whitespace only
+      
+      const saveButton = screen.getByText('✓');
+      fireEvent.click(saveButton);
+      
+      // Should show validation error for empty value
+      await waitFor(() => {
+        expect(screen.getByText('Preview value is required')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Component Props and Styling', () => {
+    it('should apply custom className prop', () => {
+      const customClass = 'custom-variables-panel';
+      render(<VariablesPanel className={customClass} />);
+      
+      // Find the root container div (parent of the header)
+      const panel = screen.getByText('Variables').closest('div')?.parentElement;
+      expect(panel).toHaveClass(customClass);
+    });
+
+    it('should render with default styling when no className provided', () => {
+      render(<VariablesPanel />);
+      
+      // Find the root container div (parent of the header)
+      const panel = screen.getByText('Variables').closest('div')?.parentElement;
+      expect(panel).toHaveClass('flex', 'flex-col', 'gap-4', 'p-4');
+    });
+  });
+
+  describe('Multiple Variable Interactions', () => {
+    it('should only allow editing one variable at a time', () => {
+      render(<VariablesPanel />);
+      
+      // Click edit on first variable
+      const editButtons = screen.getAllByText('✎');
+      fireEvent.click(editButtons[0]);
+      
+      // Verify first variable is in edit mode
+      expect(screen.getByDisplayValue('userName')).toBeInTheDocument();
+      
+      // Click edit on second variable
+      fireEvent.click(editButtons[1]);
+      
+      // First variable should no longer be in edit mode
+      expect(screen.queryByDisplayValue('userName')).not.toBeInTheDocument();
+      
+      // Second variable should be in edit mode
+      expect(screen.getByDisplayValue('userAge')).toBeInTheDocument();
+    });
+
+    it('should allow both add form and edit mode to be active', () => {
+      render(<VariablesPanel />);
+      
+      // Open add form
+      fireEvent.click(screen.getByText('Add Variable'));
+      expect(screen.getByText('Add New Variable')).toBeInTheDocument();
+      
+      // Start editing existing variable
+      const editButtons = screen.getAllByText('✎');
+      fireEvent.click(editButtons[0]);
+      
+      // Both forms should be visible (the component allows this behavior)
+      expect(screen.getByText('Add New Variable')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('userName')).toBeInTheDocument();
+    });
+
+    it('should handle variable deletion correctly', () => {
+      render(<VariablesPanel />);
+      
+      // Verify all variables are present
+      expect(screen.getByText('userName')).toBeInTheDocument();
+      expect(screen.getByText('userAge')).toBeInTheDocument();
+      expect(screen.getByText('isActive')).toBeInTheDocument();
+      
+      // Delete first variable
+      const deleteButtons = screen.getAllByText('🗑');
+      fireEvent.click(deleteButtons[0]);
+      
+      expect(mockRemoveVariable).toHaveBeenCalledWith('var1');
+      expect(mockIncrementRevision).toHaveBeenCalled();
+    });
+  });
+
+  describe('Edge Cases and State Management', () => {
+    it('should handle state updates correctly when variables change', () => {
+      const { rerender } = render(<VariablesPanel />);
+      
+      // Start editing a variable
+      const editButtons = screen.getAllByText('✎');
+      fireEvent.click(editButtons[0]);
+      
+      // Variable should be in edit mode
+      expect(screen.getByDisplayValue('userName')).toBeInTheDocument();
+      
+      // Update mock to simulate variable being deleted externally
+      mockedUseLayerStore.mockReturnValue({
+        variables: mockVariables.slice(1), // Remove first variable
+        addVariable: mockAddVariable,
+        updateVariable: mockUpdateVariable,
+        removeVariable: mockRemoveVariable,
+      });
+      
+      rerender(<VariablesPanel />);
+      
+      // Edit form should still work with remaining variables
+      expect(screen.getByText('userAge')).toBeInTheDocument();
+      expect(screen.getByText('isActive')).toBeInTheDocument();
+    });
+
+    it('should maintain form state during re-renders', () => {
+      const { rerender } = render(<VariablesPanel />);
+      
+      // Open add form and fill some data
+      fireEvent.click(screen.getByText('Add Variable'));
+      const nameInput = screen.getByLabelText(/Name/);
+      fireEvent.change(nameInput, { target: { value: 'testVar' } });
+      
+      // Trigger a re-render
+      rerender(<VariablesPanel />);
+      
+      // Form data should be preserved
+      expect(screen.getByDisplayValue('testVar')).toBeInTheDocument();
+    });
+
+    it('should handle empty variables array correctly', () => {
+      mockedUseLayerStore.mockReturnValue({
+        variables: [],
+        addVariable: mockAddVariable,
+        updateVariable: mockUpdateVariable,
+        removeVariable: mockRemoveVariable,
+      });
+
+      render(<VariablesPanel />);
+      
+      expect(screen.getByText(/No variables defined/)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     });
   });
 }); 

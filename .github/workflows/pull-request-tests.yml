@@ -36,10 +36,10 @@ jobs:
           COVERAGE=$(npm run test -- --coverage --coverageReporters=text-summary --silent | grep -o 'Lines.*: [0-9.]*%' | grep -o '[0-9.]*' | head -1)
           echo "Current line coverage: ${COVERAGE}%"
           
-          # Check if coverage is below 80%
-          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
-            echo "❌ Coverage ($COVERAGE%) is below the required threshold of 80%"
+          # Check if coverage is below 90%
+          if (( $(echo "$COVERAGE < 90" | bc -l) )); then
+            echo "❌ Coverage ($COVERAGE%) is below the required threshold of 90%"
             exit 1
           else
-            echo "✅ Coverage ($COVERAGE%) meets the required threshold of 80%"
+            echo "✅ Coverage ($COVERAGE%) meets the required threshold of 90%"
           fi

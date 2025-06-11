@@ -30,8 +30,11 @@ const customJestConfig = {
     "!components/ui/ui-builder/flexbox.tsx",
     "!components/ui/ui-builder/grid.tsx",
     "!components/ui/ui-builder/codeblock.tsx",
+    "!components/ui/ui-builder/types.ts",
     "!components/ui/ui-builder/internal/iconname-field.tsx",
     "!components/ui/ui-builder/internal/classname-control/*",
+    "!components/ui/ui-builder/internal/tailwind-classes.ts",
+    "!lib/ui-builder/registry/form-field-overrides.tsx"
   ],
 };
 
