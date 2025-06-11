@@ -629,10 +629,8 @@ npm run test
 ## Roadmap
 
 - [ ] Add variable binding to layer children and not just props
-- [ ] Documentation site for UI Builder with more hands-on examples
-- [ ] Configurable Tailwind Class subset for things like React-Email components
 - [ ] Drag and drop component in the editor panel and not just in the layers panel
-- [ ] Add string templates for variable-bound props. (ex, "Hello {name}" in a span)
+- [ ] Documentation site for UI Builder with more hands-on examples
 - [ ] Update to React 19
 - [ ] Update to latest Shadcn/ui + Tailwind CSS v4
 - [ ] Add Blocks. Reusable component blocks that can be used in multiple pages
