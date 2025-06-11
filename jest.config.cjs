@@ -13,7 +13,8 @@ const customJestConfig = {
   testRegex: ".*\\.test\\.[jt]sx?$",
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/$1",
-    "react-markdown": "<rootDir>/__tests__/__mocks__/react-markdown.js"
+    "react-markdown": "<rootDir>/__tests__/__mocks__/react-markdown.js",
+    "^@/components/ui/dropdown-menu$": "<rootDir>/__tests__/__mocks__/dropdown-menu.tsx"
   },
   transformIgnorePatterns: [
     "node_modules/(?!(lowlight|@tiptap|react-markdown|remark-gfm|remark-math|he-tree-react|micromark|mdast-util|unist-util|decode-named-character-reference|character-entities|zwitch|longest-streak|markdown-table|ccount|escape-string-regexp|react-medium-image-zoom)/)"

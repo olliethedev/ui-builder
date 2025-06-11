@@ -29,6 +29,26 @@ jest.mock("next-themes", () => ({
   ThemeProvider: jest.fn(),
 }));
 
+// Mock scrollIntoView - required by cmdk library
+Element.prototype.scrollIntoView = jest.fn();
+
+// Mock zustand - simplified approach that works with curried functions
+jest.mock("zustand", () => ({
+  create: jest.fn(() => () => ({})),
+}));
+
+// Mock zustand middleware
+jest.mock("zustand/middleware", () => ({
+  persist: jest.fn((fn) => fn),
+  subscribeWithSelector: jest.fn((fn) => fn),
+  devtools: jest.fn((fn) => fn),
+  createJSONStorage: jest.fn(() => ({
+    getItem: jest.fn(),
+    setItem: jest.fn(),
+    removeItem: jest.fn(),
+  })),
+}));
+
 class ResizeObserver {
   constructor(callback) {
     this.callback = callback;
