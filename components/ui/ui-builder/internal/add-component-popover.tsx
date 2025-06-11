@@ -1,5 +1,4 @@
-import React, { ReactNode, useCallback, useMemo, memo, Suspense, lazy, useState, useEffect, useRef } from "react";
-import { Search } from "lucide-react";
+import React, { ReactNode, useCallback, useMemo, memo, Suspense, useState, useEffect, useRef } from "react";
 
 import {
   Command,
@@ -21,8 +20,9 @@ import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { cn } from "@/lib/utils";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { ComponentLayer, ComponentRegistry } from "@/components/ui/ui-builder/types";
-import { getDefaultProps } from "@/lib/ui-builder/store/schema-utils";
 import { createComponentLayer } from "@/lib/ui-builder/store/layer-utils";
+
+const fallback = <div className="w-full h-full bg-muted rounded border animate-pulse" />;
 
 // Cache for preview layers to avoid recreation
 const previewLayerCache = new Map<string, ComponentLayer>();
@@ -225,6 +225,8 @@ const LazyComponentPreview = memo(({
   const [shouldLoad, setShouldLoad] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  
+
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
@@ -247,7 +249,7 @@ const LazyComponentPreview = memo(({
   return (
     <div ref={ref} className="w-full h-full">
       {shouldLoad ? (
-        <Suspense fallback={<div className="w-full h-full bg-muted rounded border animate-pulse" />}>
+        <Suspense fallback={fallback}>
           <ComponentPreview 
             componentType={componentType}
             componentRegistry={componentRegistry}
