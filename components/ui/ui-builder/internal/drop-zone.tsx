@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
+import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
 
 interface DropZoneProps {
   parentId: string;
@@ -9,6 +10,18 @@ interface DropZoneProps {
   className?: string;
   children?: React.ReactNode;
 }
+
+// Utility function to detect flex direction from className
+const getFlexDirection = (className?: string): 'row' | 'column' => {
+  if (!className) return 'column'; // Default to column
+  
+  // Check for flex-row variants
+  if (className.includes('flex-row')) return 'row';
+  if (className.includes('flex-col')) return 'column';
+  
+  // Default to column if flex direction is not explicitly set
+  return 'column';
+};
 
 export const DropZone: React.FC<DropZoneProps> = ({
   parentId,
@@ -94,17 +107,50 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
     },
   });
 
+  // Get parent layer to determine flex direction
+  const findLayerById = useLayerStore((state) => state.findLayerById);
+  const parentLayer = findLayerById(parentId);
+  const parentClassName = parentLayer?.props?.className as string;
+  const flexDirection = getFlexDirection(parentClassName);
+
   if (!isActive) return null;
+
+  const isHorizontalLayout = flexDirection === 'row';
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "h-2 transition-all duration-200 my-1",
-        isOver
-          ? "bg-blue-500/30 border border-blue-500 rounded-sm"
-          : "bg-blue-200/20 border border-blue-300 border-dashed rounded-sm"
+        "absolute transition-all duration-150 pointer-events-auto z-20",
+        "before:content-[''] before:absolute before:rounded-full before:transition-all before:duration-150",
+        // Horizontal layout (flex-row): vertical lines between children
+        isHorizontalLayout && [
+          "inset-y-0 w-0.5",
+          "before:inset-0 before:w-0.5",
+          isOver
+            ? "before:bg-blue-500 before:shadow-sm before:w-1 before:-left-0.5"
+            : "before:bg-blue-400/40 before:w-0.5"
+        ],
+        // Vertical layout (flex-col): horizontal lines between children
+        !isHorizontalLayout && [
+          "inset-x-0 h-0.5",
+          "before:inset-0 before:h-0.5",
+          isOver
+            ? "before:bg-blue-500 before:shadow-sm before:h-1 before:-top-0.5"
+            : "before:bg-blue-400/40 before:h-0.5"
+        ]
       )}
+      style={
+        isHorizontalLayout
+          ? {
+              left: position === 0 ? '-1px' : 'auto',
+              right: position === 0 ? 'auto' : '-1px',
+            }
+          : {
+              top: position === 0 ? '-1px' : 'auto',
+              bottom: position === 0 ? 'auto' : '-1px',
+            }
+      }
       data-testid={`drop-placeholder-${parentId}-${position}`}
     />
   );

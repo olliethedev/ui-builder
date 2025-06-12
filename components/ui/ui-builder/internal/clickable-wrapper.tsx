@@ -315,7 +315,7 @@ const InternalClickableWrapper: React.FC<ClickableWrapperProps> = ({
           onClick={handleClick}
           // onDoubleClick={handleDoubleClick}
           className={cn(
-            "fixed box-border hover:border-blue-300 hover:border-2 group",
+            "fixed box-border hover:border-blue-300 hover:border-2",
             isSelected ? "border-2 border-blue-500 hover:border-blue-500" : ""
           )}
           onWheel={handleWheel}
@@ -325,7 +325,7 @@ const InternalClickableWrapper: React.FC<ClickableWrapperProps> = ({
           style={style}
         >
           {/* Drag handle for non-page layers */}
-          {!isPageLayer && (
+          {!isPageLayer && isSelected && (
             <DragHandle
               layerId={layer.id}
               layerType={layer.type}

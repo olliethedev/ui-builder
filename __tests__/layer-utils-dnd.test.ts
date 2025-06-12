@@ -166,7 +166,7 @@ describe('Layer Utils - Drag and Drop', () => {
     });
 
     it('should return false for layer with non-array children field', () => {
-      const layer = createMockLayer('test', 'span');
+      const layer = createMockLayer('test', 'span', 'text content');
       const result = canLayerAcceptChildren(layer, mockRegistry);
       expect(result).toBe(false);
     });

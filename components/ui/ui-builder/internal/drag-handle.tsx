@@ -41,10 +41,10 @@ export const DragHandle: React.FC<DragHandleProps> = ({
       {...listeners}
       {...attributes}
       className={cn(
-        "absolute top-0 right-0 transform translate-x-full -translate-y-1/2 cursor-grab active:cursor-grabbing",
+        "absolute top-0 left-0 transform -translate-x-full -translate-y-1/2 cursor-grab active:cursor-grabbing",
         "bg-blue-500 hover:bg-blue-600 text-white rounded-full p-1 shadow-md z-10",
-        "opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-        isDragging && "opacity-100 cursor-grabbing",
+        "opacity-100 transition-opacity duration-200",
+        isDragging && "cursor-grabbing",
         className
       )}
       data-testid={`drag-handle-${layerId}`}

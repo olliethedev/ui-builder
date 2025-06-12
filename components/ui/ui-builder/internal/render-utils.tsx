@@ -102,7 +102,7 @@ export const RenderLayer: React.FC<{
     
     if (hasLayerChildren(layer) && layer.children.length > 0) {
       const childElements = layer.children.map((child, index) => (
-        <React.Fragment key={child.id}>
+        <div key={child.id} className="relative">
           {/* Show drop zone before each child when dragging */}
           {showDropZones && (
             <DropPlaceholder
@@ -118,18 +118,19 @@ export const RenderLayer: React.FC<{
             variableValues={variableValues}
             editorConfig={childEditorConfig}
           />
-        </React.Fragment>
+        </div>
       ));
 
       // Add drop zone after the last child
       if (showDropZones) {
         childElements.push(
-          <DropPlaceholder
-            key={`drop-${layer.id}-${layer.children.length}`}
-            parentId={layer.id}
-            position={layer.children.length}
-            isActive={true}
-          />
+          <div key={`drop-${layer.id}-${layer.children.length}`} className="relative h-0">
+            <DropPlaceholder
+              parentId={layer.id}
+              position={layer.children.length}
+              isActive={true}
+            />
+          </div>
         );
       }
 
@@ -139,11 +140,13 @@ export const RenderLayer: React.FC<{
     } else if (showDropZones && hasLayerChildren(layer)) {
       // Show drop zone for empty containers
       childProps.children = (
-        <DropPlaceholder
-          parentId={layer.id}
-          position={0}
-          isActive={true}
-        />
+        <div className="relative min-h-[20px]">
+          <DropPlaceholder
+            parentId={layer.id}
+            position={0}
+            isActive={true}
+          />
+        </div>
       );
     }
 

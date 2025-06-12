@@ -69,11 +69,9 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
   const isMobileScreen = window.innerWidth < 768;
 
   const renderer = useMemo(() => (
-    <DndContextProvider>
-      <div id="editor-panel-container" className="overflow-visible pt-3 pb-10 pr-20">
-        <LayerRenderer page={selectedPage} editorConfig={editorConfig} componentRegistry={componentRegistry} />
-      </div>
-    </DndContextProvider>
+    <div id="editor-panel-container" className="overflow-visible pt-3 pb-10 pr-20">
+      <LayerRenderer page={selectedPage} editorConfig={editorConfig} componentRegistry={componentRegistry} />
+    </div>
   ), [selectedPage, editorConfig, componentRegistry]);
 
   const widthClass = useMemo(() => {
@@ -93,25 +91,27 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
         className
       )}
     >
-      {useCanvas ? (
-        <InteractiveCanvas
-          frameId="editor-panel-frame"
-          disableWheel={layers.length === 0}
-          disablePinch={layers.length === 0}
-          disableDrag={!isMobileScreen}
-        >
-          <IframeWrapper
-            key={previewMode}
+      <DndContextProvider>
+        {useCanvas ? (
+          <InteractiveCanvas
             frameId="editor-panel-frame"
-            resizable={previewMode === "responsive" && layers.length > 0}
-            className={cn(`block`, widthClass)}
+            disableWheel={layers.length === 0}
+            disablePinch={layers.length === 0}
+            disableDrag={!isMobileScreen}
           >
-            {renderer}
-          </IframeWrapper>
-        </InteractiveCanvas>
-      ) : (
-        renderer
-      )}
+            <IframeWrapper
+              key={previewMode}
+              frameId="editor-panel-frame"
+              resizable={previewMode === "responsive" && layers.length > 0}
+              className={cn(`block`, widthClass)}
+            >
+              {renderer}
+            </IframeWrapper>
+          </InteractiveCanvas>
+        ) : (
+          renderer
+        )}
+      </DndContextProvider>
       <AddComponentsPopover
         parentLayerId={selectedPageId}
       >

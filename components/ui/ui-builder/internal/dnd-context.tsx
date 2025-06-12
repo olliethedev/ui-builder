@@ -44,13 +44,13 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 4,
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 200,
-        tolerance: 5,
+        delay: 100,
+        tolerance: 8,
       },
     })
   );
@@ -114,7 +114,7 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
         onDragEnd={handleDragEnd}
       >
         {children}
-        <DragOverlay>
+        <DragOverlay dropAnimation={null}>
           {activeLayerId ? <DragOverlayContent layerId={activeLayerId} /> : null}
         </DragOverlay>
       </DndContext>
