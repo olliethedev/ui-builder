@@ -84,6 +84,7 @@ describe('NavBar', () => {
       findLayerById: mockFindLayerById,
       selectPage: mockSelectPage,
       addPageLayer: mockAddPageLayer,
+      isLayerAPage: jest.fn().mockReturnValue(false),
       temporal: {
         getState: () => ({
           undo: mockUndo,
@@ -469,6 +470,7 @@ describe('NavBar', () => {
         findLayerById: mockFindLayerById,
         selectPage: mockSelectPage,
         addPageLayer: mockAddPageLayer,
+        isLayerAPage: jest.fn().mockReturnValue(false),
         temporal: {
           getState: () => ({
             undo: mockUndo,

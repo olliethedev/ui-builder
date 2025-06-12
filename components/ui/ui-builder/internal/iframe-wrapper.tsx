@@ -166,6 +166,36 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
           // Initial height update
           setTimeout(updateIframeHeight, 0);
 
+          // Forward drag events from iframe to parent for DnD to work properly
+          const forwardEvent = (eventType: string) => {
+            return (event: Event) => {
+              // Create a new event on the parent document with proper coordinates
+              const rect = iframe.getBoundingClientRect();
+              const mouseEvent = event as MouseEvent;
+              
+              const newEvent = new MouseEvent(eventType, {
+                bubbles: true,
+                cancelable: true,
+                clientX: mouseEvent.clientX + rect.left,
+                clientY: mouseEvent.clientY + rect.top,
+                button: mouseEvent.button,
+                buttons: mouseEvent.buttons,
+                ctrlKey: mouseEvent.ctrlKey,
+                shiftKey: mouseEvent.shiftKey,
+                altKey: mouseEvent.altKey,
+                metaKey: mouseEvent.metaKey,
+              });
+              
+              // Dispatch on the iframe element in the parent document
+              iframe.dispatchEvent(newEvent);
+            };
+          };
+
+          // Forward mouse events for drag and drop
+          ['mousedown', 'mousemove', 'mouseup', 'dragstart', 'drag', 'dragend'].forEach(eventType => {
+            iframeDoc.addEventListener(eventType, forwardEvent(eventType), true);
+          });
+
           // Set the mount node as ready
           setIsMounted(true);
 
@@ -173,6 +203,11 @@ export const IframeWrapper: React.FC<IframeWrapperProps> = React.memo(
           return () => {
             resizeObserver.disconnect();
             mutationObserver.disconnect();
+            
+            // Clean up forwarded events
+            ['mousedown', 'mousemove', 'mouseup', 'dragstart', 'drag', 'dragend'].forEach(eventType => {
+              iframeDoc.removeEventListener(eventType, forwardEvent(eventType), true);
+            });
           };
         }
       };

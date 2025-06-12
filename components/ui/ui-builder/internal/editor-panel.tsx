@@ -8,6 +8,7 @@ import {
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
+import { DndContextProvider } from "@/components/ui/ui-builder/internal/dnd-context";
 import { cn } from "@/lib/utils";
 import { IframeWrapper } from "@/components/ui/ui-builder/internal/iframe-wrapper";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
@@ -90,25 +91,27 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
         className
       )}
     >
-      {useCanvas ? (
-        <InteractiveCanvas
-          frameId="editor-panel-frame"
-          disableWheel={layers.length === 0}
-          disablePinch={layers.length === 0}
-          disableDrag={!isMobileScreen}
-        >
-          <IframeWrapper
-            key={previewMode}
+      <DndContextProvider>
+        {useCanvas ? (
+          <InteractiveCanvas
             frameId="editor-panel-frame"
-            resizable={previewMode === "responsive" && layers.length > 0}
-            className={cn(`block`, widthClass)}
+            disableWheel={layers.length === 0}
+            disablePinch={layers.length === 0}
+            disableDrag={!isMobileScreen}
           >
-            {renderer}
-          </IframeWrapper>
-        </InteractiveCanvas>
-      ) : (
-        renderer
-      )}
+            <IframeWrapper
+              key={previewMode}
+              frameId="editor-panel-frame"
+              resizable={previewMode === "responsive" && layers.length > 0}
+              className={cn(`block`, widthClass)}
+            >
+              {renderer}
+            </IframeWrapper>
+          </InteractiveCanvas>
+        ) : (
+          renderer
+        )}
+      </DndContextProvider>
       <AddComponentsPopover
         parentLayerId={selectedPageId}
       >

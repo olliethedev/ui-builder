@@ -5,7 +5,7 @@ import { produce } from 'immer';
 import { temporal } from 'zundo';
 import isDeepEqual from 'fast-deep-equal';
 
-import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3, createComponentLayer } from '@/lib/ui-builder/store/layer-utils';
+import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3, createComponentLayer, moveLayer } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 import { ComponentLayer, Variable, PropValue, VariableValueType, isVariableReference } from '@/components/ui/ui-builder/types';
@@ -26,6 +26,7 @@ export interface LayerStore {
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
   updateLayer: (layerId: string, newProps: Record<string, PropValue>, layerRest?: Partial<Omit<ComponentLayer, 'props'>>) => void;
+  moveLayer: (sourceLayerId: string, targetParentId: string, targetPosition: number) => void;
   selectLayer: (layerId: string) => void;
   selectPage: (pageId: string) => void;
   findLayerById: (layerId: string | null) => ComponentLayer | undefined;
@@ -436,6 +437,13 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
           state.immutableBindings[layerId] = {};
         }
         state.immutableBindings[layerId][propName] = isImmutable;
+      }));
+    },
+
+    moveLayer: (sourceLayerId: string, targetParentId: string, targetPosition: number) => {
+      set(produce((state: LayerStore) => {
+        const updatedPages = moveLayer(state.pages, sourceLayerId, targetParentId, targetPosition);
+        state.pages = updatedPages;
       }));
     },
   }

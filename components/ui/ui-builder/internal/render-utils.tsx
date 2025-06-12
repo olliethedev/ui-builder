@@ -3,15 +3,27 @@ import React, { memo, Suspense, useMemo, useRef } from "react";
 import isDeepEqual from "fast-deep-equal";
 
 import { ClickableWrapper } from "@/components/ui/ui-builder/internal/clickable-wrapper";
+import { DropPlaceholder } from "@/components/ui/ui-builder/internal/drop-zone";
+import { useDndContext } from "@/components/ui/ui-builder/internal/dnd-context";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallback";
 import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
-import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
+import { hasLayerChildren, canLayerAcceptChildren } from "@/lib/ui-builder/store/layer-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
 import { ComponentRegistry, ComponentLayer, Variable, PropValue } from '@/components/ui/ui-builder/types';
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { resolveVariableReferences } from "@/lib/ui-builder/utils/variable-resolver";
+
+// Custom hook to safely use DND context
+const useSafeDndContext = () => {
+  try {
+    return useDndContext();
+  } catch {
+    return null; // Not inside DndContextProvider
+  }
+};
 
 export interface EditorConfig {
   zIndex: number;
@@ -33,6 +45,10 @@ export const RenderLayer: React.FC<{
 }> = memo(
   ({ layer, componentRegistry, editorConfig, variables, variableValues }) => {
     const storeVariables = useLayerStore((state) => state.variables);
+    const isLayerAPage = useLayerStore((state) => state.isLayerAPage(layer.id));
+    const registry = useEditorStore((state) => state.registry);
+    const dndContext = useSafeDndContext();
+    
     // Use provided variables or fall back to store variables
     const effectiveVariables = variables || storeVariables;
     const componentDefinition =
@@ -80,20 +96,58 @@ export const RenderLayer: React.FC<{
 
     if (!Component) return null;
 
+    // Check if this layer can accept children and if drag is active
+    const canAcceptChildren = canLayerAcceptChildren(layer, registry);
+    const showDropZones = editorConfig && dndContext?.isDragging && canAcceptChildren;
     
     if (hasLayerChildren(layer) && layer.children.length > 0) {
-      childProps.children = layer.children.map((child) => (
-        <RenderLayer
-          key={child.id}
-          componentRegistry={componentRegistry}
-          layer={child}
-          variables={variables}
-          variableValues={variableValues}
-          editorConfig={childEditorConfig}
-        />
+      const childElements = layer.children.map((child, index) => (
+        <div key={child.id} className="relative">
+          {/* Show drop zone before each child when dragging */}
+          {showDropZones && (
+            <DropPlaceholder
+              parentId={layer.id}
+              position={index}
+              isActive={true}
+            />
+          )}
+          <RenderLayer
+            componentRegistry={componentRegistry}
+            layer={child}
+            variables={variables}
+            variableValues={variableValues}
+            editorConfig={childEditorConfig}
+          />
+        </div>
       ));
+
+      // Add drop zone after the last child
+      if (showDropZones) {
+        childElements.push(
+          <div key={`drop-${layer.id}-${layer.children.length}`} className="relative h-0">
+            <DropPlaceholder
+              parentId={layer.id}
+              position={layer.children.length}
+              isActive={true}
+            />
+          </div>
+        );
+      }
+
+      childProps.children = childElements;
     } else if (typeof layer.children === "string") {
       childProps.children = layer.children;
+    } else if (showDropZones && hasLayerChildren(layer)) {
+      // Show drop zone for empty containers
+      childProps.children = (
+        <div className="relative min-h-[20px]">
+          <DropPlaceholder
+            parentId={layer.id}
+            position={0}
+            isActive={true}
+          />
+        </div>
+      );
     }
 
     const WrappedComponent = isPrimitive ? (
@@ -133,6 +187,7 @@ export const RenderLayer: React.FC<{
             onDeleteLayer={handleDeleteLayer}
             listenToScrollParent={!usingCanvas}
             observeMutations={usingCanvas === true}
+            isPageLayer={isLayerAPage}
           >
             {WrappedComponent}
           </ClickableWrapper>
