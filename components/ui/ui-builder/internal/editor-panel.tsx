@@ -1,6 +1,6 @@
 "use client";
-import React, { useCallback, useMemo, useState, createContext, useContext } from "react";
-import { Plus } from "lucide-react";
+import React, { useCallback, useMemo, useState, createContext, useLayoutEffect, useRef } from "react";
+import { Plus, GripVertical } from "lucide-react";
 import {
   countLayers,
   useLayerStore,
@@ -14,14 +14,13 @@ import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { Button } from "@/components/ui/button";
 import { TransformWrapper, TransformComponent, useControls } from "react-zoom-pan-pinch";
+import { DragConfig, useDrag } from "@use-gesture/react";
 
 interface EditorPanelProps {
   className?: string;
   useCanvas?: boolean;
 }
 
-// Context to track if a drag handle is active
-export const DragHandleContext = createContext<{ dragging: boolean; setDragging: (v: boolean) => void }>({ dragging: false, setDragging: () => {} });
 
 
 const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
@@ -59,6 +58,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
     }
   }, [selectedLayer, duplicateLayer, isLayerAPage]);
 
+  const [dragging, setDragging] = useState(false);
+
+  const handleDraggingChange = useCallback((isDragging: boolean) => {
+    setDragging(isDragging);
+  }, []);
+
   const editorConfig = useMemo(() => ({
     zIndex: 1,
     totalLayers: countLayers(layers),
@@ -70,10 +75,18 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
   }), [layers, selectedLayer, onSelectElement, handleDuplicateLayer, handleDeleteLayer, useCanvas, allowPagesCreation, allowPagesDeletion]);
 
   const renderer = useMemo(() => (
-    <div id="editor-panel-container" className="overflow-visible pt-3 pb-10 pr-20">
-      <LayerRenderer page={selectedPage} editorConfig={editorConfig} componentRegistry={componentRegistry} />
-    </div>
-  ), [selectedPage, editorConfig, componentRegistry]);
+    <ResizableWrapper
+      isResizable={previewMode === "responsive"}
+      onDraggingChange={handleDraggingChange}
+    >
+      <div 
+        id="editor-panel-content" 
+        className="overflow-visible pt-3 pb-10 pr-20"
+      >
+        <LayerRenderer page={selectedPage} editorConfig={editorConfig} componentRegistry={componentRegistry} />
+      </div>
+    </ResizableWrapper>
+  ), [selectedPage, editorConfig, componentRegistry, previewMode, handleDraggingChange]);
 
   const widthClass = useMemo(() => {
     return {
@@ -84,8 +97,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
     }[previewMode]
   }, [previewMode]);
 
-  const [dragging, setDragging] = useState(false);
-
   return (
     <div
       id="editor-panel-container"
@@ -94,47 +105,45 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
         className
       )}
     >
-      <DragHandleContext.Provider value={{ dragging, setDragging }}>
-        <DndContextProvider>
-            {useCanvas ? (
-              <TransformWrapper
-                initialScale={1}
-                minScale={0.1}
-                maxScale={5}
-                wheel={{ step: 0.05 }}
-                doubleClick={{ disabled: true }}
-                panning={{ disabled: dragging }}
-                centerOnInit={true}
-                limitToBounds={false}
+      <DndContextProvider>
+        {useCanvas ? (
+          <TransformWrapper
+            initialScale={1}
+            minScale={0.1}
+            maxScale={5}
+            wheel={{ step: 0.05 }}
+            doubleClick={{ disabled: true }}
+            panning={{ disabled: dragging }}
+            centerOnInit={true}
+            limitToBounds={false}
+          >
+            <ZoomControls />
+            <TransformComponent
+              wrapperStyle={{
+                width: "100%",
+                height: "100%",
+              }}
+              contentStyle={{
+                width: "100%",
+                height: "100%",
+              }}
+            >
+              <div 
+                className={cn(`relative`, widthClass)} 
+                data-testid="transform-component"
+                style={{ 
+                  minHeight: "100vh",
+                  padding: "50px",
+                }}
               >
-                <ZoomControls />
-                <TransformComponent
-                  wrapperStyle={{
-                    width: "100%",
-                    height: "100%",
-                  }}
-                  contentStyle={{
-                    width: "100%",
-                    height: "100%",
-                  }}
-                >
-                  <div 
-                    className={cn(`relative`, widthClass)} 
-                    data-testid="transform-component"
-                    style={{ 
-                      minHeight: "100vh",
-                      padding: "50px",
-                    }}
-                  >
-                    {renderer}
-                  </div>
-                </TransformComponent>
-              </TransformWrapper>
-            ) : (
-              renderer
-            )}
-          </DndContextProvider>
-      </DragHandleContext.Provider>
+                {renderer}
+              </div>
+            </TransformComponent>
+          </TransformWrapper>
+        ) : (
+          renderer
+        )}
+      </DndContextProvider>
       <AddComponentsPopover
         parentLayerId={selectedPageId}
       >
@@ -189,6 +198,149 @@ const ZoomControls: React.FC = () => {
         ⟳
       </Button>
     </div>
+  );
+};
+
+// Context to track if a drag handle is active
+export const DragHandleContext = createContext<{ dragging: boolean; setDragging: (v: boolean) => void }>({ dragging: false, setDragging: () => {} });
+
+// Resizer Handle Component
+const Resizer = ({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+  }, []);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+  }, []);
+
+  return (
+    <div
+      data-testid="resizer"
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
+      className={cn(
+        "flex items-center justify-center w-4 h-4 cursor-ew-resize rounded-sm border bg-border hover:bg-muted touch-none z-[1001]",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
+
+// Resizable Wrapper Component for responsive mode
+interface ResizableWrapperProps {
+  children: React.ReactNode;
+  isResizable: boolean;
+  onDraggingChange?: (dragging: boolean) => void;
+  onSizeChange?: (width: number) => void;
+}
+
+const ResizableWrapper: React.FC<ResizableWrapperProps> = ({
+  children,
+  isResizable,
+  onDraggingChange,
+  onSizeChange,
+}) => {
+  const [dragging, setDragging] = useState(false);
+  const [responsiveSize, setResponsiveSize] = useState<{ width: number } | null>(null);
+  const initialSizeRef = useRef<{ width: number }>({ width: 0 });
+
+  // Set initial responsive size
+  useLayoutEffect(() => {
+    if (isResizable) {
+      const initialWidth = 800; // Default responsive width
+      setResponsiveSize({ width: initialWidth });
+      onSizeChange?.(initialWidth);
+    }
+  }, [isResizable, onSizeChange]);
+
+  const dragConfig = useMemo(() => {
+    return {
+      axis: "x",
+      from: () => [0, 0],
+      filterTaps: true,
+    } as DragConfig;
+  }, []);
+
+  // Handle resizing using useDrag for responsive mode
+  const bindResizer = useDrag(
+    ({ down, movement: [mx], first, last }) => {
+      if (first) {
+        // Capture the initial size when drag starts
+        initialSizeRef.current = {
+          width: responsiveSize?.width || 800,
+        };
+        handleSetDragging(true);
+      }
+
+      if (down) {
+        // Calculate new size based on initial size and movement
+        const newWidth = Math.max(320, initialSizeRef.current.width + mx); // Min width of 320px
+        setResponsiveSize({ width: newWidth });
+        onSizeChange?.(newWidth);
+      }
+
+      // Notify when drag ends for final measurement update
+      if (last) {
+        // Small delay to ensure DOM updates are complete
+        setTimeout(() => {
+          handleSetDragging(false);
+        }, 0);
+      }
+    },
+    dragConfig as any
+  );
+
+  const bindResizerValues = useMemo(() => {
+    return typeof bindResizer === 'function' ? bindResizer() : {};
+  }, [bindResizer]);
+
+  const resizerStyle = useMemo(() => {
+    return {
+      left: responsiveSize?.width ? `${responsiveSize.width - 80}px` : undefined
+    };
+  }, [responsiveSize]);
+
+  const responsiveWidthStyle = useMemo(() => {
+    if (isResizable && responsiveSize) {
+      return { width: `${responsiveSize.width}px` };
+    }
+    return {};
+  }, [isResizable, responsiveSize]);
+
+  const handleSetDragging = useCallback((value: boolean) => {
+    setDragging(value);
+    onDraggingChange?.(value);
+  }, [onDraggingChange]);
+
+  return (
+    <DragHandleContext.Provider value={{ dragging, setDragging: handleSetDragging }}>
+      <div className="relative" style={responsiveWidthStyle}>
+        {isResizable && (
+          <>
+            <Resizer {...bindResizerValues} className="absolute top-0 right-[-40px]" style={resizerStyle}>
+              <GripVertical className="w-4 h-4" />
+            </Resizer>
+            <Resizer
+              {...bindResizerValues}
+              className="absolute bottom-7 right-[-40px]"
+              style={resizerStyle}
+            >
+              <GripVertical className="w-4 h-4" />
+            </Resizer>
+          </>
+        )}
+        {children}
+      </div>
+    </DragHandleContext.Provider>
   );
 };
 

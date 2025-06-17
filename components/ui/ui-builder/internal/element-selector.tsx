@@ -6,12 +6,14 @@ import React, {
   useState,
   useLayoutEffect,
   useMemo,
+  useContext,
 } from "react";
-import { ComponentLayer } from "@/components/ui/ui-builder/types";
 import { useTransformEffect } from "react-zoom-pan-pinch";
+import { ComponentLayer } from "@/components/ui/ui-builder/types";
 import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
+import { DragHandle as ComponentDragHandle } from "@/components/ui/ui-builder/internal/drag-handle";
+import { DragHandleContext } from "@/components/ui/ui-builder/internal/editor-panel";
 import { cn } from "@/lib/utils";
-import { DragHandle } from "@/components/ui/ui-builder/internal/drag-handle";
 
 const style: React.CSSProperties = {
   display: "contents",
@@ -104,7 +106,7 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
         >
           {/* Drag handle for non-page layers */}
           {!isPageLayer && isSelected && (
-            <DragHandle
+            <ComponentDragHandle
               layerId={layer.id}
               layerType={layer.type}
             />
@@ -146,6 +148,12 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
   const lastMeasurementRef = useRef<DOMRectReadOnly | null>(null);
   const elementsRef = useRef<HTMLElement[]>([]);
   const transformUpdatePendingRef = useRef(false);
+  
+  // Get dragging context to respond to ResizableWrapper changes
+  const { dragging } = useContext(DragHandleContext);
+  
+  // Parent container observer to track ResizableWrapper resizing
+  const parentObserverRef = useRef<ResizeObserver | null>(null);
 
   // Throttled measurement function using RAF
   const measureElements = useCallback(() => {
@@ -215,6 +223,11 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
     }, [measureElements])
   );
 
+  // Re-measure when dragging state changes (for ResizableWrapper)
+  useEffect(() => {
+    measureElements();
+  }, [dragging, measureElements]);
+
   // Cache elements and set up ResizeObservers (without transform state dependency)
   useLayoutEffect(() => {
     const wrapper = wrapperRef.current;
@@ -236,11 +249,24 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
       return ro;
     });
 
+    // Set up parent container ResizeObserver to track ResizableWrapper changes
+    const parentContainer = wrapper.closest('#editor-panel-container') || 
+                           wrapper.closest('[data-testid="transform-component"]') ||
+                           wrapper.closest('.relative');
+    if (parentContainer && parentContainer instanceof HTMLElement) {
+      parentObserverRef.current = new ResizeObserver(measureElements);
+      parentObserverRef.current.observe(parentContainer);
+    }
+
     // Initial measurement
     measureElements();
 
     return () => {
       observers.forEach((ro) => ro.disconnect());
+      if (parentObserverRef.current) {
+        parentObserverRef.current.disconnect();
+        parentObserverRef.current = null;
+      }
       if (rafIdRef.current) {
         cancelAnimationFrame(rafIdRef.current);
         rafIdRef.current = null;

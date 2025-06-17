@@ -39,6 +39,7 @@ export const LayerMenu: React.FC<MenuProps> = ({
   const canDelete = !isLayerAPage || allowPagesDeletion;
 
   const style = useMemo(() => ({
+    position: "absolute" as const,
     top: y,
     left: x,
     zIndex: zIndex,
@@ -68,7 +69,6 @@ export const LayerMenu: React.FC<MenuProps> = ({
   return (
     <>
       <div
-        className="fixed"
         style={style}
       >
         <span
