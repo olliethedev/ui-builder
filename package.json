@@ -72,6 +72,7 @@
     "react-resizable-panels": "^2.1.4",
     "react-scan": "^0.3.4",
     "react-syntax-highlighter": "^15.6.1",
+    "react-zoom-pan-pinch": "^3.7.0",
     "remark-gfm": "^4.0.0",
     "remark-math": "^6.0.0",
     "server-only": "^0.0.1",

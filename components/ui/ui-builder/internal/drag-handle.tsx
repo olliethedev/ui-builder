@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { GripVertical } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
+import { DragHandleContext } from "./editor-panel";
 
 interface DragHandleProps {
   layerId: string;
@@ -30,9 +31,18 @@ export const DragHandle: React.FC<DragHandleProps> = ({
     },
   });
 
-  const style = {
-    transform: CSS.Translate.toString(transform),
-  };
+  const { setDragging } = React.useContext(DragHandleContext);
+
+  React.useEffect(() => {
+    setDragging(!!isDragging);
+    return () => setDragging(false);
+  }, [isDragging, setDragging]);
+
+  const style = useMemo(() => {
+    return {
+      transform: CSS.Translate.toString(transform),
+    };
+  }, [transform]);
 
   return (
     <div
@@ -41,15 +51,15 @@ export const DragHandle: React.FC<DragHandleProps> = ({
       {...listeners}
       {...attributes}
       className={cn(
-        "absolute top-0 left-0 transform -translate-x-full -translate-y-1/2 cursor-grab active:cursor-grabbing",
-        "bg-blue-500 hover:bg-blue-600 text-white rounded-full p-1 shadow-md z-10",
+        "absolute top-0 left-0 transform -translate-x-full -translate-y-full cursor-grab active:cursor-grabbing",
+        "bg-blue-500 hover:bg-blue-600 text-white p-px shadow-md z-10",
         "opacity-100 transition-opacity duration-200",
         isDragging && "cursor-grabbing",
         className
       )}
       data-testid={`drag-handle-${layerId}`}
     >
-      <GripVertical className="h-3 w-3" />
+      <GripVertical size={14} />
     </div>
   );
 };

@@ -132,7 +132,7 @@ const DragOverlayContent: React.FC<DragOverlayContentProps> = ({ layerId }) => {
   if (!layer) return null;
 
   return (
-    <div className="bg-white shadow-lg border border-gray-200 rounded px-2 py-1 text-sm font-medium opacity-90">
+    <div className="bg-white shadow-lg border border-gray-200 rounded px-2 py-1 text-sm font-medium opacity-90 text-nowrap min-w-fit">
       {layer.name || layer.type}
     </div>
   );

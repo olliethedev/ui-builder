@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState, createContext, useContext } from "react";
 import { Plus } from "lucide-react";
 import {
   countLayers,
@@ -10,16 +10,19 @@ import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { DndContextProvider } from "@/components/ui/ui-builder/internal/dnd-context";
 import { cn } from "@/lib/utils";
-import { IframeWrapper } from "@/components/ui/ui-builder/internal/iframe-wrapper";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
-import { InteractiveCanvas } from "@/components/ui/ui-builder/internal/interactive-canvas";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { Button } from "@/components/ui/button";
+import { TransformWrapper, TransformComponent, useControls } from "react-zoom-pan-pinch";
 
 interface EditorPanelProps {
   className?: string;
   useCanvas?: boolean;
 }
+
+// Context to track if a drag handle is active
+export const DragHandleContext = createContext<{ dragging: boolean; setDragging: (v: boolean) => void }>({ dragging: false, setDragging: () => {} });
+
 
 const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
   const {
@@ -63,10 +66,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
     onSelectElement: onSelectElement,
     handleDuplicateLayer: allowPagesCreation ? handleDuplicateLayer : undefined,
     handleDeleteLayer: allowPagesDeletion ? handleDeleteLayer : undefined,
-    usingCanvas: useCanvas,
+    usingCanvas: useCanvas || false,
   }), [layers, selectedLayer, onSelectElement, handleDuplicateLayer, handleDeleteLayer, useCanvas, allowPagesCreation, allowPagesDeletion]);
-
-  const isMobileScreen = window.innerWidth < 768;
 
   const renderer = useMemo(() => (
     <div id="editor-panel-container" className="overflow-visible pt-3 pb-10 pr-20">
@@ -83,6 +84,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
     }[previewMode]
   }, [previewMode]);
 
+  const [dragging, setDragging] = useState(false);
+
   return (
     <div
       id="editor-panel-container"
@@ -91,34 +94,54 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
         className
       )}
     >
-      <DndContextProvider>
-        {useCanvas ? (
-          <InteractiveCanvas
-            frameId="editor-panel-frame"
-            disableWheel={layers.length === 0}
-            disablePinch={layers.length === 0}
-            disableDrag={!isMobileScreen}
-          >
-            <IframeWrapper
-              key={previewMode}
-              frameId="editor-panel-frame"
-              resizable={previewMode === "responsive" && layers.length > 0}
-              className={cn(`block`, widthClass)}
-            >
-              {renderer}
-            </IframeWrapper>
-          </InteractiveCanvas>
-        ) : (
-          renderer
-        )}
-      </DndContextProvider>
+      <DragHandleContext.Provider value={{ dragging, setDragging }}>
+        <DndContextProvider>
+            {useCanvas ? (
+              <TransformWrapper
+                initialScale={1}
+                minScale={0.1}
+                maxScale={5}
+                wheel={{ step: 0.05 }}
+                doubleClick={{ disabled: true }}
+                panning={{ disabled: dragging }}
+                centerOnInit={true}
+                limitToBounds={false}
+              >
+                <ZoomControls />
+                <TransformComponent
+                  wrapperStyle={{
+                    width: "100%",
+                    height: "100%",
+                  }}
+                  contentStyle={{
+                    width: "100%",
+                    height: "100%",
+                  }}
+                >
+                  <div 
+                    className={cn(`relative`, widthClass)} 
+                    data-testid="transform-component"
+                    style={{ 
+                      minHeight: "100vh",
+                      padding: "50px",
+                    }}
+                  >
+                    {renderer}
+                  </div>
+                </TransformComponent>
+              </TransformWrapper>
+            ) : (
+              renderer
+            )}
+          </DndContextProvider>
+      </DragHandleContext.Provider>
       <AddComponentsPopover
         parentLayerId={selectedPageId}
       >
         <Button
           variant="secondary"
           size="icon"
-          className="absolute bottom-2 md:left-2 left-4 flex items-center rounded-full bg-secondary md:p-4 p-6 shadow"
+          className="absolute bottom-4 left-4 flex items-center rounded-full bg-secondary shadow-lg z-[1000]"
         >
           <Plus className="h-5 w-5 text-secondary-foreground" />
         </Button>
@@ -128,3 +151,44 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
 };
 
 export default EditorPanel;
+
+// Standalone Zoom Controls Component
+const ZoomControls: React.FC = () => {
+  const { zoomIn, zoomOut, resetTransform } = useControls();
+
+  return (
+    <div className="absolute bottom-4 right-4 z-[1000] flex gap-2">
+      <Button
+        data-testid="button-ZoomIn"
+        variant="secondary"
+        size="sm"
+        className="rounded-l-full rounded-r-none shadow-lg"
+        onClick={() => zoomIn()}
+      >
+        <span className="sr-only">Zoom in</span>
+        +
+      </Button>
+      <Button
+        data-testid="button-ZoomOut"
+        variant="secondary"
+        size="sm"
+        className="rounded-none shadow-lg"
+        onClick={() => zoomOut()}
+      >
+        <span className="sr-only">Zoom out</span>
+        -
+      </Button>
+      <Button
+        data-testid="button-Reset"
+        variant="secondary"
+        size="sm"
+        className="rounded-r-full rounded-l-none shadow-lg"
+        onClick={() => resetTransform()}
+      >
+        <span className="sr-only">Reset</span>
+        ⟳
+      </Button>
+    </div>
+  );
+};
+

@@ -2,7 +2,7 @@
 import React, { memo, Suspense, useMemo, useRef } from "react";
 import isDeepEqual from "fast-deep-equal";
 
-import { ClickableWrapper } from "@/components/ui/ui-builder/internal/clickable-wrapper";
+import { ElementSelector } from "@/components/ui/ui-builder/internal/element-selector";
 import { DropPlaceholder } from "@/components/ui/ui-builder/internal/drop-zone";
 import { useDndContext } from "@/components/ui/ui-builder/internal/dnd-context";
 import { ErrorBoundary } from "react-error-boundary";
@@ -102,7 +102,7 @@ export const RenderLayer: React.FC<{
     
     if (hasLayerChildren(layer) && layer.children.length > 0) {
       const childElements = layer.children.map((child, index) => (
-        <div key={child.id} className="relative">
+        <div key={child.id} className="contents">
           {/* Show drop zone before each child when dragging */}
           {showDropZones && (
             <DropPlaceholder
@@ -176,21 +176,17 @@ export const RenderLayer: React.FC<{
           id={layer.type}
           threshold={10}
         >
-          <ClickableWrapper
+          <ElementSelector
             key={layer.id}
             layer={layer}
             zIndex={zIndex}
-            totalLayers={totalLayers}
             isSelected={layer.id === selectedLayer?.id}
             onSelectElement={onSelectElement}
-            onDuplicateLayer={handleDuplicateLayer}
-            onDeleteLayer={handleDeleteLayer}
-            listenToScrollParent={!usingCanvas}
-            observeMutations={usingCanvas === true}
             isPageLayer={isLayerAPage}
+            totalLayers={totalLayers}
           >
             {WrappedComponent}
-          </ClickableWrapper>
+          </ElementSelector>
         </DevProfiler>
       );
     }

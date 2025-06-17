@@ -116,7 +116,11 @@ function getDependencies(): string[] {
         "remark-math",
         "react-syntax-highlighter",
         "lodash.template",
-        "he-tree-react"
+        "he-tree-react",
+        "@dnd-kit/core",
+        "@dnd-kit/sortable",
+        "@dnd-kit/utilities",
+        "react-zoom-pan-pinch"
     ];
 }
 

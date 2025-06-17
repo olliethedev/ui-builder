@@ -8,8 +8,8 @@ import { BaseColor, baseColors } from "../components/ui/ui-builder/internal/base
 import { z } from "zod";
 // Mock dependencies
 
-jest.mock("../components/ui/ui-builder/internal/clickable-wrapper", () => ({
-  ClickableWrapper: ({ children }: { children: React.ReactNode }) => (
+jest.mock("../components/ui/ui-builder/internal/element-selector", () => ({
+  ElementSelector: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
 }));

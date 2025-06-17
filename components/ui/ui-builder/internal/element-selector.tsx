@@ -1,0 +1,287 @@
+"use client";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useLayoutEffect,
+  useMemo,
+} from "react";
+import { ComponentLayer } from "@/components/ui/ui-builder/types";
+import { useTransformEffect } from "react-zoom-pan-pinch";
+import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
+import { cn } from "@/lib/utils";
+import { DragHandle } from "@/components/ui/ui-builder/internal/drag-handle";
+
+const style: React.CSSProperties = {
+  display: "contents",
+};
+
+interface ElementSelectorProps {
+  layer: ComponentLayer;
+  isSelected: boolean;
+  zIndex: number;
+  totalLayers: number;
+  onSelectElement: (layerId: string) => void;
+  onDuplicateLayer?: () => void;
+  onDeleteLayer?: () => void;
+  children: React.ReactNode;
+  isPageLayer?: boolean;
+}
+
+/**
+ * Element selector that measures elements using offset properties (relative to parent)
+ * instead of getBoundingClientRect (relative to viewport). This works correctly with
+ * zoom/pan transformations since the overlays are rendered inside the canvas.
+ */
+export const ElementSelector: React.FC<ElementSelectorProps> = ({
+  layer,
+  isSelected,
+  zIndex,
+  totalLayers,
+  onSelectElement,
+  onDuplicateLayer,
+  onDeleteLayer,
+  children,
+  isPageLayer = false,
+}) => {
+  const [boundingRect, setBoundingRect] = useState<{
+    top: number;
+    left: number;
+    bottom: number;
+    right: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      onSelectElement(layer.id);
+    },
+    [onSelectElement, layer.id]
+  );
+
+  const overlayStyle = useMemo(() => {
+    if (!boundingRect) return { display: 'none' };
+    return {
+      position: "absolute" as const,
+      top: boundingRect.top,
+      left: boundingRect.left,
+      width: boundingRect.width,
+      height: boundingRect.height,
+      zIndex: zIndex,
+      boxSizing: "border-box" as const,
+    };
+  }, [boundingRect, zIndex]);
+
+  return (
+    <>
+      <MeasureRange debug={false} onChange={setBoundingRect}>{children}</MeasureRange>
+
+      {isSelected && boundingRect && (
+        <LayerMenu
+          layerId={layer.id}
+          x={boundingRect.left}
+          y={boundingRect.bottom}
+          zIndex={totalLayers + zIndex}
+          width={boundingRect.width}
+          height={boundingRect.height}
+          handleDuplicateComponent={onDuplicateLayer}
+          handleDeleteComponent={onDeleteLayer}
+        />
+      )}
+
+      {boundingRect && (
+        <div
+          onClick={handleClick}
+          className={cn(
+            "absolute box-border hover:border-blue-300 hover:border-2",
+            isSelected ? "border-2 border-blue-500 hover:border-blue-500" : ""
+          )}
+          style={overlayStyle}
+        >
+          {/* Drag handle for non-page layers */}
+          {!isPageLayer && isSelected && (
+            <DragHandle
+              layerId={layer.id}
+              layerType={layer.type}
+            />
+          )}
+
+          {/* Small label with layer type floating above the bounding box */}
+          {isSelected && (
+            <span className="absolute top-[-16px] left-[-2px] text-xs text-white bg-blue-500 px-[1px] whitespace-nowrap">
+              {layer.name?.toLowerCase().startsWith(layer.type.toLowerCase())
+                ? layer.type.replaceAll("_", "")
+                : `${layer.name} (${layer.type.replaceAll("_", "")})`}
+            </span>
+          )}
+        </div>
+      )}
+    </>
+  );
+};
+
+export interface MeasureRangeProps {
+  /** Called after every size/position change. */
+  onChange?: (rect: DOMRectReadOnly & { bottom: number; right: number }) => void;
+  /** Children you want to watch (anything renderable). */
+  children: React.ReactNode;
+  debug?: boolean;
+}
+
+export const MeasureRange: React.FC<MeasureRangeProps> = ({
+  onChange,
+  children,
+  debug = false,
+}) => {
+  // A wrapper that DOESN'T affect layout thanks to display: contents
+  const wrapperRef = useRef<HTMLSpanElement>(null);
+  const [rect, setRect] = useState<DOMRectReadOnly | null>(null);
+  
+  // Performance optimizations
+  const rafIdRef = useRef<number | null>(null);
+  const lastMeasurementRef = useRef<DOMRectReadOnly | null>(null);
+  const elementsRef = useRef<HTMLElement[]>([]);
+  const transformUpdatePendingRef = useRef(false);
+
+  // Throttled measurement function using RAF
+  const measureElements = useCallback(() => {
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
+    
+    rafIdRef.current = requestAnimationFrame(() => {
+      const wrapper = wrapperRef.current;
+      if (!wrapper) return;
+
+      const elements = elementsRef.current;
+      if (elements.length === 0) return;
+
+      try {
+        // Use cached elements for better performance
+        const firstElement = elements[0];
+        const lastElement = elements[elements.length - 1];
+
+        // Calculate the natural dimensions before transform
+        const naturalWidth =
+          lastElement.offsetLeft +
+          lastElement.offsetWidth -
+          firstElement.offsetLeft;
+        const naturalHeight =
+          lastElement.offsetTop +
+          lastElement.offsetHeight -
+          firstElement.offsetTop;
+
+        const newRect = {
+          top: firstElement.offsetTop,
+          left: firstElement.offsetLeft,
+          width: naturalWidth,
+          height: naturalHeight,
+          bottom: firstElement.offsetTop + naturalHeight,
+          right: firstElement.offsetLeft + naturalWidth,
+        } as DOMRectReadOnly & { bottom: number; right: number };
+
+        // Only update if measurements actually changed (avoid unnecessary re-renders)
+        const hasChanged = !lastMeasurementRef.current ||
+          lastMeasurementRef.current.top !== newRect.top ||
+          lastMeasurementRef.current.left !== newRect.left ||
+          lastMeasurementRef.current.width !== newRect.width ||
+          lastMeasurementRef.current.height !== newRect.height;
+
+        if (hasChanged) {
+          lastMeasurementRef.current = newRect;
+          setRect(newRect);
+          onChange?.(newRect);
+        }
+
+        transformUpdatePendingRef.current = false;
+      } catch (error) {
+        console.warn('Error measuring elements:', error);
+      }
+    });
+  }, [onChange]);
+
+  // Handle transform updates with throttling
+  useTransformEffect(
+    useCallback(({ state, instance }) => {
+      // Avoid duplicate updates if one is already pending
+      if (transformUpdatePendingRef.current) return;
+      
+      transformUpdatePendingRef.current = true;
+      measureElements();
+    }, [measureElements])
+  );
+
+  // Cache elements and set up ResizeObservers (without transform state dependency)
+  useLayoutEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    // Cache filtered elements to avoid repeated filtering
+    const elements = Array.from(wrapper.childNodes).filter(
+      (n): n is HTMLElement => n.nodeType === Node.ELEMENT_NODE
+    );
+    
+    elementsRef.current = elements;
+    
+    if (elements.length === 0) return;
+
+    // Set up ResizeObservers only once (not on every transform change)
+    const observers = elements.map((el) => {
+      const ro = new ResizeObserver(measureElements);
+      ro.observe(el);
+      return ro;
+    });
+
+    // Initial measurement
+    measureElements();
+
+    return () => {
+      observers.forEach((ro) => ro.disconnect());
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+    };
+  }, [children, measureElements]); // Removed transformState dependency
+
+  // Cleanup RAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+    };
+  }, []);
+
+  const memoizedStyle: React.CSSProperties = useMemo(() => {
+    if (!rect) return {};
+    return {
+      position: "absolute",
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+      border: "1px solid #5be312",
+      zIndex: 9999,
+      boxSizing: "border-box",
+      pointerEvents: "none",
+    };
+  }, [rect]);
+
+  return (
+    <>
+      <span ref={wrapperRef} style={style}>
+        {children}
+      </span>
+
+      {/* Debug overlay that scales naturally with the transform */}
+      {rect && debug && (
+        <div style={memoizedStyle} />
+      )}
+    </>
+  );
+};

@@ -315,7 +315,6 @@ ComponentPreview.displayName = "ComponentPreview";
 
 // @components/ui/ui-builder becomes Components UI Builder
 function formatCategoryName(name: string) {
-  console.log(name);
   const words = name.split("/");
   const lastWord = words[words.length - 1];
   return lastWord.replace(/-/g, " ").replace(/\b\w/g, char => char.toUpperCase());
