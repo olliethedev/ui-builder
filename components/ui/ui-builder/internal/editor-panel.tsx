@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback, useMemo, useState, createContext, useLayoutEffect, useRef } from "react";
-import { Plus, GripVertical } from "lucide-react";
+import { Plus, GripVertical, Minus, Crosshair } from "lucide-react";
 import {
   countLayers,
   useLayerStore,
@@ -166,36 +166,36 @@ const ZoomControls: React.FC = () => {
   const { zoomIn, zoomOut, resetTransform } = useControls();
 
   return (
-    <div className="absolute bottom-4 right-4 z-[1000] flex gap-2">
+    <div className="absolute bottom-4 right-4 z-[1000] flex shadow-lg rounded-full">
       <Button
         data-testid="button-ZoomIn"
         variant="secondary"
         size="sm"
-        className="rounded-l-full rounded-r-none shadow-lg"
+        className="rounded-l-full rounded-r-none border-r border-border"
         onClick={() => zoomIn()}
       >
         <span className="sr-only">Zoom in</span>
-        +
+        <Plus className="h-5 w-5 text-secondary-foreground" />
       </Button>
       <Button
         data-testid="button-ZoomOut"
         variant="secondary"
         size="sm"
-        className="rounded-none shadow-lg"
+        className="rounded-none"
         onClick={() => zoomOut()}
       >
         <span className="sr-only">Zoom out</span>
-        -
+        <Minus className="h-5 w-5 text-secondary-foreground" />
       </Button>
       <Button
         data-testid="button-Reset"
         variant="secondary"
         size="sm"
-        className="rounded-r-full rounded-l-none shadow-lg"
+        className="rounded-r-full rounded-l-none border-l border-border"
         onClick={() => resetTransform()}
       >
         <span className="sr-only">Reset</span>
-        ⟳
+        <Crosshair className="h-5 w-5 text-secondary-foreground" />
       </Button>
     </div>
   );

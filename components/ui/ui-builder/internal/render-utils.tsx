@@ -36,6 +36,8 @@ export interface EditorConfig {
   usingCanvas?: boolean;
 }
 
+
+
 export const RenderLayer: React.FC<{
   layer: ComponentLayer;
   componentRegistry: ComponentRegistry;
@@ -64,7 +66,6 @@ export const RenderLayer: React.FC<{
       layer: layer
     }), [layer, componentRegistry]);
 
-
     // Resolve variable references in props
     const resolvedProps = resolveVariableReferences(layer.props, effectiveVariables, variableValues);
     const childProps: Record<string, PropValue> = useMemo(() => ({ ...resolvedProps }), [resolvedProps]);
@@ -92,18 +93,17 @@ export const RenderLayer: React.FC<{
       isPrimitive = true;
     }
 
-    ;
-
     if (!Component) return null;
 
     // Check if this layer can accept children and if drag is active
     const canAcceptChildren = canLayerAcceptChildren(layer, registry);
     const showDropZones = editorConfig && dndContext?.isDragging && canAcceptChildren;
     
+    // Handle children rendering with improved drop zones
     if (hasLayerChildren(layer) && layer.children.length > 0) {
       const childElements = layer.children.map((child, index) => (
-        <div key={child.id} className="contents">
-          {/* Show drop zone before each child when dragging */}
+        <React.Fragment key={child.id}>
+          {/* Show subtle drop zone before each child when dragging */}
           {showDropZones && (
             <DropPlaceholder
               parentId={layer.id}
@@ -118,19 +118,18 @@ export const RenderLayer: React.FC<{
             variableValues={variableValues}
             editorConfig={childEditorConfig}
           />
-        </div>
+        </React.Fragment>
       ));
 
       // Add drop zone after the last child
       if (showDropZones) {
         childElements.push(
-          <div key={`drop-${layer.id}-${layer.children.length}`} className="relative h-0">
-            <DropPlaceholder
-              parentId={layer.id}
-              position={layer.children.length}
-              isActive={true}
-            />
-          </div>
+          <DropPlaceholder
+            key={`drop-${layer.id}-${layer.children.length}`}
+            parentId={layer.id}
+            position={layer.children.length}
+            isActive={true}
+          />
         );
       }
 
@@ -140,23 +139,23 @@ export const RenderLayer: React.FC<{
     } else if (showDropZones && hasLayerChildren(layer)) {
       // Show drop zone for empty containers
       childProps.children = (
-        <div className="relative min-h-[20px]">
-          <DropPlaceholder
-            parentId={layer.id}
-            position={0}
-            isActive={true}
-          />
-        </div>
+        <DropPlaceholder
+          parentId={layer.id}
+          position={0}
+          isActive={true}
+        />
       );
     }
 
     const WrappedComponent = isPrimitive ? (
-      <Component id={layer.id} data-testid={layer.id} {...childProps} />
+      <Component id={layer.id} data-testid={layer.id} data-layer-id={layer.id} {...childProps} />
     ) : (
       <ErrorSuspenseWrapper key={layer.id} id={layer.id}>
-        <Component data-testid={layer.id} {...childProps} />
+        <Component data-testid={layer.id} data-layer-id={layer.id} {...childProps} />
       </ErrorSuspenseWrapper>
     );
+
+    // No wrapper needed - drop zones are now inline fragments
 
     if (!editorConfig) {
       return WrappedComponent;
@@ -218,7 +217,6 @@ const ErrorSuspenseWrapper: React.FC<{
     </ErrorBoundary>
   );
 };
-
 
 const LoadingComponent: React.FC = () => (
   <div>Loading...</div>

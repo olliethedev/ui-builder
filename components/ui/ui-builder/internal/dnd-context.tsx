@@ -13,7 +13,6 @@ import {
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 import { canLayerAcceptChildren } from '@/lib/ui-builder/store/layer-utils';
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 interface DndContextState {
   isDragging: boolean;
