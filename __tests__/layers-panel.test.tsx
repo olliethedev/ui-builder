@@ -311,6 +311,209 @@ describe("LayersPanel", () => {
     });
   });
 
+  describe("String Children Processing", () => {
+    it("handles layers with string children correctly", () => {
+      const layerWithStringChildren: ComponentLayer = {
+        id: "string-children-page",
+        name: "Page with String Children",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "box-1",
+            name: "Box A",
+            type: "div",
+            props: { className: "bg-red-300" },
+            children: [
+              {
+                id: "text-1",
+                name: "Text",
+                type: "span",
+                props: { className: "text-white" },
+                children: "Hello World" // String children - this was the issue
+              }
+            ]
+          },
+          {
+            id: "box-2",
+            name: "Box B",
+            type: "div",
+            props: { className: "bg-blue-300" },
+            children: [
+              {
+                id: "text-2",
+                name: "Text",
+                type: "span",
+                props: { className: "text-white" },
+                children: "Another Text" // Another string children case
+              }
+            ]
+          }
+        ]
+      };
+
+      const stringChildrenProps = {
+        layers: [layerWithStringChildren],
+        selectedPageId: "string-children-page",
+        selectedLayerId: "text-1",
+        updateLayer: mockUpdateLayer,
+        selectLayer: mockSelectLayer,
+        removeLayer: mockRemoveLayer,
+        duplicateLayer: mockDuplicateLayer,
+      };
+
+      render(<LayersTree {...stringChildrenProps} />);
+      
+      expect(screen.getByTestId("layers-tree")).toBeInTheDocument();
+      expect(screen.getByTestId("rendered-tree")).toBeInTheDocument();
+      
+      // The tree should render without errors even with string children
+      expect(screen.getByTestId("dev-profiler")).toBeInTheDocument();
+    });
+
+    it("processes mixed children types correctly", () => {
+      const mixedChildrenLayer: ComponentLayer = {
+        id: "mixed-page",
+        name: "Mixed Children Page",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "container-1",
+            name: "Container",
+            type: "div",
+            props: {},
+            children: [
+              {
+                id: "text-component",
+                name: "Text Component",
+                type: "span",
+                props: {},
+                children: "I am text" // String children
+              },
+              {
+                id: "nested-container",
+                name: "Nested Container",
+                type: "div",
+                props: {},
+                children: [] // Array children (empty)
+              }
+            ]
+          },
+          {
+            id: "another-text",
+            name: "Another Text",
+            type: "p",
+            props: {},
+            children: "More text content" // String children
+          }
+        ]
+      };
+
+      const mixedProps = {
+        layers: [mixedChildrenLayer],
+        selectedPageId: "mixed-page",
+        selectedLayerId: "text-component",
+        updateLayer: mockUpdateLayer,
+        selectLayer: mockSelectLayer,
+        removeLayer: mockRemoveLayer,
+        duplicateLayer: mockDuplicateLayer,
+      };
+
+      render(<LayersTree {...mixedProps} />);
+      
+      expect(screen.getByTestId("layers-tree")).toBeInTheDocument();
+      expect(screen.getByTestId("rendered-tree")).toBeInTheDocument();
+    });
+
+    it("handles null and undefined children", () => {
+      const nullUndefinedLayer: ComponentLayer = {
+        id: "null-undefined-page",
+        name: "Null/Undefined Children Page",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "null-child",
+            name: "Null Child",
+            type: "div",
+            props: {},
+            children: null as any
+          },
+          {
+            id: "undefined-child",
+            name: "Undefined Child",
+            type: "div",
+            props: {},
+            children: undefined as any
+          },
+          {
+            id: "empty-array-child",
+            name: "Empty Array Child",
+            type: "div",
+            props: {},
+            children: []
+          }
+        ]
+      };
+
+      const nullUndefinedProps = {
+        layers: [nullUndefinedLayer],
+        selectedPageId: "null-undefined-page",
+        selectedLayerId: "null-child",
+        updateLayer: mockUpdateLayer,
+        selectLayer: mockSelectLayer,
+        removeLayer: mockRemoveLayer,
+        duplicateLayer: mockDuplicateLayer,
+      };
+
+      render(<LayersTree {...nullUndefinedProps} />);
+      
+      expect(screen.getByTestId("layers-tree")).toBeInTheDocument();
+      expect(screen.getByTestId("rendered-tree")).toBeInTheDocument();
+    });
+  });
+
+  describe("Layer Data Preservation", () => {
+    it("preserves original layer data when rendering nodes", () => {
+      const layerWithPreservationTest: ComponentLayer = {
+        id: "preservation-page",
+        name: "Preservation Test Page",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "text-layer",
+            name: "Text Layer",
+            type: "span",
+            props: { className: "important-class" },
+            children: "Important Text Content"
+          }
+        ]
+      };
+
+      const preservationProps = {
+        layers: [layerWithPreservationTest],
+        selectedPageId: "preservation-page",
+        selectedLayerId: "text-layer",
+        updateLayer: mockUpdateLayer,
+        selectLayer: mockSelectLayer,
+        removeLayer: mockRemoveLayer,
+        duplicateLayer: mockDuplicateLayer,
+      };
+
+      render(<LayersTree {...preservationProps} />);
+      
+      // The tree should render and preserve the original layer structure
+      expect(screen.getByTestId("layers-tree")).toBeInTheDocument();
+      expect(screen.getByTestId("rendered-tree")).toBeInTheDocument();
+      
+      // Since he-tree-react is mocked, we can't test individual nodes
+      // but we can verify the component renders without errors
+      expect(screen.getByTestId("dev-profiler")).toBeInTheDocument();
+    });
+  });
+
   describe("Edge Cases", () => {
     it("handles layers with different structures", () => {
       const complexLayer: ComponentLayer = {
@@ -353,18 +556,77 @@ describe("LayersPanel", () => {
       expect(screen.getByTestId("rendered-tree")).toBeInTheDocument();
     });
 
-    it("handles undefined children in layers", () => {
-      const layerWithUndefinedChildren: ComponentLayer = {
-        id: "undefined-children-page",
-        name: "Page with Undefined Children",
+    it("handles deep nesting with mixed children types", () => {
+      const deepNestedLayer: ComponentLayer = {
+        id: "deep-nested-page",
+        name: "Deep Nested Page",
         type: "_page_",
         props: {},
-        children: undefined as any
+        children: [
+          {
+            id: "level-1",
+            name: "Level 1",
+            type: "div",
+            props: {},
+            children: [
+              {
+                id: "level-2",
+                name: "Level 2",
+                type: "div",
+                props: {},
+                children: [
+                  {
+                    id: "level-3-text",
+                    name: "Level 3 Text",
+                    type: "span",
+                    props: {},
+                    children: "Deep nested text"
+                  },
+                  {
+                    id: "level-3-container",
+                    name: "Level 3 Container",
+                    type: "div",
+                    props: {},
+                    children: [
+                      {
+                        id: "level-4",
+                        name: "Level 4",
+                        type: "p",
+                        props: {},
+                        children: "Deepest text"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       };
 
-      const undefinedChildrenProps = {
-        layers: [layerWithUndefinedChildren],
-        selectedPageId: "undefined-children-page",
+      const deepNestedProps = {
+        layers: [deepNestedLayer],
+        selectedPageId: "deep-nested-page",
+        selectedLayerId: "level-3-text",
+        updateLayer: mockUpdateLayer,
+        selectLayer: mockSelectLayer,
+        removeLayer: mockRemoveLayer,
+        duplicateLayer: mockDuplicateLayer,
+      };
+
+      render(<LayersTree {...deepNestedProps} />);
+      
+      expect(screen.getByTestId("layers-tree")).toBeInTheDocument();
+      expect(screen.getByTestId("rendered-tree")).toBeInTheDocument();
+      
+      // Tree should render successfully with deeply nested structure
+      expect(screen.getByTestId("dev-profiler")).toBeInTheDocument();
+    });
+
+    it("handles empty layers array", () => {
+      const emptyProps = {
+        layers: [],
+        selectedPageId: "non-existent",
         selectedLayerId: null,
         updateLayer: mockUpdateLayer,
         selectLayer: mockSelectLayer,
@@ -372,9 +634,134 @@ describe("LayersPanel", () => {
         duplicateLayer: mockDuplicateLayer,
       };
 
-      render(<LayersTree {...undefinedChildrenProps} />);
+      render(<LayersTree {...emptyProps} />);
       
       expect(screen.getByTestId("layers-tree")).toBeInTheDocument();
+      expect(screen.getByTestId("add-components-popover")).toBeInTheDocument();
+    });
+  });
+
+  describe("Tree Operations", () => {
+    it("preprocesses layers with string children correctly", () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
+      const layerWithStringChild: ComponentLayer = {
+        id: "test-page",
+        name: "Test Page",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "text-component",
+            name: "Text Component",
+            type: "span",
+            props: {},
+            children: "Test text" // String children should be converted for tree traversal
+          }
+        ]
+      };
+
+      const changeProps = {
+        layers: [layerWithStringChild],
+        selectedPageId: "test-page",
+        selectedLayerId: "text-component",
+        updateLayer: mockUpdateLayer,
+        selectLayer: mockSelectLayer,
+        removeLayer: mockRemoveLayer,
+        duplicateLayer: mockDuplicateLayer,
+      };
+
+      render(<LayersTree {...changeProps} />);
+      
+      // Verify that the component renders successfully with string children
+      expect(screen.getByTestId("layers-tree")).toBeInTheDocument();
+      expect(screen.getByTestId("rendered-tree")).toBeInTheDocument();
+      
+      // The component should render without console errors despite string children
+      expect(consoleSpy).not.toHaveBeenCalled();
+      
+      consoleSpy.mockRestore();
+    });
+
+    it("handles onChange with processed layers", () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
+      const layerWithStringChild: ComponentLayer = {
+        id: "test-page",
+        name: "Test Page",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "text-component",
+            name: "Text Component",
+            type: "span",
+            props: {},
+            children: "Test text"
+          }
+        ]
+      };
+
+      const changeProps = {
+        layers: [layerWithStringChild],
+        selectedPageId: "test-page",
+        selectedLayerId: "text-component",
+        updateLayer: mockUpdateLayer,
+        selectLayer: mockSelectLayer,
+        removeLayer: mockRemoveLayer,
+        duplicateLayer: mockDuplicateLayer,
+      };
+
+      render(<LayersTree {...changeProps} />);
+      
+      // The component should render without console errors
+      expect(consoleSpy).not.toHaveBeenCalled();
+      expect(screen.getByTestId("layers-tree")).toBeInTheDocument();
+      
+      consoleSpy.mockRestore();
+    });
+
+    it("handles tree data configuration correctly", () => {
+      const configTestLayer: ComponentLayer = {
+        id: "config-test-page",
+        name: "Config Test Page",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "mixed-child-1",
+            name: "Mixed Child 1",
+            type: "div",
+            props: {},
+            children: "String content"
+          },
+          {
+            id: "mixed-child-2",
+            name: "Mixed Child 2",
+            type: "div",
+            props: {},
+            children: []
+          }
+        ]
+      };
+
+      const configProps = {
+        layers: [configTestLayer],
+        selectedPageId: "config-test-page",
+        selectedLayerId: null,
+        updateLayer: mockUpdateLayer,
+        selectLayer: mockSelectLayer,
+        removeLayer: mockRemoveLayer,
+        duplicateLayer: mockDuplicateLayer,
+      };
+
+      render(<LayersTree {...configProps} />);
+      
+      expect(screen.getByTestId("layers-tree")).toBeInTheDocument();
+      expect(screen.getByTestId("rendered-tree")).toBeInTheDocument();
+      
+      // Tree should render successfully with mixed children types
+      expect(screen.getByTestId("dev-profiler")).toBeInTheDocument();
     });
   });
 });

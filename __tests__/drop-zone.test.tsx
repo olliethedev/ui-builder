@@ -18,10 +18,49 @@ jest.mock('@dnd-kit/core', () => ({
 // Mock layer store
 const mockFindLayerById = jest.fn();
 const mockUseLayerStore = jest.fn();
+const mockMoveLayer = jest.fn();
 
 jest.mock('@/lib/ui-builder/store/layer-store', () => ({
   useLayerStore: (selector: any) => mockUseLayerStore(selector),
 }));
+
+// Mock editor store
+const mockUseEditorStore = jest.fn();
+
+jest.mock('@/lib/ui-builder/store/editor-store', () => ({
+  useEditorStore: (selector: any) => mockUseEditorStore(selector),
+}));
+
+// Mock layer utils
+jest.mock('@/lib/ui-builder/store/layer-utils', () => ({
+  canLayerAcceptChildren: jest.fn(() => true),
+}));
+
+// Mock the DndContextProvider with a simpler TestWrapper that provides the required context
+const mockDndContextValue = {
+  isDragging: false,
+  activeLayerId: null,
+  canDropOnLayer: jest.fn(() => true),
+};
+
+jest.mock('@/components/ui/ui-builder/internal/dnd-context', () => ({
+  useDndContext: jest.fn(() => mockDndContextValue),
+  DndContextProvider: ({ children }: { children: React.ReactNode }) => (
+    <DndContext onDragEnd={() => {}}>{children}</DndContext>
+  ),
+}));
+
+// Mock window.getComputedStyle for layout detection
+const mockGetComputedStyle = jest.fn();
+Object.defineProperty(window, 'getComputedStyle', {
+  value: mockGetComputedStyle,
+});
+
+// Mock document.querySelector for dragged element detection
+const mockQuerySelector = jest.fn();
+Object.defineProperty(document, 'querySelector', {
+  value: mockQuerySelector,
+});
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <DndContext onDragEnd={() => {}}>
@@ -44,6 +83,14 @@ describe('DropZone', () => {
     mockUseLayerStore.mockImplementation((selector) => {
       const store = {
         findLayerById: mockFindLayerById,
+        moveLayer: mockMoveLayer,
+      };
+      return selector(store);
+    });
+    // Reset editor store mock
+    mockUseEditorStore.mockImplementation((selector) => {
+      const store = {
+        registry: {},
       };
       return selector(store);
     });
@@ -183,16 +230,43 @@ describe('DropPlaceholder', () => {
     // Reset the mock to default state
     const { useDroppable } = require('@dnd-kit/core');
     useDroppable.mockReturnValue(mockUseDroppable);
-    // Reset layer store mock
+    
+    // Reset DND context mock
+    const { useDndContext } = require('@/components/ui/ui-builder/internal/dnd-context');
+    useDndContext.mockReturnValue(mockDndContextValue);
+    
+    // Reset layer store mock - no longer needed since we use DOM detection
     mockUseLayerStore.mockImplementation((selector) => {
       const store = {
         findLayerById: mockFindLayerById,
+        moveLayer: mockMoveLayer,
       };
       return selector(store);
     });
-    mockFindLayerById.mockReturnValue({
-      props: { className: 'flex flex-col' }
+    
+    // Reset editor store mock
+    mockUseEditorStore.mockImplementation((selector) => {
+      const store = {
+        registry: {},
+      };
+      return selector(store);
     });
+    
+    // Mock window.getComputedStyle to return flex-col by default
+    mockGetComputedStyle.mockReturnValue({
+      display: 'flex',
+      flexDirection: 'column',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'flex',
+          'flex-direction': 'column',
+        };
+        return styles[prop] || '';
+      }),
+    });
+    
+    // Mock document.querySelector to return null by default (no dragged element)
+    mockQuerySelector.mockReturnValue(null);
   });
 
   it('renders drop placeholder with correct test id when active', () => {
@@ -248,12 +322,12 @@ describe('DropPlaceholder', () => {
     );
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
-    // Check that element exists and has proper attributes without checking specific classes
+    // Check that element exists and has proper class-based styling
     expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveAttribute('class');
+    expect(placeholder).toHaveClass('before:bg-blue-500');
   });
 
-  it('renders with proper positioning styles', () => {
+  it('renders with proper layout-based styling for flex-col', () => {
     render(
       <TestWrapper>
         <DropPlaceholder {...defaultProps} isActive={true} />
@@ -261,11 +335,12 @@ describe('DropPlaceholder', () => {
     );
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
-    // Check that positioning styles are applied
-    expect(placeholder).toHaveStyle('bottom: -1px');
+    // Check that flex-col layout classes are applied (horizontal lines)
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveClass('h-0.5', 'w-full', 'block');
   });
 
-  it('handles position 0 correctly', () => {
+  it('applies correct layout classes for flex-col layout', () => {
     render(
       <TestWrapper>
         <DropPlaceholder {...defaultProps} position={0} isActive={true} />
@@ -273,14 +348,23 @@ describe('DropPlaceholder', () => {
     );
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-0');
-    // Check that top positioning is applied for position 0
-    expect(placeholder).toHaveStyle('top: -1px');
+    // Check that flex-col layout classes are applied
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveClass('h-0.5', 'w-full', 'block');
   });
 
   it('shows vertical drop lines for horizontal layout (flex-row)', () => {
-    // Mock the layer to have flex-row className
-    mockFindLayerById.mockReturnValue({
-      props: { className: 'flex flex-row' }
+    // Mock getComputedStyle to return flex-row
+    mockGetComputedStyle.mockReturnValue({
+      display: 'flex',
+      flexDirection: 'row',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'flex',
+          'flex-direction': 'row',
+        };
+        return styles[prop] || '';
+      }),
     });
 
     render(
@@ -291,16 +375,12 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // For horizontal layout, should show vertical lines
-    expect(placeholder).toHaveStyle('right: -1px');
+    // For horizontal layout, should show vertical lines with different classes
+    expect(placeholder).toHaveClass('w-0.5', 'h-8', 'mx-1', 'inline-block');
   });
 
   it('shows horizontal drop lines for vertical layout (flex-col)', () => {
-    // Mock the layer to have flex-col className
-    mockFindLayerById.mockReturnValue({
-      props: { className: 'flex flex-col' }
-    });
-
+    // Already using flex-col from beforeEach setup
     render(
       <TestWrapper>
         <DropPlaceholder {...defaultProps} isActive={true} />
@@ -310,13 +390,21 @@ describe('DropPlaceholder', () => {
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
     // For vertical layout, should show horizontal lines
-    expect(placeholder).toHaveStyle('bottom: -1px');
+    expect(placeholder).toHaveClass('h-0.5', 'w-full', 'block');
   });
 
-  it('defaults to vertical layout when parent has no className', () => {
-    // Mock the layer to have no className
-    mockFindLayerById.mockReturnValue({
-      props: {}
+  it('handles block layout correctly', () => {
+    // Mock getComputedStyle to return block display
+    mockGetComputedStyle.mockReturnValue({
+      display: 'block',
+      flexDirection: 'column',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'block',
+          'flex-direction': 'column',
+        };
+        return styles[prop] || '';
+      }),
     });
 
     render(
@@ -327,24 +415,57 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // Should default to horizontal lines (column layout)
-    expect(placeholder).toHaveStyle('bottom: -1px');
+    // Should default to horizontal lines (block layout)
+    expect(placeholder).toHaveClass('h-0.5', 'w-full', 'block');
   });
 
-  it('handles position 0 correctly for horizontal layout', () => {
-    // Mock the layer to have flex-row className
-    mockFindLayerById.mockReturnValue({
-      props: { className: 'flex flex-row' }
+  it('handles inline element detection when dragging span', () => {
+    // Mock an active drag with a span element
+    const { useDndContext } = require('@/components/ui/ui-builder/internal/dnd-context');
+    useDndContext.mockReturnValue({
+      ...mockDndContextValue,
+      activeLayerId: 'span-123',
+    });
+
+    // Mock document.querySelector to return a span element
+    const mockSpanElement = {
+      tagName: 'SPAN',
+      style: {},
+    };
+    mockQuerySelector.mockReturnValue(mockSpanElement);
+
+    // Mock getComputedStyle for the dragged span
+    mockGetComputedStyle.mockImplementation((element: any) => {
+      if (element === mockSpanElement) {
+        return {
+          display: 'inline',
+          flexDirection: 'row',
+          getPropertyValue: jest.fn(() => 'inline'),
+        };
+      }
+      // Parent element (block container)
+      return {
+        display: 'block',
+        flexDirection: 'column',
+        getPropertyValue: jest.fn((prop: string) => {
+          const styles: Record<string, string> = {
+            display: 'block',
+            'flex-direction': 'column',
+          };
+          return styles[prop] || '';
+        }),
+      };
     });
 
     render(
       <TestWrapper>
-        <DropPlaceholder {...defaultProps} position={0} isActive={true} />
+        <DropPlaceholder {...defaultProps} isActive={true} />
       </TestWrapper>
     );
 
-    const placeholder = screen.getByTestId('drop-placeholder-parent-456-0');
-    // For horizontal layout at position 0, should position on left
-    expect(placeholder).toHaveStyle('left: -1px');
+    const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
+    expect(placeholder).toBeInTheDocument();
+    // Should use inline layout classes for inline elements
+    expect(placeholder).toHaveClass('w-px', 'h-4', 'mx-0.5', 'inline-block', 'align-middle');
   });
 });

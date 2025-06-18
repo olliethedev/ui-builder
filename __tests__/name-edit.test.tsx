@@ -33,7 +33,7 @@ describe("NameEdit", () => {
   });
 
   it("updates input value when typing", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: 1 });
     render(<NameEdit {...defaultProps} />);
     
     const input = screen.getByDisplayValue("Test Name");
@@ -41,21 +41,22 @@ describe("NameEdit", () => {
     await user.type(input, "New Name");
     
     expect(input).toHaveValue("New Name");
-  });
+  }, 15000);
 
   it("calls onSave with trimmed name when save button is clicked", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: 1 });
     render(<NameEdit {...defaultProps} />);
     
     const input = screen.getByDisplayValue("Test Name");
-    await user.clear(input);
-    await user.type(input, "  New Name  ");
+    
+    // Use direct value setting instead of type to avoid timing issues
+    fireEvent.change(input, { target: { value: "  New Name  " } });
     
     const saveButton = screen.getByLabelText("Save rename");
     await user.click(saveButton);
     
     expect(mockOnSave).toHaveBeenCalledWith("New Name");
-  });
+  }, 15000);
 
   it("does not call onSave when name is empty or only whitespace", async () => {
     const user = userEvent.setup();

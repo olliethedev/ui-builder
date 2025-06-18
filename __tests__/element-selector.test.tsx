@@ -24,6 +24,27 @@ Element.prototype.getBoundingClientRect = jest.fn(() => ({
   toJSON: jest.fn(),
 }));
 
+// Mock the transform hooks that require TransformWrapper
+jest.mock('react-zoom-pan-pinch', () => ({
+  useTransformEffect: jest.fn((callback) => {
+    // Call the callback with mock data
+    callback({
+      state: { scale: 1, positionX: 0, positionY: 0 },
+      instance: { transformState: { scale: 1, positionX: 0, positionY: 0 } }
+    });
+  }),
+  useTransformContext: jest.fn(() => ({
+    transformState: { scale: 1, positionX: 0, positionY: 0 },
+    instance: { transformState: { scale: 1, positionX: 0, positionY: 0 } }
+  })),
+  TransformWrapper: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  TransformComponent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <div>{children}</div>
+);
+
 describe("ElementSelector", () => {
   const mockLayer: ComponentLayer = {
     id: "test-layer",
@@ -37,6 +58,7 @@ describe("ElementSelector", () => {
     layer: mockLayer,
     isSelected: false,
     zIndex: 1,
+    totalLayers: 5,
     onSelectElement: jest.fn(),
   };
 
@@ -46,9 +68,11 @@ describe("ElementSelector", () => {
 
   it("renders children correctly", () => {
     render(
-      <ElementSelector {...defaultProps}>
-        <div>Test Content</div>
-      </ElementSelector>
+      <TestWrapper>
+        <ElementSelector {...defaultProps}>
+          <div>Test Content</div>
+        </ElementSelector>
+      </TestWrapper>
     );
     
     expect(screen.getByText("Test Content")).toBeInTheDocument();
@@ -56,13 +80,15 @@ describe("ElementSelector", () => {
 
   it("shows selection overlay when element has bounds", async () => {
     render(
-      <ElementSelector {...defaultProps}>
-        <div>Test Content</div>
-      </ElementSelector>
+      <TestWrapper>
+        <ElementSelector {...defaultProps}>
+          <div>Test Content</div>
+        </ElementSelector>
+      </TestWrapper>
     );
     
     await waitFor(() => {
-      const overlay = document.querySelector('.fixed.pointer-events-auto');
+      const overlay = document.querySelector('.absolute.box-border');
       expect(overlay).toBeInTheDocument();
     });
   });
@@ -70,17 +96,19 @@ describe("ElementSelector", () => {
   it("calls onSelectElement when overlay is clicked", async () => {
     const mockOnSelect = jest.fn();
     render(
-      <ElementSelector {...defaultProps} onSelectElement={mockOnSelect}>
-        <div>Test Content</div>
-      </ElementSelector>
+      <TestWrapper>
+        <ElementSelector {...defaultProps} onSelectElement={mockOnSelect}>
+          <div>Test Content</div>
+        </ElementSelector>
+      </TestWrapper>
     );
     
     await waitFor(() => {
-      const overlay = document.querySelector('.fixed.pointer-events-auto');
+      const overlay = document.querySelector('.absolute.box-border');
       expect(overlay).toBeInTheDocument();
     });
 
-    const overlay = document.querySelector('.fixed.pointer-events-auto') as HTMLElement;
+    const overlay = document.querySelector('.absolute.box-border') as HTMLElement;
     fireEvent.click(overlay);
     
     expect(mockOnSelect).toHaveBeenCalledWith("test-layer");
@@ -88,9 +116,11 @@ describe("ElementSelector", () => {
 
   it("shows blue border when selected", async () => {
     render(
-      <ElementSelector {...defaultProps} isSelected={true}>
-        <div>Test Content</div>
-      </ElementSelector>
+      <TestWrapper>
+        <ElementSelector {...defaultProps} isSelected={true}>
+          <div>Test Content</div>
+        </ElementSelector>
+      </TestWrapper>
     );
     
     await waitFor(() => {
@@ -101,52 +131,60 @@ describe("ElementSelector", () => {
 
   it("shows light blue border on hover", async () => {
     render(
-      <ElementSelector {...defaultProps}>
-        <div>Test Content</div>
-      </ElementSelector>
+      <TestWrapper>
+        <ElementSelector {...defaultProps}>
+          <div>Test Content</div>
+        </ElementSelector>
+      </TestWrapper>
     );
     
     await waitFor(() => {
-      const overlay = document.querySelector('.fixed.pointer-events-auto');
+      const overlay = document.querySelector('.absolute.box-border');
       expect(overlay).toBeInTheDocument();
     });
 
-    const overlay = document.querySelector('.fixed.pointer-events-auto') as HTMLElement;
+    const overlay = document.querySelector('.absolute.box-border') as HTMLElement;
     fireEvent.mouseEnter(overlay);
     
     await waitFor(() => {
-      expect(overlay).toHaveClass('border-blue-300');
+      expect(overlay).toHaveClass('hover:border-blue-300');
     });
   });
 
   it("shows layer label when selected", async () => {
     render(
-      <ElementSelector {...defaultProps} isSelected={true}>
-        <div>Test Content</div>
-      </ElementSelector>
+      <TestWrapper>
+        <ElementSelector {...defaultProps} isSelected={true}>
+          <div>Test Content</div>
+        </ElementSelector>
+      </TestWrapper>
     );
     
     await waitFor(() => {
-      expect(screen.getByText("Test Layer")).toBeInTheDocument();
+      expect(screen.getByText("Test Layer (div)")).toBeInTheDocument();
     });
   });
 
   it("does not show overlay for page layers", () => {
     render(
-      <ElementSelector {...defaultProps} isPageLayer={true}>
-        <div>Test Content</div>
-      </ElementSelector>
+      <TestWrapper>
+        <ElementSelector {...defaultProps} isPageLayer={true}>
+          <div>Test Content</div>
+        </ElementSelector>
+      </TestWrapper>
     );
     
-    const overlay = document.querySelector('.fixed.pointer-events-auto');
+    const overlay = document.querySelector('.absolute.box-border');
     expect(overlay).not.toBeInTheDocument();
   });
 
   it("handles resize events", async () => {
     render(
-      <ElementSelector {...defaultProps}>
-        <div>Test Content</div>
-      </ElementSelector>
+      <TestWrapper>
+        <ElementSelector {...defaultProps}>
+          <div>Test Content</div>
+        </ElementSelector>
+      </TestWrapper>
     );
     
     await waitFor(() => {

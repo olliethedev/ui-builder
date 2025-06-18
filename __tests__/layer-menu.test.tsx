@@ -255,11 +255,27 @@ describe("LayerMenu", () => {
 
   describe("basic rendering", () => {
     it("should render the layer menu with correct positioning", () => {
+      // Ensure the layer is found by the component
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector({
+            findLayerById: jest.fn().mockReturnValue(mockComponentLayer),
+            isLayerAPage: jest.fn().mockReturnValue(false),
+          } as any);
+        }
+        return null;
+      });
+
       const { container } = render(<LayerMenu {...defaultProps} />);
 
-      // Check that the component renders successfully
-      const menuContainer = container.querySelector('div.fixed');
+      // Check that the component renders successfully - the chevron icon should be present
+      const chevronIcon = container.querySelector('svg');
+      expect(chevronIcon).toBeInTheDocument();
+      
+      // Also check for the main container div
+      const menuContainer = container.firstChild as HTMLElement;
       expect(menuContainer).toBeInTheDocument();
+      expect(menuContainer.tagName).toBe('DIV');
     });
   });
 });
