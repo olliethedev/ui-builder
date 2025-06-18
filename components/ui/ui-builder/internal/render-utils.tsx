@@ -124,12 +124,12 @@ export const RenderLayer: React.FC<{
       // Add drop zone after the last child
       if (showDropZones) {
         childElements.push(
-          <DropPlaceholder
+            <DropPlaceholder
             key={`drop-${layer.id}-${layer.children.length}`}
-            parentId={layer.id}
-            position={layer.children.length}
-            isActive={true}
-          />
+              parentId={layer.id}
+              position={layer.children.length}
+              isActive={true}
+            />
         );
       }
 
@@ -139,11 +139,11 @@ export const RenderLayer: React.FC<{
     } else if (showDropZones && hasLayerChildren(layer)) {
       // Show drop zone for empty containers
       childProps.children = (
-        <DropPlaceholder
-          parentId={layer.id}
-          position={0}
-          isActive={true}
-        />
+          <DropPlaceholder
+            parentId={layer.id}
+            position={0}
+            isActive={true}
+          />
       );
     }
 

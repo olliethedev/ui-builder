@@ -12,53 +12,25 @@ interface DropZoneProps {
   children?: React.ReactNode;
 }
 
-// Utility function to detect actual layout from computed styles and child content
-const getLayoutType = (element: HTMLElement | null): 'flex-row' | 'flex-col' | 'grid' | 'inline' | 'block' => {
-  if (!element) return 'block';
+// Utility function to detect layout type from computed styles
+function getLayoutType(element: HTMLElement): 'flex-row' | 'flex-col' | 'grid' | 'inline' | 'block' {
+  const styles = window.getComputedStyle(element);
+  const display = styles.display;
+  const flexDirection = styles.flexDirection;
   
-  const computedStyle = window.getComputedStyle(element);
-  const display = computedStyle.display;
-  
-  // Check for CSS Grid (including inline-grid)
-  if (display.includes('grid')) {
-    return 'grid';
-  }
-  
-  // Check for Flexbox (flex and inline-flex)
-  if (display.includes('flex')) {
-    const flexDirection = computedStyle.flexDirection;
+  // Handle flex layouts
+  if (display === 'flex' || display === 'inline-flex') {
     return flexDirection === 'row' || flexDirection === 'row-reverse' ? 'flex-row' : 'flex-col';
   }
   
-  // Check for inline elements (these flow horizontally like flex-row)
+  // Handle grid layouts
+  if (display === 'grid' || display === 'inline-grid') {
+    return 'grid';
+  }
+  
+  // Handle inline layouts
   if (display === 'inline' || display === 'inline-block') {
     return 'inline';
-  }
-  
-  // Check for table-related displays (these have specific layout rules)
-  if (display.startsWith('table')) {
-    // table-row flows horizontally, table flows vertically
-    return display === 'table-row' ? 'inline' : 'block';
-  }
-  
-  // Check for list-item (typically flows vertically)
-  if (display === 'list-item') {
-    return 'block';
-  }
-  
-  // Check for contents (element doesn't generate a box)
-  if (display === 'contents') {
-    // For contents, we should probably check the parent's display
-    const parent = element.parentElement;
-    if (parent) {
-      return getLayoutType(parent);
-    }
-    return 'block';
-  }
-  
-  // Check for hidden elements
-  if (display === 'none') {
-    return 'block'; // Fallback, though this shouldn't normally be droppable
   }
   
   // CRITICAL: For block containers, check if children are inline
@@ -69,28 +41,11 @@ const getLayoutType = (element: HTMLElement | null): 'flex-row' | 'flex-col' | '
       child => !child.hasAttribute('data-drop-indicator')
     );
     
-    console.log('🔍 Block container analysis:', {
-      elementTag: element.tagName,
-      allChildren: allChildren.length,
-      nonDropChildren: nonDropChildren.length,
-      childrenDetails: nonDropChildren.map(child => ({
-        tag: child.tagName,
-        display: window.getComputedStyle(child).display,
-        classes: child.className
-      }))
-    });
-    
     if (nonDropChildren.length > 0) {
       // Check if most children are inline/inline-block
       const inlineChildren = nonDropChildren.filter(child => {
         const childDisplay = window.getComputedStyle(child).display;
         return childDisplay === 'inline' || childDisplay === 'inline-block';
-      });
-      
-      console.log('🔍 Inline detection:', {
-        totalChildren: nonDropChildren.length,
-        inlineChildren: inlineChildren.length,
-        shouldBeInline: inlineChildren.length > nonDropChildren.length / 2
       });
       
       // If majority of children are inline, treat as inline flow
@@ -100,9 +55,9 @@ const getLayoutType = (element: HTMLElement | null): 'flex-row' | 'flex-col' | '
     }
   }
   
-  // Default to block for everything else
+  // Default to block for most other display types
   return 'block';
-};
+}
 
 export const DropZone: React.FC<DropZoneProps> = ({
   parentId,
@@ -190,52 +145,140 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
     },
   });
 
-  const findLayerById = useLayerStore((state) => state.findLayerById);
+  // Get parent element to determine actual layout type
+  const [layoutType, setLayoutType] = React.useState<'flex-row' | 'flex-col' | 'grid' | 'inline' | 'block'>('block');
+  const [element, setElement] = React.useState<HTMLDivElement | null>(null);
+  
+  // Get the DND context to check what's being dragged
+  const dndContext = useDndContext();
+  
+  React.useLayoutEffect(() => {
+    if (!isActive || !element) return;
+    
+    // Find the parent element to determine layout
+    const parentElement = element.parentElement;
+    if (parentElement) {
+      let detectedLayout = getLayoutType(parentElement);
+      
+      // Override: If we're dragging an inline element, and parent is block,
+      // treat it as inline flow to avoid breaking text layout
+      if (dndContext?.activeLayerId) {
+        // Find the actual DOM element being dragged by looking for elements with matching layer ID
+        const draggedElement = document.querySelector(`[data-layer-id="${dndContext.activeLayerId}"]`) as HTMLElement;
+        
+        if (draggedElement) {
+          const draggedTagName = draggedElement.tagName.toLowerCase();
+          const draggedDisplay = window.getComputedStyle(draggedElement).display;
+          
+          // Check if the dragged element is inline or inline-block
+          const isInlineElement = draggedDisplay === 'inline' || 
+                                 draggedDisplay === 'inline-block' ||
+                                 ['span', 'a', 'strong', 'em', 'code', 'small', 'mark', 'del', 'ins', 'sub', 'sup'].includes(draggedTagName);
+          
+          if (isInlineElement && detectedLayout === 'block') {
+            detectedLayout = 'inline';
+          }
+          
+          console.log('🔍 Drop zone layout detection:', {
+            parentElement: parentElement.tagName,
+            parentDisplay: window.getComputedStyle(parentElement).display,
+            draggedElement: draggedTagName,
+            draggedDisplay,
+            isInlineElement,
+            detectedLayout,
+            parentId,
+            position
+          });
+        } else {
+          console.log('🔍 Drop zone layout detection (no dragged element found):', {
+            parentElement: parentElement.tagName,
+            parentDisplay: window.getComputedStyle(parentElement).display,
+            draggedLayerId: dndContext.activeLayerId,
+            detectedLayout,
+            parentId,
+            position
+          });
+        }
+      } else {
+        console.log('🔍 Drop zone layout detection (no active drag):', {
+          parentElement: parentElement.tagName,
+          parentDisplay: window.getComputedStyle(parentElement).display,
+          detectedLayout,
+          parentId,
+          position
+        });
+      }
+      
+      setLayoutType(detectedLayout);
+    }
+  }, [isActive, element, parentId, position, dndContext?.activeLayerId]);
+  
+  // Combine refs
+  const combinedRef = React.useCallback((node: HTMLDivElement | null) => {
+    setElement(node);
+    setNodeRef(node);
+  }, [setNodeRef]);
 
   if (!isActive) return null;
 
-  // Get parent layer to determine layout
-  const parentLayer = findLayerById(parentId);
-  const parentClassName = typeof parentLayer?.props?.className === 'string' ? parentLayer.props.className : '';
-  
-  // Determine layout type based on parent's className
-  const isHorizontalLayout = parentClassName.includes('flex-row');
-  const isVerticalLayout = parentClassName.includes('flex-col') || !parentClassName.includes('flex-row');
-  
-  // Calculate positioning styles based on layout and position
-  const getPositioningStyle = (): React.CSSProperties => {
-    if (style) return style;
-    
-    const baseStyle: React.CSSProperties = {
-      position: 'absolute',
-      width: isHorizontalLayout ? '2px' : '100%',
-      height: isHorizontalLayout ? '100%' : '2px',
-      backgroundColor: isOver ? '#3b82f6' : '#93c5fd',
-      borderRadius: '1px',
-      zIndex: 20,
-    };
-
-    if (isHorizontalLayout) {
-      // For horizontal layout (flex-row), show vertical drop lines
-      if (position === 0) {
-        return { ...baseStyle, left: '-1px' };
-      } else {
-        return { ...baseStyle, right: '-1px' };
-      }
-    } else {
-      // For vertical layout (flex-col or default), show horizontal drop lines
-      if (position === 0) {
-        return { ...baseStyle, top: '-1px' };
-      } else {
-        return { ...baseStyle, bottom: '-1px' };
-      }
-    }
-  };
+  const isHorizontalLayout = layoutType === 'flex-row' || layoutType === 'inline';
 
   return (
     <div
-      ref={setNodeRef}
-      style={getPositioningStyle()}
+      ref={combinedRef}
+      className={cn(
+        "transition-all duration-150 pointer-events-auto z-20",
+        "before:content-[''] before:absolute before:transition-all before:duration-150",
+        // Use custom style if provided, otherwise use default layout-based positioning
+        !style && [
+          "relative my-1",
+          // Flex-row layout: vertical lines between children
+          layoutType === 'flex-row' && [
+            "w-0.5 h-8 mx-1 inline-block",
+            "before:inset-0 before:w-0.5 before:rounded-full",
+            isOver
+              ? "before:bg-blue-500 before:shadow-sm before:w-1"
+              : "before:bg-blue-400/30 before:w-0.5"
+          ],
+          // Inline layout: subtle vertical indicators that can wrap
+          layoutType === 'inline' && [
+            "w-px h-4 mx-0.5 inline-block align-middle",
+            "before:inset-0 before:w-px before:rounded-full",
+            isOver
+              ? "before:bg-blue-500 before:shadow-sm before:w-0.5"
+              : "before:bg-blue-400/25 before:w-px"
+          ],
+          // Vertical layout (flex-col): horizontal lines between children
+          layoutType === 'flex-col' && [
+            "h-0.5 w-full block",
+            "before:inset-0 before:h-0.5 before:rounded-full",
+            isOver
+              ? "before:bg-blue-500 before:shadow-sm before:h-1"
+              : "before:bg-blue-400/30 before:h-0.5"
+          ],
+          // Grid layout: minimal visual indicator
+          layoutType === 'grid' && [
+            "h-1 w-full block",
+            "before:inset-0 before:h-0.5 before:rounded-full before:bg-blue-400/20",
+            isOver && "before:bg-blue-500/40 before:h-1"
+          ],
+          // Block layout: horizontal lines
+          layoutType === 'block' && [
+            "h-0.5 w-full block",
+            "before:inset-0 before:h-0.5 before:rounded-full",
+            isOver
+              ? "before:bg-blue-500 before:shadow-sm before:h-1"
+              : "before:bg-blue-400/30 before:h-0.5"
+          ]
+        ],
+        // Custom style overrides for absolute positioning
+        style && [
+          "absolute",
+          "before:bg-blue-500/60 before:rounded-sm",
+          isOver && "before:bg-blue-600 before:shadow-md"
+        ]
+      )}
+      style={style}
       data-testid={`drop-placeholder-${parentId}-${position}`}
       data-drop-indicator
     />
