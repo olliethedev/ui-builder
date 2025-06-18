@@ -97,7 +97,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
 
   const currentPanelConfig = useMemo(() => {
     const effectiveTabsContent = userPanelConfig?.pageConfigPanelTabsContent || memoizedDefaultTabsContent;
-    const defaultPanels = getDefaultPanelConfigValues(true, effectiveTabsContent);
+    const defaultPanels = getDefaultPanelConfigValues(effectiveTabsContent);
 
     return {
       navBar: userPanelConfig?.navBar ?? defaultPanels.navBar,
@@ -181,28 +181,51 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
 };
 
 function MainLayout({ panelConfig }: { panelConfig: PanelConfig }) {
-  const mainPanels = useMemo(
-    () => [
-      {
+  const showLeftPanel = useEditorStore((state) => state.showLeftPanel);
+  const showRightPanel = useEditorStore((state) => state.showRightPanel);
+
+  const mainPanels = useMemo(() => {
+    const panels = [];
+    
+    if (showLeftPanel) {
+      panels.push({
         title: "Page Config",
         content: panelConfig.pageConfigPanel,
-        defaultSize: 25,
-      },
-      {
-        title: "UI Editor",
-        content: panelConfig.editorPanel,
-        defaultSize: 50,
-      },
-      {
+        defaultSize: showRightPanel ? 25 : 33,
+      });
+    }
+    
+    panels.push({
+      title: "UI Editor",
+      content: panelConfig.editorPanel,
+      defaultSize: showLeftPanel && showRightPanel ? 50 : (showLeftPanel || showRightPanel ? 67 : 100),
+    });
+    
+    if (showRightPanel) {
+      panels.push({
         title: "Props",
         content: panelConfig.propsPanel,
-        defaultSize: 25,
-      },
-    ],
-    [panelConfig]
-  );
+        defaultSize: showLeftPanel ? 25 : 33,
+      });
+    }
+    
+    return panels;
+  }, [panelConfig, showLeftPanel, showRightPanel]);
 
-  const [selectedPanel, setSelectedPanel] = useState(mainPanels[1]);
+  const [selectedPanel, setSelectedPanel] = useState(() => {
+    const editorPanel = mainPanels.find(panel => panel.title === "UI Editor");
+    return editorPanel || mainPanels[0];
+  });
+
+  // Update selected panel when panels change
+  useEffect(() => {
+    const editorPanel = mainPanels.find(panel => panel.title === "UI Editor");
+    const currentPanel = mainPanels.find(panel => panel.title === selectedPanel.title);
+    
+    if (!currentPanel) {
+      setSelectedPanel(editorPanel || mainPanels[0]);
+    }
+  }, [mainPanels, selectedPanel.title]);
 
   const handlePanelClickById = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     const panelIndex = parseInt(e.currentTarget.dataset.panelIndex || "0");
@@ -351,19 +374,17 @@ export function LoadingSkeleton() {
 /**
  * Returns the default panel configuration values for the UI Builder.
  *
- * @param {boolean} useCanvas - Whether to use the canvas editor.
  * @param {TabsContentConfig} tabsContent - The content for the page config panel tabs.
  * @returns {PanelConfig} The default panel configuration.
  */
-export const getDefaultPanelConfigValues = (useCanvas: boolean, tabsContent: TabsContentConfig) => {
+export const getDefaultPanelConfigValues = ( tabsContent: TabsContentConfig) => {
   return {
-    navBar: <NavBar useCanvas={useCanvas} />,
+    navBar: <NavBar />,
     pageConfigPanel: (
       <PageConfigPanel className="pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" tabsContent={tabsContent} />
     ),
     editorPanel: (
       <EditorPanel
-        useCanvas={useCanvas}
         className="pb-20 md:pb-0 overflow-y-auto"
       />
     ),

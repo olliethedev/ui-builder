@@ -15,7 +15,9 @@ import {
   Tablet,
   Smartphone,
   Maximize,
-  MoreVertical, // Ensure this import is present
+  MoreVertical,
+  PanelLeft,
+  PanelRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,15 +79,19 @@ import { useStore } from "zustand";
 
 const Z_INDEX = 1000;
 
-interface NavBarProps {
-  useCanvas?: boolean;
-}
 
-export function NavBar({ useCanvas }: NavBarProps) {
+
+export function NavBar() {
   const selectedPageId = useLayerStore((state) => state.selectedPageId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const componentRegistry = useEditorStore((state) => state.registry);
   const incrementRevision = useEditorStore((state) => state.incrementRevision);
+  
+  // Panel visibility state
+  const showLeftPanel = useEditorStore((state) => state.showLeftPanel);
+  const setShowLeftPanel = useEditorStore((state) => state.setShowLeftPanel);
+  const showRightPanel = useEditorStore((state) => state.showRightPanel);
+  const setShowRightPanel = useEditorStore((state) => state.setShowRightPanel);
 
   // Fix: Subscribe to temporal state changes using useStoreWithEqualityFn
   const pastStates = useStore(
@@ -164,6 +170,14 @@ export function NavBar({ useCanvas }: NavBarProps) {
     setIsExportModalOpen(true);
   }, []);
 
+  const handleToggleLeftPanel = useCallback(() => {
+    setShowLeftPanel(!showLeftPanel);
+  }, [showLeftPanel, setShowLeftPanel]);
+
+  const handleToggleRightPanel = useCallback(() => {
+    setShowRightPanel(!showRightPanel);
+  }, [showRightPanel, setShowRightPanel]);
+
   const style = useMemo(() => ({ zIndex: Z_INDEX }), []);
 
   return (
@@ -172,12 +186,44 @@ export function NavBar({ useCanvas }: NavBarProps) {
       style={style}
     >
       <div className="flex items-center gap-2">
-        <h1 className="block text-lg md:text-2xl font-bold whitespace-nowrap">
-          UI Builder
-        </h1>
-        <div className="flex h-10 w-px bg-border"></div>
+        <div className="hidden md:contents">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={handleToggleLeftPanel}
+              variant={showLeftPanel ? "secondary" : "outline"}
+              size="icon"
+              className="flex flex-col justify-center"
+            >
+              <span className="sr-only">Toggle Left Panel</span>
+              <PanelLeft className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {showLeftPanel ? "Hide" : "Show"} Left Panel
+          </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={handleToggleRightPanel}
+              variant={showRightPanel ? "secondary" : "outline"}
+              size="icon"
+              className="flex flex-col justify-center"
+            >
+              <span className="sr-only">Toggle Right Panel</span>
+              <PanelRight className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            {showRightPanel ? "Hide" : "Show"} Right Panel
+          </TooltipContent>
+        </Tooltip>
+        </div>
+        <div className="hidden md:flex h-10 w-px bg-border"></div>
         <PagesPopover />
-        {useCanvas && <PreviewModeToggle />}
+        <PreviewModeToggle />
       </div>
 
       <div className="w-full flex items-center justify-end gap-2">

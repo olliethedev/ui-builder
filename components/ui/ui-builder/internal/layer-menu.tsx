@@ -114,9 +114,10 @@ export const LayerMenu: React.FC<MenuProps> = ({
                   "cursor-pointer"
                 )}
                 onClick={handleDuplicateComponent}
+                data-testid="duplicate-button"
               >
                 <span className="sr-only">Duplicate {isLayerAPage ? "Page" : "Component"}</span>
-                <Copy className="h-5 w-5 text-secondary-foreground" />
+                <Copy className="h-5 w-5 text-secondary-foreground" data-testid="duplicate-icon" />
               </div>
             )}
             {canDelete && (
@@ -126,9 +127,10 @@ export const LayerMenu: React.FC<MenuProps> = ({
                   "rounded-r-full mr-1 cursor-pointer"
                 )}
                 onClick={handleDeleteComponent}
+                data-testid="delete-button"
               >
                 <span className="sr-only">Delete {isLayerAPage ? "Page" : "Component"}</span>
-                <Trash className="h-5 w-5 text-secondary-foreground" />
+                <Trash className="h-5 w-5 text-secondary-foreground" data-testid="delete-icon" />
               </div>
             )}
           </div>

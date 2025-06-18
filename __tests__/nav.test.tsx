@@ -144,10 +144,12 @@ describe('NavBar', () => {
   });
 
   describe('Basic Rendering', () => {
-    it('should render the navbar with title', () => {
+    it('should render the navbar with basic structure', () => {
       render(<NavBar />, { wrapper: TestWrapper });
       
-      expect(screen.getByText('UI Builder')).toBeInTheDocument();
+      // Check that navbar container is rendered
+      const navbar = document.querySelector('.flex.items-center.justify-between.bg-background');
+      expect(navbar).toBeInTheDocument();
     });
 
     it('should render undo and redo buttons', () => {
@@ -504,32 +506,23 @@ describe('NavBar', () => {
     });
   });
 
-  describe('Canvas Mode', () => {
-    it('should render preview mode toggle when useCanvas is true', () => {
-      render(<NavBar useCanvas={true} />, { wrapper: TestWrapper });
-      
-      // Should show the preview mode toggle button
-      const buttons = screen.getAllByRole('button');
-      const previewModeButton = buttons.find(button => button.textContent?.includes('Select screen size'));
-      expect(previewModeButton).toBeInTheDocument();
-    });
-
-    it('should not render preview mode toggle when useCanvas is false', () => {
-      render(<NavBar useCanvas={false} />, { wrapper: TestWrapper });
-      
-      // Should not show the preview mode toggle button
-      const buttons = screen.getAllByRole('button');
-      const previewModeButton = buttons.find(button => button.textContent?.includes('Select screen size'));
-      expect(previewModeButton).toBeUndefined();
-    });
-
-    it('should not render preview mode toggle when useCanvas is undefined', () => {
+  describe('Panel Toggles', () => {
+    it('should render left panel toggle button', () => {
       render(<NavBar />, { wrapper: TestWrapper });
       
-      // Should not show the preview mode toggle button
+      // Should show the left panel toggle button
       const buttons = screen.getAllByRole('button');
-      const previewModeButton = buttons.find(button => button.textContent?.includes('Select screen size'));
-      expect(previewModeButton).toBeUndefined();
+      const leftPanelButton = buttons.find(button => button.textContent?.includes('Toggle Left Panel'));
+      expect(leftPanelButton).toBeInTheDocument();
+    });
+
+    it('should render right panel toggle button', () => {
+      render(<NavBar />, { wrapper: TestWrapper });
+      
+      // Should show the right panel toggle button
+      const buttons = screen.getAllByRole('button');
+      const rightPanelButton = buttons.find(button => button.textContent?.includes('Toggle Right Panel'));
+      expect(rightPanelButton).toBeInTheDocument();
     });
   });
 

@@ -28,14 +28,6 @@ jest.mock("@/components/ui/ui-builder/layer-renderer", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/ui-builder/internal/iframe-wrapper", () => ({
-  IframeWrapper: ({ children, className, resizable }: any) => (
-    <div data-testid="iframe-wrapper" className={className} data-resizable={resizable}>
-      {children}
-    </div>
-  ),
-}));
-
 // Interactive canvas is no longer used in editor-panel
 
 jest.mock("@/components/ui/ui-builder/internal/add-component-popover", () => ({
@@ -47,9 +39,9 @@ jest.mock("@/components/ui/ui-builder/internal/add-component-popover", () => ({
 }));
 
 jest.mock("@/components/ui/button", () => ({
-  Button: ({ children, variant, size, className, ...props }: any) => (
+  Button: ({ children, variant, size, className, "data-testid": testId, ...props }: any) => (
     <button 
-      data-testid="add-button" 
+      data-testid={testId || "add-button"} 
       data-variant={variant} 
       data-size={size} 
       className={className}
@@ -60,12 +52,7 @@ jest.mock("@/components/ui/button", () => ({
   ),
 }));
 
-jest.mock("lucide-react", () => ({
-  Plus: () => <svg data-testid="plus-icon" />,
-  GripVertical: () => <svg data-testid="grip-vertical-icon" />,
-  Minus: () => <svg data-testid="minus-icon" />,
-  Crosshair: () => <svg data-testid="crosshair-icon" />,
-}));
+
 
 jest.mock("@/lib/utils", () => ({
   cn: (...classes: any[]) => classes.filter(Boolean).join(" "),
@@ -73,12 +60,20 @@ jest.mock("@/lib/utils", () => ({
 
 jest.mock("react-zoom-pan-pinch", () => ({
   TransformWrapper: ({ children }: any) => <div data-testid="transform-wrapper">{children}</div>,
-  TransformComponent: ({ children, contentStyle, wrapperStyle }: any) => <div data-testid="transform-component" style={contentStyle}>{children}</div>,
+  TransformComponent: ({ children, contentStyle, wrapperStyle }: any) => <div data-testid="transform-component-wrapper" style={contentStyle}>{children}</div>,
   useControls: () => ({
     zoomIn: jest.fn(),
     zoomOut: jest.fn(),
     resetTransform: jest.fn(),
   }),
+}));
+
+jest.mock("lucide-react", () => ({
+  Plus: () => <svg data-testid="plus-icon" />,
+  GripVertical: () => <svg data-testid="grip-vertical-icon" />,
+  ZoomIn: () => <svg data-testid="zoom-in-icon" />,
+  ZoomOut: () => <svg data-testid="zoom-out-icon" />,
+  Crosshair: () => <svg data-testid="crosshair-icon" />,
 }));
 
 jest.mock("@use-gesture/react", () => ({
@@ -260,26 +255,20 @@ describe("EditorPanel", () => {
     });
   });
 
-  describe("Canvas vs Non-Canvas Rendering", () => {
-    it("renders without canvas by default", () => {
+  describe("Transform Wrapper Rendering", () => {
+    it("renders with TransformWrapper by default", () => {
       renderEditorPanel();
       
-      expect(screen.queryByTestId("transform-wrapper")).not.toBeInTheDocument();
+      expect(screen.getByTestId("transform-wrapper")).toBeInTheDocument();
       expect(screen.getByTestId("layer-renderer")).toBeInTheDocument();
     });
 
-    it("renders with InteractiveCanvas when useCanvas is true", () => {
-      renderEditorPanel({ useCanvas: true });
+    it("renders zoom controls", () => {
+      renderEditorPanel();
       
-      expect(screen.getByTestId("transform-wrapper")).toBeInTheDocument();
-      expect(screen.getAllByTestId("transform-component")).toHaveLength(2);
-    });
-
-    it("configures TransformWrapper correctly when useCanvas is true", () => {
-      renderEditorPanel({ useCanvas: true });
-      
-      const wrapper = screen.getByTestId("transform-wrapper");
-      expect(wrapper).toBeInTheDocument();
+      expect(screen.getByTestId("button-ZoomIn")).toBeInTheDocument();
+      expect(screen.getByTestId("button-ZoomOut")).toBeInTheDocument();
+      expect(screen.getByTestId("button-Reset")).toBeInTheDocument();
     });
 
     it("renders correctly when no layers present", () => {
@@ -294,7 +283,7 @@ describe("EditorPanel", () => {
       const { countLayers } = require("@/lib/ui-builder/store/layer-store");
       countLayers.mockReturnValue(0);
 
-      renderEditorPanel({ useCanvas: true });
+      renderEditorPanel();
       
       const wrapper = screen.getByTestId("transform-wrapper");
       expect(wrapper).toBeInTheDocument();
@@ -303,12 +292,10 @@ describe("EditorPanel", () => {
 
   describe("Preview Mode Handling", () => {
     it("applies responsive width class by default", () => {
-      renderEditorPanel({ useCanvas: true });
+      renderEditorPanel();
       
-      const components = screen.getAllByTestId("transform-component");
-      const innerComponent = components.find(el => el.className.includes("w-full"));
-      expect(innerComponent).toBeInTheDocument();
-      expect(innerComponent).toHaveClass("w-full");
+      const transformDiv = screen.getByTestId("transform-component");
+      expect(transformDiv).toHaveClass("w-full");
     });
 
     it("applies mobile width class when preview mode is mobile", () => {
@@ -319,12 +306,10 @@ describe("EditorPanel", () => {
         return { ...mockEditorState, previewMode: "mobile" };
       });
 
-      renderEditorPanel({ useCanvas: true });
+      renderEditorPanel();
       
-      const components = screen.getAllByTestId("transform-component");
-      const innerComponent = components.find(el => el.className.includes("w-[390px]"));
-      expect(innerComponent).toBeInTheDocument();
-      expect(innerComponent).toHaveClass("w-[390px]");
+      const transformDiv = screen.getByTestId("transform-component");
+      expect(transformDiv).toHaveClass("w-[390px]");
     });
 
     it("applies tablet width class when preview mode is tablet", () => {
@@ -335,12 +320,10 @@ describe("EditorPanel", () => {
         return { ...mockEditorState, previewMode: "tablet" };
       });
 
-      renderEditorPanel({ useCanvas: true });
+      renderEditorPanel();
       
-      const components = screen.getAllByTestId("transform-component");
-      const innerComponent = components.find(el => el.className.includes("w-[768px]"));
-      expect(innerComponent).toBeInTheDocument();
-      expect(innerComponent).toHaveClass("w-[768px]");
+      const transformDiv = screen.getByTestId("transform-component");
+      expect(transformDiv).toHaveClass("w-[768px]");
     });
 
     it("applies desktop width class when preview mode is desktop", () => {
@@ -351,16 +334,14 @@ describe("EditorPanel", () => {
         return { ...mockEditorState, previewMode: "desktop" };
       });
 
-      renderEditorPanel({ useCanvas: true });
+      renderEditorPanel();
       
-      const components = screen.getAllByTestId("transform-component");
-      const innerComponent = components.find(el => el.className.includes("w-[1440px]"));
-      expect(innerComponent).toBeInTheDocument();
-      expect(innerComponent).toHaveClass("w-[1440px]");
+      const transformDiv = screen.getByTestId("transform-component");
+      expect(transformDiv).toHaveClass("w-[1440px]");
     });
 
     it("makes resizer elements visible in responsive mode when layers exist", () => {
-      renderEditorPanel({ useCanvas: true });
+      renderEditorPanel();
       
       const resizers = screen.getAllByTestId("resizer");
       expect(resizers.length).toBeGreaterThan(0);
@@ -374,7 +355,7 @@ describe("EditorPanel", () => {
         return { ...mockEditorState, previewMode: "mobile" };
       });
 
-      renderEditorPanel({ useCanvas: true });
+      renderEditorPanel();
       
       const resizers = screen.queryAllByTestId("resizer");
       expect(resizers.length).toBe(0);
@@ -390,7 +371,7 @@ describe("EditorPanel", () => {
         value: 600,
       });
 
-      renderEditorPanel({ useCanvas: true });
+      renderEditorPanel();
       
       const wrapper = screen.getByTestId("transform-wrapper");
       expect(wrapper).toBeInTheDocument();
@@ -404,7 +385,7 @@ describe("EditorPanel", () => {
         value: 1024,
       });
 
-      renderEditorPanel({ useCanvas: true });
+      renderEditorPanel();
       
       const wrapper = screen.getByTestId("transform-wrapper");
       expect(wrapper).toBeInTheDocument();
@@ -568,16 +549,14 @@ describe("EditorPanel", () => {
     });
 
     it("memoizes widthClass to avoid unnecessary recalculations", () => {
-      const { rerender } = renderEditorPanel({ useCanvas: true });
+      const { rerender } = renderEditorPanel();
       
-      const components = screen.getAllByTestId("transform-component");
-      const firstRender = components.find(el => el.className.includes("w-full"));
+      const firstRender = screen.getByTestId("transform-component");
       
       // Rerender with same preview mode
-      rerender(<EditorPanel useCanvas={true} />);
+      rerender(<EditorPanel />);
 
-      const secondComponents = screen.getAllByTestId("transform-component");
-      const secondRender = secondComponents.find(el => el.className.includes("w-full"));
+      const secondRender = screen.getByTestId("transform-component");
 
       expect(firstRender).toHaveClass("w-full");
       expect(secondRender).toHaveClass("w-full");

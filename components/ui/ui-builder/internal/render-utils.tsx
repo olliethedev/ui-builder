@@ -33,7 +33,6 @@ export interface EditorConfig {
   onSelectElement: (layerId: string) => void;
   handleDuplicateLayer?: () => void;
   handleDeleteLayer?: () => void;
-  usingCanvas?: boolean;
 }
 
 
@@ -167,7 +166,6 @@ export const RenderLayer: React.FC<{
         onSelectElement,
         handleDuplicateLayer,
         handleDeleteLayer,
-        usingCanvas,
       } = editorConfig;
 
       return (
@@ -183,6 +181,8 @@ export const RenderLayer: React.FC<{
             onSelectElement={onSelectElement}
             isPageLayer={isLayerAPage}
             totalLayers={totalLayers}
+            onDuplicateLayer={handleDuplicateLayer}
+            onDeleteLayer={handleDeleteLayer}
           >
             {WrappedComponent}
           </ElementSelector>

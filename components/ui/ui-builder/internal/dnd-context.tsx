@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -54,14 +54,14 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
     })
   );
 
-  const handleDragStart = (event: DragStartEvent) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
     if (active.data.current?.type === 'layer') {
       setActiveLayerId(active.data.current.layerId);
     }
-  };
+  }, []);
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     setActiveLayerId(null);
 
@@ -86,9 +86,9 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
         moveLayer(sourceLayerId, parentId, position);
       }
     }
-  };
+  }, [findLayerById, componentRegistry, moveLayer]);
 
-  const canDropOnLayer = (layerId: string): boolean => {
+  const canDropOnLayer = useCallback((layerId: string): boolean => {
     const layer = findLayerById(layerId);
     if (!layer) return false;
     
@@ -96,13 +96,15 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
     if (activeLayerId === layerId) return false;
     
     return canLayerAcceptChildren(layer, componentRegistry);
-  };
+  }, [findLayerById, activeLayerId, componentRegistry]);
 
-  const contextValue: DndContextState = {
+  const contextValue: DndContextState = useMemo(() => ({
     isDragging: activeLayerId !== null,
     activeLayerId,
     canDropOnLayer,
-  };
+  }), [activeLayerId, canDropOnLayer]);
+
+  const dropAnimationConfig = useMemo(() => null, []);
 
   return (
     <DndContextStateContext.Provider value={contextValue}>
@@ -113,7 +115,7 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
         onDragEnd={handleDragEnd}
       >
         {children}
-        <DragOverlay dropAnimation={null}>
+        <DragOverlay dropAnimation={dropAnimationConfig}>
           {activeLayerId ? <DragOverlayContent layerId={activeLayerId} /> : null}
         </DragOverlay>
       </DndContext>

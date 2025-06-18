@@ -27,6 +27,12 @@ export interface EditorStore {
     setAllowPagesDeletion: (allow: boolean) => void;
     allowVariableEditing: boolean;
     setAllowVariableEditing: (allow: boolean) => void;
+
+    // Panel visibility state
+    showLeftPanel: boolean;
+    setShowLeftPanel: (show: boolean) => void;
+    showRightPanel: boolean;
+    setShowRightPanel: (show: boolean) => void;
 }
 
 const store: StateCreator<EditorStore, [], []> = (set, get) => ({
@@ -59,6 +65,12 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
     setAllowPagesDeletion: (allow) => set({ allowPagesDeletion: allow }),
     allowVariableEditing: true,
     setAllowVariableEditing: (allow) => set({ allowVariableEditing: allow }),
+
+    // Panel visibility state
+    showLeftPanel: true,
+    setShowLeftPanel: (show) => set({ showLeftPanel: show }),
+    showRightPanel: true,
+    setShowRightPanel: (show) => set({ showRightPanel: show }),
 });
 
 export const useEditorStore = create<EditorStore>()(store);
