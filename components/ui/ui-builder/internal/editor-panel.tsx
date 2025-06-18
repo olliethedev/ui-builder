@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useMemo, useState, createContext, useLayoutEffect, useRef } from "react";
+import React, { useCallback, useMemo, useState, createContext, useLayoutEffect, useRef, useEffect } from "react";
 import { Plus, GripVertical, Minus, Crosshair } from "lucide-react";
 import {
   countLayers,
@@ -19,11 +19,12 @@ import { DragConfig, useDrag } from "@use-gesture/react";
 interface EditorPanelProps {
   className?: string;
   useCanvas?: boolean;
+  autoZoomToSelected?: boolean;
 }
 
 
 
-const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
+const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas, autoZoomToSelected = true }) => {
   const {
     selectLayer,
     selectedLayerId,
@@ -97,6 +98,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
     }[previewMode]
   }, [previewMode]);
 
+
+
   return (
     <div
       id="editor-panel-container"
@@ -118,6 +121,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
             limitToBounds={false}
           >
             <ZoomControls />
+            {/* <AutoZoomToSelected 
+              selectedLayerId={selectedLayerId} 
+              autoZoomToSelected={autoZoomToSelected} 
+            /> */}
             <TransformComponent
               wrapperStyle={{
                 width: "100%",
@@ -160,6 +167,41 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className, useCanvas }) => {
 };
 
 export default EditorPanel;
+
+// Auto-zoom to selected element component
+const AutoZoomToSelected: React.FC<{
+  selectedLayerId: string | null;
+  autoZoomToSelected: boolean;
+}> = ({ selectedLayerId, autoZoomToSelected }) => {
+  const { zoomToElement } = useControls();
+  const previousSelectedLayerIdRef = useRef<string | null>(null);
+  
+  // Zoom to selected element when selection changes
+  useEffect(() => {
+    if (!selectedLayerId || !zoomToElement || !autoZoomToSelected) return;
+    
+    // Only zoom if the selected element is different from the previous one
+    if (previousSelectedLayerIdRef.current === selectedLayerId) return;
+    
+    // Update the previous selected layer ID
+    previousSelectedLayerIdRef.current = selectedLayerId;
+    
+    // Small delay to ensure DOM is updated after selection change
+    const timeoutId = setTimeout(() => {
+      // Try to find the selected element by data attribute or ID
+      const selectedElement = document.querySelector(`[data-layer-id="${selectedLayerId}"]`) ||
+                             document.getElementById(`layer-${selectedLayerId}`);
+      
+      if (selectedElement) {
+        zoomToElement(selectedElement as HTMLElement, undefined, 300); // 1.5x scale, 300ms animation
+      }
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [selectedLayerId, zoomToElement, autoZoomToSelected]);
+
+  return null; // This component doesn't render anything
+};
 
 // Standalone Zoom Controls Component
 const ZoomControls: React.FC = () => {
