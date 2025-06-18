@@ -57,9 +57,18 @@ const initialLayers = [
         type: "div",
         name: "Box C",
         props: {
-          className: "bg-blue-300 p-2 w-1/2 h-1/3 p-2 w-1/2 h-1/3 text-center",
+          className: "flex flex-row justify-center items-center bg-blue-300 p-2 w-1/2 h-1/3 p-2 w-1/2 h-1/3 text-center",
         },
         children: [
+          {
+            id: "8",
+            type: "div",
+            name: "Inner Box D",
+            props: {
+              className: "bg-yellow-300 p-2 w-1/2 h-1/3 p-2 w-1/2 h-1/3 text-center",
+            },
+            children: [],
+          },
           {
             id: "7",
             type: "span",
