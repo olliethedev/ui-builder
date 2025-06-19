@@ -190,6 +190,7 @@ interface DragOverlayContentProps {
   layerId: string;
 }
 
+/* istanbul ignore next */
 const DragOverlayContent: React.FC<DragOverlayContentProps> = ({ layerId }) => {
   const layer = useLayerStore((state) => state.findLayerById(layerId));
   

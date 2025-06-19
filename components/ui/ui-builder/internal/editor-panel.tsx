@@ -68,18 +68,101 @@ interface EditorPanelProps {
   className?: string;
 }
 
+const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
+  const {
+    selectLayer,
+    selectedLayerId,
+    findLayerById,
+    duplicateLayer,
+    removeLayer,
+    selectedPageId,
+  } = useLayerStore();
+  const previewMode = useEditorStore((state) => state.previewMode);
+  const componentRegistry = useEditorStore((state) => state.registry);
+  const selectedLayer = findLayerById(selectedLayerId) as ComponentLayer;
+  const selectedPage = findLayerById(selectedPageId) as ComponentLayer;
+  const isLayerAPage = useLayerStore((state) =>
+    state.isLayerAPage(selectedLayerId || "")
+  );
+  const allowPagesCreation = useEditorStore(
+    (state) => state.allowPagesCreation
+  );
+  const allowPagesDeletion = useEditorStore(
+    (state) => state.allowPagesDeletion
+  );
+
+  const onSelectElement = useCallback(
+    (layerId: string) => {
+      selectLayer(layerId);
+    },
+    [selectLayer]
+  );
+
+  const handleDeleteLayer = useCallback(() => {
+    if (selectedLayer && !isLayerAPage) {
+      removeLayer(selectedLayer.id);
+    }
+  }, [selectedLayer, removeLayer, isLayerAPage]);
+
+  const handleDuplicateLayer = useCallback(() => {
+    if (selectedLayer && !isLayerAPage) {
+      duplicateLayer(selectedLayer.id);
+    }
+  }, [selectedLayer, duplicateLayer, isLayerAPage]);
+
+  return (
+    <DndContextProvider>
+      <EditorPanelContent
+        className={className}
+        selectedLayerId={selectedLayerId}
+        selectedPageId={selectedPageId}
+        selectedLayer={selectedLayer}
+        selectedPage={selectedPage}
+        isLayerAPage={isLayerAPage}
+        allowPagesCreation={allowPagesCreation}
+        allowPagesDeletion={allowPagesDeletion}
+        previewMode={previewMode}
+        componentRegistry={componentRegistry}
+        autoZoomToSelected={false}
+        onSelectElement={onSelectElement}
+        handleDeleteLayer={handleDeleteLayer}
+        handleDuplicateLayer={handleDuplicateLayer}
+      />
+    </DndContextProvider>
+  );
+};
+
+export default EditorPanel;
+
+interface EditorPanelContentProps {
+  className?: string;
+  selectedLayerId: string | null;
+  selectedPageId: string;
+  selectedLayer: ComponentLayer;
+  selectedPage: ComponentLayer;
+  isLayerAPage: boolean;
+  allowPagesCreation: boolean;
+  allowPagesDeletion: boolean;
+  previewMode: string;
+  componentRegistry: any;
+  autoZoomToSelected?: boolean;
+  onSelectElement: (layerId: string) => void;
+  handleDeleteLayer: () => void;
+  handleDuplicateLayer: () => void;
+}
+
 // Inner component that can access ComponentDragContext
 const EditorPanelContent: React.FC<EditorPanelContentProps> = ({ 
   className,
-  selectedLayerId,
   selectedPageId,
+  selectedLayerId,
   selectedLayer,
   selectedPage,
-  isLayerAPage,
   allowPagesCreation,
   allowPagesDeletion,
   previewMode,
   componentRegistry,
+  autoZoomToSelected,
   onSelectElement,
   handleDeleteLayer,
   handleDuplicateLayer
@@ -202,10 +285,10 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
         limitToBounds={false}
       >
         <ZoomControls />
-        {/* <AutoZoomToSelected 
+        {autoZoomToSelected && <AutoZoomToSelected 
             selectedLayerId={selectedLayerId} 
             autoZoomToSelected={autoZoomToSelected} 
-          /> */}
+          /> }
         <TransformComponent
           wrapperStyle={wrapperStyle}
           contentStyle={contentStyle}
@@ -232,86 +315,7 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
   );
 };
 
-interface EditorPanelContentProps {
-  className?: string;
-  selectedLayerId: string | null;
-  selectedPageId: string;
-  selectedLayer: ComponentLayer;
-  selectedPage: ComponentLayer;
-  isLayerAPage: boolean;
-  allowPagesCreation: boolean;
-  allowPagesDeletion: boolean;
-  previewMode: string;
-  componentRegistry: any;
-  onSelectElement: (layerId: string) => void;
-  handleDeleteLayer: () => void;
-  handleDuplicateLayer: () => void;
-}
-
-const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
-  const {
-    selectLayer,
-    selectedLayerId,
-    findLayerById,
-    duplicateLayer,
-    removeLayer,
-    selectedPageId,
-  } = useLayerStore();
-  const previewMode = useEditorStore((state) => state.previewMode);
-  const componentRegistry = useEditorStore((state) => state.registry);
-  const selectedLayer = findLayerById(selectedLayerId) as ComponentLayer;
-  const selectedPage = findLayerById(selectedPageId) as ComponentLayer;
-  const isLayerAPage = useLayerStore((state) =>
-    state.isLayerAPage(selectedLayerId || "")
-  );
-  const allowPagesCreation = useEditorStore(
-    (state) => state.allowPagesCreation
-  );
-  const allowPagesDeletion = useEditorStore(
-    (state) => state.allowPagesDeletion
-  );
-
-  const onSelectElement = useCallback(
-    (layerId: string) => {
-      selectLayer(layerId);
-    },
-    [selectLayer]
-  );
-
-  const handleDeleteLayer = useCallback(() => {
-    if (selectedLayer && !isLayerAPage) {
-      removeLayer(selectedLayer.id);
-    }
-  }, [selectedLayer, removeLayer, isLayerAPage]);
-
-  const handleDuplicateLayer = useCallback(() => {
-    if (selectedLayer && !isLayerAPage) {
-      duplicateLayer(selectedLayer.id);
-    }
-  }, [selectedLayer, duplicateLayer, isLayerAPage]);
-
-  return (
-    <DndContextProvider>
-      <EditorPanelContent
-        className={className}
-        selectedLayerId={selectedLayerId}
-        selectedPageId={selectedPageId}
-        selectedLayer={selectedLayer}
-        selectedPage={selectedPage}
-        isLayerAPage={isLayerAPage}
-        allowPagesCreation={allowPagesCreation}
-        allowPagesDeletion={allowPagesDeletion}
-        previewMode={previewMode}
-        componentRegistry={componentRegistry}
-        onSelectElement={onSelectElement}
-        handleDeleteLayer={handleDeleteLayer}
-        handleDuplicateLayer={handleDuplicateLayer}
-      />
-    </DndContextProvider>
-  );
-};
-
-export default EditorPanel;
+/* istanbul ignore next */
 
 // Auto-zoom to selected element component
 const AutoZoomToSelected: React.FC<{

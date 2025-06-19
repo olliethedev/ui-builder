@@ -42,66 +42,66 @@ export  const ResizableWrapper: React.FC<ResizableWrapperProps> = ({
       }
     }, [isResizable, onSizeChange]);
   
-    const dragConfig = useMemo(() => {
-      return {
-        axis: "x",
-        from: () => [0, 0],
-        filterTaps: true,
-      } as DragConfig;
-    }, []);
-  
-    // Handle resizing using useDrag for responsive mode
-    const bindResizer = useDrag(({ down, movement: [mx], first, last }) => {
-      if (first) {
-        // Capture the initial size when drag starts
-        initialSizeRef.current = {
-          width: responsiveSize?.width || 800,
-        };
-        handleSetDragging(true);
-      }
-  
-      if (down) {
-        // Calculate new size based on initial size and movement
-        const newWidth = Math.max(320, initialSizeRef.current.width + mx); // Min width of 320px
-        setResponsiveSize({ width: newWidth });
-        onSizeChange?.(newWidth);
-      }
-  
-      // Notify when drag ends for final measurement update
-      if (last) {
-        // Small delay to ensure DOM updates are complete
-        setTimeout(() => {
-          handleSetDragging(false);
-        }, 0);
-      }
-    }, dragConfig as any);
-  
-    const bindResizerValues = useMemo(() => {
-      return typeof bindResizer === "function" ? bindResizer() : {};
-    }, [bindResizer]);
-  
-    const resizerStyle = useMemo(() => {
-      return {
-        left: responsiveSize?.width
-          ? `${responsiveSize.width - 80}px`
-          : undefined,
+      const handleSetDragging = useCallback(
+    (value: boolean) => {
+      setDragging(value);
+      onDraggingChange?.(value);
+    },
+    [onDraggingChange]
+  );
+
+  const dragConfig = useMemo(() => {
+    return {
+      axis: "x",
+      from: () => [0, 0],
+      filterTaps: true,
+    } as DragConfig;
+  }, []);
+
+  // Handle resizing using useDrag for responsive mode
+  const bindResizer = useDrag(({ down, movement: [mx], first, last }) => {
+    if (first) {
+      // Capture the initial size when drag starts
+      initialSizeRef.current = {
+        width: responsiveSize?.width || 800,
       };
-    }, [responsiveSize]);
-  
-    const responsiveWidthStyle = useMemo(() => {
-      if (isResizable && responsiveSize) {
-        return { width: `${responsiveSize.width}px` };
-      }
-      return {};
-    }, [isResizable, responsiveSize]);
-  
-    const handleSetDragging = useCallback(
-      (value: boolean) => {
-        setDragging(value);
-        onDraggingChange?.(value);
-      },
-      [onDraggingChange]
-    );
+      handleSetDragging(true);
+    }
+
+    if (down) {
+      // Calculate new size based on initial size and movement
+      const newWidth = Math.max(320, initialSizeRef.current.width + mx); // Min width of 320px
+      setResponsiveSize({ width: newWidth });
+      onSizeChange?.(newWidth);
+    }
+
+    // Notify when drag ends for final measurement update
+    if (last) {
+      // Small delay to ensure DOM updates are complete
+      setTimeout(() => {
+        handleSetDragging(false);
+      }, 0);
+    }
+  }, dragConfig as any);
+
+  const bindResizerValues = useMemo(() => {
+    return typeof bindResizer === "function" ? bindResizer() : {};
+  }, [bindResizer]);
+
+  const resizerStyle = useMemo(() => {
+    return {
+      left: responsiveSize?.width
+        ? `${responsiveSize.width - 80}px`
+        : undefined,
+    };
+  }, [responsiveSize]);
+
+  const responsiveWidthStyle = useMemo(() => {
+    if (isResizable && responsiveSize) {
+      return { width: `${responsiveSize.width}px` };
+    }
+    return {};
+  }, [isResizable, responsiveSize]);
   
     const contextValue = useMemo(() => ({
       dragging,

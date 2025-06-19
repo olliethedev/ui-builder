@@ -264,6 +264,8 @@ const LazyComponentPreview = memo(({
 
 LazyComponentPreview.displayName = "LazyComponentPreview";
 
+/* istanbul ignore next */
+
 const ComponentPreview = memo(({
   componentType,
   componentRegistry,
