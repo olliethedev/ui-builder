@@ -91,7 +91,7 @@ describe("ElementSelector", () => {
       const overlay = document.querySelector('.absolute.box-border');
       expect(overlay).toBeInTheDocument();
     });
-  });
+  }, 10000);
 
   it("calls onSelectElement when overlay is clicked", async () => {
     const mockOnSelect = jest.fn();

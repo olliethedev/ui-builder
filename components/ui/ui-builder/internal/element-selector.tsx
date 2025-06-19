@@ -12,7 +12,8 @@ import { useTransformEffect } from "react-zoom-pan-pinch";
 import { ComponentLayer } from "@/components/ui/ui-builder/types";
 import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
 import { DragHandle as ComponentDragHandle } from "@/components/ui/ui-builder/internal/drag-handle";
-import { DragHandleContext } from "@/components/ui/ui-builder/internal/editor-panel";
+import { DragHandleContext } from "@/components/ui/ui-builder/internal/resizable-wrapper";
+import { useDndContext } from "@/components/ui/ui-builder/internal/dnd-context";
 import { cn } from "@/lib/utils";
 
 const style: React.CSSProperties = {
@@ -56,6 +57,11 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
     height: number;
   } | null>(null);
 
+  const dndContext = useDndContext();
+  
+  // Check if this specific layer is being dragged
+  const isBeingDragged = dndContext.activeLayerId === layer.id;
+
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -82,7 +88,7 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
     <>
       <MeasureRange debug={false} onChange={setBoundingRect}>{children}</MeasureRange>
 
-      {isSelected && boundingRect && (
+      {isSelected && boundingRect && !isBeingDragged && (
         <LayerMenu
           layerId={layer.id}
           x={boundingRect.left}
@@ -100,7 +106,11 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
           onClick={handleClick}
           className={cn(
             "absolute box-border hover:border-blue-300 hover:border-2",
-            isSelected ? "border-2 border-blue-500 hover:border-blue-500" : ""
+            isBeingDragged 
+              ? "border-2 border-orange-500 border-dashed shadow-lg shadow-orange-500/30 opacity-70 bg-orange-50/20" 
+              : isSelected 
+                ? "border-2 border-blue-500 hover:border-blue-500" 
+                : ""
           )}
           style={overlayStyle}
         >

@@ -3,27 +3,25 @@ import React, {
   useCallback,
   useMemo,
   useState,
-  createContext,
-  useLayoutEffect,
   useRef,
   useEffect,
 } from "react";
-import { Plus, GripVertical, Crosshair, ZoomIn, ZoomOut } from "lucide-react";
+import { Plus, Crosshair, ZoomIn, ZoomOut } from "lucide-react";
 import { countLayers, useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { ComponentLayer } from "@/components/ui/ui-builder/types";
-
-import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
-import { DndContextProvider } from "@/components/ui/ui-builder/internal/dnd-context";
-import { cn } from "@/lib/utils";
-import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
-import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
-import { Button } from "@/components/ui/button";
 import {
   TransformWrapper,
   TransformComponent,
   useControls,
 } from "react-zoom-pan-pinch";
-import { DragConfig, useDrag } from "@use-gesture/react";
+
+import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
+import { DndContextProvider, useComponentDragContext } from "@/components/ui/ui-builder/internal/dnd-context";
+import { cn } from "@/lib/utils";
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
+import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
+import { Button } from "@/components/ui/button";
+import { ResizableWrapper } from "@/components/ui/ui-builder/internal/resizable-wrapper";
 
 // ZoomControls component definition moved before EditorPanel
 const ZoomControls: React.FC = () => {
@@ -70,55 +68,30 @@ interface EditorPanelProps {
   className?: string;
 }
 
-const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
-  const {
-    selectLayer,
-    selectedLayerId,
-    findLayerById,
-    duplicateLayer,
-    removeLayer,
-    selectedPageId,
-  } = useLayerStore();
-  const previewMode = useEditorStore((state) => state.previewMode);
-  const componentRegistry = useEditorStore((state) => state.registry);
-  const selectedLayer = findLayerById(selectedLayerId) as ComponentLayer;
-  const selectedPage = findLayerById(selectedPageId) as ComponentLayer;
-  const isLayerAPage = useLayerStore((state) =>
-    state.isLayerAPage(selectedLayerId || "")
-  );
-  const allowPagesCreation = useEditorStore(
-    (state) => state.allowPagesCreation
-  );
-  const allowPagesDeletion = useEditorStore(
-    (state) => state.allowPagesDeletion
-  );
+// Inner component that can access ComponentDragContext
+const EditorPanelContent: React.FC<EditorPanelContentProps> = ({ 
+  className,
+  selectedLayerId,
+  selectedPageId,
+  selectedLayer,
+  selectedPage,
+  isLayerAPage,
+  allowPagesCreation,
+  allowPagesDeletion,
+  previewMode,
+  componentRegistry,
+  onSelectElement,
+  handleDeleteLayer,
+  handleDuplicateLayer
+}) => {
+  const { isDragging: isComponentDragging } = useComponentDragContext();
+  const [resizing, setResizing] = useState(false);
+
+  const handleResizingChange = useCallback((isDragging: boolean) => {
+    setResizing(isDragging);
+  }, []);
 
   const layers = selectedPage.children;
-
-  const onSelectElement = useCallback(
-    (layerId: string) => {
-      selectLayer(layerId);
-    },
-    [selectLayer]
-  );
-
-  const handleDeleteLayer = useCallback(() => {
-    if (selectedLayer && !isLayerAPage) {
-      removeLayer(selectedLayer.id);
-    }
-  }, [selectedLayer, removeLayer, isLayerAPage]);
-
-  const handleDuplicateLayer = useCallback(() => {
-    if (selectedLayer && !isLayerAPage) {
-      duplicateLayer(selectedLayer.id);
-    }
-  }, [selectedLayer, duplicateLayer, isLayerAPage]);
-
-  const [dragging, setDragging] = useState(false);
-
-  const handleDraggingChange = useCallback((isDragging: boolean) => {
-    setDragging(isDragging);
-  }, []);
 
   const editorConfig = useMemo(
     () => ({
@@ -146,7 +119,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
     () => (
       <ResizableWrapper
         isResizable={previewMode === "responsive"}
-        onDraggingChange={handleDraggingChange}
+        onDraggingChange={handleResizingChange}
       >
         <div
           id="editor-panel-content"
@@ -165,7 +138,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
       editorConfig,
       componentRegistry,
       previewMode,
-      handleDraggingChange,
+      handleResizingChange,
     ]
   );
 
@@ -205,8 +178,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
   // Memoize doubleClick configuration for TransformWrapper
   const doubleClickConfig = useMemo(() => ({ disabled: true }), []);
 
-  // Memoize panning configuration for TransformWrapper
-  const panningConfig = useMemo(() => ({ disabled: dragging }), [dragging]);
+  // Disable panning when either resizing the viewport OR dragging components
+  const panningConfig = useMemo(() => ({ 
+    disabled: resizing || isComponentDragging 
+  }), [resizing, isComponentDragging]);
 
   return (
     <div
@@ -216,36 +191,34 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
         className
       )}
     >
-      <DndContextProvider>
-        <TransformWrapper
-          initialScale={1}
-          minScale={0.1}
-          maxScale={5}
-          wheel={wheelConfig}
-          doubleClick={doubleClickConfig}
-          panning={panningConfig}
-          centerOnInit={true}
-          limitToBounds={false}
+      <TransformWrapper
+        initialScale={1}
+        minScale={0.1}
+        maxScale={5}
+        wheel={wheelConfig}
+        doubleClick={doubleClickConfig}
+        panning={panningConfig}
+        centerOnInit={true}
+        limitToBounds={false}
+      >
+        <ZoomControls />
+        {/* <AutoZoomToSelected 
+            selectedLayerId={selectedLayerId} 
+            autoZoomToSelected={autoZoomToSelected} 
+          /> */}
+        <TransformComponent
+          wrapperStyle={wrapperStyle}
+          contentStyle={contentStyle}
         >
-          <ZoomControls />
-          {/* <AutoZoomToSelected 
-              selectedLayerId={selectedLayerId} 
-              autoZoomToSelected={autoZoomToSelected} 
-            /> */}
-          <TransformComponent
-            wrapperStyle={wrapperStyle}
-            contentStyle={contentStyle}
+          <div
+            className={cn("relative", widthClass)}
+            data-testid="transform-component"
+            style={transformDivStyle}
           >
-            <div
-              className={cn("relative", widthClass)}
-              data-testid="transform-component"
-              style={transformDivStyle}
-            >
-              {renderer}
-            </div>
-          </TransformComponent>
-        </TransformWrapper>
-      </DndContextProvider>
+            {renderer}
+          </div>
+        </TransformComponent>
+      </TransformWrapper>
       <AddComponentsPopover parentLayerId={selectedPageId}>
         <Button
           variant="secondary"
@@ -256,6 +229,85 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
         </Button>
       </AddComponentsPopover>
     </div>
+  );
+};
+
+interface EditorPanelContentProps {
+  className?: string;
+  selectedLayerId: string | null;
+  selectedPageId: string;
+  selectedLayer: ComponentLayer;
+  selectedPage: ComponentLayer;
+  isLayerAPage: boolean;
+  allowPagesCreation: boolean;
+  allowPagesDeletion: boolean;
+  previewMode: string;
+  componentRegistry: any;
+  onSelectElement: (layerId: string) => void;
+  handleDeleteLayer: () => void;
+  handleDuplicateLayer: () => void;
+}
+
+const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
+  const {
+    selectLayer,
+    selectedLayerId,
+    findLayerById,
+    duplicateLayer,
+    removeLayer,
+    selectedPageId,
+  } = useLayerStore();
+  const previewMode = useEditorStore((state) => state.previewMode);
+  const componentRegistry = useEditorStore((state) => state.registry);
+  const selectedLayer = findLayerById(selectedLayerId) as ComponentLayer;
+  const selectedPage = findLayerById(selectedPageId) as ComponentLayer;
+  const isLayerAPage = useLayerStore((state) =>
+    state.isLayerAPage(selectedLayerId || "")
+  );
+  const allowPagesCreation = useEditorStore(
+    (state) => state.allowPagesCreation
+  );
+  const allowPagesDeletion = useEditorStore(
+    (state) => state.allowPagesDeletion
+  );
+
+  const onSelectElement = useCallback(
+    (layerId: string) => {
+      selectLayer(layerId);
+    },
+    [selectLayer]
+  );
+
+  const handleDeleteLayer = useCallback(() => {
+    if (selectedLayer && !isLayerAPage) {
+      removeLayer(selectedLayer.id);
+    }
+  }, [selectedLayer, removeLayer, isLayerAPage]);
+
+  const handleDuplicateLayer = useCallback(() => {
+    if (selectedLayer && !isLayerAPage) {
+      duplicateLayer(selectedLayer.id);
+    }
+  }, [selectedLayer, duplicateLayer, isLayerAPage]);
+
+  return (
+    <DndContextProvider>
+      <EditorPanelContent
+        className={className}
+        selectedLayerId={selectedLayerId}
+        selectedPageId={selectedPageId}
+        selectedLayer={selectedLayer}
+        selectedPage={selectedPage}
+        isLayerAPage={isLayerAPage}
+        allowPagesCreation={allowPagesCreation}
+        allowPagesDeletion={allowPagesDeletion}
+        previewMode={previewMode}
+        componentRegistry={componentRegistry}
+        onSelectElement={onSelectElement}
+        handleDeleteLayer={handleDeleteLayer}
+        handleDuplicateLayer={handleDuplicateLayer}
+      />
+    </DndContextProvider>
   );
 };
 
@@ -297,166 +349,4 @@ const AutoZoomToSelected: React.FC<{
   return null; // This component doesn't render anything
 };
 
-// Context to track if a drag handle is active
-export const DragHandleContext = createContext<{
-  dragging: boolean;
-  setDragging: (v: boolean) => void;
-}>({ dragging: false, setDragging: () => {} });
 
-// Resizer Handle Component
-const Resizer = ({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => {
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    e.preventDefault();
-  }, []);
-
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent<HTMLDivElement>) => {
-      e.stopPropagation();
-    },
-    []
-  );
-
-  return (
-    <div
-      data-testid="resizer"
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
-      className={cn(
-        "flex items-center justify-center w-4 h-4 cursor-ew-resize rounded-sm border bg-border hover:bg-muted touch-none z-[1001]",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-};
-
-// Resizable Wrapper Component for responsive mode
-interface ResizableWrapperProps {
-  children: React.ReactNode;
-  isResizable: boolean;
-  onDraggingChange?: (dragging: boolean) => void;
-  onSizeChange?: (width: number) => void;
-}
-
-const ResizableWrapper: React.FC<ResizableWrapperProps> = ({
-  children,
-  isResizable,
-  onDraggingChange,
-  onSizeChange,
-}) => {
-  const [dragging, setDragging] = useState(false);
-  const [responsiveSize, setResponsiveSize] = useState<{
-    width: number;
-  } | null>(null);
-  const initialSizeRef = useRef<{ width: number }>({ width: 0 });
-
-  // Set initial responsive size
-  useLayoutEffect(() => {
-    if (isResizable) {
-      const initialWidth = 800; // Default responsive width
-      setResponsiveSize({ width: initialWidth });
-      onSizeChange?.(initialWidth);
-    }
-  }, [isResizable, onSizeChange]);
-
-  const dragConfig = useMemo(() => {
-    return {
-      axis: "x",
-      from: () => [0, 0],
-      filterTaps: true,
-    } as DragConfig;
-  }, []);
-
-  // Handle resizing using useDrag for responsive mode
-  const bindResizer = useDrag(({ down, movement: [mx], first, last }) => {
-    if (first) {
-      // Capture the initial size when drag starts
-      initialSizeRef.current = {
-        width: responsiveSize?.width || 800,
-      };
-      handleSetDragging(true);
-    }
-
-    if (down) {
-      // Calculate new size based on initial size and movement
-      const newWidth = Math.max(320, initialSizeRef.current.width + mx); // Min width of 320px
-      setResponsiveSize({ width: newWidth });
-      onSizeChange?.(newWidth);
-    }
-
-    // Notify when drag ends for final measurement update
-    if (last) {
-      // Small delay to ensure DOM updates are complete
-      setTimeout(() => {
-        handleSetDragging(false);
-      }, 0);
-    }
-  }, dragConfig as any);
-
-  const bindResizerValues = useMemo(() => {
-    return typeof bindResizer === "function" ? bindResizer() : {};
-  }, [bindResizer]);
-
-  const resizerStyle = useMemo(() => {
-    return {
-      left: responsiveSize?.width
-        ? `${responsiveSize.width - 80}px`
-        : undefined,
-    };
-  }, [responsiveSize]);
-
-  const responsiveWidthStyle = useMemo(() => {
-    if (isResizable && responsiveSize) {
-      return { width: `${responsiveSize.width}px` };
-    }
-    return {};
-  }, [isResizable, responsiveSize]);
-
-  const handleSetDragging = useCallback(
-    (value: boolean) => {
-      setDragging(value);
-      onDraggingChange?.(value);
-    },
-    [onDraggingChange]
-  );
-
-  const contextValue = useMemo(() => ({
-    dragging,
-    setDragging: handleSetDragging
-  }), [dragging, handleSetDragging]);
-
-  return (
-    <DragHandleContext.Provider
-      value={contextValue}
-    >
-      <div className="relative" style={responsiveWidthStyle}>
-        {isResizable && (
-          <>
-            <Resizer
-              {...bindResizerValues}
-              className="absolute top-0 right-[-40px]"
-              style={resizerStyle}
-            >
-              <GripVertical className="w-4 h-4" />
-            </Resizer>
-            <Resizer
-              {...bindResizerValues}
-              className="absolute bottom-7 right-[-40px]"
-              style={resizerStyle}
-            >
-              <GripVertical className="w-4 h-4" />
-            </Resizer>
-          </>
-        )}
-        {children}
-      </div>
-    </DragHandleContext.Provider>
-  );
-};

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useMemo, useEffect } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -12,7 +12,7 @@ import {
 } from '@dnd-kit/core';
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
-import { canLayerAcceptChildren } from '@/lib/ui-builder/store/layer-utils';
+import { canLayerAcceptChildren, findAllParentLayersRecursive } from '@/lib/ui-builder/store/layer-utils';
 
 interface DndContextState {
   isDragging: boolean;
@@ -20,15 +20,26 @@ interface DndContextState {
   canDropOnLayer: (layerId: string) => boolean;
 }
 
-const DndContextStateContext = createContext<DndContextState | null>(null);
+// Component drag context for tracking individual component drag states
+interface ComponentDragContextState {
+  isDragging: boolean;
+  setDragging: (isDragging: boolean) => void;
+}
 
-export const useDndContext = () => {
-  const context = useContext(DndContextStateContext);
-  if (!context) {
-    throw new Error('useDndContext must be used within a DndContextProvider');
-  }
-  return context;
-};
+const DndContextStateContext = createContext<DndContextState>({
+  isDragging: false,
+  activeLayerId: null,
+  canDropOnLayer: () => false,
+});
+
+// New context specifically for component drag operations
+const ComponentDragContext = createContext<ComponentDragContextState>({
+  isDragging: false,
+  setDragging: () => {},
+});
+
+export const useDndContext = () => useContext(DndContextStateContext);
+export const useComponentDragContext = () => useContext(ComponentDragContext);
 
 interface DndContextProviderProps {
   children: ReactNode;
@@ -36,9 +47,18 @@ interface DndContextProviderProps {
 
 export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children }) => {
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
+  const [componentDragging, setComponentDragging] = useState(false);
   const moveLayer = useLayerStore((state) => state.moveLayer);
   const findLayerById = useLayerStore((state) => state.findLayerById);
+  const pages = useLayerStore((state) => state.pages);
   const componentRegistry = useEditorStore((state) => state.registry);
+  
+  // Helper function to check if a layer is a descendant of another layer
+  const isLayerDescendantOf = useCallback((childId: string, parentId: string): boolean => {
+    if (childId === parentId) return true; // A layer is considered its own descendant for drop prevention
+    const parentLayers = findAllParentLayersRecursive(pages, childId);
+    return parentLayers.some(parent => parent.id === parentId);
+  }, [pages]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -64,6 +84,7 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     setActiveLayerId(null);
+    setComponentDragging(false);
 
     if (!over || !active.data.current?.layerId) {
       return;
@@ -75,8 +96,13 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
     if (overData?.type === 'drop-zone') {
       const { parentId, position } = overData;
       
-      // Prevent dropping a layer onto itself or its children
+      // Prevent dropping a layer onto itself
       if (sourceLayerId === parentId) {
+        return;
+      }
+
+      // Prevent dropping a layer into its own descendants
+      if (isLayerDescendantOf(parentId, sourceLayerId)) {
         return;
       }
 
@@ -86,7 +112,12 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
         moveLayer(sourceLayerId, parentId, position);
       }
     }
-  }, [findLayerById, componentRegistry, moveLayer]);
+  }, [findLayerById, componentRegistry, moveLayer, isLayerDescendantOf]);
+
+  const handleDragCancel = useCallback(() => {
+    setActiveLayerId(null);
+    setComponentDragging(false);
+  }, []);
 
   const canDropOnLayer = useCallback((layerId: string): boolean => {
     const layer = findLayerById(layerId);
@@ -95,8 +126,13 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
     // Don't allow dropping on the currently dragged layer
     if (activeLayerId === layerId) return false;
     
+    // Don't allow dropping into descendants of the dragged layer
+    if (activeLayerId && isLayerDescendantOf(layerId, activeLayerId)) {
+      return false;
+    }
+    
     return canLayerAcceptChildren(layer, componentRegistry);
-  }, [findLayerById, activeLayerId, componentRegistry]);
+  }, [findLayerById, activeLayerId, componentRegistry, isLayerDescendantOf]);
 
   const contextValue: DndContextState = useMemo(() => ({
     isDragging: activeLayerId !== null,
@@ -104,21 +140,48 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
     canDropOnLayer,
   }), [activeLayerId, canDropOnLayer]);
 
+  const componentDragContextValue: ComponentDragContextState = useMemo(() => ({
+    isDragging: componentDragging,
+    setDragging: setComponentDragging,
+  }), [componentDragging]);
+
   const dropAnimationConfig = useMemo(() => null, []);
+
+  // Handle escape key to cancel drag operations
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && activeLayerId) {
+        event.preventDefault();
+        event.stopPropagation();
+        handleDragCancel();
+      }
+    };
+
+    // Only add the listener when actively dragging
+    if (activeLayerId) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [activeLayerId, handleDragCancel]);
 
   return (
     <DndContextStateContext.Provider value={contextValue}>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      >
-        {children}
-        <DragOverlay dropAnimation={dropAnimationConfig}>
-          {activeLayerId ? <DragOverlayContent layerId={activeLayerId} /> : null}
-        </DragOverlay>
-      </DndContext>
+      <ComponentDragContext.Provider value={componentDragContextValue}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          {children}
+          <DragOverlay dropAnimation={dropAnimationConfig}>
+            {activeLayerId ? <DragOverlayContent layerId={activeLayerId} /> : null}
+          </DragOverlay>
+        </DndContext>
+      </ComponentDragContext.Provider>
     </DndContextStateContext.Provider>
   );
 };

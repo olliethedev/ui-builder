@@ -3,7 +3,7 @@ import { GripVertical } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
-import { DragHandleContext } from "./editor-panel";
+import { useComponentDragContext } from './dnd-context';
 
 interface DragHandleProps {
   layerId: string;
@@ -31,7 +31,7 @@ export const DragHandle: React.FC<DragHandleProps> = ({
     },
   });
 
-  const { setDragging } = React.useContext(DragHandleContext);
+  const { setDragging } = useComponentDragContext();
 
   React.useEffect(() => {
     setDragging(!!isDragging);
@@ -54,12 +54,12 @@ export const DragHandle: React.FC<DragHandleProps> = ({
         "absolute top-0 left-0 transform -translate-x-full -translate-y-full cursor-grab active:cursor-grabbing",
         "bg-blue-500 hover:bg-blue-600 text-white p-px shadow-md z-10",
         "opacity-100 transition-opacity duration-200",
-        isDragging && "cursor-grabbing",
+        isDragging && "cursor-grabbing opacity-0",
         className
       )}
       data-testid={`drag-handle-${layerId}`}
     >
-      <GripVertical size={14} />
+      {!isDragging && <GripVertical size={14} />}
     </div>
   );
 };
