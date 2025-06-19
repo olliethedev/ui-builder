@@ -237,6 +237,7 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
       componentRegistry,
       previewMode,
       handleResizingChange,
+      widthClass
     ]
   );
 
