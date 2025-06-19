@@ -198,6 +198,21 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
     ]
   );
 
+  const widthClass = useMemo(() => {
+    if (previewMode === "responsive") {
+      return "w-full";
+    } else if (previewMode === "mobile") {
+      return "w-[390px]";
+    } else if (previewMode === "tablet") {
+      return "w-[768px]";
+    } else if (previewMode === "desktop") {
+      return "w-[1440px]";
+    } else {
+      return "w-full";
+    }
+  }, [previewMode]);
+
+
   const renderer = useMemo(
     () => (
       <ResizableWrapper
@@ -206,7 +221,7 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
       >
         <div
           id="editor-panel-content"
-          className="overflow-visible pt-3 pb-10 pr-20"
+          className={cn("overflow-visible pt-3 pb-10 pr-20", widthClass)}
         >
           <LayerRenderer
             page={selectedPage}
@@ -225,20 +240,7 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
     ]
   );
 
-  const widthClass = useMemo(() => {
-    if (previewMode === "responsive") {
-      return "w-full";
-    } else if (previewMode === "mobile") {
-      return "w-[390px]";
-    } else if (previewMode === "tablet") {
-      return "w-[768px]";
-    } else if (previewMode === "desktop") {
-      return "w-[1440px]";
-    } else {
-      return "w-full";
-    }
-  }, [previewMode]);
-
+  
   // Memoize style objects for TransformComponent
   const wrapperStyle = useMemo(() => ({
     width: "100%",

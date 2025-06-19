@@ -101,10 +101,11 @@ describe("ResizableWrapper", () => {
   });
 
   describe("Responsive Width Styling", () => {
-    it("does not apply width style when not resizable", () => {
+    it("applies width 100% when not resizable to inherit parent constraints", () => {
       renderResizableWrapper({ isResizable: false });
       
       const wrapper = screen.getByTestId("child-content").parentElement;
+      expect(wrapper).toHaveStyle("width: 100%");
       expect(wrapper).not.toHaveStyle("width: 800px");
     });
 
@@ -542,7 +543,8 @@ describe("ResizableWrapper", () => {
       renderResizableWrapper({ isResizable: false });
       
       const wrapper = screen.getByTestId("child-content").parentElement;
-      expect(wrapper).not.toHaveAttribute("style");
+      // Should apply width: 100% when not resizable to inherit parent constraints
+      expect(wrapper).toHaveStyle("width: 100%");
     });
 
     it("handles className merging correctly in Resizer", () => {

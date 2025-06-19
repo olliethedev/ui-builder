@@ -100,7 +100,8 @@ export  const ResizableWrapper: React.FC<ResizableWrapperProps> = ({
     if (isResizable && responsiveSize) {
       return { width: `${responsiveSize.width}px` };
     }
-    return {};
+    // When not resizable, ensure we inherit the parent's width constraint
+    return { width: '100%' };
   }, [isResizable, responsiveSize]);
   
     const contextValue = useMemo(() => ({
