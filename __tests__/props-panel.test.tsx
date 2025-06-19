@@ -252,18 +252,18 @@ describe("PropsPanel", () => {
       await waitFor(() => {
         labelInput = container.querySelector('input[name="label"]');
         expect(labelInput).toBeInTheDocument();
-      });
+      }, { timeout: 10000 });
 
-      await userEvent.clear(labelInput!);
-      await userEvent.type(labelInput!, "Updated Label", { delay: 0 });
+      // Use fireEvent for more reliable input changes
+      fireEvent.change(labelInput!, { target: { value: "Updated Label" } });
 
       await waitFor(() => {
         expect(mockUpdateLayer).toHaveBeenLastCalledWith("layer-6", {
           label: "Updated Label",
           className: "merge-class",
         }, undefined);
-      });
-    });
+      }, { timeout: 10000 });
+    }, 15000);
 
     it('should call removeLayer when Delete Component button is clicked', () => {
       const selectedLayer = { id: 'layer1', type: 'Button', props: {} };

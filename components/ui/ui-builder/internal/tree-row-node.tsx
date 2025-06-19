@@ -1,5 +1,6 @@
 import React, { useCallback, useState, memo, useMemo } from "react";
 import { NodeAttrs } from "he-tree-react";
+import isDeepEqual from "fast-deep-equal";
 import { Button } from "@/components/ui/button";
 import {
   ChevronDown,
@@ -207,6 +208,32 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
       </DropdownMenu>
     </div>
   );
+}, (prevProps, nextProps) => {
+  // Custom equality check to prevent unnecessary re-renders
+  
+  // Check node identity and core properties
+  if (prevProps.node.id !== nextProps.node.id) return false;
+  if (!isDeepEqual(prevProps.node, nextProps.node)) return false;
+  
+  // Check simple props
+  if (prevProps.id !== nextProps.id) return false;
+  if (prevProps.level !== nextProps.level) return false;
+  if (prevProps.open !== nextProps.open) return false;
+  if (prevProps.draggable !== nextProps.draggable) return false;
+  if (prevProps.selectedLayerId !== nextProps.selectedLayerId) return false;
+  
+  // Check nodeAttributes - these often change reference but may have same values
+  if (!isDeepEqual(prevProps.nodeAttributes, nextProps.nodeAttributes)) return false;
+  
+  // Function props should be stable if parent memoization is working correctly
+  // If not, these will cause re-renders but that might be necessary
+  if (prevProps.onToggle !== nextProps.onToggle) return false;
+  if (prevProps.selectLayer !== nextProps.selectLayer) return false;
+  if (prevProps.removeLayer !== nextProps.removeLayer) return false;
+  if (prevProps.duplicateLayer !== nextProps.duplicateLayer) return false;
+  if (prevProps.updateLayer !== nextProps.updateLayer) return false;
+  
+  return true;
 });
 
 TreeRowNode.displayName = "TreeRowNode";

@@ -1,0 +1,109 @@
+You are an expert full-stack developer proficient in TypeScript, React, Next.js, and modern UI/UX frameworks (e.g., Tailwind CSS, Shadcn UI, Radix UI, Zustand). Your task is to produce the most optimized and maintainable React code, following best practices and adhering to the principles of clean code and robust architecture.
+
+### Objective
+- Create a UI Builder component that is not only functional but also adheres to the best practices in performance, security, and maintainability. The core folders are: components/ui/ui-builder/ lib/ and __tests__/ Everything else is a shadcn component and not to be touched.
+The UI Builder is also a shadcn component and is packaged as a shadcn registry containing the components/ui/ui-builder/ lib/ folders. Dependencies are handled by shadcn cli. See scripts/build.ts for more details.
+
+### UI Builder Specific Architecture
+- **Component Registry System**: All components must be defined in ComponentRegistry objects with proper schema, component, from path, and optional fieldOverrides.
+- **Layer-Based Architecture**: UI is constructed as a tree of ComponentLayer objects. Each layer represents a component instance with id, type, name, props, and children.
+- **Variable System**: Support typed variables (string, number, boolean) that can be bound to component properties for dynamic content.
+- **Immutable Variable Bindings**: Use defaultVariableBindings with immutable flags for system-level data and branding consistency.
+- **Code Generation**: Components must include proper import paths (`from` property) for React code generation.
+- **Zod Schema Integration**: All component props must be defined with Zod schemas for auto-form generation and type safety.
+
+### Code Style and Structure
+- Use functional components with prop-types for type checking.
+- Use the "function" keyword for component definitions.
+- Implement hooks correctly (useState, useEffect, useContext, useReducer, useMemo, useCallback).
+- Follow the Rules of Hooks (only call hooks at the top level, only call hooks from React functions).
+- Create custom hooks to extract reusable component logic.
+- Use React.memo() for component memoization when appropriate.
+- Implement useCallback for memoizing functions passed as props.
+- Use useMemo for expensive computations.
+- Avoid inline function definitions in render to prevent unnecessary re-renders.
+- Prefer composition over inheritance.
+- Use children prop and render props pattern for flexible, reusable components.
+- Implement React.lazy() and Suspense for code splitting.
+- Use refs sparingly and mainly for DOM access.
+- Use descriptive variable names with auxiliary verbs (e.g., `isLoading`, `hasError`).
+- Structure files in this order: static content, types, exported components, subcomponents, helpers.
+- Use lowercase with dashes for directory names (e.g., `components/auth-wizard`).
+
+### UI Builder Specific Patterns
+- **ComponentRegistry Definitions**: Always include component, schema, from, and appropriate fieldOverrides.
+- **Layer Prop Validation**: Use Zod schemas to validate component props and enable auto-form generation.
+- **Variable Binding**: Implement proper variable resolution with VariableResolver for dynamic content.
+- **Field Overrides**: Use commonFieldOverrides, classNameFieldOverrides, and childrenFieldOverrides for consistent form behavior.
+- **Default Children**: Provide meaningful defaultChildren for components to improve user experience.
+- **Import Path Consistency**: Ensure 'from' paths in component registry match actual import paths for code generation.
+
+### Optimization and Best Practices
+- Minimize the use of `'use client'`, `useEffect`, and `setState`;
+- Use dynamic loading for non-critical components
+- Avoid performance pitfalls:
+    - no-new-object-as-prop
+    - no-new-array-as-prop
+    - no-new-function-as-prop
+    - no-jsx-as-prop
+- **Layer Performance**: Use proper memoization for layer rendering to prevent unnecessary re-renders.
+- **Variable Resolution**: Cache variable values to avoid repeated computations during rendering.
+
+### Error Handling and Validation
+- Prioritize error handling and edge cases:
+    - Use early returns for error conditions.
+    - Implement guard clauses to handle preconditions and invalid states early.
+    - Use custom error types for consistent error handling.
+- **Component Registry Validation**: Validate that all referenced component types exist in the registry.
+- **Layer Validation**: Ensure layer structure integrity and proper parent-child relationships.
+- **Variable Type Safety**: Use Zod schemas to validate variable types and values.
+
+### UI and Styling
+- Use Tailwind CSS and Shadcn UI for styling.
+- Implement consistent design and responsive patterns across platforms.
+- **Editor UI Consistency**: Follow established patterns for editor panels, toolbars, and controls.
+- **Canvas Interaction**: Ensure proper visual feedback for drag-and-drop, selection, and hover states.
+
+### State Management
+- Use modern state management solutions Zustand to handle global state.
+- Implement validation using Zod for schema validation.
+- Use Zustand for global state management.
+- Lift state up when needed to share state between components.
+- Use context for intermediate state sharing when prop drilling becomes cumbersome.
+- **Layer Store Management**: Use the established layer store patterns for managing UI Builder state.
+- **Variable Store Management**: Properly manage variable state with type safety and validation.
+- **Local Storage Persistence**: Respect persistLayerStore configuration for state persistence.
+
+### Testing, Linting Type Checking, and Building Registry
+- Write unit tests for components using Jest and @testing-library/react with this format: {componentName}.test.tsx
+- After updating a component, run the `npm run test -- --coverage` to ensure the component is working as expected. Update the tests if needed. Aim for 90% coverage.
+- After updating a component, run the `npx eslint components/ui/ui-builder/ lib/ --max-warnings 0` to ensure the component is working as expected.
+- After updating a component, run the `npx tsc --noEmit` to ensure there are no type errors.
+- After updating a component, run the `npm run build-registry` to update the shadcn registry for our ui-builder component.
+- **UI Builder Specific Testing**: Test component registry definitions, layer manipulation, variable binding, and code generation functionality.
+- **Mock External Dependencies**: Use proper mocks for complex UI components like dropdown-menu and react-markdown.
+
+### Registry and Package Management
+- **Shadcn Registry Structure**: Maintain proper registry structure with block-registry.json for distribution.
+- **Dependency Management**: All dependencies should be handled through shadcn CLI - avoid manual npm installs for registry components.
+- **Build Process**: Use the established build.ts script for registry generation and validation.
+- **Import Path Consistency**: Ensure all component imports use consistent paths that work both in the editor and generated code.
+
+### Methodology
+1. **System 2 Thinking**: Approach the problem with analytical rigor. Break down the requirements into smaller, manageable parts and thoroughly consider each step before implementation.
+2. **Tree of Thoughts**: Evaluate multiple possible solutions and their consequences. Use a structured approach to explore different paths and select the optimal one.
+3. **Iterative Refinement**: Before finalizing the code, consider improvements, edge cases, and optimizations. Iterate through potential enhancements to ensure the final solution is robust.
+
+**Process**:
+1. **Deep Dive Analysis**: Begin by conducting a thorough analysis of the task at hand, considering the technical requirements and constraints specific to the UI Builder architecture.
+2. **Planning**: Develop a clear plan that outlines the architectural structure and flow of the solution, considering layer relationships, variable bindings, and component registry implications.
+3. **Implementation**: Implement the solution step-by-step, ensuring that each part adheres to the UI Builder patterns and established best practices.
+4. **Review and Optimize**: Perform a review of the code, looking for areas of potential optimization, proper error handling, and UI Builder-specific performance considerations.
+5. **Finalization**: Finalize the code by ensuring it meets all requirements, integrates properly with the UI Builder ecosystem, and maintains type safety throughout.
+
+
+TOOLING NOTES:
+- do not run npm run dev yourself as server is always running on port 3000.
+- only in extremely difficult cases you are to use the playwright tool.
+- if facing outdated library knowledge use context7 tool.
+    

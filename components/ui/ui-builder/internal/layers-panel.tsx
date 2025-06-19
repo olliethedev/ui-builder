@@ -89,6 +89,7 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
     duplicateLayer,
   }) => {
     const [openIds, setOpenIds] = useState<Set<Id>>(new Set());
+    const [openIdsArray, setOpenIdsArray] = useState<Id[]>([]);
 
     const prevSelectedLayerId = useRef(selectedLayerId);
 
@@ -100,6 +101,8 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
         } else {
           newSet.delete(id);
         }
+        // Update array representation for useHeTree
+        setOpenIdsArray(Array.from(newSet));
         return newSet;
       });
     }, []);
@@ -108,10 +111,27 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
       (newLayers: unknown) => {
         if (Array.isArray(newLayers) && newLayers.length > 0) {
           const updatedPageLayer = newLayers[0] as ComponentLayer;
+          
+          // Validate the layer structure before updating
+          if (!updatedPageLayer || !updatedPageLayer.id || updatedPageLayer.id !== selectedPageId) {
+            console.error(
+              "LayersTree onChange: Invalid layer structure - ID mismatch",
+              { updatedPageLayer, selectedPageId }
+            );
+            return;
+          }
+          
           const updatedChildren = hasLayerChildren(updatedPageLayer)
-            ? updatedPageLayer.children
+            ? updatedPageLayer.children || []
             : [];
-          updateLayer(selectedPageId, {}, { children: updatedChildren });
+            
+          // Only update if children actually changed
+          const currentLayer = layers[0];
+          const currentChildren = hasLayerChildren(currentLayer) ? currentLayer.children || [] : [];
+          
+          if (!isDeepEqual(currentChildren, updatedChildren)) {
+            updateLayer(selectedPageId, {}, { children: updatedChildren });
+          }
         } else {
           console.error(
             "LayersTree onChange: Invalid newLayers structure received",
@@ -119,7 +139,7 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
           );
         }
       },
-      [updateLayer, selectedPageId]
+      [updateLayer, selectedPageId, layers]
     );
 
     const handleDragOpen = useCallback(
@@ -138,16 +158,37 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
 
     const renderNode = useCallback(
       ({ stat, attrs, isPlaceholder }: any) => {
-        return isPlaceholder ? (
-          <TreeRowPlaceholder
-            key={`placeholder-${attrs.key}`}
-            nodeAttributes={attrs}
-          />
-        ) : (
+        // Use node.id as key to ensure stable identity across tree operations
+        const stableKey = isPlaceholder ? `placeholder-${attrs.key}` : stat.node.id;
+        
+        if (isPlaceholder) {
+          return (
+            <TreeRowPlaceholder
+              key={stableKey}
+              nodeAttributes={attrs}
+            />
+          );
+        }
+        
+        // Find the original layer data (not processed) to preserve text children info
+        const findOriginalLayer = (layers: ComponentLayer[], id: string): ComponentLayer | null => {
+          for (const layer of layers) {
+            if (layer.id === id) return layer;
+            if (hasLayerChildren(layer)) {
+              const found = findOriginalLayer(layer.children, id);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+        
+        const originalNode = findOriginalLayer(layers, stat.node.id) || stat.node;
+        
+        return (
           <TreeRowNode
-            key={attrs.key}
+            key={stableKey}
             nodeAttributes={attrs}
-            node={stat.node}
+            node={originalNode}
             id={stat.id}
             open={stat.open}
             draggable={stat.draggable}
@@ -168,15 +209,39 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
         removeLayer,
         duplicateLayer,
         updateLayer,
+        layers,
       ]
     );
 
+    // Preprocess layers to ensure all nodes appear in tree, even those with string children
+    const processedLayers = useMemo(() => {
+      const processLayer = (layer: ComponentLayer): ComponentLayer => {
+        const processed = { ...layer };
+        
+        if (hasLayerChildren(layer)) {
+          // Recursively process array children
+          processed.children = layer.children.map(processLayer);
+        } else if (typeof layer.children === 'string') {
+          // Convert string children to empty array for tree traversal
+          // The actual text content is preserved in the original layer
+          processed.children = [];
+        } else if (!layer.children) {
+          // Ensure undefined/null children become empty arrays
+          processed.children = [];
+        }
+        
+        return processed;
+      };
+      
+      return layers.map(processLayer);
+    }, [layers]);
+
     const data = useMemo(() => {
       return {
-        data: layers,
+        data: processedLayers,
         dataType: "tree" as const,
         childrenKey: "children",
-        openIds: Array.from(openIds),
+        openIds: openIdsArray,
         dragOpen: true,
         onChange: handleChange,
         renderNodeBox: renderNode,
@@ -184,8 +249,8 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
         canDrop: canNodeDrop,
       };
     }, [
-      layers,
-      openIds,
+      processedLayers,
+      openIdsArray,
       handleChange,
       renderNode,
       handleDragOpen,
@@ -203,7 +268,18 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
         const parentIds = parentLayers.map((layer) => layer.id);
         setOpenIds((prevOpenIds) => {
           const updatedSet = new Set(prevOpenIds);
-          parentIds.forEach((id) => updatedSet.add(id));
+          let hasChanges = false;
+          parentIds.forEach((id) => {
+            if (!updatedSet.has(id)) {
+              updatedSet.add(id);
+              hasChanges = true;
+            }
+          });
+          
+          if (hasChanges) {
+            setOpenIdsArray(Array.from(updatedSet));
+          }
+          
           return updatedSet;
         });
       }

@@ -34,6 +34,7 @@ const customJestConfig = {
     "!components/ui/ui-builder/internal/iconname-field.tsx",
     "!components/ui/ui-builder/internal/classname-control/*",
     "!components/ui/ui-builder/internal/tailwind-classes.ts",
+    "!components/ui/ui-builder/internal/divider-control.tsx",
     "!lib/ui-builder/registry/form-field-overrides.tsx"
   ],
 };

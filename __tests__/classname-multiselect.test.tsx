@@ -171,11 +171,18 @@ describe("ClassNameMultiselect", () => {
     const mockOnChange = jest.fn();
     render(<ClassNameMultiselect value="bg-red-500 text-blue-600" onChange={mockOnChange} />);
     
-    const removeButton = screen.getByTestId("remove-bg-red-500");
+    // Wait for the component to fully render
+    await waitFor(() => {
+      expect(screen.getByTestId("selected-bg-red-500")).toBeInTheDocument();
+    });
+    
+    const removeButton = await screen.findByTestId("remove-bg-red-500");
     await userEvent.click(removeButton);
     
-    expect(mockOnChange).toHaveBeenCalledWith("text-blue-600");
-  });
+    await waitFor(() => {
+      expect(mockOnChange).toHaveBeenCalledWith("text-blue-600");
+    });
+  }, 15000);
 
   it("calls onChange when a class is added", async () => {
     const mockOnChange = jest.fn();

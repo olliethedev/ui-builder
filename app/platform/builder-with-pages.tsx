@@ -1,6 +1,6 @@
 "use client"
 
-import UIBuilder from "@/components/ui/ui-builder";
+import UIBuilder, { defaultConfigTabsContent, getDefaultPanelConfigValues } from "@/components/ui/ui-builder";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
@@ -990,5 +990,6 @@ export const BuilderWithPages = ({fixedPages = false}: {fixedPages?: boolean}) =
     }}
     allowPagesCreation={!fixedPages}
     allowPagesDeletion={!fixedPages}
+    panelConfig={getDefaultPanelConfigValues(defaultConfigTabsContent())}
     />;
 };

@@ -115,9 +115,8 @@ describe("LayerMenu", () => {
       render(<LayerMenu {...defaultProps} />);
 
       // Should show both buttons for component layers regardless of page permissions
-      // Find buttons by their SVG icons
-      const duplicateIcon = document.querySelector('svg.lucide-copy');
-      const deleteIcon = document.querySelector('svg.lucide-trash');
+      const duplicateIcon = screen.queryByTestId('duplicate-icon');
+      const deleteIcon = screen.queryByTestId('delete-icon');
 
       expect(duplicateIcon).toBeInTheDocument();
       expect(deleteIcon).toBeInTheDocument();
@@ -152,8 +151,8 @@ describe("LayerMenu", () => {
 
       render(<LayerMenu {...defaultProps} layerId="test-page-1" />);
 
-      const duplicateIcon = document.querySelector('svg.lucide-copy');
-      const deleteIcon = document.querySelector('svg.lucide-trash');
+      const duplicateIcon = screen.queryByTestId('duplicate-icon');
+      const deleteIcon = screen.queryByTestId('delete-icon');
 
       expect(duplicateIcon).not.toBeInTheDocument();
       expect(deleteIcon).toBeInTheDocument();
@@ -173,8 +172,8 @@ describe("LayerMenu", () => {
 
       render(<LayerMenu {...defaultProps} layerId="test-page-1" />);
 
-      const duplicateIcon = document.querySelector('svg.lucide-copy');
-      const deleteIcon = document.querySelector('svg.lucide-trash');
+      const duplicateIcon = screen.queryByTestId('duplicate-icon');
+      const deleteIcon = screen.queryByTestId('delete-icon');
 
       expect(duplicateIcon).toBeInTheDocument();
       expect(deleteIcon).not.toBeInTheDocument();
@@ -194,8 +193,8 @@ describe("LayerMenu", () => {
 
       render(<LayerMenu {...defaultProps} layerId="test-page-1" />);
 
-      const duplicateIcon = document.querySelector('svg.lucide-copy');
-      const deleteIcon = document.querySelector('svg.lucide-trash');
+      const duplicateIcon = screen.queryByTestId('duplicate-icon');
+      const deleteIcon = screen.queryByTestId('delete-icon');
 
       expect(duplicateIcon).not.toBeInTheDocument();
       expect(deleteIcon).not.toBeInTheDocument();
@@ -215,8 +214,8 @@ describe("LayerMenu", () => {
 
       render(<LayerMenu {...defaultProps} layerId="test-page-1" />);
 
-      const duplicateIcon = document.querySelector('svg.lucide-copy');
-      const deleteIcon = document.querySelector('svg.lucide-trash');
+      const duplicateIcon = screen.queryByTestId('duplicate-icon');
+      const deleteIcon = screen.queryByTestId('delete-icon');
 
       expect(duplicateIcon).toBeInTheDocument();
       expect(deleteIcon).toBeInTheDocument();
@@ -229,13 +228,11 @@ describe("LayerMenu", () => {
       
       render(<LayerMenu {...defaultProps} handleDuplicateComponent={mockHandleDuplicate} />);
 
-      const duplicateIcon = document.querySelector('svg.lucide-copy');
-      expect(duplicateIcon).toBeInTheDocument();
+      const duplicateButton = screen.getByTestId('duplicate-button');
+      expect(duplicateButton).toBeInTheDocument();
       
-      if (duplicateIcon?.parentElement) {
-        fireEvent.click(duplicateIcon.parentElement);
-        expect(mockHandleDuplicate).toHaveBeenCalledTimes(1);
-      }
+      fireEvent.click(duplicateButton);
+      expect(mockHandleDuplicate).toHaveBeenCalledTimes(1);
     });
 
     it("should call handleDeleteComponent when delete button is clicked", () => {
@@ -243,23 +240,37 @@ describe("LayerMenu", () => {
       
       render(<LayerMenu {...defaultProps} handleDeleteComponent={mockHandleDelete} />);
 
-      const deleteIcon = document.querySelector('svg.lucide-trash');
-      expect(deleteIcon).toBeInTheDocument();
+      const deleteButton = screen.getByTestId('delete-button');
+      expect(deleteButton).toBeInTheDocument();
       
-      if (deleteIcon?.parentElement) {
-        fireEvent.click(deleteIcon.parentElement);
-        expect(mockHandleDelete).toHaveBeenCalledTimes(1);
-      }
+      fireEvent.click(deleteButton);
+      expect(mockHandleDelete).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("basic rendering", () => {
     it("should render the layer menu with correct positioning", () => {
+      // Ensure the layer is found by the component
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector({
+            findLayerById: jest.fn().mockReturnValue(mockComponentLayer),
+            isLayerAPage: jest.fn().mockReturnValue(false),
+          } as any);
+        }
+        return null;
+      });
+
       const { container } = render(<LayerMenu {...defaultProps} />);
 
-      // Check that the component renders successfully
-      const menuContainer = container.querySelector('div.fixed');
+      // Check that the component renders successfully - the chevron icon should be present
+      const chevronIcon = container.querySelector('svg');
+      expect(chevronIcon).toBeInTheDocument();
+      
+      // Also check for the main container div
+      const menuContainer = container.firstChild as HTMLElement;
       expect(menuContainer).toBeInTheDocument();
+      expect(menuContainer.tagName).toBe('DIV');
     });
   });
 });

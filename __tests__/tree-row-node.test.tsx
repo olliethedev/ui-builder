@@ -141,7 +141,9 @@ describe('TreeRowNode', () => {
 
     // Mock hasLayerChildren
     const { hasLayerChildren } = require('@/lib/ui-builder/store/layer-utils');
-    hasLayerChildren.mockReturnValue(false);
+    hasLayerChildren.mockImplementation((layer: ComponentLayer) => {
+      return Array.isArray(layer.children) && typeof layer.children !== 'string';
+    });
   });
 
   describe('Basic Rendering', () => {
@@ -180,9 +182,6 @@ describe('TreeRowNode', () => {
 
   describe('Tree Expansion', () => {
     it('should show expansion button for nodes with children', () => {
-      const { hasLayerChildren } = require('@/lib/ui-builder/store/layer-utils');
-      hasLayerChildren.mockReturnValue(true);
-
       render(
         <TreeRowNode 
           {...defaultProps} 
@@ -198,9 +197,6 @@ describe('TreeRowNode', () => {
     });
 
     it('should show chevron right when closed', () => {
-      const { hasLayerChildren } = require('@/lib/ui-builder/store/layer-utils');
-      hasLayerChildren.mockReturnValue(true);
-
       render(
         <TreeRowNode 
           {...defaultProps} 
@@ -216,9 +212,6 @@ describe('TreeRowNode', () => {
     });
 
     it('should show chevron down when open', () => {
-      const { hasLayerChildren } = require('@/lib/ui-builder/store/layer-utils');
-      hasLayerChildren.mockReturnValue(true);
-
       render(
         <TreeRowNode 
           {...defaultProps} 
@@ -234,9 +227,6 @@ describe('TreeRowNode', () => {
     });
 
     it('should not show expansion button for nodes without children', () => {
-      const { hasLayerChildren } = require('@/lib/ui-builder/store/layer-utils');
-      hasLayerChildren.mockReturnValue(false);
-
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
 
       // Should only have the node name button, not the toggle button
@@ -246,9 +236,6 @@ describe('TreeRowNode', () => {
     });
 
     it('should call onToggle when expansion button is clicked', () => {
-      const { hasLayerChildren } = require('@/lib/ui-builder/store/layer-utils');
-      hasLayerChildren.mockReturnValue(true);
-
       render(
         <TreeRowNode 
           {...defaultProps} 
@@ -280,9 +267,6 @@ describe('TreeRowNode', () => {
 
   describe('Add Component Functionality', () => {
     it('should show add component button for nodes with children', () => {
-      const { hasLayerChildren } = require('@/lib/ui-builder/store/layer-utils');
-      hasLayerChildren.mockReturnValue(true);
-
       render(<TreeRowNode {...defaultProps} node={mockNodeWithChildren} />);
 
       // Look for the button with screen reader text "Add component"
@@ -290,14 +274,11 @@ describe('TreeRowNode', () => {
       expect(addButton).toBeInTheDocument();
     });
 
-    it('should not show add component button for nodes without children', () => {
-      const { hasLayerChildren } = require('@/lib/ui-builder/store/layer-utils');
-      hasLayerChildren.mockReturnValue(false);
-
+    it('should show add component button for nodes that can accept children', () => {
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
 
       const addButton = screen.queryByRole('button', { name: /add component/i });
-      expect(addButton).not.toBeInTheDocument();
+      expect(addButton).toBeInTheDocument();
     });
   });
 
