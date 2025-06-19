@@ -100,36 +100,47 @@ export const RenderLayer: React.FC<{
     
     // Handle children rendering with improved drop zones
     if (hasLayerChildren(layer) && layer.children.length > 0) {
-      const childElements = layer.children.map((child, index) => (
-        <React.Fragment key={child.id}>
-          {/* Show subtle drop zone before each child when dragging */}
-          {showDropZones && (
-            <DropPlaceholder
-              parentId={layer.id}
-              position={index}
-              isActive={true}
-            />
-          )}
+      const childElements = layer.children.map((child, index) => {
+        const childElement = (
           <RenderLayer
+            key={child.id}
             componentRegistry={componentRegistry}
             layer={child}
             variables={variables}
             variableValues={variableValues}
             editorConfig={childEditorConfig}
           />
-        </React.Fragment>
-      ));
+        );
 
-      // Add drop zone after the last child
+        // For drop zones, we create a wrapper that allows absolute positioning
+        if (showDropZones) {
+          return (
+            <div key={child.id} className="relative">
+              <DropPlaceholder
+                parentId={layer.id}
+                position={index}
+                isActive={true}
+              />
+              {childElement}
+            </div>
+          );
+        }
+
+        return childElement;
+      });
+
+      // Add drop zone after the last child using a similar wrapper approach
       if (showDropZones) {
-        childElements.push(
+        const lastDropZone = (
+          <div key={`drop-${layer.id}-${layer.children.length}`} className="relative">
             <DropPlaceholder
-            key={`drop-${layer.id}-${layer.children.length}`}
               parentId={layer.id}
               position={layer.children.length}
               isActive={true}
             />
+          </div>
         );
+        childElements.push(lastDropZone);
       }
 
       childProps.children = childElements;
@@ -138,11 +149,13 @@ export const RenderLayer: React.FC<{
     } else if (showDropZones && hasLayerChildren(layer)) {
       // Show drop zone for empty containers
       childProps.children = (
+        <div className="relative min-h-[2rem]">
           <DropPlaceholder
             parentId={layer.id}
             position={0}
             isActive={true}
           />
+        </div>
       );
     }
 
@@ -154,7 +167,7 @@ export const RenderLayer: React.FC<{
       </ErrorSuspenseWrapper>
     );
 
-    // No wrapper needed - drop zones are now inline fragments
+    // No wrapper needed - drop zones are now absolute positioned
 
     if (!editorConfig) {
       return WrappedComponent;

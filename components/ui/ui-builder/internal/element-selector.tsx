@@ -62,13 +62,51 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
   // Check if this specific layer is being dragged
   const isBeingDragged = dndContext.activeLayerId === layer.id;
 
+  // Track mouse position and timing to distinguish clicks from drags/pans
+  const mouseDownPos = useRef<{ x: number; y: number; time: number } | null>(null);
+  const CLICK_THRESHOLD = 5; // pixels - if mouse moves less than this, consider it a click
+  const CLICK_TIME_THRESHOLD = 200; // ms - if interaction is longer than this, likely a pan
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      // Don't prevent propagation/default - let pan system handle the events
+      mouseDownPos.current = { 
+        x: e.clientX, 
+        y: e.clientY, 
+        time: Date.now() 
+      };
+    },
+    []
+  );
+
+  const handleMouseUp = useCallback(
+    (e: React.MouseEvent) => {
+      if (!mouseDownPos.current) return;
+      
+      // Calculate distance moved and time elapsed
+      const deltaX = Math.abs(e.clientX - mouseDownPos.current.x);
+      const deltaY = Math.abs(e.clientY - mouseDownPos.current.y);
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      const timeElapsed = Date.now() - mouseDownPos.current.time;
+      
+      // Only select if movement was minimal AND interaction was quick (click, not pan)
+      // Don't prevent propagation - let the pan system handle its events properly
+      if (distance <= CLICK_THRESHOLD && timeElapsed <= CLICK_TIME_THRESHOLD) {
+        onSelectElement(layer.id);
+      }
+      
+      mouseDownPos.current = null;
+    },
+    [onSelectElement, layer.id]
+  );
+
+  // Prevent click events from firing after we've handled mousedown/mouseup
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
-      onSelectElement(layer.id);
     },
-    [onSelectElement, layer.id]
+    []
   );
 
   const overlayStyle = useMemo(() => {
@@ -103,6 +141,8 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
 
       {boundingRect && (
         <div
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
           onClick={handleClick}
           className={cn(
             "absolute box-border hover:border-blue-300 hover:border-2",

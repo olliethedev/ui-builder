@@ -155,8 +155,14 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
   React.useLayoutEffect(() => {
     if (!isActive || !element) return;
     
-    // Find the parent element to determine layout
-    const parentElement = element.parentElement;
+    // Find the parent element to determine layout - walk up to find the actual container
+    let parentElement = element.parentElement;
+    
+    // Walk up until we find the actual layout container (skip relative wrapper)
+    while (parentElement && parentElement.classList.contains('relative') && parentElement.children.length === 2) {
+      parentElement = parentElement.parentElement;
+    }
+    
     if (parentElement) {
       let detectedLayout = getLayoutType(parentElement);
       
@@ -178,35 +184,7 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
           if (isInlineElement && detectedLayout === 'block') {
             detectedLayout = 'inline';
           }
-          
-          console.log('🔍 Drop zone layout detection:', {
-            parentElement: parentElement.tagName,
-            parentDisplay: window.getComputedStyle(parentElement).display,
-            draggedElement: draggedTagName,
-            draggedDisplay,
-            isInlineElement,
-            detectedLayout,
-            parentId,
-            position
-          });
-        } else {
-          console.log('🔍 Drop zone layout detection (no dragged element found):', {
-            parentElement: parentElement.tagName,
-            parentDisplay: window.getComputedStyle(parentElement).display,
-            draggedLayerId: dndContext.activeLayerId,
-            detectedLayout,
-            parentId,
-            position
-          });
         }
-      } else {
-        console.log('🔍 Drop zone layout detection (no active drag):', {
-          parentElement: parentElement.tagName,
-          parentDisplay: window.getComputedStyle(parentElement).display,
-          detectedLayout,
-          parentId,
-          position
-        });
       }
       
       setLayoutType(detectedLayout);
@@ -221,59 +199,55 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
 
   if (!isActive) return null;
 
-  const isHorizontalLayout = layoutType === 'flex-row' || layoutType === 'inline';
-
+  // CRITICAL FIX: Use absolute positioning with precise calculations
   return (
     <div
       ref={combinedRef}
       className={cn(
-        "transition-all duration-150 pointer-events-auto z-20",
-        "before:content-[''] before:absolute before:transition-all before:duration-150",
+        "absolute pointer-events-auto z-50",
+        "before:content-[''] before:absolute before:transition-all before:duration-200",
+        "before:pointer-events-none",
         // Use custom style if provided, otherwise use default layout-based positioning
         !style && [
-          "relative my-1",
-          // Flex-row layout: vertical lines between children
+          // Flex-row layout: vertical lines on the left edge
           layoutType === 'flex-row' && [
-            "w-0.5 h-8 mx-1 inline-block",
-            "before:inset-0 before:w-0.5 before:rounded-full",
+            "-left-2 top-0 bottom-0 w-4",
+            "before:left-1/2 before:top-1/2 before:-translate-x-1/2 before:-translate-y-1/2",
+            "before:w-0.5 before:h-6 before:rounded-full",
             isOver
-              ? "before:bg-blue-500 before:shadow-sm before:w-1"
-              : "before:bg-blue-400/30 before:w-0.5"
+              ? "before:bg-blue-500 before:shadow-xl before:w-1 before:h-10"
+              : "before:bg-blue-400/50 before:w-0.5 before:h-4"
           ],
-          // Inline layout: subtle vertical indicators that can wrap
+          // Inline layout: subtle vertical indicators for text flow
           layoutType === 'inline' && [
-            "w-px h-4 mx-0.5 inline-block align-middle",
-            "before:inset-0 before:w-px before:rounded-full",
+            "-left-1 top-0 bottom-0 w-2",
+            "before:left-1/2 before:top-1/2 before:-translate-x-1/2 before:-translate-y-1/2",
+            "before:w-px before:h-3 before:rounded-full",
             isOver
-              ? "before:bg-blue-500 before:shadow-sm before:w-0.5"
-              : "before:bg-blue-400/25 before:w-px"
+              ? "before:bg-blue-500 before:shadow-lg before:w-0.5 before:h-5"
+              : "before:bg-blue-400/40 before:w-px before:h-2"
           ],
-          // Vertical layout (flex-col): horizontal lines between children
-          layoutType === 'flex-col' && [
-            "h-0.5 w-full block",
-            "before:inset-0 before:h-0.5 before:rounded-full",
+          // Vertical layout (flex-col, block): horizontal lines on the top edge
+          (layoutType === 'flex-col' || layoutType === 'block') && [
+            "left-0 right-0 -top-2 h-4",
+            "before:left-1/2 before:top-1/2 before:-translate-x-1/2 before:-translate-y-1/2",
+            "before:h-0.5 before:w-6 before:rounded-full",
             isOver
-              ? "before:bg-blue-500 before:shadow-sm before:h-1"
-              : "before:bg-blue-400/30 before:h-0.5"
+              ? "before:bg-blue-500 before:shadow-xl before:h-1 before:w-10"
+              : "before:bg-blue-400/50 before:h-0.5 before:w-4"
           ],
-          // Grid layout: minimal visual indicator
+          // Grid layout: corner indicator
           layoutType === 'grid' && [
-            "h-1 w-full block",
-            "before:inset-0 before:h-0.5 before:rounded-full before:bg-blue-400/20",
-            isOver && "before:bg-blue-500/40 before:h-1"
-          ],
-          // Block layout: horizontal lines
-          layoutType === 'block' && [
-            "h-0.5 w-full block",
-            "before:inset-0 before:h-0.5 before:rounded-full",
+            "-left-2 -top-2 w-4 h-4",
+            "before:left-1/2 before:top-1/2 before:-translate-x-1/2 before:-translate-y-1/2",
+            "before:h-1 before:w-1 before:rounded-full",
             isOver
-              ? "before:bg-blue-500 before:shadow-sm before:h-1"
-              : "before:bg-blue-400/30 before:h-0.5"
+              ? "before:bg-blue-500 before:shadow-xl before:h-2 before:w-2"
+              : "before:bg-blue-400/50 before:h-1 before:w-1"
           ]
         ],
         // Custom style overrides for absolute positioning
         style && [
-          "absolute",
           "before:bg-blue-500/60 before:rounded-sm",
           isOver && "before:bg-blue-600 before:shadow-md"
         ]

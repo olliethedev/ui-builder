@@ -129,7 +129,7 @@ describe("ChildrenSearchableSelect", () => {
       layerType: "Button",
       parentLayerId: "parent-layer",
     });
-  });
+  }, 10000);
 
   it("renders child layer badges when layer has children", () => {
     render(

@@ -327,7 +327,7 @@ describe('DropPlaceholder', () => {
     expect(placeholder).toHaveClass('before:bg-blue-500');
   });
 
-  it('renders with proper layout-based styling for flex-col', () => {
+  it('renders with absolute positioning for flex-col layout', () => {
     render(
       <TestWrapper>
         <DropPlaceholder {...defaultProps} isActive={true} />
@@ -335,9 +335,10 @@ describe('DropPlaceholder', () => {
     );
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
-    // Check that flex-col layout classes are applied (horizontal lines)
+    // Check that flex-col layout classes are applied (absolute positioning with horizontal lines)
     expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveClass('h-0.5', 'w-full', 'block');
+    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-50');
+    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-2', 'h-4');
   });
 
   it('applies correct layout classes for flex-col layout', () => {
@@ -348,9 +349,10 @@ describe('DropPlaceholder', () => {
     );
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-0');
-    // Check that flex-col layout classes are applied
+    // Check that flex-col layout classes are applied (absolute positioning)
     expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveClass('h-0.5', 'w-full', 'block');
+    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-50');
+    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-2', 'h-4');
   });
 
   it('shows vertical drop lines for horizontal layout (flex-row)', () => {
@@ -375,8 +377,9 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // For horizontal layout, should show vertical lines with different classes
-    expect(placeholder).toHaveClass('w-0.5', 'h-8', 'mx-1', 'inline-block');
+    // For horizontal layout, should show vertical lines with absolute positioning
+    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-50');
+    expect(placeholder).toHaveClass('-left-2', 'top-0', 'bottom-0', 'w-4');
   });
 
   it('shows horizontal drop lines for vertical layout (flex-col)', () => {
@@ -389,8 +392,9 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // For vertical layout, should show horizontal lines
-    expect(placeholder).toHaveClass('h-0.5', 'w-full', 'block');
+    // For vertical layout, should show horizontal lines with absolute positioning
+    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-50');
+    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-2', 'h-4');
   });
 
   it('handles block layout correctly', () => {
@@ -415,8 +419,9 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // Should default to horizontal lines (block layout)
-    expect(placeholder).toHaveClass('h-0.5', 'w-full', 'block');
+    // Should default to horizontal lines with absolute positioning (block layout)
+    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-50');
+    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-2', 'h-4');
   });
 
   it('handles inline element detection when dragging span', () => {
@@ -465,7 +470,8 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // Should use inline layout classes for inline elements
-    expect(placeholder).toHaveClass('w-px', 'h-4', 'mx-0.5', 'inline-block', 'align-middle');
+    // Should use inline layout classes for inline elements with absolute positioning
+    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-50');
+    expect(placeholder).toHaveClass('-left-1', 'top-0', 'bottom-0', 'w-2');
   });
 });
