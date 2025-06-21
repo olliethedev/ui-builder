@@ -145,8 +145,8 @@ function ThemePicker({
     return (
       <ThemeModeOption
         key={modeOption}
-        mode={modeOption}
-        modeOption={mode}
+        mode={mode}
+        modeOption={modeOption}
         onClick={setMode}
       />
     );

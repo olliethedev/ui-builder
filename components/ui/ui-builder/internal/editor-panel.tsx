@@ -6,7 +6,7 @@ import React, {
   useRef,
   useEffect,
 } from "react";
-import { Plus, Crosshair, ZoomIn, ZoomOut } from "lucide-react";
+import { Plus, Crosshair, ZoomIn, ZoomOut, MousePointer } from "lucide-react";
 import { countLayers, useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { ComponentLayer } from "@/components/ui/ui-builder/types";
 import {
@@ -22,14 +22,21 @@ import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
 import { Button } from "@/components/ui/button";
 import { ResizableWrapper } from "@/components/ui/ui-builder/internal/resizable-wrapper";
+import AutoFrame from "./auto-frame";
 
 // ZoomControls component definition moved before EditorPanel
-const ZoomControls: React.FC = () => {
+const ZoomControls: React.FC<{ onPointerEventsToggle: (enabled: boolean) => void; pointerEventsEnabled: boolean }> = ({ 
+  onPointerEventsToggle, 
+  pointerEventsEnabled 
+}) => {
   const { zoomIn, zoomOut, resetTransform } = useControls();
 
   const handleZoomIn = useCallback(() => zoomIn(), [zoomIn]);
   const handleZoomOut = useCallback(() => zoomOut(), [zoomOut]);
   const handleReset = useCallback(() => resetTransform(), [resetTransform]);
+  const handleTogglePointerEvents = useCallback(() => {
+    onPointerEventsToggle(!pointerEventsEnabled);
+  }, [onPointerEventsToggle, pointerEventsEnabled]);
 
   return (
     <div className="absolute bottom-24 md:bottom-4 right-4 z-[1000] flex shadow-lg rounded-full">
@@ -45,7 +52,7 @@ const ZoomControls: React.FC = () => {
       <Button
         data-testid="button-ZoomOut"
         variant="secondary"
-        className="size-14 md:size-10 rounded-none [&_svg]:size-7 [&_svg]:md:size-4"
+        className="size-14 md:size-10 rounded-none border-r border-border [&_svg]:size-7 [&_svg]:md:size-4"
         onClick={handleZoomOut}
       >
         <span className="sr-only">Zoom out</span>
@@ -54,11 +61,20 @@ const ZoomControls: React.FC = () => {
       <Button
         data-testid="button-Reset"
         variant="secondary"
-        className="size-14 md:size-10 rounded-r-full rounded-l-none border-l border-border [&_svg]:size-7 [&_svg]:md:size-4"
+        className="size-14 md:size-10 rounded-none border-r border-border [&_svg]:size-7 [&_svg]:md:size-4"
         onClick={handleReset}
       >
         <span className="sr-only">Reset</span>
         <Crosshair className="text-secondary-foreground" />
+      </Button>
+      <Button
+        data-testid="button-PointerEvents"
+        variant={pointerEventsEnabled ? "default" : "secondary"}
+        className="size-14 md:size-10 rounded-r-full rounded-l-none [&_svg]:size-7 [&_svg]:md:size-4"
+        onClick={handleTogglePointerEvents}
+      >
+        <span className="sr-only">{pointerEventsEnabled ? "Disable pointer events" : "Enable pointer events"}</span>
+        <MousePointer className={pointerEventsEnabled ? "text-primary-foreground" : "text-secondary-foreground"} />
       </Button>
     </div>
   );
@@ -169,9 +185,23 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
 }) => {
   const { isDragging: isComponentDragging } = useComponentDragContext();
   const [resizing, setResizing] = useState(false);
-
+  const [frameSize, setFrameSize] = useState<{ width: number; height: number }>({ 
+    width: 1000, 
+    height: 1000 
+  });
+  const [pointerEventsEnabled, setPointerEventsEnabled] = useState(true);
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  
   const handleResizingChange = useCallback((isDragging: boolean) => {
     setResizing(isDragging);
+  }, []);
+
+  const handleSizeChange = useCallback((width: number, height: number) => {
+    setFrameSize({ width, height });
+  }, []);
+
+  const handlePointerEventsToggle = useCallback((enabled: boolean) => {
+    setPointerEventsEnabled(enabled);
   }, []);
 
   const layers = selectedPage.children;
@@ -218,16 +248,24 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
       <ResizableWrapper
         isResizable={previewMode === "responsive"}
         onDraggingChange={handleResizingChange}
+        onSizeChange={handleSizeChange}
       >
         <div
           id="editor-panel-content"
-          className={cn("overflow-visible pt-3 pb-10 pr-20", widthClass)}
+          className={cn("overflow-visible ", widthClass)}
         >
-          <LayerRenderer
-            page={selectedPage}
-            editorConfig={editorConfig}
-            componentRegistry={componentRegistry}
-          />
+          <AutoFrame 
+            height={frameSize.height} 
+            className={cn("shadow-lg overflow-visible border border-border", widthClass)} 
+            frameRef={frameRef}
+            pointerEventsEnabled={pointerEventsEnabled}
+          >
+            <LayerRenderer
+              page={selectedPage}
+              editorConfig={editorConfig}
+              componentRegistry={componentRegistry}
+            />
+          </AutoFrame>
         </div>
       </ResizableWrapper>
     ),
@@ -237,7 +275,10 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
       componentRegistry,
       previewMode,
       handleResizingChange,
-      widthClass
+      handleSizeChange,
+      widthClass,
+      frameSize,
+      pointerEventsEnabled
     ]
   );
 
@@ -259,10 +300,10 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
   }), []);
 
   // Memoize wheel configuration for TransformWrapper
-  const wheelConfig = useMemo(() => ({ step: 0.05 }), []);
+  const wheelConfig = useMemo(() => ({ step: 0.1 }), []);
 
   // Memoize doubleClick configuration for TransformWrapper
-  const doubleClickConfig = useMemo(() => ({ disabled: true }), []);
+  const doubleClickConfig = useMemo(() => ({ disabled: false }), []);
 
   // Disable panning when either resizing the viewport OR dragging components
   const panningConfig = useMemo(() => ({ 
@@ -278,16 +319,21 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
       )}
     >
       <TransformWrapper
-        initialScale={1}
+        initialScale={0.9}
+        initialPositionX={-40}
+        initialPositionY={-40}
         minScale={0.1}
         maxScale={5}
         wheel={wheelConfig}
         doubleClick={doubleClickConfig}
         panning={panningConfig}
-        centerOnInit={true}
+        centerOnInit={false}
         limitToBounds={false}
       >
-        <ZoomControls />
+        <ZoomControls 
+          onPointerEventsToggle={handlePointerEventsToggle}
+          pointerEventsEnabled={pointerEventsEnabled}
+        />
         {autoZoomToSelected && <AutoZoomToSelected 
             selectedLayerId={selectedLayerId} 
             autoZoomToSelected={autoZoomToSelected} 

@@ -226,17 +226,6 @@ export const textInputFieldOverrides = (
   };
 };
 
-export const renderParentWithVariableBinding = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => (
-  <div className="flex bg-red-500">
-    {children}
-    <div>YO!</div>
-  </div>
-);
-
 export function VariableBindingWrapper({
   propName,
   children,

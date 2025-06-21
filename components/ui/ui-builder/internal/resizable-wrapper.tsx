@@ -11,14 +11,14 @@ import { GripVertical } from "lucide-react";
 import { useDrag } from "@use-gesture/react";
 import { DragConfig } from "@use-gesture/react";
 
-
+const RESPONSIVE_DEFAULT_SIZE = 800;
 
   // Resizable Wrapper Component for responsive mode
   interface ResizableWrapperProps {
     children: React.ReactNode;
     isResizable: boolean;
     onDraggingChange?: (dragging: boolean) => void;
-    onSizeChange?: (width: number) => void;
+    onSizeChange?: (width: number, height: number) => void;
   }
   
 export  const ResizableWrapper: React.FC<ResizableWrapperProps> = ({
@@ -30,15 +30,17 @@ export  const ResizableWrapper: React.FC<ResizableWrapperProps> = ({
     const [dragging, setDragging] = useState(false);
     const [responsiveSize, setResponsiveSize] = useState<{
       width: number;
+      height: number;
     } | null>(null);
-    const initialSizeRef = useRef<{ width: number }>({ width: 0 });
+    const initialSizeRef = useRef<{ width: number, height: number }>({ width: 0, height: 0 });
   
     // Set initial responsive size
     useLayoutEffect(() => {
       if (isResizable) {
-        const initialWidth = 800; // Default responsive width
-        setResponsiveSize({ width: initialWidth });
-        onSizeChange?.(initialWidth);
+        const initialWidth = RESPONSIVE_DEFAULT_SIZE; // Default responsive width
+        const initialHeight = RESPONSIVE_DEFAULT_SIZE; // Default responsive height
+        setResponsiveSize({ width: initialWidth, height: initialHeight });
+        onSizeChange?.(initialWidth, initialHeight);
       }
     }, [isResizable, onSizeChange]);
   
@@ -50,7 +52,7 @@ export  const ResizableWrapper: React.FC<ResizableWrapperProps> = ({
     [onDraggingChange]
   );
 
-  const dragConfig = useMemo(() => {
+  const horizontalDragConfig = useMemo(() => {
     return {
       axis: "x",
       from: () => [0, 0],
@@ -58,21 +60,31 @@ export  const ResizableWrapper: React.FC<ResizableWrapperProps> = ({
     } as DragConfig;
   }, []);
 
-  // Handle resizing using useDrag for responsive mode
-  const bindResizer = useDrag(({ down, movement: [mx], first, last }) => {
+  const verticalDragConfig = useMemo(() => {
+    return {
+      axis: "y",
+      from: () => [0, 0],
+      filterTaps: true,
+    } as DragConfig;
+  }, []);
+
+  // Handle horizontal resizing
+  const bindHorizontalResizer = useDrag(({ down, movement: [mx], first, last }) => {
     if (first) {
       // Capture the initial size when drag starts
       initialSizeRef.current = {
-        width: responsiveSize?.width || 800,
+        width: responsiveSize?.width || RESPONSIVE_DEFAULT_SIZE,
+        height: responsiveSize?.height || RESPONSIVE_DEFAULT_SIZE,
       };
       handleSetDragging(true);
     }
 
     if (down) {
-      // Calculate new size based on initial size and movement
+      // Calculate new width based on initial size and movement
       const newWidth = Math.max(320, initialSizeRef.current.width + mx); // Min width of 320px
-      setResponsiveSize({ width: newWidth });
-      onSizeChange?.(newWidth);
+      const newHeight = initialSizeRef.current.height; // Keep height unchanged
+      setResponsiveSize({ width: newWidth, height: newHeight });
+      onSizeChange?.(newWidth, newHeight);
     }
 
     // Notify when drag ends for final measurement update
@@ -82,23 +94,50 @@ export  const ResizableWrapper: React.FC<ResizableWrapperProps> = ({
         handleSetDragging(false);
       }, 0);
     }
-  }, dragConfig as any);
+  }, horizontalDragConfig as any);
 
-  const bindResizerValues = useMemo(() => {
-    return typeof bindResizer === "function" ? bindResizer() : {};
-  }, [bindResizer]);
+  // Handle vertical resizing
+  const bindVerticalResizer = useDrag(({ down, movement: [, my], first, last }) => {
+    if (first) {
+      // Capture the initial size when drag starts
+      initialSizeRef.current = {
+        width: responsiveSize?.width || RESPONSIVE_DEFAULT_SIZE,
+        height: responsiveSize?.height || RESPONSIVE_DEFAULT_SIZE,
+      };
+      handleSetDragging(true);
+    }
 
-  const resizerStyle = useMemo(() => {
-    return {
-      left: responsiveSize?.width
-        ? `${responsiveSize.width - 80}px`
-        : undefined,
-    };
-  }, [responsiveSize]);
+    if (down) {
+      // Calculate new height based on initial size and movement
+      const newWidth = initialSizeRef.current.width; // Keep width unchanged
+      const newHeight = Math.max(200, initialSizeRef.current.height + my); // Min height of 200px
+      setResponsiveSize({ width: newWidth, height: newHeight });
+      onSizeChange?.(newWidth, newHeight);
+    }
 
-  const responsiveWidthStyle = useMemo(() => {
+    // Notify when drag ends for final measurement update
+    if (last) {
+      // Small delay to ensure DOM updates are complete
+      setTimeout(() => {
+        handleSetDragging(false);
+      }, 0);
+    }
+  }, verticalDragConfig as any);
+
+  const bindHorizontalResizerValues = useMemo(() => {
+    return typeof bindHorizontalResizer === "function" ? bindHorizontalResizer() : {};
+  }, [bindHorizontalResizer]);
+
+  const bindVerticalResizerValues = useMemo(() => {
+    return typeof bindVerticalResizer === "function" ? bindVerticalResizer() : {};
+  }, [bindVerticalResizer]);
+
+  const responsiveStyle = useMemo(() => {
     if (isResizable && responsiveSize) {
-      return { width: `${responsiveSize.width}px` };
+      return { 
+        width: `${responsiveSize.width}px`,
+        height: `${responsiveSize.height}px`
+      };
     }
     // When not resizable, ensure we inherit the parent's width constraint
     return { width: '100%' };
@@ -113,22 +152,22 @@ export  const ResizableWrapper: React.FC<ResizableWrapperProps> = ({
       <DragHandleContext.Provider
         value={contextValue}
       >
-        <div className="relative" style={responsiveWidthStyle}>
+        <div className="relative" style={responsiveStyle}>
           {isResizable && (
             <>
+              {/* Horizontal resizer on the right middle */}
               <Resizer
-                {...bindResizerValues}
-                className="absolute top-0 right-[-40px]"
-                style={resizerStyle}
+                {...bindHorizontalResizerValues}
+                className="absolute top-1/2 right-[-20px] -translate-y-1/2"
               >
                 <GripVertical className="w-4 h-4" />
               </Resizer>
+              {/* Vertical resizer at the bottom center */}
               <Resizer
-                {...bindResizerValues}
-                className="absolute bottom-7 right-[-40px]"
-                style={resizerStyle}
+                {...bindVerticalResizerValues}
+                className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 cursor-ns-resize"
               >
-                <GripVertical className="w-4 h-4" />
+                <GripVertical className="w-4 h-4 rotate-90" />
               </Resizer>
             </>
           )}
@@ -168,7 +207,9 @@ export const DragHandleContext = createContext<{
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
         className={cn(
-          "flex items-center justify-center w-4 h-4 cursor-ew-resize rounded-sm border bg-border hover:bg-muted touch-none z-[1001]",
+          "flex items-center justify-center w-4 h-4 rounded-sm border bg-border hover:bg-muted touch-none z-[1001]",
+          // Default cursor is ew-resize, but can be overridden by className
+          !className?.includes('cursor-') && "cursor-ew-resize",
           className
         )}
         {...props}

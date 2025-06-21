@@ -51,15 +51,14 @@ export const DragHandle: React.FC<DragHandleProps> = ({
       {...listeners}
       {...attributes}
       className={cn(
-        "absolute top-0 left-0 transform -translate-x-full -translate-y-full cursor-grab active:cursor-grabbing",
-        "bg-blue-500 hover:bg-blue-600 text-white p-px shadow-md z-10",
+        "cursor-grab size-6 flex items-center justify-center active:cursor-grabbing bg-blue-500 text-white hover:bg-white hover:text-black p-1 rounded-lg z-50",
         "opacity-100 transition-opacity duration-200",
         isDragging && "cursor-grabbing opacity-0",
         className
       )}
       data-testid={`drag-handle-${layerId}`}
     >
-      {!isDragging && <GripVertical size={14} />}
+      {!isDragging && <GripVertical className='size-3' />}
     </div>
   );
 };

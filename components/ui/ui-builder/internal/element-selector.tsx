@@ -58,59 +58,55 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
   } | null>(null);
 
   const dndContext = useDndContext();
-  
+
   // Check if this specific layer is being dragged
   const isBeingDragged = dndContext.activeLayerId === layer.id;
 
   // Track mouse position and timing to distinguish clicks from drags/pans
-  const mouseDownPos = useRef<{ x: number; y: number; time: number } | null>(null);
+  const mouseDownPos = useRef<{ x: number; y: number; time: number } | null>(
+    null
+  );
   const CLICK_THRESHOLD = 5; // pixels - if mouse moves less than this, consider it a click
   const CLICK_TIME_THRESHOLD = 200; // ms - if interaction is longer than this, likely a pan
 
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      // Don't prevent propagation/default - let pan system handle the events
-      mouseDownPos.current = { 
-        x: e.clientX, 
-        y: e.clientY, 
-        time: Date.now() 
-      };
-    },
-    []
-  );
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // Don't prevent propagation/default - let pan system handle the events
+    mouseDownPos.current = {
+      x: e.clientX,
+      y: e.clientY,
+      time: Date.now(),
+    };
+  }, []);
 
   const handleMouseUp = useCallback(
     (e: React.MouseEvent) => {
       if (!mouseDownPos.current) return;
-      
+
       // Calculate distance moved and time elapsed
       const deltaX = Math.abs(e.clientX - mouseDownPos.current.x);
       const deltaY = Math.abs(e.clientY - mouseDownPos.current.y);
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
       const timeElapsed = Date.now() - mouseDownPos.current.time;
-      
+
       // Only select if movement was minimal AND interaction was quick (click, not pan)
       // Don't prevent propagation - let the pan system handle its events properly
       if (distance <= CLICK_THRESHOLD && timeElapsed <= CLICK_TIME_THRESHOLD) {
         onSelectElement(layer.id);
       }
-      
+
       mouseDownPos.current = null;
     },
     [onSelectElement, layer.id]
   );
 
   // Prevent click events from firing after we've handled mousedown/mouseup
-  const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-    },
-    []
-  );
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  }, []);
 
   const overlayStyle = useMemo(() => {
-    if (!boundingRect) return { display: 'none' };
+    if (!boundingRect) return { display: "none" };
     return {
       position: "absolute" as const,
       top: boundingRect.top,
@@ -124,20 +120,9 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
 
   return (
     <>
-      <MeasureRange debug={false} onChange={setBoundingRect}>{children}</MeasureRange>
-
-      {isSelected && boundingRect && !isBeingDragged && (
-        <LayerMenu
-          layerId={layer.id}
-          x={boundingRect.left}
-          y={boundingRect.bottom}
-          zIndex={totalLayers + zIndex}
-          width={boundingRect.width}
-          height={boundingRect.height}
-          handleDuplicateComponent={onDuplicateLayer}
-          handleDeleteComponent={onDeleteLayer}
-        />
-      )}
+      <MeasureRange debug={false} onChange={setBoundingRect}>
+        {children}
+      </MeasureRange>
 
       {boundingRect && (
         <div
@@ -146,29 +131,36 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
           onClick={handleClick}
           className={cn(
             "absolute box-border hover:border-blue-300 hover:border-2",
-            isBeingDragged 
-              ? "border-2 border-orange-500 border-dashed shadow-lg shadow-orange-500/30 opacity-70 bg-orange-50/20" 
-              : isSelected 
-                ? "border-2 border-blue-500 hover:border-blue-500" 
-                : ""
+            isBeingDragged
+              ? "border-2 border-orange-500 border-dashed shadow-lg shadow-orange-500/30 opacity-70 bg-orange-50/20"
+              : isSelected
+              ? "border-2 border-blue-500 hover:border-blue-500"
+              : ""
           )}
           style={overlayStyle}
         >
-          {/* Drag handle for non-page layers */}
-          {!isPageLayer && isSelected && (
-            <ComponentDragHandle
-              layerId={layer.id}
-              layerType={layer.type}
-            />
-          )}
-
           {/* Small label with layer type floating above the bounding box */}
           {isSelected && (
-            <span className="absolute top-[-16px] left-[-2px] text-xs text-white bg-blue-500 px-[1px] whitespace-nowrap">
-              {layer.name?.toLowerCase().startsWith(layer.type.toLowerCase())
-                ? layer.type.replaceAll("_", "")
-                : `${layer.name} (${layer.type.replaceAll("_", "")})`}
-            </span>
+            <div className="absolute flex items-center top-[-24px] left-[-2px] bg-blue-500 rounded-t-lg">
+              {/* Drag handle for non-page layers */}
+              {!isPageLayer && isSelected && (
+                <ComponentDragHandle
+                  layerId={layer.id}
+                  layerType={layer.type}
+                />
+              )}
+              <span className="text-xs text-white  px-[1px] whitespace-nowrap">
+                {layer.name?.toLowerCase().startsWith(layer.type.toLowerCase())
+                  ? layer.type.replaceAll("_", "")
+                  : `${layer.name} (${layer.type.replaceAll("_", "")})`}
+              </span>
+              <div className="w-px h-4 bg-white/20 ml-1" />
+              <LayerMenu
+                layerId={layer.id}
+                handleDuplicateComponent={onDuplicateLayer}
+                handleDeleteComponent={onDeleteLayer}
+              />
+            </div>
           )}
         </div>
       )}
@@ -178,7 +170,9 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
 
 export interface MeasureRangeProps {
   /** Called after every size/position change. */
-  onChange?: (rect: DOMRectReadOnly & { bottom: number; right: number }) => void;
+  onChange?: (
+    rect: DOMRectReadOnly & { bottom: number; right: number }
+  ) => void;
   /** Children you want to watch (anything renderable). */
   children: React.ReactNode;
   debug?: boolean;
@@ -192,16 +186,16 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
   // A wrapper that DOESN'T affect layout thanks to display: contents
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const [rect, setRect] = useState<DOMRectReadOnly | null>(null);
-  
+
   // Performance optimizations
   const rafIdRef = useRef<number | null>(null);
   const lastMeasurementRef = useRef<DOMRectReadOnly | null>(null);
   const elementsRef = useRef<HTMLElement[]>([]);
   const transformUpdatePendingRef = useRef(false);
-  
+
   // Get dragging context to respond to ResizableWrapper changes
   const { dragging } = useContext(DragHandleContext);
-  
+
   // Parent container observer to track ResizableWrapper resizing
   const parentObserverRef = useRef<ResizeObserver | null>(null);
 
@@ -210,7 +204,7 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
     if (rafIdRef.current) {
       cancelAnimationFrame(rafIdRef.current);
     }
-    
+
     rafIdRef.current = requestAnimationFrame(() => {
       const wrapper = wrapperRef.current;
       if (!wrapper) return;
@@ -243,7 +237,8 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
         } as DOMRectReadOnly & { bottom: number; right: number };
 
         // Only update if measurements actually changed (avoid unnecessary re-renders)
-        const hasChanged = !lastMeasurementRef.current ||
+        const hasChanged =
+          !lastMeasurementRef.current ||
           lastMeasurementRef.current.top !== newRect.top ||
           lastMeasurementRef.current.left !== newRect.left ||
           lastMeasurementRef.current.width !== newRect.width ||
@@ -257,20 +252,23 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
 
         transformUpdatePendingRef.current = false;
       } catch (error) {
-        console.warn('Error measuring elements:', error);
+        console.warn("Error measuring elements:", error);
       }
     });
   }, [onChange]);
 
   // Handle transform updates with throttling
   useTransformEffect(
-    useCallback(({ state, instance }) => {
-      // Avoid duplicate updates if one is already pending
-      if (transformUpdatePendingRef.current) return;
-      
-      transformUpdatePendingRef.current = true;
-      measureElements();
-    }, [measureElements])
+    useCallback(
+      ({ state, instance }) => {
+        // Avoid duplicate updates if one is already pending
+        if (transformUpdatePendingRef.current) return;
+
+        transformUpdatePendingRef.current = true;
+        measureElements();
+      },
+      [measureElements]
+    )
   );
 
   // Re-measure when dragging state changes (for ResizableWrapper)
@@ -287,9 +285,9 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
     const elements = Array.from(wrapper.childNodes).filter(
       (n): n is HTMLElement => n.nodeType === Node.ELEMENT_NODE
     );
-    
+
     elementsRef.current = elements;
-    
+
     if (elements.length === 0) return;
 
     // Set up ResizeObservers only once (not on every transform change)
@@ -300,9 +298,10 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
     });
 
     // Set up parent container ResizeObserver to track ResizableWrapper changes
-    const parentContainer = wrapper.closest('#editor-panel-container') || 
-                           wrapper.closest('[data-testid="transform-component"]') ||
-                           wrapper.closest('.relative');
+    const parentContainer =
+      wrapper.closest("#editor-panel-container") ||
+      wrapper.closest('[data-testid="transform-component"]') ||
+      wrapper.closest(".relative");
     if (parentContainer && parentContainer instanceof HTMLElement) {
       parentObserverRef.current = new ResizeObserver(measureElements);
       parentObserverRef.current.observe(parentContainer);
@@ -355,9 +354,7 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
       </span>
 
       {/* Debug overlay that scales naturally with the transform */}
-      {rect && debug && (
-        <div style={memoizedStyle} />
-      )}
+      {rect && debug && <div style={memoizedStyle} />}
     </>
   );
 };
