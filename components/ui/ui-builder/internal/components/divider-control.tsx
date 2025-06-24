@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
+import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/components/add-component-popover";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";

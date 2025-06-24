@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NameEdit } from "@/components/ui/ui-builder/internal/name-edit";
+import { NameEdit } from "@/components/ui/ui-builder/internal/components/name-edit";
 
 describe("NameEdit", () => {
   const mockOnSave = jest.fn();

@@ -19,11 +19,11 @@ import { useHeTree, Id } from "he-tree-react";
 import {
   TreeRowNode,
   TreeRowPlaceholder,
-} from "@/components/ui/ui-builder/internal/tree-row-node";
-import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
-import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
+} from "@/components/ui/ui-builder/internal/components/tree-row-node";
+import { DevProfiler } from "@/components/ui/ui-builder/internal/components/dev-profiler";
+import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/components/add-component-popover";
 import { buttonVariants } from "@/components/ui/button";
-import { DividerControl } from "@/components/ui/ui-builder/internal/divider-control";
+import { DividerControl } from "@/components/ui/ui-builder/internal/components/divider-control";
 
 interface LayersPanelProps {
   className?: string;

@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/tooltip";
 
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/ui-builder/icon";
 import { ChevronDown, XIcon } from "lucide-react";
 
 type ToggleGroupProps = {

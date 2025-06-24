@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ChildrenSearchableSelect } from "@/components/ui/ui-builder/internal/children-searchable-select";
+import { ChildrenSearchableSelect } from "@/components/ui/ui-builder/internal/form-fields/children-searchable-select";
 import { ComponentLayer } from "@/components/ui/ui-builder/types";
 
 // Mock the layer store
@@ -19,7 +19,7 @@ jest.mock("@/lib/ui-builder/store/layer-store", () => ({
 }));
 
 // Mock the AddComponentsPopover
-jest.mock("@/components/ui/ui-builder/internal/add-component-popover", () => ({
+jest.mock("@/components/ui/ui-builder/internal/components/add-component-popover", () => ({
   AddComponentsPopover: ({ children, onChange, parentLayerId }: any) => (
     <div data-testid="add-components-popover" data-parent-layer-id={parentLayerId}>
       <button 

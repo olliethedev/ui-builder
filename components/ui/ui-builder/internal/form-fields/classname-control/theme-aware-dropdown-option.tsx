@@ -3,7 +3,7 @@
 import { ReactNode, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
-import { baseColors } from "@/components/ui/ui-builder/internal/base-colors";
+import { baseColors } from "@/components/ui/ui-builder/internal/utils/base-colors";
 import { ComponentLayer } from "@/components/ui/ui-builder/types";
 
 // Known prefixes for shadcn theme colors

@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { DndContext } from '@dnd-kit/core';
-import { DragHandle } from '@/components/ui/ui-builder/internal/drag-handle';
+import { DragHandle } from '@/components/ui/ui-builder/internal/dnd/drag-handle';
 
 // Mock the dnd-kit utilities
 jest.mock('@dnd-kit/utilities', () => ({

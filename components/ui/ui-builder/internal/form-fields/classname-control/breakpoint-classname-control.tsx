@@ -5,8 +5,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ClassNameMultiselect from "@/components/ui/ui-builder/internal/classname-multiselect";
-import { ClassNameItemControl } from "@/components/ui/ui-builder/internal/classname-control/classname-item-control";
+import ClassNameMultiselect from "@/components/ui/ui-builder/internal/form-fields/classname-control/classname-multiselect";
+import { ClassNameItemControl } from "@/components/ui/ui-builder/internal/form-fields/classname-control/classname-item-control";
 import {
   Accordion,
   AccordionItem,

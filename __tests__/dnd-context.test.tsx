@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, act, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { DndContextProvider, useDndContext, useComponentDragContext } from '@/components/ui/ui-builder/internal/dnd-context';
+import { DndContextProvider, useDndContext, useComponentDragContext } from '@/lib/ui-builder/context/dnd-context';
 
 // Mock the layer store
 const mockUseLayerStore = jest.fn();

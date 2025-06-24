@@ -23,7 +23,7 @@ jest.mock("../lib/ui-builder/store/editor-store", () => ({
 }));
 
 jest.mock(
-  "../components/ui/ui-builder/internal/add-component-popover.tsx",
+  "../components/ui/ui-builder/internal/components/add-component-popover.tsx",
   () => ({
     AddComponentsPopover: ({ children }: any) => (
       <div data-testid="add-components-popover">{children}</div>
@@ -32,7 +32,7 @@ jest.mock(
 );
 
 // Mock TreeRowNode and TreeRowPlaceholder to allow testing render callbacks
-jest.mock("../components/ui/ui-builder/internal/tree-row-node.tsx", () => ({
+jest.mock("../components/ui/ui-builder/internal/components/tree-row-node.tsx", () => ({
   TreeRowNode: ({ node, onToggle, id, open }: any) => (
     <div 
       data-testid={`tree-row-node-${node.id}`}
@@ -114,12 +114,12 @@ jest.mock("he-tree-react", () => ({
 }));
 
 // Mock dev profiler
-jest.mock("../components/ui/ui-builder/internal/dev-profiler", () => ({
+jest.mock("../components/ui/ui-builder/internal/components/dev-profiler", () => ({
   DevProfiler: ({ children }: any) => <div data-testid="dev-profiler">{children}</div>,
 }));
 
 // Mock divider control
-jest.mock("../components/ui/ui-builder/internal/divider-control", () => ({
+jest.mock("../components/ui/ui-builder/internal/components/divider-control", () => ({
   DividerControl: () => <div data-testid="divider-control">Divider</div>,
 }));
 

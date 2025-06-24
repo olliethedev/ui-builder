@@ -2,15 +2,15 @@
 import React, { memo, Suspense, useMemo, useRef } from "react";
 import isDeepEqual from "fast-deep-equal";
 
-import { ElementSelector } from "@/components/ui/ui-builder/internal/element-selector";
-import { DropPlaceholder } from "@/components/ui/ui-builder/internal/drop-zone";
-import { useDndContext } from "@/components/ui/ui-builder/internal/dnd-context";
+import { ElementSelector } from "@/components/ui/ui-builder/internal/components/element-selector";
+import { DropPlaceholder } from "@/components/ui/ui-builder/internal/dnd/drop-zone";
+import { useDndContext } from "@/lib/ui-builder/context/dnd-context";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallback";
+import { ErrorFallback } from "@/components/ui/ui-builder/internal/components/error-fallback";
 import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
 import { hasLayerChildren, canLayerAcceptChildren } from "@/lib/ui-builder/store/layer-utils";
-import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
+import { DevProfiler } from "@/components/ui/ui-builder/internal/components/dev-profiler";
 import { ComponentRegistry, ComponentLayer, Variable, PropValue } from '@/components/ui/ui-builder/types';
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
@@ -80,6 +80,13 @@ export const RenderLayer: React.FC<{
         : undefined;
     }, [editorConfig, layer]);
 
+    // Check if this layer can accept children and if drag is active (must be before early returns)
+    const canAcceptChildren = useMemo(() => canLayerAcceptChildren(layer, registry), [layer, registry]);
+    const showDropZones = useMemo(() => 
+      editorConfig && dndContext?.isDragging && canAcceptChildren,
+      [editorConfig, dndContext?.isDragging, canAcceptChildren]
+    );
+
     if (!componentDefinition) {
       console.error(
         `[UIBuilder] Component definition not found in registry:`, 
@@ -97,13 +104,6 @@ export const RenderLayer: React.FC<{
     }
 
     if (!Component) return null;
-
-    // Check if this layer can accept children and if drag is active
-    const canAcceptChildren = useMemo(() => canLayerAcceptChildren(layer, registry), [layer, registry]);
-    const showDropZones = useMemo(() => 
-      editorConfig && dndContext?.isDragging && canAcceptChildren,
-      [editorConfig, dndContext?.isDragging, canAcceptChildren]
-    );
     
     // Handle children rendering with improved drop zones
     if (hasLayerChildren(layer) && layer.children.length > 0) {

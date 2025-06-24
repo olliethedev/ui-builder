@@ -7,8 +7,8 @@ import {
 } from "@/components/ui/form";
 import MultipleSelector, {
   Option,
-} from "@/components/ui/ui-builder/multi-select";
-import { iconNames } from "@/components/ui/ui-builder/icon";
+} from "@/components/ui/ui-builder/internal/components/multi-select";
+import { iconNames } from "@/components/ui/ui-builder/components/icon";
 
 const EMPTY_OPTIONS: Option[] = [];
 

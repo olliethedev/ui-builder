@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { TreeRowNode, TreeRowPlaceholder } from '@/components/ui/ui-builder/internal/tree-row-node';
+import { TreeRowNode, TreeRowPlaceholder } from '@/components/ui/ui-builder/internal/components/tree-row-node';
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
@@ -26,12 +26,12 @@ jest.mock('@/components/ui/dropdown-menu', () => ({
 }));
 
 // Mock AddComponentsPopover
-jest.mock('@/components/ui/ui-builder/internal/add-component-popover', () => ({
+jest.mock('@/components/ui/ui-builder/internal/components/add-component-popover', () => ({
   AddComponentsPopover: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 // Mock NameEdit
-jest.mock('@/components/ui/ui-builder/internal/name-edit', () => ({
+jest.mock('@/components/ui/ui-builder/internal/components/name-edit', () => ({
   NameEdit: ({ initialName, onSave, onCancel }: { 
     initialName: string; 
     onSave: (name: string) => void; 

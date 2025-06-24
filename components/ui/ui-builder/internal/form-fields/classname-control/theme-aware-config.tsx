@@ -6,9 +6,9 @@ import {
   SHADCN_TAILWIND_BORDER_COLOR_CLASSES,
   SHADCN_TAILWIND_BACKGROUND_COLOR_CLASSES,
   SHADCN_TAILWIND_TEXT_COLOR_CLASSES,
-} from "@/components/ui/ui-builder/internal/tailwind-classes";
-import { ThemeAwareDropdownOption } from "@/components/ui/ui-builder/internal/classname-control/theme-aware-dropdown-option";
-import { DropdownOption } from "@/components/ui/ui-builder/internal/classname-control/toggle-group";
+} from "@/components/ui/ui-builder/internal/utils/tailwind-classes";
+import { ThemeAwareDropdownOption } from "@/components/ui/ui-builder/internal/form-fields/classname-control/theme-aware-dropdown-option";
+import { DropdownOption } from "@/components/ui/ui-builder/internal/form-fields/classname-control/toggle-group";
 
 // Create theme-aware color dropdown items (for shadcn theme colors)
 export function createThemeAwareColorDropdown(

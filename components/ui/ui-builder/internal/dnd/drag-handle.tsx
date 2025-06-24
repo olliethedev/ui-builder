@@ -3,7 +3,7 @@ import { GripVertical } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
-import { useComponentDragContext } from './dnd-context';
+import { useComponentDragContext } from '@/lib/ui-builder/context/dnd-context';
 
 interface DragHandleProps {
   layerId: string;

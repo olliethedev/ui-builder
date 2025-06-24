@@ -2,8 +2,8 @@ import React, { useCallback, useMemo } from "react";
 
 import MultipleSelector, {
   Option,
-} from "@/components/ui/ui-builder/multi-select";
-import { TAILWIND_CLASSES_WITH_BREAKPOINTS } from "@/components/ui/ui-builder/internal/tailwind-classes";
+} from "@/components/ui/ui-builder/internal/components/multi-select";
+import { TAILWIND_CLASSES_WITH_BREAKPOINTS } from "@/components/ui/ui-builder/internal/utils/tailwind-classes";
 
 const EMPTY_OPTIONS: Option[] = [];
 

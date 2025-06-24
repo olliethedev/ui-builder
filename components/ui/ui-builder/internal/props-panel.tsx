@@ -289,6 +289,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
   const autoFormFieldConfig = useMemo(() => {
     if (!selectedLayer) return undefined; // Or a default config if appropriate
     return generateFieldOverrides(componentRegistry, selectedLayer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [componentRegistry, selectedLayer, selectedLayer?.props]);
 
   // Create a unique key that changes when we need to force re-render the form
@@ -357,3 +358,5 @@ const Title = React.memo(() => {
     </h2>
   );
 });
+
+Title.displayName = "Title";

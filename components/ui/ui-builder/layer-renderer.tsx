@@ -1,7 +1,7 @@
 import React from "react";
 
-import { EditorConfig, RenderLayer } from "@/components/ui/ui-builder/internal/render-utils";
-import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
+import { EditorConfig, RenderLayer } from "@/components/ui/ui-builder/internal/utils/render-utils";
+import { DevProfiler } from "@/components/ui/ui-builder/internal/components/dev-profiler";
 
 import { Variable, ComponentLayer, ComponentRegistry, PropValue } from '@/components/ui/ui-builder/types';
 
@@ -16,14 +16,14 @@ interface LayerRendererProps<TRegistry extends ComponentRegistry = ComponentRegi
   variableValues?: Record<string, PropValue>;
 }
 
-const LayerRenderer = React.memo<LayerRendererProps>(({
+const LayerRenderer = React.memo<LayerRendererProps>(function LayerRenderer({
   className,
   page,
   editorConfig,
   componentRegistry,
   variables,
   variableValues,
-}) => {
+}) {
 
   return (
     <DevProfiler id="LayerRenderer" threshold={30}>

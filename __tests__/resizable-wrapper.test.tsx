@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useContext } from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
-import { ResizableWrapper, DragHandleContext } from "@/components/ui/ui-builder/internal/resizable-wrapper";
+import { ResizableWrapper, DragHandleContext } from "@/components/ui/ui-builder/internal/canvas/resizable-wrapper";
 import { useDrag } from "@use-gesture/react";
 
 // Mock dependencies
@@ -35,7 +35,8 @@ const TestContextConsumer = () => {
 
 describe("ResizableWrapper", () => {
   const mockUseDrag = useDrag as jest.Mock;
-  const mockDragHandler = jest.fn();
+  const mockHorizontalDragHandler = jest.fn();
+  const mockVerticalDragHandler = jest.fn();
   const mockOnDraggingChange = jest.fn();
   const mockOnSizeChange = jest.fn();
 
@@ -95,8 +96,10 @@ describe("ResizableWrapper", () => {
       renderResizableWrapper({ isResizable: true });
       
       const resizers = screen.getAllByTestId("resizer");
-      expect(resizers[0]).toHaveClass("absolute", "top-0", "right-[-40px]");
-      expect(resizers[1]).toHaveClass("absolute", "bottom-7", "right-[-40px]");
+      // Horizontal resizer (right middle)
+      expect(resizers[0]).toHaveClass("absolute", "top-1/2", "right-[-20px]", "-translate-y-1/2");
+      // Vertical resizer (bottom center)
+      expect(resizers[1]).toHaveClass("absolute", "bottom-[-20px]", "left-1/2", "-translate-x-1/2", "cursor-ns-resize");
     });
   });
 
@@ -109,31 +112,42 @@ describe("ResizableWrapper", () => {
       expect(wrapper).not.toHaveStyle("width: 800px");
     });
 
-    it("applies initial width style when resizable", () => {
+    it("applies initial width and height style when resizable", () => {
       renderResizableWrapper({ isResizable: true });
       
       const wrapper = screen.getByTestId("child-content").parentElement;
       expect(wrapper).toHaveStyle("width: 800px");
+      expect(wrapper).toHaveStyle("height: 800px");
     });
 
-    it("calls onSizeChange with initial width when becoming resizable", () => {
+    it("calls onSizeChange with initial width and height when becoming resizable", () => {
       renderResizableWrapper({ 
         isResizable: true, 
         onSizeChange: mockOnSizeChange 
       });
       
-      expect(mockOnSizeChange).toHaveBeenCalledWith(800);
+      expect(mockOnSizeChange).toHaveBeenCalledWith(800, 800);
     });
   });
 
   describe("Drag Configuration", () => {
-    it("configures useDrag with correct parameters", () => {
+    it("configures useDrag with correct parameters for both resizers", () => {
       renderResizableWrapper({ isResizable: true });
       
+      // Should be called at least twice - once for horizontal, once for vertical (may be more due to re-renders)
       expect(mockUseDrag).toHaveBeenCalledWith(
         expect.any(Function),
         expect.objectContaining({
           axis: "x",
+          from: expect.any(Function),
+          filterTaps: true,
+        })
+      );
+      
+      expect(mockUseDrag).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.objectContaining({
+          axis: "y",
           from: expect.any(Function),
           filterTaps: true,
         })
@@ -143,29 +157,41 @@ describe("ResizableWrapper", () => {
     it("useDrag from function returns [0, 0]", () => {
       renderResizableWrapper({ isResizable: true });
       
-      const dragConfig = mockUseDrag.mock.calls[0][1];
-      expect(dragConfig.from()).toEqual([0, 0]);
+      // Find the horizontal and vertical drag configs from all calls
+      const horizontalDragConfig = mockUseDrag.mock.calls.find(call => call[1].axis === "x")?.[1];
+      const verticalDragConfig = mockUseDrag.mock.calls.find(call => call[1].axis === "y")?.[1];
+      
+      expect(horizontalDragConfig).toBeDefined();
+      expect(verticalDragConfig).toBeDefined();
+      expect(horizontalDragConfig.from()).toEqual([0, 0]);
+      expect(verticalDragConfig.from()).toEqual([0, 0]);
     });
   });
 
   describe("Drag Interaction", () => {
     beforeEach(() => {
-      // Mock useDrag to capture the drag handler
+      // Mock useDrag to capture the drag handlers
+      let callIndex = 0;
       mockUseDrag.mockImplementation((handler) => {
-        mockDragHandler.mockImplementation(handler);
+        if (callIndex === 0) {
+          mockHorizontalDragHandler.mockImplementation(handler);
+        } else {
+          mockVerticalDragHandler.mockImplementation(handler);
+        }
+        callIndex++;
         return () => ({});
       });
     });
 
-    it("sets dragging to true when drag starts", () => {
+    it("sets dragging to true when horizontal drag starts", () => {
       renderResizableWrapper({ 
         isResizable: true,
         onDraggingChange: mockOnDraggingChange 
       });
       
-      // Simulate drag start
+      // Simulate horizontal drag start
       act(() => {
-        mockDragHandler({
+        mockHorizontalDragHandler({
           down: true,
           movement: [0, 0],
           first: true,
@@ -176,15 +202,15 @@ describe("ResizableWrapper", () => {
       expect(mockOnDraggingChange).toHaveBeenCalledWith(true);
     });
 
-    it("updates width during drag", () => {
+    it("updates width during horizontal drag", () => {
       renderResizableWrapper({ 
         isResizable: true,
         onSizeChange: mockOnSizeChange 
       });
       
-      // Simulate drag start
+      // Simulate horizontal drag start
       act(() => {
-        mockDragHandler({
+        mockHorizontalDragHandler({
           down: true,
           movement: [0, 0],
           first: true,
@@ -192,9 +218,9 @@ describe("ResizableWrapper", () => {
         });
       });
       
-      // Simulate drag movement
+      // Simulate horizontal drag movement
       act(() => {
-        mockDragHandler({
+        mockHorizontalDragHandler({
           down: true,
           movement: [100, 0],
           first: false,
@@ -202,18 +228,18 @@ describe("ResizableWrapper", () => {
         });
       });
       
-      expect(mockOnSizeChange).toHaveBeenCalledWith(900); // 800 + 100
+      expect(mockOnSizeChange).toHaveBeenCalledWith(900, 800);
     });
 
-    it("enforces minimum width of 320px", () => {
+    it("enforces minimum width of 320px during horizontal drag", () => {
       renderResizableWrapper({ 
         isResizable: true,
         onSizeChange: mockOnSizeChange 
       });
       
-      // Simulate drag start
+      // Simulate horizontal drag start
       act(() => {
-        mockDragHandler({
+        mockHorizontalDragHandler({
           down: true,
           movement: [0, 0],
           first: true,
@@ -223,7 +249,7 @@ describe("ResizableWrapper", () => {
       
       // Simulate large negative movement
       act(() => {
-        mockDragHandler({
+        mockHorizontalDragHandler({
           down: true,
           movement: [-600, 0],
           first: false,
@@ -231,7 +257,65 @@ describe("ResizableWrapper", () => {
         });
       });
       
-      expect(mockOnSizeChange).toHaveBeenCalledWith(320); // Minimum width
+      expect(mockOnSizeChange).toHaveBeenCalledWith(320, 800); // Minimum width with height unchanged
+    });
+
+    it("updates height during vertical drag", () => {
+      renderResizableWrapper({ 
+        isResizable: true,
+        onSizeChange: mockOnSizeChange 
+      });
+      
+      // Simulate vertical drag start
+      act(() => {
+        mockVerticalDragHandler({
+          down: true,
+          movement: [0, 0],
+          first: true,
+          last: false,
+        });
+      });
+      
+      // Simulate vertical drag movement
+      act(() => {
+        mockVerticalDragHandler({
+          down: true,
+          movement: [0, 100],
+          first: false,
+          last: false,
+        });
+      });
+      
+      expect(mockOnSizeChange).toHaveBeenCalledWith(800, 900);
+    });
+
+    it("enforces minimum height of 200px during vertical drag", () => {
+      renderResizableWrapper({ 
+        isResizable: true,
+        onSizeChange: mockOnSizeChange 
+      });
+      
+      // Simulate vertical drag start
+      act(() => {
+        mockVerticalDragHandler({
+          down: true,
+          movement: [0, 0],
+          first: true,
+          last: false,
+        });
+      });
+      
+      // Simulate large negative movement
+      act(() => {
+        mockVerticalDragHandler({
+          down: true,
+          movement: [0, -700],
+          first: false,
+          last: false,
+        });
+      });
+      
+      expect(mockOnSizeChange).toHaveBeenCalledWith(800, 200); // Minimum height with width unchanged
     });
 
     it("sets dragging to false when drag ends", (done) => {
@@ -240,9 +324,9 @@ describe("ResizableWrapper", () => {
         onDraggingChange: mockOnDraggingChange 
       });
       
-      // Simulate drag end
+      // Simulate horizontal drag end
       act(() => {
-        mockDragHandler({
+        mockHorizontalDragHandler({
           down: false,
           movement: [0, 0],
           first: false,
@@ -287,7 +371,7 @@ describe("ResizableWrapper", () => {
       expect(resizer).toBeInTheDocument();
     });
 
-    it("applies correct CSS classes to resizer", () => {
+    it("applies correct CSS classes to horizontal resizer", () => {
       renderResizableWrapper({ isResizable: true });
       
       const resizer = screen.getAllByTestId("resizer")[0];
@@ -304,6 +388,27 @@ describe("ResizableWrapper", () => {
         "hover:bg-muted",
         "touch-none",
         "z-[1001]"
+      );
+    });
+
+    it("applies correct CSS classes to vertical resizer", () => {
+      renderResizableWrapper({ isResizable: true });
+      
+      const resizers = screen.getAllByTestId("resizer");
+      const verticalResizer = resizers[1];
+      expect(verticalResizer).toHaveClass(
+        "flex",
+        "items-center",
+        "justify-center",
+        "w-4",
+        "h-4",
+        "rounded-sm",
+        "border",
+        "bg-border",
+        "hover:bg-muted",
+        "touch-none",
+        "z-[1001]",
+        "cursor-ns-resize"
       );
     });
   });
@@ -359,34 +464,6 @@ describe("ResizableWrapper", () => {
     });
   });
 
-  describe("Dynamic Resizer Positioning", () => {
-    it("positions resizers based on responsive width", () => {
-      renderResizableWrapper({ isResizable: true });
-      
-      const resizers = screen.getAllByTestId("resizer");
-      
-      // Default width is 800px, so resizers should be at 720px (800 - 80)
-      resizers.forEach(resizer => {
-        expect(resizer).toHaveStyle("left: 720px");
-      });
-    });
-
-    it("updates resizer positions when width changes", () => {
-      // This test checks that resizer positioning is dynamic
-      const { rerender } = renderResizableWrapper({ isResizable: true });
-      
-      const resizers = screen.getAllByTestId("resizer");
-      
-      // Initially positioned at 720px (800 - 80)
-      resizers.forEach(resizer => {
-        expect(resizer).toHaveStyle("left: 720px");
-      });
-      
-      // This test verifies the positioning logic without triggering the drag handler
-      expect(resizers).toHaveLength(2);
-    });
-  });
-
   describe("Edge Cases and Error Handling", () => {
     it("handles missing onDraggingChange callback", () => {
       renderResizableWrapper({ isResizable: true });
@@ -416,7 +493,7 @@ describe("ResizableWrapper", () => {
       );
       
       expect(screen.getAllByTestId("resizer")).toHaveLength(2);
-      expect(mockOnSizeChange).toHaveBeenCalledWith(800);
+      expect(mockOnSizeChange).toHaveBeenCalledWith(800, 800);
     });
 
     it("handles prop changes from resizable to non-resizable", () => {
@@ -436,15 +513,29 @@ describe("ResizableWrapper", () => {
     it("memoizes drag config to avoid unnecessary recalculations", () => {
       const { rerender } = renderResizableWrapper({ isResizable: true });
       
-      const firstCallConfig = mockUseDrag.mock.calls[0][1];
+      const initialCallCount = mockUseDrag.mock.calls.length;
       
       rerender(<ResizableWrapper {...defaultProps} isResizable={true} />);
       
-      const secondCallConfig = mockUseDrag.mock.calls[1][1];
+      // Find horizontal and vertical configs from all calls
+      const horizontalConfigs = mockUseDrag.mock.calls.filter(call => call[1].axis === "x").map(call => call[1]);
+      const verticalConfigs = mockUseDrag.mock.calls.filter(call => call[1].axis === "y").map(call => call[1]);
       
-      // The config object should have the same structure
-      expect(firstCallConfig.axis).toBe(secondCallConfig.axis);
-      expect(firstCallConfig.filterTaps).toBe(secondCallConfig.filterTaps);
+      // Should have at least one config of each type
+      expect(horizontalConfigs.length).toBeGreaterThan(0);
+      expect(verticalConfigs.length).toBeGreaterThan(0);
+      
+      // All horizontal configs should have the same structure
+      horizontalConfigs.forEach(config => {
+        expect(config.axis).toBe("x");
+        expect(config.filterTaps).toBe(true);
+      });
+      
+      // All vertical configs should have the same structure
+      verticalConfigs.forEach(config => {
+        expect(config.axis).toBe("y");
+        expect(config.filterTaps).toBe(true);
+      });
     });
 
     it("memoizes bind resizer values", () => {
@@ -454,16 +545,19 @@ describe("ResizableWrapper", () => {
       expect(mockUseDrag).toHaveBeenCalled();
     });
 
-    it("memoizes responsive width style calculations", () => {
+    it("memoizes responsive size style calculations", () => {
       const { rerender } = renderResizableWrapper({ isResizable: true });
       
       const wrapper = screen.getByTestId("child-content").parentElement;
-      const firstStyle = wrapper?.style.width;
+      const firstWidthStyle = wrapper?.style.width;
+      const firstHeightStyle = wrapper?.style.height;
       
       rerender(<ResizableWrapper {...defaultProps} isResizable={true} />);
       
-      const secondStyle = wrapper?.style.width;
-      expect(firstStyle).toBe(secondStyle);
+      const secondWidthStyle = wrapper?.style.width;
+      const secondHeightStyle = wrapper?.style.height;
+      expect(firstWidthStyle).toBe(secondWidthStyle);
+      expect(firstHeightStyle).toBe(secondHeightStyle);
     });
 
     it("memoizes context value to avoid unnecessary re-renders", () => {
@@ -487,14 +581,6 @@ describe("ResizableWrapper", () => {
   });
 
   describe("Accessibility", () => {
-    it("applies cursor-ew-resize to resizers for accessibility", () => {
-      renderResizableWrapper({ isResizable: true });
-      
-      const resizers = screen.getAllByTestId("resizer");
-      resizers.forEach(resizer => {
-        expect(resizer).toHaveClass("cursor-ew-resize");
-      });
-    });
 
     it("applies touch-none class to prevent touch interactions", () => {
       renderResizableWrapper({ isResizable: true });
@@ -526,7 +612,7 @@ describe("ResizableWrapper", () => {
       expect(screen.getAllByTestId("resizer")).toHaveLength(2);
     });
 
-    it("handles responsiveSize as null for resizer style", () => {
+    it("handles responsiveSize as null for initial render", () => {
       // Test the initial state where responsiveSize might be null
       renderResizableWrapper({ isResizable: false });
       
@@ -551,8 +637,10 @@ describe("ResizableWrapper", () => {
       renderResizableWrapper({ isResizable: true });
       
       const resizers = screen.getAllByTestId("resizer");
-      expect(resizers[0]).toHaveClass("absolute", "top-0", "right-[-40px]");
-      expect(resizers[1]).toHaveClass("absolute", "bottom-7", "right-[-40px]");
+      // Horizontal resizer
+      expect(resizers[0]).toHaveClass("absolute", "top-1/2", "right-[-20px]", "-translate-y-1/2");
+      // Vertical resizer  
+      expect(resizers[1]).toHaveClass("absolute", "bottom-[-20px]", "left-1/2", "-translate-x-1/2", "cursor-ns-resize");
     });
   });
 }); 

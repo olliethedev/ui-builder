@@ -2,7 +2,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { BreakpointClassNameControl } from "@/components/ui/ui-builder/internal/classname-control/breakpoint-classname-control";
+import { BreakpointClassNameControl } from "@/components/ui/ui-builder/internal/form-fields/classname-control/breakpoint-classname-control";
 
 // Mock the dependencies
 jest.mock("@/components/ui/tooltip", () => ({
@@ -73,7 +73,7 @@ jest.mock("@/components/ui/accordion", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/ui-builder/internal/classname-multiselect", () => {
+jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/classname-multiselect", () => {
   return {
     __esModule: true,
     default: ({ value, onChange }: any) => (
@@ -90,7 +90,7 @@ jest.mock("@/components/ui/ui-builder/internal/classname-multiselect", () => {
   };
 });
 
-jest.mock("@/components/ui/ui-builder/internal/classname-control/classname-item-control", () => ({
+jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/classname-item-control", () => ({
   ClassNameItemControl: ({ value, onChange }: any) => (
     <div data-testid="classname-item-control">
       <input

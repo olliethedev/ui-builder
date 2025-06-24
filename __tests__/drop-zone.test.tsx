@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { DndContext } from '@dnd-kit/core';
-import { DropZone, DropPlaceholder } from '@/components/ui/ui-builder/internal/drop-zone';
+import { DropZone, DropPlaceholder } from '@/components/ui/ui-builder/internal/dnd/drop-zone';
 
 // Mock useDroppable hook
 const mockUseDroppable = {
@@ -43,7 +43,7 @@ const mockDndContextValue = {
   canDropOnLayer: jest.fn(() => true),
 };
 
-jest.mock('@/components/ui/ui-builder/internal/dnd-context', () => ({
+jest.mock('@/lib/ui-builder/context/dnd-context', () => ({
   useDndContext: jest.fn(() => mockDndContextValue),
   DndContextProvider: ({ children }: { children: React.ReactNode }) => (
     <DndContext onDragEnd={() => {}}>{children}</DndContext>
@@ -232,7 +232,7 @@ describe('DropPlaceholder', () => {
     useDroppable.mockReturnValue(mockUseDroppable);
     
     // Reset DND context mock
-    const { useDndContext } = require('@/components/ui/ui-builder/internal/dnd-context');
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
     useDndContext.mockReturnValue(mockDndContextValue);
     
     // Reset layer store mock - no longer needed since we use DOM detection
@@ -337,8 +337,8 @@ describe('DropPlaceholder', () => {
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     // Check that flex-col layout classes are applied (absolute positioning with horizontal lines)
     expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-50');
-    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-2', 'h-4');
+    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
+    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-4', 'h-8');
   });
 
   it('applies correct layout classes for flex-col layout', () => {
@@ -351,8 +351,8 @@ describe('DropPlaceholder', () => {
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-0');
     // Check that flex-col layout classes are applied (absolute positioning)
     expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-50');
-    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-2', 'h-4');
+    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
+    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-4', 'h-8');
   });
 
   it('shows vertical drop lines for horizontal layout (flex-row)', () => {
@@ -378,8 +378,8 @@ describe('DropPlaceholder', () => {
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
     // For horizontal layout, should show vertical lines with absolute positioning
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-50');
-    expect(placeholder).toHaveClass('-left-2', 'top-0', 'bottom-0', 'w-4');
+    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
+    expect(placeholder).toHaveClass('-left-4', 'top-0', 'bottom-0', 'w-8');
   });
 
   it('shows horizontal drop lines for vertical layout (flex-col)', () => {
@@ -393,8 +393,8 @@ describe('DropPlaceholder', () => {
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
     // For vertical layout, should show horizontal lines with absolute positioning
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-50');
-    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-2', 'h-4');
+    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
+    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-4', 'h-8');
   });
 
   it('handles block layout correctly', () => {
@@ -420,13 +420,13 @@ describe('DropPlaceholder', () => {
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
     // Should default to horizontal lines with absolute positioning (block layout)
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-50');
-    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-2', 'h-4');
+    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
+    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-4', 'h-8');
   });
 
   it('handles inline element detection when dragging span', () => {
     // Mock an active drag with a span element
-    const { useDndContext } = require('@/components/ui/ui-builder/internal/dnd-context');
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
     useDndContext.mockReturnValue({
       ...mockDndContextValue,
       activeLayerId: 'span-123',
@@ -471,7 +471,7 @@ describe('DropPlaceholder', () => {
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
     // Should use inline layout classes for inline elements with absolute positioning
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-50');
-    expect(placeholder).toHaveClass('-left-1', 'top-0', 'bottom-0', 'w-2');
+    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
+    expect(placeholder).toHaveClass('-left-3', 'top-0', 'bottom-0', 'w-6');
   });
 });

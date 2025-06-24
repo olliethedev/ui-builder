@@ -18,8 +18,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
-import { NameEdit } from "@/components/ui/ui-builder/internal/name-edit";
+import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/components/add-component-popover";
+import { NameEdit } from "@/components/ui/ui-builder/internal/components/name-edit";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 

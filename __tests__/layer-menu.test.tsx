@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
+import { LayerMenu } from "@/components/ui/ui-builder/internal/components/layer-menu";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { ComponentLayer } from "@/components/ui/ui-builder/types";
@@ -17,7 +17,7 @@ jest.mock("@/lib/ui-builder/store/editor-store", () => ({
 }));
 
 // Mock the AddComponentsPopover
-jest.mock("@/components/ui/ui-builder/internal/add-component-popover", () => ({
+jest.mock("@/components/ui/ui-builder/internal/components/add-component-popover", () => ({
   AddComponentsPopover: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="add-components-popover">{children}</div>
   ),

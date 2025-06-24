@@ -9,7 +9,7 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import LayersPanel from "@/components/ui/ui-builder/internal/layers-panel";
 import EditorPanel from "@/components/ui/ui-builder/internal/editor-panel";
 import PropsPanel from "@/components/ui/ui-builder/internal/props-panel";
-import { NavBar } from "@/components/ui/ui-builder/internal/nav";
+import { NavBar } from "@/components/ui/ui-builder/internal/components/nav";
 import { ThemeProvider } from "next-themes";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {

@@ -8,7 +8,7 @@ import {
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
+import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/components/add-component-popover";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
 
 interface ChildrenSearchableSelectProps { 

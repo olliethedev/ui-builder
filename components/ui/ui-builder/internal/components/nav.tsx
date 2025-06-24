@@ -57,7 +57,7 @@ import {
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { CodePanel } from "@/components/ui/ui-builder/code-panel";
+import { CodePanel } from "@/components/ui/ui-builder/components/code-panel";
 import {
   EditorStore,
   useEditorStore,

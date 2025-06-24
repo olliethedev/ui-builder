@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { AddComponentsPopover } from '@/components/ui/ui-builder/internal/add-component-popover';
+import { AddComponentsPopover } from '@/components/ui/ui-builder/internal/components/add-component-popover';
 
 // Mock scrollIntoView for jsdom environment
 Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {

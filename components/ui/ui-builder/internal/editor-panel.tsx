@@ -16,13 +16,13 @@ import {
 } from "react-zoom-pan-pinch";
 
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
-import { DndContextProvider, useComponentDragContext } from "@/components/ui/ui-builder/internal/dnd-context";
+import { DndContextProvider, useComponentDragContext } from "@/lib/ui-builder/context/dnd-context";
 import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
-import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-component-popover";
+import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/components/add-component-popover";
 import { Button } from "@/components/ui/button";
-import { ResizableWrapper } from "@/components/ui/ui-builder/internal/resizable-wrapper";
-import AutoFrame from "./auto-frame";
+import { ResizableWrapper } from "@/components/ui/ui-builder/internal/canvas/resizable-wrapper";
+import AutoFrame from "./canvas/auto-frame";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 // Static style objects to prevent recreation on every render

@@ -86,7 +86,7 @@ jest.mock("next-themes", () => ({
   }),
 }));
 
-jest.mock("../components/ui/ui-builder/internal/nav", () => ({
+jest.mock("../components/ui/ui-builder/internal/components/nav", () => ({
   NavBar: () => <div data-testid="nav">Nav</div>,
 }));
 

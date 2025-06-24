@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { CodePanel } from '@/components/ui/ui-builder/code-panel';
+import { CodePanel } from '@/components/ui/ui-builder/components/code-panel';
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
-import { pageLayerToCode } from '@/components/ui/ui-builder/internal/templates';
+import { pageLayerToCode } from '@/components/ui/ui-builder/internal/utils/templates';
 
 // Mock dependencies
 jest.mock('@/lib/ui-builder/store/layer-store', () => ({
@@ -15,11 +15,11 @@ jest.mock('@/lib/ui-builder/store/editor-store', () => ({
   useEditorStore: jest.fn(),
 }));
 
-jest.mock('@/components/ui/ui-builder/internal/templates', () => ({
+jest.mock('@/components/ui/ui-builder/internal/utils/templates', () => ({
   pageLayerToCode: jest.fn(),
 }));
 
-jest.mock('@/components/ui/ui-builder/codeblock', () => ({
+jest.mock('@/components/ui/ui-builder/components/codeblock', () => ({
   CodeBlock: ({ language, value }: { language: string; value: string }) => (
     <div data-testid={`codeblock-${language}`}>{value}</div>
   ),

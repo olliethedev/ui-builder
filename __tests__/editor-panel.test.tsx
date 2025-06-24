@@ -17,6 +17,40 @@ jest.mock("@/lib/ui-builder/store/editor-store", () => ({
   useEditorStore: jest.fn(),
 }));
 
+// Mock Tooltip components
+jest.mock("@/components/ui/tooltip", () => ({
+  Tooltip: ({ children }: any) => <div data-testid="tooltip">{children}</div>,
+  TooltipContent: ({ children, side }: any) => (
+    <div data-testid="tooltip-content" data-side={side}>
+      {children}
+    </div>
+  ),
+  TooltipTrigger: ({ children, asChild }: any) => (
+    <div data-testid="tooltip-trigger" data-as-child={asChild}>
+      {children}
+    </div>
+  ),
+  TooltipProvider: ({ children }: any) => (
+    <div data-testid="tooltip-provider">{children}</div>
+  ),
+}));
+
+// Mock AutoFrame component
+jest.mock("@/components/ui/ui-builder/internal/canvas/auto-frame", () => ({
+  __esModule: true,
+  default: ({ children, height, className, frameRef, pointerEventsEnabled }: any) => (
+    <div 
+      data-testid="auto-frame"
+      data-height={height}
+      className={className}
+      data-pointer-events-enabled={pointerEventsEnabled}
+      ref={frameRef}
+    >
+      {children}
+    </div>
+  ),
+}));
+
 jest.mock("@/components/ui/ui-builder/layer-renderer", () => ({
   __esModule: true,
   default: ({ page, editorConfig, componentRegistry }: any) => (
@@ -32,7 +66,7 @@ jest.mock("@/components/ui/ui-builder/layer-renderer", () => ({
 }));
 
 // Mock DndContextProvider and useComponentDragContext
-jest.mock("@/components/ui/ui-builder/internal/dnd-context", () => ({
+jest.mock("@/lib/ui-builder/context/dnd-context", () => ({
   DndContextProvider: ({ children }: any) => (
     <div data-testid="dnd-context-provider">{children}</div>
   ),
@@ -40,7 +74,7 @@ jest.mock("@/components/ui/ui-builder/internal/dnd-context", () => ({
 }));
 
 // Mock ResizableWrapper
-jest.mock("@/components/ui/ui-builder/internal/resizable-wrapper", () => ({
+jest.mock("@/components/ui/ui-builder/internal/canvas/resizable-wrapper", () => ({
   ResizableWrapper: ({ children, isResizable, onDraggingChange }: any) => (
     <div 
       data-testid="resizable-wrapper" 
@@ -52,7 +86,7 @@ jest.mock("@/components/ui/ui-builder/internal/resizable-wrapper", () => ({
   ),
 }));
 
-jest.mock("@/components/ui/ui-builder/internal/add-component-popover", () => ({
+jest.mock("@/components/ui/ui-builder/internal/components/add-component-popover", () => ({
   AddComponentsPopover: ({ children, parentLayerId }: any) => (
     <div data-testid="add-components-popover" data-parent-layer-id={parentLayerId}>
       {children}
@@ -119,6 +153,7 @@ jest.mock("lucide-react", () => ({
   ZoomIn: () => <svg data-testid="zoom-in-icon" />,
   ZoomOut: () => <svg data-testid="zoom-out-icon" />,
   Crosshair: () => <svg data-testid="crosshair-icon" />,
+  MousePointer: () => <svg data-testid="mouse-pointer-icon" />,
 }));
 
 // Mock window.innerWidth
@@ -131,7 +166,7 @@ Object.defineProperty(window, 'innerWidth', {
 describe("EditorPanel", () => {
   const mockedUseLayerStore = useLayerStore as unknown as jest.Mock;
   const mockedUseEditorStore = useEditorStore as unknown as jest.Mock;
-  const { useComponentDragContext } = require("@/components/ui/ui-builder/internal/dnd-context");
+  const { useComponentDragContext } = require("@/lib/ui-builder/context/dnd-context");
 
   const mockSelectLayer = jest.fn();
   const mockFindLayerById = jest.fn();
@@ -336,14 +371,14 @@ describe("EditorPanel", () => {
       
       const wrapper = screen.getByTestId("transform-wrapper");
       const wheelConfig = JSON.parse(wrapper.getAttribute("data-wheel") || "{}");
-      expect(wheelConfig.step).toBe(0.05);
+      expect(wheelConfig.step).toBe(0.1);
     });
 
-    it("disables double click", () => {
+    it("enables double click", () => {
       renderEditorPanel();
       
       const wrapper = screen.getByTestId("transform-wrapper");
-      expect(wrapper).toHaveAttribute("data-double-click-disabled", "true");
+      expect(wrapper).toHaveAttribute("data-double-click-disabled", "false");
     });
 
     it("enables panning by default", () => {
@@ -1292,9 +1327,7 @@ describe("EditorPanel", () => {
       
       const editorContent = document.getElementById("editor-panel-content");
       expect(editorContent).toHaveClass("overflow-visible");
-      expect(editorContent).toHaveClass("pt-3");
-      expect(editorContent).toHaveClass("pb-10");
-      expect(editorContent).toHaveClass("pr-20");
+      expect(editorContent).toHaveClass("w-full");
     });
 
     it("applies correct transform div styling with all preview modes", () => {

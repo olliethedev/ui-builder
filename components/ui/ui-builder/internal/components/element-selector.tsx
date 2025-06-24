@@ -10,10 +10,10 @@ import React, {
 } from "react";
 import { useTransformEffect } from "react-zoom-pan-pinch";
 import { ComponentLayer } from "@/components/ui/ui-builder/types";
-import { LayerMenu } from "@/components/ui/ui-builder/internal/layer-menu";
-import { DragHandle as ComponentDragHandle } from "@/components/ui/ui-builder/internal/drag-handle";
-import { DragHandleContext } from "@/components/ui/ui-builder/internal/resizable-wrapper";
-import { useDndContext } from "@/components/ui/ui-builder/internal/dnd-context";
+import { LayerMenu } from "@/components/ui/ui-builder/internal/components/layer-menu";
+import { DragHandle as ComponentDragHandle } from "@/components/ui/ui-builder/internal/dnd/drag-handle";
+import { DragHandleContext } from "@/components/ui/ui-builder/internal/canvas/resizable-wrapper";
+import { useDndContext } from "@/lib/ui-builder/context/dnd-context";
 import { cn } from "@/lib/utils";
 import { offset, useFloating, autoUpdate, shift, limitShift } from "@floating-ui/react";
 
@@ -82,7 +82,7 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
     e.stopPropagation();
     e.preventDefault();
     onSelectElement(layer.id);
-  }, []);
+  }, [layer.id, onSelectElement]);
 
   const overlayStyle = useMemo(() => {
     if (!boundingRect) return { display: "none" };

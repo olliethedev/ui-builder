@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { ElementSelector } from "@/components/ui/ui-builder/internal/element-selector";
+import { ElementSelector } from "@/components/ui/ui-builder/internal/components/element-selector";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 // Mock ResizeObserver
@@ -93,7 +93,7 @@ describe("ElementSelector", () => {
     });
   }, 10000);
 
-  it("calls onSelectElement when overlay is clicked with minimal movement", async () => {
+  it("calls onSelectElement when overlay is clicked", async () => {
     const mockOnSelect = jest.fn();
     render(
       <TestWrapper>
@@ -110,64 +110,13 @@ describe("ElementSelector", () => {
 
     const overlay = document.querySelector('.absolute.box-border') as HTMLElement;
     
-    // Simulate mouse down and up with minimal movement (should trigger selection)
-    fireEvent.mouseDown(overlay, { clientX: 100, clientY: 100 });
-    fireEvent.mouseUp(overlay, { clientX: 102, clientY: 102 }); // 2px movement, under 5px threshold
+    // Simulate a simple click
+    fireEvent.click(overlay);
     
     expect(mockOnSelect).toHaveBeenCalledWith("test-layer");
   });
 
-  it("does not call onSelectElement when overlay is dragged with significant movement", async () => {
-    const mockOnSelect = jest.fn();
-    render(
-      <TestWrapper>
-        <ElementSelector {...defaultProps} onSelectElement={mockOnSelect}>
-          <div>Test Content</div>
-        </ElementSelector>
-      </TestWrapper>
-    );
-    
-    await waitFor(() => {
-      const overlay = document.querySelector('.absolute.box-border');
-      expect(overlay).toBeInTheDocument();
-    });
 
-    const overlay = document.querySelector('.absolute.box-border') as HTMLElement;
-    
-    // Simulate mouse down and up with significant movement (should NOT trigger selection)
-    fireEvent.mouseDown(overlay, { clientX: 100, clientY: 100 });
-    fireEvent.mouseUp(overlay, { clientX: 120, clientY: 120 }); // 28px movement, over 5px threshold
-    
-    expect(mockOnSelect).not.toHaveBeenCalled();
-  });
-
-  it("does not call onSelectElement when interaction takes too long (likely panning)", async () => {
-    const mockOnSelect = jest.fn();
-    render(
-      <TestWrapper>
-        <ElementSelector {...defaultProps} onSelectElement={mockOnSelect}>
-          <div>Test Content</div>
-        </ElementSelector>
-      </TestWrapper>
-    );
-    
-    await waitFor(() => {
-      const overlay = document.querySelector('.absolute.box-border');
-      expect(overlay).toBeInTheDocument();
-    });
-
-    const overlay = document.querySelector('.absolute.box-border') as HTMLElement;
-    
-    // Simulate a long interaction (like panning)
-    fireEvent.mouseDown(overlay, { clientX: 100, clientY: 100 });
-    
-    // Wait longer than the click threshold (200ms)
-    await new Promise(resolve => setTimeout(resolve, 250));
-    
-    fireEvent.mouseUp(overlay, { clientX: 102, clientY: 102 }); // Small movement, but took too long
-    
-    expect(mockOnSelect).not.toHaveBeenCalled();
-  });
 
   it("shows blue border when selected", async () => {
     render(
