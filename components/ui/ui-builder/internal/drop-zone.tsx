@@ -204,7 +204,7 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
     <div
       ref={combinedRef}
       className={cn(
-        "absolute pointer-events-auto z-50",
+        "absolute pointer-events-auto z-[999]",
         "before:content-[''] before:absolute before:transition-all before:duration-200",
         "before:pointer-events-none",
         // Use custom style if provided, otherwise use default layout-based positioning

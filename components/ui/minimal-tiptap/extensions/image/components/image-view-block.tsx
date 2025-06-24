@@ -76,13 +76,25 @@ export const ImageViewBlock: React.FC<NodeViewProps> = ({
   const aspectRatio =
     imageState.naturalSize.width / imageState.naturalSize.height
   const maxWidth = MAX_HEIGHT * aspectRatio
-  const containerMaxWidth = containerRef.current
-    ? parseFloat(
-        getComputedStyle(containerRef.current).getPropertyValue(
-          "--editor-width"
-        )
-      )
-    : Infinity
+  
+  // Find the editor container that has the --editor-width property
+  const getEditorWidth = React.useCallback(() => {
+    if (!containerRef.current) return Infinity
+    
+    // Walk up the DOM tree to find the element with --editor-width
+    let element = containerRef.current as HTMLElement | null
+    while (element) {
+      const editorWidth = getComputedStyle(element).getPropertyValue("--editor-width")
+      if (editorWidth && editorWidth !== "" && editorWidth !== "0px") {
+        const width = parseFloat(editorWidth)
+        return isNaN(width) ? Infinity : width
+      }
+      element = element.parentElement
+    }
+    return Infinity
+  }, [])
+  
+  const containerMaxWidth = getEditorWidth()
 
   const { isLink, onView, onDownload, onCopy, onCopyLink, onRemoveImg } =
     useImageActions({

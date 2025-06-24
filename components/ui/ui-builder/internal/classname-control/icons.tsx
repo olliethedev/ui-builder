@@ -1,8 +1,8 @@
 import { cn } from "@/lib/utils";
 
-export function HugIcon() {
+export function HugIcon( {className}: {className?: string}) {
   return (
-    <svg className="!size-6" fill="none" viewBox="0 0 24 24">
+    <svg className={cn("!size-6", className)} fill="none" viewBox="0 0 24 24">
       <path
         fill="currentColor"
         fillRule="evenodd"
@@ -13,9 +13,9 @@ export function HugIcon() {
   );
 }
 
-export function FillIcon() {
+export function FillIcon( {className}: {className?: string}) {
   return (
-    <svg className="!size-6" fill="none" viewBox="0 0 24 24">
+    <svg className={cn("!size-6", className)} fill="none" viewBox="0 0 24 24">
       <path
         fill="currentColor"
         fillRule="evenodd"
@@ -26,9 +26,9 @@ export function FillIcon() {
   );
 }
 
-export function FixedIcon() {
+export function FixedIcon( {className}: {className?: string}) {
   return (
-    <svg className="!size-6" fill="none" viewBox="0 0 24 24">
+    <svg className={cn("!size-6", className)} fill="none" viewBox="0 0 24 24">
       <path
         fill="currentColor"
         fillRule="evenodd"

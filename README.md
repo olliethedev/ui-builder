@@ -57,7 +57,7 @@ If you are not using shadcn/ui, you can install the component simply by copying 
 Add dev dependencies, since there currently seems to be an issue with shadcn/ui not installing them from the registry:
 
 ```bash
-npm install -D @types/lodash.template @tailwindcss/typography @types/react-syntax-highlighter react-docgen-typescript tailwindcss-animate ts-morph ts-to-zod
+npm install -D @types/lodash.template @tailwindcss/typography @types/react-syntax-highlighter tailwindcss-animate @types/object-hash
 ```
 
 And that's it! You have a UI Builder that you can use to build your UI.

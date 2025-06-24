@@ -1,3 +1,4 @@
+import React from "react";
 import {
   FormControl,
   FormDescription,
@@ -175,11 +176,21 @@ export const childrenAsTipTapFieldOverrides: FieldConfigFunction = (
   };
 };
 
+// Memoized common field overrides to avoid recreating objects
+const memoizedCommonFieldOverrides = new Map<boolean, Record<string, FieldConfigFunction>>();
+
 export const commonFieldOverrides = (allowBinding = false) => {
-  return {
+  if (memoizedCommonFieldOverrides.has(allowBinding)) {
+    return memoizedCommonFieldOverrides.get(allowBinding)!;
+  }
+  
+  const overrides = {
     className: (layer: ComponentLayer) => classNameFieldOverrides(layer),
     children: (layer: ComponentLayer) => childrenFieldOverrides(layer),
   };
+  
+  memoizedCommonFieldOverrides.set(allowBinding, overrides);
+  return overrides;
 };
 
 export const commonVariableRenderParentOverrides = (propName: string) => {

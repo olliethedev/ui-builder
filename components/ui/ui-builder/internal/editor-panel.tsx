@@ -23,8 +23,27 @@ import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/add-co
 import { Button } from "@/components/ui/button";
 import { ResizableWrapper } from "@/components/ui/ui-builder/internal/resizable-wrapper";
 import AutoFrame from "./auto-frame";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
-// ZoomControls component definition moved before EditorPanel
+// Static style objects to prevent recreation on every render
+const WRAPPER_STYLE = {
+  width: "100%",
+  height: "100%",
+} as const;
+
+const CONTENT_STYLE = {
+  width: "100%",
+  height: "100%",
+} as const;
+
+const TRANSFORM_DIV_STYLE = {
+  minHeight: "100vh",
+  padding: "50px",
+} as const;
+
+const WHEEL_CONFIG = { step: 0.1 } as const;
+const DOUBLE_CLICK_CONFIG = { disabled: false } as const;
+
 const ZoomControls: React.FC<{ onPointerEventsToggle: (enabled: boolean) => void; pointerEventsEnabled: boolean }> = ({ 
   onPointerEventsToggle, 
   pointerEventsEnabled 
@@ -39,44 +58,77 @@ const ZoomControls: React.FC<{ onPointerEventsToggle: (enabled: boolean) => void
   }, [onPointerEventsToggle, pointerEventsEnabled]);
 
   return (
-    <div className="absolute bottom-24 md:bottom-4 right-4 z-[1000] flex shadow-lg rounded-full">
-      <Button
-        data-testid="button-ZoomIn"
-        variant="secondary"
-        className="size-14 md:size-10 rounded-l-full rounded-r-none border-r border-border [&_svg]:size-7 [&_svg]:md:size-4"
-        onClick={handleZoomIn}
-      >
-        <span className="sr-only">Zoom in</span>
-        <ZoomIn className="text-secondary-foreground" />
-      </Button>
-      <Button
-        data-testid="button-ZoomOut"
-        variant="secondary"
-        className="size-14 md:size-10 rounded-none border-r border-border [&_svg]:size-7 [&_svg]:md:size-4"
-        onClick={handleZoomOut}
-      >
-        <span className="sr-only">Zoom out</span>
-        <ZoomOut className="text-secondary-foreground" />
-      </Button>
-      <Button
-        data-testid="button-Reset"
-        variant="secondary"
-        className="size-14 md:size-10 rounded-none border-r border-border [&_svg]:size-7 [&_svg]:md:size-4"
-        onClick={handleReset}
-      >
-        <span className="sr-only">Reset</span>
-        <Crosshair className="text-secondary-foreground" />
-      </Button>
-      <Button
-        data-testid="button-PointerEvents"
-        variant={pointerEventsEnabled ? "default" : "secondary"}
-        className="size-14 md:size-10 rounded-r-full rounded-l-none [&_svg]:size-7 [&_svg]:md:size-4"
-        onClick={handleTogglePointerEvents}
-      >
-        <span className="sr-only">{pointerEventsEnabled ? "Disable pointer events" : "Enable pointer events"}</span>
-        <MousePointer className={pointerEventsEnabled ? "text-primary-foreground" : "text-secondary-foreground"} />
-      </Button>
-    </div>
+    <TooltipProvider>
+      <div className="absolute bottom-24 md:bottom-4 right-4 z-[1000] flex shadow-lg rounded-full">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              data-testid="button-ZoomIn"
+              variant="secondary"
+              className="size-14 md:size-10 rounded-l-full rounded-r-none border-r border-border [&_svg]:size-7 [&_svg]:md:size-4"
+              onClick={handleZoomIn}
+            >
+              <span className="sr-only">Zoom in</span>
+              <ZoomIn className="text-secondary-foreground" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p>Zoom in</p>
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              data-testid="button-ZoomOut"
+              variant="secondary"
+              className="size-14 md:size-10 rounded-none border-r border-border [&_svg]:size-7 [&_svg]:md:size-4"
+              onClick={handleZoomOut}
+            >
+              <span className="sr-only">Zoom out</span>
+              <ZoomOut className="text-secondary-foreground" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p>Zoom out</p>
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              data-testid="button-Reset"
+              variant="secondary"
+              className="size-14 md:size-10 rounded-none border-r border-border [&_svg]:size-7 [&_svg]:md:size-4"
+              onClick={handleReset}
+            >
+              <span className="sr-only">Reset</span>
+              <Crosshair className="text-secondary-foreground" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p>Reset zoom and position</p>
+          </TooltipContent>
+        </Tooltip>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              data-testid="button-PointerEvents"
+              variant={pointerEventsEnabled ? "default" : "secondary"}
+              className="size-14 md:size-10 rounded-r-full rounded-l-none [&_svg]:size-7 [&_svg]:md:size-4"
+              onClick={handleTogglePointerEvents}
+            >
+              <span className="sr-only">{pointerEventsEnabled ? "Disable pointer events" : "Enable pointer events"}</span>
+              <MousePointer className={pointerEventsEnabled ? "text-primary-foreground" : "text-secondary-foreground"} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p>{pointerEventsEnabled ? "Disable page interaction" : "Enable page interaction"}</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    </TooltipProvider>
   );
 };
 
@@ -206,10 +258,13 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
 
   const layers = selectedPage.children;
 
+  // Memoize totalLayers calculation separately to avoid recalculating on every render
+  const totalLayers = useMemo(() => countLayers(layers), [layers]);
+  
   const editorConfig = useMemo(
     () => ({
       zIndex: 1,
-      totalLayers: countLayers(layers),
+      totalLayers: totalLayers,
       selectedLayer: selectedLayer,
       onSelectElement: onSelectElement,
       handleDuplicateLayer: allowPagesCreation
@@ -218,7 +273,7 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
       handleDeleteLayer: allowPagesDeletion ? handleDeleteLayer : undefined,
     }),
     [
-      layers,
+      totalLayers,
       selectedLayer,
       onSelectElement,
       handleDuplicateLayer,
@@ -243,67 +298,51 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
   }, [previewMode]);
 
 
+  // Memoize ResizableWrapper props
+  const resizableProps = useMemo(() => ({
+    isResizable: previewMode === "responsive",
+    onDraggingChange: handleResizingChange,
+    onSizeChange: handleSizeChange
+  }), [previewMode, handleResizingChange, handleSizeChange]);
+
+  // Memoize AutoFrame props
+  const autoFrameProps = useMemo(() => ({
+    height: frameSize.height,
+    className: cn("shadow-lg", widthClass),
+    frameRef: frameRef,
+    pointerEventsEnabled: pointerEventsEnabled
+  }), [frameSize.height, widthClass, frameRef, pointerEventsEnabled]);
+
+  // Memoize LayerRenderer props
+  const layerRendererProps = useMemo(() => ({
+    page: selectedPage,
+    editorConfig: editorConfig,
+    componentRegistry: componentRegistry
+  }), [selectedPage, editorConfig, componentRegistry]);
+
   const renderer = useMemo(
     () => (
-      <ResizableWrapper
-        isResizable={previewMode === "responsive"}
-        onDraggingChange={handleResizingChange}
-        onSizeChange={handleSizeChange}
-      >
+      <ResizableWrapper {...resizableProps}>
         <div
           id="editor-panel-content"
           className={cn("overflow-visible ", widthClass)}
         >
-          <AutoFrame 
-            height={frameSize.height} 
-            className={cn("shadow-lg overflow-visible border border-border", widthClass)} 
-            frameRef={frameRef}
-            pointerEventsEnabled={pointerEventsEnabled}
-          >
-            <LayerRenderer
-              page={selectedPage}
-              editorConfig={editorConfig}
-              componentRegistry={componentRegistry}
-            />
+          <AutoFrame {...autoFrameProps}>
+            <LayerRenderer {...layerRendererProps} />
           </AutoFrame>
         </div>
       </ResizableWrapper>
     ),
-    [
-      selectedPage,
-      editorConfig,
-      componentRegistry,
-      previewMode,
-      handleResizingChange,
-      handleSizeChange,
-      widthClass,
-      frameSize,
-      pointerEventsEnabled
-    ]
+    [resizableProps, widthClass, autoFrameProps, layerRendererProps]
   );
 
   
-  // Memoize style objects for TransformComponent
-  const wrapperStyle = useMemo(() => ({
-    width: "100%",
-    height: "100%",
-  }), []);
-
-  const contentStyle = useMemo(() => ({
-    width: "100%",
-    height: "100%",
-  }), []);
-
-  const transformDivStyle = useMemo(() => ({
-    minHeight: "100vh",
-    padding: "50px",
-  }), []);
-
-  // Memoize wheel configuration for TransformWrapper
-  const wheelConfig = useMemo(() => ({ step: 0.1 }), []);
-
-  // Memoize doubleClick configuration for TransformWrapper
-  const doubleClickConfig = useMemo(() => ({ disabled: false }), []);
+  // Use static objects for consistent styles (defined outside component would be better)
+  const wrapperStyle = WRAPPER_STYLE;
+  const contentStyle = CONTENT_STYLE;
+  const transformDivStyle = TRANSFORM_DIV_STYLE;
+  const wheelConfig = WHEEL_CONFIG;
+  const doubleClickConfig = DOUBLE_CLICK_CONFIG;
 
   // Disable panning when either resizing the viewport OR dragging components
   const panningConfig = useMemo(() => ({ 
@@ -319,9 +358,9 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
       )}
     >
       <TransformWrapper
-        initialScale={0.9}
-        initialPositionX={-40}
-        initialPositionY={-40}
+        initialScale={0.8}
+        initialPositionX={-30}
+        initialPositionY={-30}
         minScale={0.1}
         maxScale={5}
         wheel={wheelConfig}

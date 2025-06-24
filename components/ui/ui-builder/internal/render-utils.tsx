@@ -65,8 +65,12 @@ export const RenderLayer: React.FC<{
       layer: layer
     }), [layer, componentRegistry]);
 
-    // Resolve variable references in props
-    const resolvedProps = resolveVariableReferences(layer.props, effectiveVariables, variableValues);
+    // Resolve variable references in props with proper memoization
+    const resolvedProps = useMemo(() => 
+      resolveVariableReferences(layer.props, effectiveVariables, variableValues),
+      [layer.props, effectiveVariables, variableValues]
+    );
+    
     const childProps: Record<string, PropValue> = useMemo(() => ({ ...resolvedProps }), [resolvedProps]);
     
     // Memoize child editor config to avoid creating objects in JSX
@@ -95,8 +99,11 @@ export const RenderLayer: React.FC<{
     if (!Component) return null;
 
     // Check if this layer can accept children and if drag is active
-    const canAcceptChildren = canLayerAcceptChildren(layer, registry);
-    const showDropZones = editorConfig && dndContext?.isDragging && canAcceptChildren;
+    const canAcceptChildren = useMemo(() => canLayerAcceptChildren(layer, registry), [layer, registry]);
+    const showDropZones = useMemo(() => 
+      editorConfig && dndContext?.isDragging && canAcceptChildren,
+      [editorConfig, dndContext?.isDragging, canAcceptChildren]
+    );
     
     // Handle children rendering with improved drop zones
     if (hasLayerChildren(layer) && layer.children.length > 0) {

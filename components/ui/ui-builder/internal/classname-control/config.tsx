@@ -137,13 +137,13 @@ export const CONFIG: ConfigType = {
     ] as const,
     component: ToggleGroup,
     options: [
-      { value: "h-full", tooltip: "Fill (h-auto)", icon: <FillIcon /> },
-      { value: "h-auto", tooltip: "Hug (h-auto)", icon: <HugIcon /> },
+      { value: "h-full", tooltip: "Fill (h-auto)", icon: <FillIcon className="rotate-90" /> },
+      { value: "h-auto", tooltip: "Hug (h-auto)", icon: <HugIcon className="rotate-90" /> },
       {
         value: "_h-fixed",
         label: "Fixed",
         tooltip: "Fixed (h-*)",
-        icon: <FixedIcon />,
+        icon: <FixedIcon className="rotate-90" />,
         dropdown: {
           items: TAILWIND_FIXED_HEIGHT_CLASSES.map((cls) => ({
             value: cls,

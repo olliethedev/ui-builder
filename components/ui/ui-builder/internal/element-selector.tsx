@@ -15,6 +15,7 @@ import { DragHandle as ComponentDragHandle } from "@/components/ui/ui-builder/in
 import { DragHandleContext } from "@/components/ui/ui-builder/internal/resizable-wrapper";
 import { useDndContext } from "@/components/ui/ui-builder/internal/dnd-context";
 import { cn } from "@/lib/utils";
+import { offset, useFloating, autoUpdate, shift, limitShift } from "@floating-ui/react";
 
 const style: React.CSSProperties = {
   display: "contents",
@@ -59,50 +60,28 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
 
   const dndContext = useDndContext();
 
+  const {refs, floatingStyles} = useFloating({
+    placement: "top-start",
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(-2), // Negative offset to overlap like the sticky label
+      shift({
+        crossAxis: true, // Allow sliding along the cross axis
+        limiter: limitShift(),
+      }),
+    ],
+  });
+
+
+
+
   // Check if this specific layer is being dragged
   const isBeingDragged = dndContext.activeLayerId === layer.id;
 
-  // Track mouse position and timing to distinguish clicks from drags/pans
-  const mouseDownPos = useRef<{ x: number; y: number; time: number } | null>(
-    null
-  );
-  const CLICK_THRESHOLD = 5; // pixels - if mouse moves less than this, consider it a click
-  const CLICK_TIME_THRESHOLD = 200; // ms - if interaction is longer than this, likely a pan
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    // Don't prevent propagation/default - let pan system handle the events
-    mouseDownPos.current = {
-      x: e.clientX,
-      y: e.clientY,
-      time: Date.now(),
-    };
-  }, []);
-
-  const handleMouseUp = useCallback(
-    (e: React.MouseEvent) => {
-      if (!mouseDownPos.current) return;
-
-      // Calculate distance moved and time elapsed
-      const deltaX = Math.abs(e.clientX - mouseDownPos.current.x);
-      const deltaY = Math.abs(e.clientY - mouseDownPos.current.y);
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-      const timeElapsed = Date.now() - mouseDownPos.current.time;
-
-      // Only select if movement was minimal AND interaction was quick (click, not pan)
-      // Don't prevent propagation - let the pan system handle its events properly
-      if (distance <= CLICK_THRESHOLD && timeElapsed <= CLICK_TIME_THRESHOLD) {
-        onSelectElement(layer.id);
-      }
-
-      mouseDownPos.current = null;
-    },
-    [onSelectElement, layer.id]
-  );
-
-  // Prevent click events from firing after we've handled mousedown/mouseup
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    onSelectElement(layer.id);
   }, []);
 
   const overlayStyle = useMemo(() => {
@@ -115,8 +94,10 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
       height: boundingRect.height,
       zIndex: zIndex,
       boxSizing: "border-box" as const,
-    };
+    } as React.CSSProperties;
   }, [boundingRect, zIndex]);
+
+
 
   return (
     <>
@@ -126,42 +107,52 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
 
       {boundingRect && (
         <div
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
           onClick={handleClick}
+          ref={refs.setReference}
           className={cn(
-            "absolute box-border hover:border-blue-300 hover:border-2",
+            "absolute box-border hover:border-blue-300 hover:border-2 hover:bg-blue-300/20 hover:shadow-md hover:shadow-blue-500/20",
             isBeingDragged
               ? "border-2 border-orange-500 border-dashed shadow-lg shadow-orange-500/30 opacity-70 bg-orange-50/20"
               : isSelected
-              ? "border-2 border-blue-500 hover:border-blue-500"
+              ? "border-2 border-blue-500 hover:border-blue-500 hover:bg-transparent  hover:shadow-none"
               : ""
           )}
           style={overlayStyle}
         >
-          {/* Small label with layer type floating above the bounding box */}
-          {isSelected && (
-            <div className="absolute flex items-center top-[-24px] left-[-2px] bg-blue-500 rounded-t-lg">
-              {/* Drag handle for non-page layers */}
-              {!isPageLayer && isSelected && (
+          
+        </div>
+      )}
+
+      {/* Floating UI element - positioned outside the overlay */}
+      {isSelected && (
+        <div className="z-[9999]" ref={refs.setFloating} style={floatingStyles}>
+          <div className="flex items-center bg-blue-500">
+            {/* Drag handle for non-page layers */}
+            {!isPageLayer && isSelected && (
                 <ComponentDragHandle
                   layerId={layer.id}
                   layerType={layer.type}
                 />
               )}
-              <span className="text-xs text-white  px-[1px] whitespace-nowrap">
-                {layer.name?.toLowerCase().startsWith(layer.type.toLowerCase())
-                  ? layer.type.replaceAll("_", "")
-                  : `${layer.name} (${layer.type.replaceAll("_", "")})`}
-              </span>
-              <div className="w-px h-4 bg-white/20 ml-1" />
-              <LayerMenu
-                layerId={layer.id}
-                handleDuplicateComponent={onDuplicateLayer}
-                handleDeleteComponent={onDeleteLayer}
-              />
-            </div>
-          )}
+              
+              {!isBeingDragged && (
+                <>
+                  <span className="text-xs text-white  px-[1px] whitespace-nowrap">
+                    {layer.name
+                      ?.toLowerCase()
+                      .startsWith(layer.type.toLowerCase())
+                      ? layer.type.replaceAll("_", "")
+                      : `${layer.name} (${layer.type.replaceAll("_", "")})`}
+                  </span>
+                  <div className="w-px h-4 bg-white/20 ml-1" />
+                  <LayerMenu
+                    layerId={layer.id}
+                    handleDuplicateComponent={onDuplicateLayer}
+                    handleDeleteComponent={onDeleteLayer}
+                  />
+                </>
+              )}
+          </div>
         </div>
       )}
     </>

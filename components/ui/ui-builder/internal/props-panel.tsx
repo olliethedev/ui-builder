@@ -19,7 +19,7 @@ interface PropsPanelProps {
   className?: string;
 }
 
-const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
+const PropsPanel: React.FC<PropsPanelProps> = React.memo(({ className }) => {
   const selectedLayerId = useLayerStore((state) => state.selectedLayerId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const removeLayer = useLayerStore((state) => state.removeLayer);
@@ -98,7 +98,7 @@ const PropsPanel: React.FC<PropsPanelProps> = ({ className }) => {
       )}
     </div>
   );
-};
+});
 PropsPanel.displayName = "PropsPanel";
 export default PropsPanel;
 
@@ -222,11 +222,12 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
     [updateLayer, selectedLayerId, selectedLayer, addComponentLayer, schema]
   );
 
+  // Memoize variables to avoid accessing store state on every render
+  const variables = useLayerStore((state) => state.variables);
+
   // Prepare values for AutoForm, converting enum values to strings as select elements only accept string values
   const formValues = useMemo(() => {
     if (!selectedLayer) return EMPTY_FORM_VALUES;
-
-    const variables = useLayerStore.getState().variables;
 
     // First resolve variable references to get display values
     const resolvedProps = resolveVariableReferences(
@@ -288,7 +289,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
   const autoFormFieldConfig = useMemo(() => {
     if (!selectedLayer) return undefined; // Or a default config if appropriate
     return generateFieldOverrides(componentRegistry, selectedLayer);
-  }, [componentRegistry, selectedLayer]);
+  }, [componentRegistry, selectedLayer, selectedLayer?.props]);
 
   // Create a unique key that changes when we need to force re-render the form
   // This includes selectedLayerId and revisionCounter to handle both layer changes and undo/redo
@@ -344,13 +345,15 @@ const nameForLayer = (layer: ComponentLayer) => {
   return layer.name || layer.type.replaceAll("_", "");
 };
 
-const Title = () => {
-  const { selectedLayerId } = useLayerStore();
-  const findLayerById = useLayerStore((state) => state.findLayerById);
-  const selectedLayer = findLayerById(selectedLayerId);
+const Title = React.memo(() => {
+  const selectedLayer = useLayerStore((state) => {
+    const selectedLayerId = state.selectedLayerId;
+    return selectedLayerId ? state.findLayerById(selectedLayerId) : null;
+  });
+  
   return (
     <h2 className="text-xl font-semibold mb-2">
       {selectedLayer ? nameForLayer(selectedLayer) : ""} Properties
     </h2>
   );
-};
+});

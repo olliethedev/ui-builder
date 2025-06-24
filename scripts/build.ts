@@ -120,7 +120,9 @@ function getDependencies(): string[] {
         "@dnd-kit/core",
         "@dnd-kit/sortable",
         "@dnd-kit/utilities",
-        "react-zoom-pan-pinch"
+        "react-zoom-pan-pinch",
+        "object-hash",
+        "@floating-ui/react"
     ];
 }
 
@@ -132,7 +134,8 @@ function getDevDependencies(): string[] {
         "react-docgen-typescript",
         "tailwindcss-animate",
         "ts-morph",
-        "ts-to-zod"
+        "ts-to-zod",
+        "@types/object-hash"
     ];
 }
 
