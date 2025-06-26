@@ -38,17 +38,17 @@ jest.mock("@/components/ui/tooltip", () => ({
 // Mock AutoFrame component
 jest.mock("@/components/ui/ui-builder/internal/canvas/auto-frame", () => ({
   __esModule: true,
-  default: ({ children, height, className, frameRef, pointerEventsEnabled }: any) => (
+  default: React.forwardRef(({ children, height, className, pointerEventsEnabled }: any, ref: any) => (
     <div 
       data-testid="auto-frame"
       data-height={height}
       className={className}
       data-pointer-events-enabled={pointerEventsEnabled}
-      ref={frameRef}
+      ref={ref}
     >
       {children}
     </div>
-  ),
+  )),
 }));
 
 jest.mock("@/components/ui/ui-builder/layer-renderer", () => ({

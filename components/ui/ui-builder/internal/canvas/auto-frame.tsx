@@ -1,12 +1,12 @@
 import {
   createContext,
   ReactNode,
-  RefObject,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
+  forwardRef,
 } from "react";
 import hash from "object-hash";
 import { createPortal } from "react-dom";
@@ -333,7 +333,6 @@ export type AutoFrameProps = {
   id?: string;
   onReady?: () => void;
   onNotReady?: () => void;
-  frameRef: RefObject<HTMLIFrameElement | null>;
   style?: React.CSSProperties;
   pointerEventsEnabled?: boolean;
 } & React.IframeHTMLAttributes<HTMLIFrameElement>;
@@ -347,18 +346,17 @@ export const autoFrameContext = createContext<AutoFrameContext>({});
 
 export const useFrame = () => useContext(autoFrameContext);
 
-function AutoFrame({
+const AutoFrame = forwardRef<HTMLIFrameElement, AutoFrameProps>(({
   children,
   className,
   debug,
   id,
   onReady = () => {},
   onNotReady = () => {},
-  frameRef,
   style,
   pointerEventsEnabled = true,
   ...props
-}: AutoFrameProps) {
+}, ref) => {
   const [loaded, setLoaded] = useState(false);
   const [ctx, setCtx] = useState<AutoFrameContext>({});
   const [mountTarget, setMountTarget] = useState<HTMLElement | null>();
@@ -383,9 +381,9 @@ function AutoFrame({
   );
 
   useEffect(() => {
-    if (frameRef.current) {
-      const doc = frameRef.current.contentDocument;
-      const win = frameRef.current.contentWindow;
+    if (ref && 'current' in ref && ref.current) {
+      const doc = ref.current.contentDocument;
+      const win = ref.current.contentWindow;
 
       setCtx({
         document: doc || undefined,
@@ -393,7 +391,7 @@ function AutoFrame({
       });
 
       setMountTarget(
-        frameRef.current.contentDocument?.getElementById("frame-root")
+        ref.current.contentDocument?.getElementById("frame-root")
       );
 
       if (doc && win && stylesLoaded) {
@@ -403,7 +401,7 @@ function AutoFrame({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [frameRef, loaded, stylesLoaded]);
+  }, [ref, loaded, stylesLoaded]);
 
   return (
     <iframe
@@ -412,7 +410,7 @@ function AutoFrame({
       id={id}
       data-testid="auto-frame"
       srcDoc='<!DOCTYPE html><html><head></head><body><div id="frame-root" data-autoform-entry></div></body></html>'
-      ref={frameRef as RefObject<HTMLIFrameElement>}
+      ref={ref}
       style={iframeStyle}
       onLoad={handleLoad}
     >
@@ -425,7 +423,7 @@ function AutoFrame({
       </autoFrameContext.Provider>
     </iframe>
   );
-}
+});
 
 AutoFrame.displayName = "AutoFrame";
 

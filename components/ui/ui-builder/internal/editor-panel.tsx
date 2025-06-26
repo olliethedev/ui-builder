@@ -327,7 +327,7 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
           id="editor-panel-content"
           className={cn("overflow-visible ", widthClass)}
         >
-          <AutoFrame {...autoFrameProps}>
+          <AutoFrame {...autoFrameProps} ref={frameRef}>
             <LayerRenderer {...layerRendererProps} />
           </AutoFrame>
         </div>
