@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ZodObject, ZodSchema, ZodType } from "zod";
+import { ZodObject, ZodSchema } from "zod";
 import { ComponentType as ReactComponentType, ReactNode } from 'react';
 import {
     FieldConfigItem,
@@ -81,9 +81,11 @@ export type FieldConfigFunction = (layer: ComponentLayer, allowVariableBinding?:
 // Enhanced ComponentRegistry with better typing
 export type ComponentRegistry = Record<string, RegistryEntry<ReactComponentType<any>>>;
 
-// Type-safe layer change handler
+// Type-safe layer change handler with registry awareness
 export type LayerChangeHandler<TRegistry extends ComponentRegistry = ComponentRegistry> = 
-  (layers: ComponentLayer[]) => void;
+  (layers: Array<ComponentLayer & {
+    type: keyof TRegistry;
+  }>) => void;
 
 // Type-safe variable change handler  
 export type VariableChangeHandler = (variables: Variable[]) => void;

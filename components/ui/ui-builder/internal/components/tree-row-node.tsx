@@ -21,7 +21,6 @@ import {
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/components/add-component-popover";
 import { NameEdit } from "@/components/ui/ui-builder/internal/components/name-edit";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
-import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 
 interface TreeRowNodeProps {
   node: ComponentLayer;
@@ -62,8 +61,6 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
   const [isRenaming, setIsRenaming] = useState(false);
 
   const [popoverOrMenuOpen, setPopoverOrMenuOpen] = useState(false);
-
-  const isPage = useLayerStore((state) => state.isLayerAPage(node.id));
 
   const allowPagesCreation = useEditorStore(
     (state) => state.allowPagesCreation

@@ -221,11 +221,8 @@ const LazyComponentPreview = memo(({
   componentType: string;
   componentRegistry: ComponentRegistry;
 }) => {
-  const [isVisible, setIsVisible] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
-  
 
   useEffect(() => {
     const element = ref.current;
@@ -234,7 +231,6 @@ const LazyComponentPreview = memo(({
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
           // Delay loading slightly to improve tab switching performance
           setTimeout(() => setShouldLoad(true), 50);
         }

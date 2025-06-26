@@ -39,14 +39,12 @@ import { Badge } from "@/components/ui/badge";
 export const classNameFieldOverrides: FieldConfigFunction = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   layer,
-  allowBinding = false
 ) => {
   return {
     fieldType: ({
       label,
       isRequired,
       field,
-      fieldProps,
       fieldConfigItem,
     }: AutoFormInputComponentProps) => (
       <FormFieldWrapper
@@ -66,7 +64,6 @@ export const classNameFieldOverrides: FieldConfigFunction = (
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const childrenFieldOverrides: FieldConfigFunction = (
   layer,
-  allowBinding = false
 ) => {
   return {
     fieldType: ({
@@ -111,8 +108,7 @@ export const iconNameFieldOverrides: FieldConfigFunction = (layer) => {
 };
 
 export const childrenAsTextareaFieldOverrides: FieldConfigFunction = (
-  layer,
-  allowBinding = false
+  layer
 ) => {
   return {
     fieldType: ({
@@ -139,7 +135,6 @@ export const childrenAsTextareaFieldOverrides: FieldConfigFunction = (
 
 export const childrenAsTipTapFieldOverrides: FieldConfigFunction = (
   layer,
-  allowBinding = false
 ) => {
   return {
     fieldType: ({

@@ -37,10 +37,11 @@ const getStyles = (styleSheet?: CSSStyleSheet) => {
       return Array.from(styleSheet.cssRules)
         .map((rule) => rule.cssText)
         .join("");
-    } catch (e) {
+    } catch (e: any) {
       console.warn(
         "Access to stylesheet %s is denied. Ignoring…",
-        styleSheet.href
+        styleSheet.href,
+        e.message
       );
     }
   }
@@ -260,7 +261,7 @@ const CopyHostStyles = ({
     });
 
     Promise.all(
-      collectedStyles.map(async (styleNode, i) => {
+      collectedStyles.map(async (styleNode) => {
         if (styleNode.nodeName === "LINK") {
           const linkHref = (styleNode as HTMLLinkElement).href;
 

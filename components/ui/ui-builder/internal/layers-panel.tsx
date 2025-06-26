@@ -88,22 +88,17 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
     removeLayer,
     duplicateLayer,
   }) => {
-    const [openIds, setOpenIds] = useState<Set<Id>>(new Set());
     const [openIdsArray, setOpenIdsArray] = useState<Id[]>([]);
 
     const prevSelectedLayerId = useRef(selectedLayerId);
 
     const handleNodeToggle = useCallback((id: Id, open: boolean) => {
-      setOpenIds((prev) => {
-        const newSet = new Set(prev);
+      setOpenIdsArray((prev) => {
         if (open) {
-          newSet.add(id);
+          return prev.includes(id) ? prev : [...prev, id];
         } else {
-          newSet.delete(id);
+          return prev.filter((existingId) => existingId !== id);
         }
-        // Update array representation for useHeTree
-        setOpenIdsArray(Array.from(newSet));
-        return newSet;
       });
     }, []);
 
@@ -266,21 +261,18 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
           selectedLayerId
         );
         const parentIds = parentLayers.map((layer) => layer.id);
-        setOpenIds((prevOpenIds) => {
-          const updatedSet = new Set(prevOpenIds);
+        setOpenIdsArray((prevOpenIds) => {
+          const newIds = [...prevOpenIds];
           let hasChanges = false;
+          
           parentIds.forEach((id) => {
-            if (!updatedSet.has(id)) {
-              updatedSet.add(id);
+            if (!newIds.includes(id)) {
+              newIds.push(id);
               hasChanges = true;
             }
           });
           
-          if (hasChanges) {
-            setOpenIdsArray(Array.from(updatedSet));
-          }
-          
-          return updatedSet;
+          return hasChanges ? newIds : prevOpenIds;
         });
       }
     }, [selectedLayerId, layers]);

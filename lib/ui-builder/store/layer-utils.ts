@@ -331,7 +331,9 @@ export const moveLayer = (
   targetPosition: number
 ): ComponentLayer[] => {
   let layerToMove: ComponentLayer | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let sourceParentId: string | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let sourcePosition: number = -1;
 
   // Find the layer to move and its current parent
@@ -363,7 +365,7 @@ export const moveLayer = (
 
   // Remove the layer from its current position
   const layersWithoutSource = layers.map(page =>
-    visitLayer(page, null, (layer, parent) => {
+    visitLayer(page, null, (layer) => {
       if (hasLayerChildren(layer)) {
         const updatedChildren = layer.children.filter(child => child.id !== sourceLayerId);
         return { ...layer, children: updatedChildren };

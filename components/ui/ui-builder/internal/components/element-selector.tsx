@@ -42,7 +42,6 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
   layer,
   isSelected,
   zIndex,
-  totalLayers,
   onSelectElement,
   onDuplicateLayer,
   onDeleteLayer,
@@ -251,7 +250,7 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
   // Handle transform updates with throttling
   useTransformEffect(
     useCallback(
-      ({ state, instance }) => {
+      () => {
         // Avoid duplicate updates if one is already pending
         if (transformUpdatePendingRef.current) return;
 

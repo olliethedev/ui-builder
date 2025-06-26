@@ -1,5 +1,5 @@
 import React from 'react';
-import { Variable, VariableReference, PropValue, isVariableReference } from '@/components/ui/ui-builder/types';
+import { Variable, PropValue, isVariableReference } from '@/components/ui/ui-builder/types';
 
 /**
  * Resolves variable references in props using provided variable values
