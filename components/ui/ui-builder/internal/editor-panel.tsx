@@ -22,7 +22,7 @@ import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/components/add-component-popover";
 import { Button } from "@/components/ui/button";
 import { ResizableWrapper } from "@/components/ui/ui-builder/internal/canvas/resizable-wrapper";
-import AutoFrame from "./canvas/auto-frame";
+import AutoFrame from "@/components/ui/ui-builder/internal/canvas/auto-frame";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 // Static style objects to prevent recreation on every render
