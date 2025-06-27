@@ -402,7 +402,8 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
     });
 
     // Listen to both parent window and iframe window events
-    const setupWindowListeners = (win: Window) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const setupWindowListeners = (win: Window, _: string) => {
       const windowScrollHandler = () => {
         measureElements();
       };
