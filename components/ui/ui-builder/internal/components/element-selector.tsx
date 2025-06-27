@@ -124,6 +124,7 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
     ) => {
       setBoundingRect(rect);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [layer.id]
   );
 
@@ -401,7 +402,7 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
     });
 
     // Listen to both parent window and iframe window events
-    const setupWindowListeners = (win: Window, context: string) => {
+    const setupWindowListeners = (win: Window) => {
       const windowScrollHandler = () => {
         measureElements();
       };
