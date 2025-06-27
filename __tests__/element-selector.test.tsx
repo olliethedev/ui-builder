@@ -11,6 +11,13 @@ const mockResizeObserver = {
 };
 (global as any).ResizeObserver = jest.fn(() => mockResizeObserver);
 
+// Mock MutationObserver
+const mockMutationObserver = {
+  observe: jest.fn(),
+  disconnect: jest.fn(),
+};
+(global as any).MutationObserver = jest.fn(() => mockMutationObserver);
+
 // Mock getBoundingClientRect
 Element.prototype.getBoundingClientRect = jest.fn(() => ({
   top: 100,
@@ -39,6 +46,56 @@ jest.mock('react-zoom-pan-pinch', () => ({
   })),
   TransformWrapper: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   TransformComponent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+// Mock floating UI
+jest.mock('@floating-ui/react', () => ({
+  useFloating: jest.fn(() => ({
+    refs: {
+      setReference: jest.fn(),
+      setFloating: jest.fn(),
+    },
+    floatingStyles: {},
+  })),
+  offset: jest.fn(),
+  autoUpdate: jest.fn(),
+  shift: jest.fn(),
+  limitShift: jest.fn(),
+}));
+
+// Mock AutoFrame context
+jest.mock('@/components/ui/ui-builder/internal/canvas/auto-frame', () => ({
+  useFrame: jest.fn(() => ({
+    document: document,
+    window: window,
+  })),
+}));
+
+// Mock DragHandleContext
+jest.mock('@/components/ui/ui-builder/internal/canvas/resizable-wrapper', () => ({
+  DragHandleContext: React.createContext({ dragging: false }),
+}));
+
+// Mock DND context
+jest.mock('@/lib/ui-builder/context/dnd-context', () => ({
+  useDndContext: jest.fn(() => ({
+    activeLayerId: null,
+  })),
+}));
+
+// Mock getScrollParent
+jest.mock('@/lib/ui-builder/utils/get-scroll-parent', () => ({
+  getScrollParent: jest.fn(() => document.body),
+}));
+
+// Mock LayerMenu component
+jest.mock('@/components/ui/ui-builder/internal/components/layer-menu', () => ({
+  LayerMenu: jest.fn(() => <div data-testid="layer-menu">Menu</div>),
+}));
+
+// Mock DragHandle component
+jest.mock('@/components/ui/ui-builder/internal/dnd/drag-handle', () => ({
+  DragHandle: jest.fn(() => <div data-testid="drag-handle">Handle</div>),
 }));
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -88,7 +145,7 @@ describe("ElementSelector", () => {
     );
     
     await waitFor(() => {
-      const overlay = document.querySelector('.absolute.box-border');
+      const overlay = document.querySelector('.fixed.box-border');
       expect(overlay).toBeInTheDocument();
     });
   }, 10000);
@@ -104,11 +161,11 @@ describe("ElementSelector", () => {
     );
     
     await waitFor(() => {
-      const overlay = document.querySelector('.absolute.box-border');
+      const overlay = document.querySelector('.fixed.box-border');
       expect(overlay).toBeInTheDocument();
     });
 
-    const overlay = document.querySelector('.absolute.box-border') as HTMLElement;
+    const overlay = document.querySelector('.fixed.box-border') as HTMLElement;
     
     // Simulate a simple click
     fireEvent.click(overlay);
@@ -143,11 +200,11 @@ describe("ElementSelector", () => {
     );
     
     await waitFor(() => {
-      const overlay = document.querySelector('.absolute.box-border');
+      const overlay = document.querySelector('.fixed.box-border');
       expect(overlay).toBeInTheDocument();
     });
 
-    const overlay = document.querySelector('.absolute.box-border') as HTMLElement;
+    const overlay = document.querySelector('.fixed.box-border') as HTMLElement;
     fireEvent.mouseEnter(overlay);
     
     await waitFor(() => {
@@ -178,7 +235,7 @@ describe("ElementSelector", () => {
       </TestWrapper>
     );
     
-    const overlay = document.querySelector('.absolute.box-border');
+    const overlay = document.querySelector('.fixed.box-border');
     expect(overlay).not.toBeInTheDocument();
   });
 
