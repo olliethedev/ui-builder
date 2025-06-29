@@ -190,7 +190,7 @@ export const BreakpointClassNameControl = ({
             className="text-sm"
             data-testid="classes-accordion-trigger"
           >
-            Edit Classes
+            Edit All Classes
           </AccordionTrigger>
             <AccordionContent
               data-testid="classes-accordion-content"

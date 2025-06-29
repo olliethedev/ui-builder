@@ -67,12 +67,14 @@ const CodeContent = ({
       </TabsContent>
       <TabsContent value="serialized">
         <div className="space-y-4">
+          {codeBlocks.variables!=='[]' && (
           <div className="relative">
             <Label>Variables</Label>
             <div className="overflow-auto max-h-[200px] w-full">
               <CodeBlock language="json" value={codeBlocks.variables} />
             </div>
           </div>
+          )}
           <div className="relative">
             <Label>Layers</Label>
             <div className="overflow-auto max-h-[200px] w-full">

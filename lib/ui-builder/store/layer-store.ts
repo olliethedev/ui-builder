@@ -11,7 +11,7 @@ import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 import { ComponentLayer, Variable, PropValue, VariableValueType, isVariableReference } from '@/components/ui/ui-builder/types';
 
 const DEFAULT_PAGE_PROPS = {
-  className: "p-4 flex flex-col gap-2",
+  className: "h-screen p-4 flex flex-col gap-2 bg-background overflow-y-scroll",
 };
 
 export interface LayerStore {
@@ -151,6 +151,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       const updatedPages = addLayer(state.pages, newLayer, parentId, parentPosition);
       // Directly mutate the state instead of returning a new object
       state.pages = updatedPages;
+      state.selectedLayerId = newLayer.id;
     })),
 
     addPageLayer: (pageName: string) => set(produce((state: LayerStore) => {

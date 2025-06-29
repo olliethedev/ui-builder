@@ -55,6 +55,12 @@ jest.mock('@/lib/ui-builder/store/layer-utils', () => ({
   hasLayerChildren: jest.fn(),
 }));
 
+// Mock schema-utils
+jest.mock('@/lib/ui-builder/store/schema-utils', () => ({
+  hasAnyChildrenField: jest.fn(),
+  hasChildrenFieldOfTypeString: jest.fn(),
+}));
+
 const mockUseEditorStore = useEditorStore as jest.MockedFunction<typeof useEditorStore>;
 const mockUseLayerStore = useLayerStore as jest.MockedFunction<typeof useLayerStore>;
 
@@ -117,14 +123,23 @@ describe('TreeRowNode', () => {
     } as NodeAttrs,
   };
 
+  const createMockRegistry = (componentType: string, hasChildren = true, childrenIsString = false) => ({
+    [componentType]: {
+      schema: {
+        shape: hasChildren ? { children: 'mock-children-field' } : {}
+      }
+    }
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     
-    // Mock EditorStore  
+    // Mock EditorStore with registry
     mockUseEditorStore.mockImplementation((selector) => {
       const state = {
         allowPagesCreation: true,
         allowPagesDeletion: true,
+        registry: createMockRegistry('div', true, false),
       };
       return selector(state as any);
     });
@@ -144,6 +159,11 @@ describe('TreeRowNode', () => {
     hasLayerChildren.mockImplementation((layer: ComponentLayer) => {
       return Array.isArray(layer.children) && typeof layer.children !== 'string';
     });
+
+    // Mock schema-utils functions
+    const { hasAnyChildrenField, hasChildrenFieldOfTypeString } = require('@/lib/ui-builder/store/schema-utils');
+    hasAnyChildrenField.mockReturnValue(true);
+    hasChildrenFieldOfTypeString.mockReturnValue(false);
   });
 
   describe('Basic Rendering', () => {
@@ -266,19 +286,84 @@ describe('TreeRowNode', () => {
   });
 
   describe('Add Component Functionality', () => {
-    it('should show add component button for nodes with children', () => {
-      render(<TreeRowNode {...defaultProps} node={mockNodeWithChildren} />);
+    it('should show add component button when component schema allows children', () => {
+      // Mock registry with a component that has children field
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          allowPagesCreation: true,
+          allowPagesDeletion: true,
+          registry: createMockRegistry('div', true, false),
+        };
+        return selector(state as any);
+      });
 
-      // Look for the button with screen reader text "Add component"
-      const addButton = screen.getByRole('button', { name: /add component/i });
-      expect(addButton).toBeInTheDocument();
-    });
+      const { hasAnyChildrenField, hasChildrenFieldOfTypeString } = require('@/lib/ui-builder/store/schema-utils');
+      hasAnyChildrenField.mockReturnValue(true);
+      hasChildrenFieldOfTypeString.mockReturnValue(false);
 
-    it('should show add component button for nodes that can accept children', () => {
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
 
       const addButton = screen.queryByRole('button', { name: /add component/i });
       expect(addButton).toBeInTheDocument();
+    });
+
+    it('should not show add component button when component schema has string children', () => {
+      // Mock registry with a component that has string children field
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          allowPagesCreation: true,
+          allowPagesDeletion: true,
+          registry: createMockRegistry('div', true, true),
+        };
+        return selector(state as any);
+      });
+
+      const { hasAnyChildrenField, hasChildrenFieldOfTypeString } = require('@/lib/ui-builder/store/schema-utils');
+      hasAnyChildrenField.mockReturnValue(true);
+      hasChildrenFieldOfTypeString.mockReturnValue(true);
+
+      render(<TreeRowNode {...defaultProps} node={mockNode} />);
+
+      const addButton = screen.queryByRole('button', { name: /add component/i });
+      expect(addButton).not.toBeInTheDocument();
+    });
+
+    it('should not show add component button when component schema has no children field', () => {
+      // Mock registry with a component that has no children field
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          allowPagesCreation: true,
+          allowPagesDeletion: true,
+          registry: createMockRegistry('div', false, false),
+        };
+        return selector(state as any);
+      });
+
+      const { hasAnyChildrenField, hasChildrenFieldOfTypeString } = require('@/lib/ui-builder/store/schema-utils');
+      hasAnyChildrenField.mockReturnValue(false);
+      hasChildrenFieldOfTypeString.mockReturnValue(false);
+
+      render(<TreeRowNode {...defaultProps} node={mockNode} />);
+
+      const addButton = screen.queryByRole('button', { name: /add component/i });
+      expect(addButton).not.toBeInTheDocument();
+    });
+
+    it('should not show add component button when component not found in registry', () => {
+      // Mock registry without the component type
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          allowPagesCreation: true,
+          allowPagesDeletion: true,
+          registry: {},
+        };
+        return selector(state as any);
+      });
+
+      render(<TreeRowNode {...defaultProps} node={mockNode} />);
+
+      const addButton = screen.queryByRole('button', { name: /add component/i });
+      expect(addButton).not.toBeInTheDocument();
     });
   });
 
@@ -305,6 +390,7 @@ describe('TreeRowNode', () => {
         const state = {
           allowPagesCreation: true,
           allowPagesDeletion: true,
+          registry: createMockRegistry('div', true, false),
         };
         return selector(state as any);
       });
@@ -322,6 +408,7 @@ describe('TreeRowNode', () => {
         const state = {
           allowPagesCreation: false,
           allowPagesDeletion: true,
+          registry: createMockRegistry('div', true, false),
         };
         return selector(state as any);
       });
@@ -339,6 +426,7 @@ describe('TreeRowNode', () => {
         const state = {
           allowPagesCreation: true,
           allowPagesDeletion: true,
+          registry: createMockRegistry('div', true, false),
         };
         return selector(state as any);
       });
@@ -356,6 +444,7 @@ describe('TreeRowNode', () => {
         const state = {
           allowPagesCreation: true,
           allowPagesDeletion: false,
+          registry: createMockRegistry('div', true, false),
         };
         return selector(state as any);
       });

@@ -297,6 +297,23 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
     }
   }, [previewMode]);
 
+  const heightClass = useMemo(() => {
+    if (previewMode === "responsive") {
+      return "";
+    } else if (previewMode === "mobile") {
+      // iPhone 13 / 14 viewport: 390×844
+      return "h-[844px]";
+    } else if (previewMode === "tablet") {
+      // iPad portrait viewport: 768×1024
+      return "h-[1024px]";
+    } else if (previewMode === "desktop") {
+      // MacBook Air 13" viewport: 1440×900
+      return "h-[900px]";
+    } else {
+      return "h-full";
+    }
+  }, [previewMode]);
+
 
   // Memoize ResizableWrapper props
   const resizableProps = useMemo(() => ({
@@ -308,13 +325,14 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
   // Memoize AutoFrame props
   const autoFrameProps = useMemo(() => ({
     height: frameSize.height,
-    className: cn("shadow-lg", widthClass),
+    className: cn("shadow-lg", widthClass, heightClass),
     frameRef: frameRef,
     pointerEventsEnabled: pointerEventsEnabled
-  }), [frameSize.height, widthClass, frameRef, pointerEventsEnabled]);
+  }), [frameSize.height, widthClass, heightClass, frameRef, pointerEventsEnabled]);
 
   // Memoize LayerRenderer props
   const layerRendererProps = useMemo(() => ({
+    className: "contents",
     page: selectedPage,
     editorConfig: editorConfig,
     componentRegistry: componentRegistry

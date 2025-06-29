@@ -130,7 +130,7 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
 
   return (
     <>
-      <MeasureRange debug={true} onChange={handleBoundingRectChange}>
+      <MeasureRange debug={false} onChange={handleBoundingRectChange}>
         {children}
       </MeasureRange>
 
@@ -199,7 +199,7 @@ export interface MeasureRangeProps {
 
 const MIN_SIZE = 5;
 
-const MIN_CHANGE_THRESHOLD = 0.2;
+const MIN_CHANGE_THRESHOLD = 0;
 
 export const MeasureRange: React.FC<MeasureRangeProps> = ({
   onChange,
@@ -240,7 +240,6 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
 
       const elements = elementsRef.current;
       if (elements.length === 0) {
-        console.warn(`[MeasureRange] No elements found`);
         return;
       }
 

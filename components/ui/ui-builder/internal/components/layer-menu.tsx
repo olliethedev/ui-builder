@@ -5,7 +5,7 @@ import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/components/add-component-popover";
 import { cn } from "@/lib/utils";
-import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
+import { hasAnyChildrenField, hasChildrenFieldOfTypeString } from "@/lib/ui-builder/store/schema-utils";
 
 interface MenuProps {
   layerId: string;
@@ -47,12 +47,11 @@ export const LayerMenu: React.FC<MenuProps> = ({
     if (!componentDef) return false;
 
     // Safely check if schema has shape property (ZodObject) and children field
-    const hasChildrenField =
+    const canAddChildren =
       "shape" in componentDef.schema &&
-      componentDef.schema.shape &&
-      componentDef.schema.shape.children !== undefined;
+      hasAnyChildrenField(componentDef.schema) && !hasChildrenFieldOfTypeString(componentDef.schema);
 
-    return hasLayerChildren(selectedLayer) && hasChildrenField;
+    return canAddChildren;
   }, [selectedLayer, componentRegistry]);
 
   return (

@@ -15,7 +15,7 @@ const extendedPrimitiveDefinitions: ComponentRegistry = {
   'h1': {
     schema: z.object({
       className: z.string().optional(),
-      children: z.any().optional(),
+      children: z.string().optional(),
     }),
     fieldOverrides: {
       ...commonFieldOverrides(),
@@ -26,7 +26,7 @@ const extendedPrimitiveDefinitions: ComponentRegistry = {
   'h2': {
     schema: z.object({
       className: z.string().optional(),
-      children: z.any().optional(),
+      children: z.string().optional(),
     }),
     fieldOverrides: {
       ...commonFieldOverrides(),
@@ -37,7 +37,7 @@ const extendedPrimitiveDefinitions: ComponentRegistry = {
   'h3': {
     schema: z.object({
       className: z.string().optional(),
-      children: z.any().optional(),
+      children: z.string().optional(),
     }),
     fieldOverrides: {
       ...commonFieldOverrides(),
@@ -48,7 +48,7 @@ const extendedPrimitiveDefinitions: ComponentRegistry = {
   'p': {
     schema: z.object({
       className: z.string().optional(),
-      children: z.any().optional(),
+      children: z.string().optional(),
     }),
     fieldOverrides: {
       ...commonFieldOverrides(),
@@ -59,7 +59,7 @@ const extendedPrimitiveDefinitions: ComponentRegistry = {
   'li': {
     schema: z.object({
       className: z.string().optional(),
-      children: z.any().optional(),
+      children: z.string().optional(),
     }),
     fieldOverrides: {
       ...commonFieldOverrides(),
@@ -70,14 +70,14 @@ const extendedPrimitiveDefinitions: ComponentRegistry = {
   'ul': {
     schema: z.object({
       className: z.string().optional(),
-      children: z.any().optional(),
+      children: z.string().optional(),
     }),
     fieldOverrides: commonFieldOverrides()
   },
   'ol': {
     schema: z.object({
       className: z.string().optional(),
-      children: z.any().optional(),
+      children: z.string().optional(),
     }),
     fieldOverrides: commonFieldOverrides()
   }

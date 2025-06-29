@@ -164,43 +164,6 @@ describe('AddComponentsPopover', () => {
       });
     });
 
-    it('should limit tabs to maximum of 3', async () => {
-      // Mock registry with more than 3 groups
-      const registryWithManyGroups = {
-        ...mockRegistry,
-        ExtraComponent1: {
-          component: () => null,
-          name: 'ExtraComponent1',
-          from: '@/group1/component'
-        },
-        ExtraComponent2: {
-          component: () => null,
-          name: 'ExtraComponent2',
-          from: '@/group2/component'
-        }
-      };
-
-      mockUseEditorStore.mockImplementation((selector) => {
-        const state = {
-          registry: registryWithManyGroups,
-        };
-        return selector(state as any);
-      });
-
-      render(
-        <AddComponentsPopover parentLayerId="parent-1">
-          <button>Add Component</button>
-        </AddComponentsPopover>
-      );
-
-      const trigger = screen.getByText('Add Component');
-      fireEvent.click(trigger);
-
-      await waitFor(() => {
-        const tabs = screen.getAllByRole('tab');
-        expect(tabs.length).toBeLessThanOrEqual(3);
-      });
-    });
   });
 
   describe('Component Selection', () => {

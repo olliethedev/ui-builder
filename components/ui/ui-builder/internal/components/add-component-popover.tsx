@@ -130,8 +130,8 @@ export function AddComponentsPopover({
           {categories.length > 0 ? (
             <Tabs defaultValue={defaultTab} className="w-full">
               <TabsList className={cn(categories.length > 1 ? "h-14 w-full rounded-none border-b flex flex-row overflow-x-scroll justify-start": "hidden")}>
-                {categories.slice(0, 3).map((category) => (
-                  <TabsTrigger key={category} value={category} className="flex flex-col justify-start items-start overflow-hidden px-2 py-1 min-w-24 min-h-11">
+                {categories.map((category) => (
+                  <TabsTrigger key={category} value={category} className="flex flex-col justify-start items-start overflow-hidden px-2 py-1 min-w-24 min-h-11 flex-shrink-0">
                     <div className="text-sm">{formatCategoryName(category)}</div>
                     <div className="w-full min-h-[12px] text-[8px] leading-[9px] text-left text-muted-foreground text-wrap">{category}</div>
                     

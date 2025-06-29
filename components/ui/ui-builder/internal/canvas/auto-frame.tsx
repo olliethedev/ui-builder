@@ -410,7 +410,7 @@ const AutoFrame = forwardRef<HTMLIFrameElement, AutoFrameProps>(({
       className={className}
       id={id}
       data-testid="auto-frame"
-      srcDoc='<!DOCTYPE html><html><head></head><body><div id="frame-root" data-autoform-entry></div></body></html>'
+      srcDoc='<!DOCTYPE html><html><head></head><body><div id="frame-root" data-autoform-entry style="display: contents;"></div></body></html>'
       ref={ref}
       style={iframeStyle}
       onLoad={handleLoad}

@@ -21,6 +21,7 @@ import {
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/components/add-component-popover";
 import { NameEdit } from "@/components/ui/ui-builder/internal/components/name-edit";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
+import { hasAnyChildrenField, hasChildrenFieldOfTypeString } from "@/lib/ui-builder/store/schema-utils";
 
 interface TreeRowNodeProps {
   node: ComponentLayer;
@@ -58,6 +59,8 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
   duplicateLayer,
   updateLayer,
 }) => {
+  const componentRegistry = useEditorStore((state) => state.registry);
+
   const [isRenaming, setIsRenaming] = useState(false);
 
   const [popoverOrMenuOpen, setPopoverOrMenuOpen] = useState(false);
@@ -100,6 +103,20 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
   const handleCancelRename = useCallback(() => {
     setIsRenaming(false);
   }, []);
+
+  const canRenderAddChild = useMemo(() => {
+
+    const componentDef =
+      componentRegistry[node.type as keyof typeof componentRegistry];
+    if (!componentDef) return false;
+
+    // Safely check if schema has shape property (ZodObject) and children field
+    const canAddChildren =
+      "shape" in componentDef.schema &&
+      hasAnyChildrenField(componentDef.schema) && !hasChildrenFieldOfTypeString(componentDef.schema);
+
+    return canAddChildren;
+  }, [node, componentRegistry]);
 
   const { key, ...rest } = nodeAttributes;
 
@@ -157,7 +174,7 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
           {node.name}
         </Button>
       )}
-      {hasLayerChildren(node) && (
+      {canRenderAddChild && (
         <AddComponentsPopover
           parentLayerId={node.id}
           onOpenChange={setPopoverOrMenuOpen}

@@ -93,14 +93,14 @@ export const CONFIG: ConfigType = {
     label: "Width",
     possibleTypes: [
       null,
-      ...filterClassnameArray(TAILWIND_AUTO_WIDTH_CLASSES, ["w-full","w-auto"] as const),
+      ...filterClassnameArray(TAILWIND_AUTO_WIDTH_CLASSES, ["w-full","w-max"] as const),
       ...TAILWIND_FIXED_WIDTH_CLASSES,
       ...TAILWIND_PERCENTAGE_WIDTH_CLASSES,
     ] as const,
     component: ToggleGroup,
     options: [
       { value: "w-full", tooltip: "Fill (w-full)", icon: <FillIcon /> },
-      { value: "w-auto", tooltip: "Hug (w-auto)", icon: <HugIcon /> },
+      { value: "w-max", tooltip: "Hug (w-max)", icon: <HugIcon /> },
       {
         value: "_w-fixed",
         label: "Fixed",
@@ -137,7 +137,7 @@ export const CONFIG: ConfigType = {
     ] as const,
     component: ToggleGroup,
     options: [
-      { value: "h-full", tooltip: "Fill (h-auto)", icon: <FillIcon className="rotate-90" /> },
+      { value: "h-full", tooltip: "Fill (h-full)", icon: <FillIcon className="rotate-90" /> },
       { value: "h-auto", tooltip: "Hug (h-auto)", icon: <HugIcon className="rotate-90" /> },
       {
         value: "_h-fixed",

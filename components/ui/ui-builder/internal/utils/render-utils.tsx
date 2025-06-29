@@ -191,7 +191,7 @@ export const RenderLayer: React.FC<{
       return (
         <DevProfiler
           id={layer.type}
-          threshold={10}
+          threshold={20}
         >
           <ElementSelector
             key={layer.id}
