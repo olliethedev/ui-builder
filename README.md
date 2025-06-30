@@ -21,7 +21,7 @@ How it unlocks novel product features:
 
 See the [docs site](https://uibuilder.app/) for more information.
 
-![UI Builder Demo](./public/demo.png)
+![UI Builder Demo](./public/demo.gif)
 
 ---
 
