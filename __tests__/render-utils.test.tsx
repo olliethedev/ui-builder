@@ -2,14 +2,14 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import {
   RenderLayer,
-} from "../components/ui/ui-builder/internal/render-utils";
+} from "../components/ui/ui-builder/internal/utils/render-utils";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
-import { BaseColor, baseColors } from "../components/ui/ui-builder/internal/base-colors";
+import { BaseColor, baseColors } from "../components/ui/ui-builder/internal/utils/base-colors";
 import { z } from "zod";
 // Mock dependencies
 
-jest.mock("../components/ui/ui-builder/internal/clickable-wrapper", () => ({
-  ClickableWrapper: ({ children }: { children: React.ReactNode }) => (
+jest.mock("../components/ui/ui-builder/internal/components/element-selector", () => ({
+  ElementSelector: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
 }));

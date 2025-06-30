@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { DevProfiler } from "@/components/ui/ui-builder/internal/dev-profiler";
+import { DevProfiler } from "@/components/ui/ui-builder/internal/components/dev-profiler";
 
 // Mock console.log to capture profiler output
 const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});

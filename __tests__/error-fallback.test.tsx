@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { ErrorFallback } from "@/components/ui/ui-builder/internal/error-fallback";
+import { ErrorFallback } from "@/components/ui/ui-builder/internal/components/error-fallback";
 
 describe("ErrorFallback", () => {
   it("renders error message", () => {

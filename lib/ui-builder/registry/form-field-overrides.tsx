@@ -1,16 +1,17 @@
+import React from "react";
 import {
   FormControl,
   FormDescription,
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import { ChildrenSearchableSelect } from "@/components/ui/ui-builder/internal/children-searchable-select";
+import { ChildrenSearchableSelect } from "@/components/ui/ui-builder/internal/form-fields/children-searchable-select";
 import {
   AutoFormInputComponentProps,
   ComponentLayer,
   FieldConfigFunction,
 } from "@/components/ui/ui-builder/types";
-import IconNameField from "@/components/ui/ui-builder/internal/iconname-field";
+import IconNameField from "@/components/ui/ui-builder/internal/form-fields/iconname-field";
 import { Textarea } from "@/components/ui/textarea";
 import { MinimalTiptapEditor } from "@/components/ui/minimal-tiptap";
 import {
@@ -31,21 +32,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { useEditorStore } from "../store/editor-store";
 import { Card, CardContent } from "@/components/ui/card";
-import BreakpointClassNameControl from "@/components/ui/ui-builder/internal/classname-control";
+import BreakpointClassNameControl from "@/components/ui/ui-builder/internal/form-fields/classname-control";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
 export const classNameFieldOverrides: FieldConfigFunction = (
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   layer,
-  allowBinding = false
 ) => {
   return {
     fieldType: ({
       label,
       isRequired,
       field,
-      fieldProps,
       fieldConfigItem,
     }: AutoFormInputComponentProps) => (
       <FormFieldWrapper
@@ -65,7 +64,6 @@ export const classNameFieldOverrides: FieldConfigFunction = (
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const childrenFieldOverrides: FieldConfigFunction = (
   layer,
-  allowBinding = false
 ) => {
   return {
     fieldType: ({
@@ -110,8 +108,7 @@ export const iconNameFieldOverrides: FieldConfigFunction = (layer) => {
 };
 
 export const childrenAsTextareaFieldOverrides: FieldConfigFunction = (
-  layer,
-  allowBinding = false
+  layer
 ) => {
   return {
     fieldType: ({
@@ -138,7 +135,6 @@ export const childrenAsTextareaFieldOverrides: FieldConfigFunction = (
 
 export const childrenAsTipTapFieldOverrides: FieldConfigFunction = (
   layer,
-  allowBinding = false
 ) => {
   return {
     fieldType: ({
@@ -175,11 +171,21 @@ export const childrenAsTipTapFieldOverrides: FieldConfigFunction = (
   };
 };
 
+// Memoized common field overrides to avoid recreating objects
+const memoizedCommonFieldOverrides = new Map<boolean, Record<string, FieldConfigFunction>>();
+
 export const commonFieldOverrides = (allowBinding = false) => {
-  return {
+  if (memoizedCommonFieldOverrides.has(allowBinding)) {
+    return memoizedCommonFieldOverrides.get(allowBinding)!;
+  }
+  
+  const overrides = {
     className: (layer: ComponentLayer) => classNameFieldOverrides(layer),
     children: (layer: ComponentLayer) => childrenFieldOverrides(layer),
   };
+  
+  memoizedCommonFieldOverrides.set(allowBinding, overrides);
+  return overrides;
 };
 
 export const commonVariableRenderParentOverrides = (propName: string) => {
@@ -225,17 +231,6 @@ export const textInputFieldOverrides = (
     ),
   };
 };
-
-export const renderParentWithVariableBinding = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => (
-  <div className="flex bg-red-500">
-    {children}
-    <div>YO!</div>
-  </div>
-);
 
 export function VariableBindingWrapper({
   propName,

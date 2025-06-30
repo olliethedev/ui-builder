@@ -2,14 +2,14 @@ import { ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Flexbox } from '@/components/ui/ui-builder/flexbox';
-import { Grid } from '@/components/ui/ui-builder/grid';
-import { CodePanel } from '@/components/ui/ui-builder/code-panel';
-import { Markdown } from "@/components/ui/ui-builder/markdown";
-import { Icon, iconNames } from "@/components/ui/ui-builder/icon";
+import { Flexbox } from '@/components/ui/ui-builder/components/flexbox';
+import { Grid } from '@/components/ui/ui-builder/components/grid';
+import { CodePanel } from '@/components/ui/ui-builder/components/code-panel';
+import { Markdown } from "@/components/ui/ui-builder/components/markdown";
+import { Icon, iconNames } from "@/components/ui/ui-builder/components/icon";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { classNameFieldOverrides, childrenFieldOverrides, iconNameFieldOverrides, commonFieldOverrides, childrenAsTipTapFieldOverrides, textInputFieldOverrides, commonVariableRenderParentOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { classNameFieldOverrides, childrenFieldOverrides, iconNameFieldOverrides, commonFieldOverrides, childrenAsTipTapFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 export const complexComponentDefinitions: ComponentRegistry = {

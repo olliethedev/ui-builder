@@ -158,7 +158,7 @@ const AddVariableForm: React.FC<AddVariableFormProps> = ({
         parsedValue = defaultValue.toLowerCase() === "true";
       }
     } catch (e) {
-      // Keep as string if parsing fails
+      console.warn("Error parsing variable value, keeping as string", e);
     }
 
     onSave(name, type, parsedValue);
@@ -308,7 +308,7 @@ const VariableCard: React.FC<VariableCardProps> = ({
         parsedValue = defaultValue.toLowerCase() === "true";
       }
     } catch (e) {
-      // Keep as string if parsing fails
+      console.warn("Error parsing variable value, keeping as string", e);
     }
 
     onSave(variable.id, { name, type, defaultValue: parsedValue });
