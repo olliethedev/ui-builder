@@ -235,7 +235,7 @@ function MainLayout({ panelConfig }: { panelConfig: PanelConfig }) {
   return (
     <div
       data-testid="component-editor"
-      className="flex flex-col w-full flex-grow h-screen"
+      className="flex flex-col w-full flex-grow h-dvh"
     >
       {panelConfig.navBar}
       {/* Desktop Layout */}
