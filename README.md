@@ -21,7 +21,7 @@ How it unlocks novel product features:
 
 See the [docs site](https://uibuilder.app/) for more information.
 
-![UI Builder Demo](./public/demo.png)
+![UI Builder Demo](./public/demo.gif)
 
 ---
 
@@ -588,6 +588,10 @@ Separate content from structure, allowing non-technical users to update dynamic 
 
 
 ## Breaking Changes
+
+### v2.0.0
+- Internal structure of the editor directory has changed. When calling shadcn add, you will need to manually delete old files in /ui-builder and /lib/ui-builder directories.
+- Many components have been refactored to support drag and drop functionality and the new canvas.
 
 ### v1.0.0
 - Removed _page_ layer type in favor of using any component type (like `div`, `main`, or custom containers) as the root page layer. This enhances flexibility, enabling use cases like building react-email templates directly. You should migrate any layers stored in the database to use a standard component type as the root. The [migrateV2ToV3](lib/ui-builder/store/layer-utils.ts) function in `layer-utils.ts` can assist with this migration.
