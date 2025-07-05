@@ -16,21 +16,21 @@ export function ThemeAwareDropdownOption({
   color?: string;
   children: ReactNode;
 }) {
-  const  selectedPageId = useLayerStore( state => state.selectedPageId);
-  const findLayerById = useLayerStore( state => state.findLayerById);
-  
+  const selectedPageId = useLayerStore(state => state.selectedPageId);
+  const findLayerById = useLayerStore(state => state.findLayerById);
+
   // Get current theme information
   const selectedPageData = findLayerById(selectedPageId) as ComponentLayer;
   const currentTheme = selectedPageData?.props?.["data-color-theme"];
   const currentMode = selectedPageData?.props?.["data-mode"] || "light";
-  
-  
+
+
   // Resolve the actual color value
   const getResolvedColor = (colorClass?: string): string | undefined => {
     if (!colorClass) {
       return undefined;
     }
-    
+
     // Check if this is a theme color by trying to strip known prefixes
     let themeColorKey: string | undefined;
     for (const prefix of THEME_COLOR_PREFIXES) {
@@ -39,18 +39,18 @@ export function ThemeAwareDropdownOption({
         break;
       }
     }
-    
+
     if (themeColorKey && currentTheme) {
       try {
         // Find the current theme data
         const themeData = baseColors.find((theme) => theme.name === currentTheme);
-        
+
         if (themeData?.cssVars) {
           const modeColors = themeData.cssVars[currentMode as "light" | "dark"];
-          
+
           if (modeColors) {
             const colorValue = (modeColors as any)[themeColorKey];
-            
+
             if (colorValue) {
               const hslColor = `hsl(${colorValue})`;
               return hslColor;
@@ -62,7 +62,7 @@ export function ThemeAwareDropdownOption({
         console.warn(`Failed to resolve theme color for ${colorClass}:`, error);
       }
     }
-    
+
     // Fallback to using the Tailwind class (for non-theme colors like bg-red-500)
     return undefined;
   };
@@ -70,7 +70,7 @@ export function ThemeAwareDropdownOption({
   const resolvedColor = getResolvedColor(color);
 
   const style = useMemo(() => ({ backgroundColor: resolvedColor }), [resolvedColor]);
-  
+
 
   return (
     <div className="flex flex-row items-center justify-start text-center w-full">
@@ -81,7 +81,7 @@ export function ThemeAwareDropdownOption({
             // Use resolved color as inline style if available, otherwise fall back to class
             !resolvedColor && color
           )}
-          style={resolvedColor ? style : undefined}
+        // style={resolvedColor ? style : undefined}
         />
       )}
       <span className="text-xs text-muted-foreground">{children}</span>

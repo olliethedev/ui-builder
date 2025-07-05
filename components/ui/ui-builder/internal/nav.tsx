@@ -74,6 +74,7 @@ import {
   useKeyboardShortcuts,
 } from "@/hooks/use-keyboard-shortcuts";
 import { useStore } from "zustand";
+import ExportButton from "../ExportButton";
 
 const Z_INDEX = 1000;
 
@@ -86,6 +87,7 @@ export function NavBar({ useCanvas }: NavBarProps) {
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const componentRegistry = useEditorStore((state) => state.registry);
   const incrementRevision = useEditorStore((state) => state.incrementRevision);
+  const pages = useLayerStore((state) => state.pages);
 
   // Fix: Subscribe to temporal state changes using useStoreWithEqualityFn
   const pastStates = useStore(
@@ -175,6 +177,8 @@ export function NavBar({ useCanvas }: NavBarProps) {
         <h1 className="block text-lg md:text-2xl font-bold whitespace-nowrap">
           UI Builder
         </h1>
+        <ExportButton pageData={pages} projectName="casino-pages" />
+
         <div className="flex h-10 w-px bg-border"></div>
         <PagesPopover />
         {useCanvas && <PreviewModeToggle />}
