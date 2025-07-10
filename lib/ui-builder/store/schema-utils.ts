@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { z, ZodObject, ZodTypeAny, ZodDate, ZodNumber, ZodEnum, ZodOptional, ZodNullable, ZodDefault, ZodArray, ZodRawShape, ZodLiteral, ZodUnion, ZodTuple } from 'zod';
+import { z, ZodObject, ZodTypeAny, ZodDate, ZodNumber, ZodEnum, ZodOptional, ZodNullable, ZodDefault, ZodArray, ZodRawShape, ZodLiteral, ZodUnion, ZodTuple, ZodString, ZodAny } from 'zod';
 
 /**
  * Generates default props based on the provided Zod schema.
@@ -249,4 +249,40 @@ export function addDefaultValues<T extends ZodObject<any>>(
   }
 
   return z.object(updatedShape) as T;
+}
+
+/**
+ * Checks if a Zod schema has a children field of type ANY
+ */
+export function hasAnyChildrenField(schema: ZodObject<any>): boolean {
+    const shape = schema.shape;
+    if (!shape.children) {
+        return false;
+    }
+    
+    // Unwrap optional and nullable wrappers to get the inner type
+    let childrenSchema = shape.children;
+    while (childrenSchema instanceof ZodOptional || childrenSchema instanceof ZodNullable) {
+        childrenSchema = childrenSchema.unwrap();
+    }
+    
+    return childrenSchema instanceof ZodAny;
+}
+
+/**
+* Checks if a Zod schema has a children field of type String
+*/
+export function hasChildrenFieldOfTypeString(schema: ZodObject<any>): boolean {
+    const shape = schema.shape;
+    if (!shape.children) {
+        return false;
+    }
+    
+    // Unwrap optional and nullable wrappers to get the inner type
+    let childrenSchema = shape.children;
+    while (childrenSchema instanceof ZodOptional || childrenSchema instanceof ZodNullable) {
+        childrenSchema = childrenSchema.unwrap();
+    }
+    
+    return childrenSchema instanceof ZodString;
 }

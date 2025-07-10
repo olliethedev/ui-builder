@@ -2,10 +2,10 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ClassNameItemControl } from "@/components/ui/ui-builder/internal/classname-control/classname-item-control";
+import { ClassNameItemControl } from "@/components/ui/ui-builder/internal/form-fields/classname-control/classname-item-control";
 
 // Mock the dependencies
-jest.mock("@/components/ui/ui-builder/internal/classname-control/config", () => ({
+jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/config", () => ({
   CONFIG: {
     width: {
       label: "Width",
@@ -231,7 +231,7 @@ jest.mock("@/components/ui/ui-builder/internal/classname-control/config", () => 
   StateType: {} as any,
 }));
 
-jest.mock("@/components/ui/ui-builder/internal/classname-control/classname-group-control", () => ({
+jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/classname-group-control", () => ({
   ClassNameGroupControl: ({ group, selectedKey, handleStateChange, handleGroupKeySelect }: any) => (
     <div data-testid={`group-control-${group.label.toLowerCase().replace(/\s+/g, '-')}`}>
       <span data-testid="group-label">{group.label}</span>
@@ -256,7 +256,7 @@ jest.mock("@/components/ui/ui-builder/internal/classname-control/classname-group
   ),
 }));
 
-jest.mock("@/components/ui/ui-builder/internal/classname-control/utils", () => ({
+jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/utils", () => ({
   isTailwindClass: jest.fn((arr: string[], token: string) => arr.includes(token)),
 }));
 

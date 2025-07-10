@@ -53,7 +53,7 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
   'span': {
     schema: z.object({
         className: z.string().optional(),
-        children: z.any().optional(),
+        children: z.string().optional(),
     }),
     fieldOverrides: {
         className:(layer)=> classNameFieldOverrides(layer),

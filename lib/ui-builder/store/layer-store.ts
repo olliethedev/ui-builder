@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { create, StateCreator } from 'zustand';
-import { persist, createJSONStorage, StorageValue } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import { produce } from 'immer';
 import { temporal } from 'zundo';
 import isDeepEqual from 'fast-deep-equal';
 
-import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3, createComponentLayer } from '@/lib/ui-builder/store/layer-utils';
+import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3, createComponentLayer, moveLayer } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 import { ComponentLayer, Variable, PropValue, VariableValueType, isVariableReference } from '@/components/ui/ui-builder/types';
 
 const DEFAULT_PAGE_PROPS = {
-  className: "p-4 flex flex-col gap-2",
+  className: "h-screen p-4 flex flex-col gap-2 bg-background overflow-y-scroll",
 };
 
 export interface LayerStore {
@@ -26,6 +26,7 @@ export interface LayerStore {
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
   updateLayer: (layerId: string, newProps: Record<string, PropValue>, layerRest?: Partial<Omit<ComponentLayer, 'props'>>) => void;
+  moveLayer: (sourceLayerId: string, targetParentId: string, targetPosition: number) => void;
   selectLayer: (layerId: string) => void;
   selectPage: (pageId: string) => void;
   findLayerById: (layerId: string | null) => ComponentLayer | undefined;
@@ -150,6 +151,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       const updatedPages = addLayer(state.pages, newLayer, parentId, parentPosition);
       // Directly mutate the state instead of returning a new object
       state.pages = updatedPages;
+      state.selectedLayerId = newLayer.id;
     })),
 
     addPageLayer: (pageName: string) => set(produce((state: LayerStore) => {
@@ -436,6 +438,13 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
           state.immutableBindings[layerId] = {};
         }
         state.immutableBindings[layerId][propName] = isImmutable;
+      }));
+    },
+
+    moveLayer: (sourceLayerId: string, targetParentId: string, targetPosition: number) => {
+      set(produce((state: LayerStore) => {
+        const updatedPages = moveLayer(state.pages, sourceLayerId, targetParentId, targetPosition);
+        state.pages = updatedPages;
       }));
     },
   }

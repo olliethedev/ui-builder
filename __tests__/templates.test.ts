@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { pageLayerToCode, generateLayerCode, generatePropsString } from "../components/ui/ui-builder/internal/templates";
+import { pageLayerToCode, generateLayerCode, generatePropsString } from "../components/ui/ui-builder/internal/utils/templates";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { Variable } from '@/components/ui/ui-builder/types';
 import template from "lodash/template";

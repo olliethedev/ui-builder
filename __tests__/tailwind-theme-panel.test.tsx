@@ -191,54 +191,35 @@ describe('TailwindThemePanel', () => {
     it('should render mode options', () => {
       render(<TailwindThemePanel />);
       
-      // Bug documented: ThemeModeOption props are swapped - mode={modeOption} and modeOption={mode}
-      // This causes both buttons to show the same text instead of "light" and "dark"
-      
       // Verify mode section exists
       expect(screen.getByText('Mode')).toBeInTheDocument();
       
-      // Should have exactly 2 light buttons (due to the bug, both show as "light")
-      const lightButtons = screen.getAllByText('light');
-      expect(lightButtons.length).toBe(2);
+      // Should have both light and dark buttons
+      expect(screen.getByText('light')).toBeInTheDocument();
+      expect(screen.getByText('dark')).toBeInTheDocument();
       
-      // Verify that one is selected and one is not (based on CSS classes)
-      const selectedButton = lightButtons.find(button => {
-        const buttonElement = button.closest('button');
-        return buttonElement?.classList.contains('border-2') && 
-               buttonElement?.classList.contains('border-primary');
-      });
+      // Light button should be selected (border-2 border-primary)
+      const lightButton = screen.getByText('light').closest('button');
+      expect(lightButton).toHaveClass('border-2', 'border-primary');
       
-      const unselectedButton = lightButtons.find(button => {
-        const buttonElement = button.closest('button');
-        return buttonElement?.classList.contains('border-input') && 
-               !buttonElement?.classList.contains('border-primary');
-      });
-      
-      expect(selectedButton).toBeTruthy();
-      expect(unselectedButton).toBeTruthy();
+      // Dark button should not be selected (no border-2 border-primary classes)
+      const darkButton = screen.getByText('dark').closest('button');
+      expect(darkButton).not.toHaveClass('border-2');
+      expect(darkButton).not.toHaveClass('border-primary');
     });
 
     it('should select mode', async () => {
       render(<TailwindThemePanel />);
       
-      // Bug documented: Due to swapped props in ThemeModeOption, both buttons show "light"
-      // Find the second light button (which should be the dark mode button)
-      const lightButtons = screen.getAllByText('light');
+      // Click on dark button to switch mode
+      const darkButton = screen.getByText('dark');
+      fireEvent.click(darkButton);
       
-      if (lightButtons.length >= 2) {
-        const secondLightButton = lightButtons[1];
-        fireEvent.click(secondLightButton);
-        
-        await waitFor(() => {
-          // The component should still update the mode state correctly
-          expect(mockUpdateLayer).toHaveBeenCalledWith('page-1', expect.objectContaining({
-            'data-mode': expect.any(String),
-          }));
-        });
-      } else {
-        // If there's only one button, skip this test
-        expect(lightButtons.length).toBeGreaterThan(0);
-      }
+      await waitFor(() => {
+        expect(mockUpdateLayer).toHaveBeenCalledWith('page-1', expect.objectContaining({
+          'data-mode': 'dark',
+        }));
+      });
     });
 
     it('should show selected color with checkmark', () => {
@@ -260,15 +241,9 @@ describe('TailwindThemePanel', () => {
     it('should show selected mode with highlight', () => {
       render(<TailwindThemePanel />);
       
-      // Find the light button that has the selected styling (border-2 border-primary)
-      const lightButtons = screen.getAllByText('light');
-      const selectedLightButton = lightButtons.find(button => {
-        const buttonElement = button.closest('button');
-        return buttonElement?.classList.contains('border-2') && 
-               buttonElement?.classList.contains('border-primary');
-      });
-      
-      expect(selectedLightButton).toBeTruthy();
+      // Light button should have selected styling (border-2 border-primary)
+      const lightButton = screen.getByText('light').closest('button');
+      expect(lightButton).toHaveClass('border-2', 'border-primary');
     });
   });
 
@@ -304,15 +279,9 @@ describe('TailwindThemePanel', () => {
       
       render(<TailwindThemePanel />);
       
-      // Find the light button that has the selected styling (border-2 border-primary)
-      const lightButtons = screen.getAllByText('light');
-      const selectedLightButton = lightButtons.find(button => {
-        const buttonElement = button.closest('button');
-        return buttonElement?.classList.contains('border-2') && 
-               buttonElement?.classList.contains('border-primary');
-      });
-      
-      expect(selectedLightButton).toBeTruthy();
+      // Should fall back to 'light' as default, so light button should be selected
+      const lightButton = screen.getByText('light').closest('button');
+      expect(lightButton).toHaveClass('border-2', 'border-primary');
     });
 
     it('should handle invalid border radius prop', () => {

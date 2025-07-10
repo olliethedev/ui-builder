@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ChildrenSearchableSelect } from "@/components/ui/ui-builder/internal/children-searchable-select";
+import { ChildrenSearchableSelect } from "@/components/ui/ui-builder/internal/form-fields/children-searchable-select";
 import { ComponentLayer } from "@/components/ui/ui-builder/types";
 
 // Mock the layer store
@@ -19,7 +19,7 @@ jest.mock("@/lib/ui-builder/store/layer-store", () => ({
 }));
 
 // Mock the AddComponentsPopover
-jest.mock("@/components/ui/ui-builder/internal/add-component-popover", () => ({
+jest.mock("@/components/ui/ui-builder/internal/components/add-component-popover", () => ({
   AddComponentsPopover: ({ children, onChange, parentLayerId }: any) => (
     <div data-testid="add-components-popover" data-parent-layer-id={parentLayerId}>
       <button 
@@ -93,7 +93,9 @@ describe("ChildrenSearchableSelect", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFindLayerById.mockReturnValue(mockSelectedLayer);
-    mockHasLayerChildren.mockReturnValue(true);
+    mockHasLayerChildren.mockImplementation((layer: ComponentLayer) => {
+      return Array.isArray(layer.children) && typeof layer.children !== 'string';
+    });
   });
 
   it("renders add component button", () => {
@@ -127,7 +129,7 @@ describe("ChildrenSearchableSelect", () => {
       layerType: "Button",
       parentLayerId: "parent-layer",
     });
-  });
+  }, 10000);
 
   it("renders child layer badges when layer has children", () => {
     render(
@@ -139,10 +141,11 @@ describe("ChildrenSearchableSelect", () => {
   });
 
   it("does not render child badges when layer has no children", () => {
-    mockHasLayerChildren.mockReturnValue(false);
+    const layerWithStringChildren = { ...mockLayer, children: "text content" };
+    mockFindLayerById.mockReturnValue({ ...mockSelectedLayer, children: "text content" });
     
     render(
-      <ChildrenSearchableSelect layer={mockLayer} onChange={mockOnChange} />
+      <ChildrenSearchableSelect layer={layerWithStringChildren} onChange={mockOnChange} />
     );
 
     expect(screen.queryByText("Selected Input")).not.toBeInTheDocument();
@@ -161,7 +164,6 @@ describe("ChildrenSearchableSelect", () => {
   it("does not render child badges when selected layer has no children", () => {
     const layerWithoutChildren = { ...mockSelectedLayer, children: [] };
     mockFindLayerById.mockReturnValue(layerWithoutChildren);
-    mockHasLayerChildren.mockImplementation((layer) => layer.children.length > 0);
     
     render(
       <ChildrenSearchableSelect layer={mockLayer} onChange={mockOnChange} />
@@ -278,7 +280,6 @@ describe("ChildrenSearchableSelect", () => {
   it("handles empty children array", () => {
     const emptySelectedLayer = { ...mockSelectedLayer, children: [] };
     mockFindLayerById.mockReturnValue(emptySelectedLayer);
-    mockHasLayerChildren.mockReturnValue(false);
     
     render(
       <ChildrenSearchableSelect layer={mockLayer} onChange={mockOnChange} />

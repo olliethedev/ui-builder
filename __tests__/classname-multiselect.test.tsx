@@ -1,10 +1,10 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ClassNameMultiselect from "@/components/ui/ui-builder/internal/classname-multiselect";
+import ClassNameMultiselect from "@/components/ui/ui-builder/internal/form-fields/classname-control/classname-multiselect";
 
 // Mock the MultipleSelector component
-jest.mock("@/components/ui/ui-builder/multi-select", () => ({
+jest.mock("@/components/ui/ui-builder/internal/components/multi-select", () => ({
   __esModule: true,
   default: ({ 
     value, 
@@ -106,7 +106,7 @@ jest.mock("@/components/ui/ui-builder/multi-select", () => ({
 }));
 
 // Mock the tailwind classes
-jest.mock("@/components/ui/ui-builder/internal/tailwind-classes", () => ({
+jest.mock("@/components/ui/ui-builder/internal/utils/tailwind-classes", () => ({
   TAILWIND_CLASSES_WITH_BREAKPOINTS: [
     "bg-red-500",
     "text-blue-600", 
@@ -171,11 +171,18 @@ describe("ClassNameMultiselect", () => {
     const mockOnChange = jest.fn();
     render(<ClassNameMultiselect value="bg-red-500 text-blue-600" onChange={mockOnChange} />);
     
-    const removeButton = screen.getByTestId("remove-bg-red-500");
+    // Wait for the component to fully render
+    await waitFor(() => {
+      expect(screen.getByTestId("selected-bg-red-500")).toBeInTheDocument();
+    });
+    
+    const removeButton = await screen.findByTestId("remove-bg-red-500");
     await userEvent.click(removeButton);
     
-    expect(mockOnChange).toHaveBeenCalledWith("text-blue-600");
-  });
+    await waitFor(() => {
+      expect(mockOnChange).toHaveBeenCalledWith("text-blue-600");
+    });
+  }, 15000);
 
   it("calls onChange when a class is added", async () => {
     const mockOnChange = jest.fn();

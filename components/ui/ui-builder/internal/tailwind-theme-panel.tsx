@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   baseColors,
   BaseColor,
-} from "@/components/ui/ui-builder/internal/base-colors";
+} from "@/components/ui/ui-builder/internal/utils/base-colors";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CheckIcon, InfoIcon, MoonIcon, SunIcon } from "lucide-react";
@@ -145,8 +145,8 @@ function ThemePicker({
     return (
       <ThemeModeOption
         key={modeOption}
-        mode={modeOption}
-        modeOption={mode}
+        mode={mode}
+        modeOption={modeOption}
         onClick={setMode}
       />
     );
