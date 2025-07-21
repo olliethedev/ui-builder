@@ -1,0 +1,18 @@
+
+import {  notFound } from "next/navigation";
+import { DocEditor } from "@/app/platform/doc-editor";
+import { getDocPageForSlug } from "../../docs-data/data";
+
+export default async function DocEditPage({
+    params,
+  }: {
+    params: Promise<{ slug: string }>;
+  }){
+    const { slug } = await params;
+    const page = getDocPageForSlug(slug);
+    if (!page) {
+        notFound();
+    }
+    console.log({slug});
+    return <DocEditor page={page} />
+}
