@@ -13,6 +13,6 @@ export default async function DocEditPage({
     if (!page) {
         notFound();
     }
-    console.log({slug});
+    
     return <DocEditor page={page} />
 }

@@ -13,8 +13,6 @@ export async function generateMetadata(
   }
 ): Promise<Metadata> {
   const slug = (await params).slug
-
-  console.log({slug});
  
   const page = getDocPageForSlug(slug);
   
