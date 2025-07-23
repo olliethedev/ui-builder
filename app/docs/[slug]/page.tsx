@@ -29,9 +29,10 @@ export default async function DocPage({
         notFound();
     }
     const breadcrumbs = getBreadcrumbsFromUrl(slug);
+    const currentPath = `/docs/${slug}`;
     console.log({slug});
     return <SidebarProvider>
-    <AppSidebar />
+    <AppSidebar currentPath={currentPath} />
     <SidebarInset>
       <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
         <SidebarTrigger className="-ml-1" />

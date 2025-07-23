@@ -14,7 +14,11 @@ import {
 } from "@/components/ui/sidebar"
 import { MENU_DATA } from "@/app/docs/docs-data/data"
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  currentPath?: string;
+}
+
+export function AppSidebar({ currentPath, ...props }: AppSidebarProps) {
   return (
     <Sidebar {...props}>
       <SidebarContent>
@@ -23,16 +27,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarGroupLabel>{section.title}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {section.items?.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      // isActive={item.isActive}
-                    >
-                      <Link href={item.url}>{item.title}</Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {section.items?.map((item) => {
+                  const isActive = currentPath === item.url;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                      >
+                        <Link href={item.url}>{item.title}</Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

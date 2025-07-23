@@ -1,7 +1,61 @@
 import { INTRODUCTION_LAYER } from "@/app/docs/docs-data/docs-page-layers/introduction";
+import { QUICK_START_LAYER } from "@/app/docs/docs-data/docs-page-layers/quick-start";
+import { COMPONENT_REGISTRY_LAYER } from "@/app/docs/docs-data/docs-page-layers/component-registry";
+import { FIELD_OVERRIDES_LAYER } from "@/app/docs/docs-data/docs-page-layers/field-overrides";
+import { CUSTOM_COMPONENTS_LAYER } from "@/app/docs/docs-data/docs-page-layers/custom-components";
+import { CANVAS_EDITOR_LAYER } from "@/app/docs/docs-data/docs-page-layers/canvas-editor";
+import { PAGES_PANEL_LAYER } from "@/app/docs/docs-data/docs-page-layers/pages-panel";
+import { VARIABLES_PANEL_LAYER } from "@/app/docs/docs-data/docs-page-layers/variables-panel";
+import { PROPS_PANEL_LAYER } from "@/app/docs/docs-data/docs-page-layers/props-panel";
+import { APPEARANCE_PANEL_LAYER } from "@/app/docs/docs-data/docs-page-layers/appearance-panel";
+import { IMMUTABLE_PAGES_LAYER } from "@/app/docs/docs-data/docs-page-layers/immutable-pages";
+import { PANEL_CONFIGURATION_LAYER } from "@/app/docs/docs-data/docs-page-layers/panel-configuration";
+import { VARIABLES_LAYER } from "@/app/docs/docs-data/docs-page-layers/variables";
+import { VARIABLE_BINDING_LAYER } from "@/app/docs/docs-data/docs-page-layers/variable-binding";
+import { READ_ONLY_MODE_LAYER } from "@/app/docs/docs-data/docs-page-layers/read-only-mode";
+import { DATA_BINDING_LAYER } from "@/app/docs/docs-data/docs-page-layers/data-binding";
+import { LAYER_STRUCTURE_LAYER } from "@/app/docs/docs-data/docs-page-layers/layer-structure";
+import { PERSISTENCE_LAYER } from "@/app/docs/docs-data/docs-page-layers/persistence";
+import { RENDERING_PAGES_LAYER } from "@/app/docs/docs-data/docs-page-layers/rendering-pages";
+import { PAGE_THEMING_LAYER } from "@/app/docs/docs-data/docs-page-layers/page-theming";
+import { EDITOR_PANEL_CONFIG_LAYER } from "@/app/docs/docs-data/docs-page-layers/editor-panel-config";
+import { PROPS_PANEL_CUSTOMIZATION_LAYER } from "@/app/docs/docs-data/docs-page-layers/props-panel-customization";
 
 export const DOCS_PAGES = [
-    INTRODUCTION_LAYER
+    // Core
+    INTRODUCTION_LAYER,
+    QUICK_START_LAYER,
+    
+    // Component System
+    COMPONENT_REGISTRY_LAYER,
+    CUSTOM_COMPONENTS_LAYER,
+    FIELD_OVERRIDES_LAYER,
+    
+    // Editor Features
+    CANVAS_EDITOR_LAYER,
+    PAGES_PANEL_LAYER,
+    IMMUTABLE_PAGES_LAYER,
+    APPEARANCE_PANEL_LAYER,
+    PROPS_PANEL_LAYER,
+    VARIABLES_PANEL_LAYER,
+    PANEL_CONFIGURATION_LAYER,
+    EDITOR_PANEL_CONFIG_LAYER,
+    PROPS_PANEL_CUSTOMIZATION_LAYER,
+    
+    // Data & Variables
+    VARIABLES_LAYER,
+    VARIABLE_BINDING_LAYER,
+    READ_ONLY_MODE_LAYER,
+    DATA_BINDING_LAYER,
+    
+    // Layout & Persistence
+    LAYER_STRUCTURE_LAYER,
+    PERSISTENCE_LAYER,
+    
+    // Rendering
+    RENDERING_PAGES_LAYER,
+    PAGE_THEMING_LAYER,
+
 ] as const;
 
 type ExistingDocPageNames = `${Capitalize<(typeof DOCS_PAGES)[number]["name"]>}`;
@@ -12,8 +66,8 @@ type ExistingDocGroupNames = `${Capitalize<(typeof DOCS_PAGES)[0]["props"]["data
 type DocPageNavItem = {
     title: ExistingDocGroupNames | string;
     items: {
-        title: ExistingDocPageNames | string;
-        url: `/${ExistingDocPageIds}` | `/${string}`;
+        title: ExistingDocPageNames ;
+        url: `/docs/${ExistingDocPageIds}`;
     }[];
 }
 
@@ -23,11 +77,11 @@ export const MENU_DATA: DocPageNavItem[] = [
         items: [
             {
                 title: "Introduction",
-                url: "/introduction",
+                url: "/docs/introduction",
             },
             {
                 title: "Quick Start",
-                url: "/quick-start",
+                url: "/docs/quick-start",
             },
         ],
     },
@@ -35,20 +89,16 @@ export const MENU_DATA: DocPageNavItem[] = [
         title: "Component System",
         items: [
             {
-                title: "Component Registry",
-                url: "/component-registry",
+                title: "Getting Started with Components",
+                url: "/docs/component-registry",
             },
             {
-                title: "Field Overrides",
-                url: "/field-overrides",
+                title: "Creating Custom Components",
+                url: "/docs/custom-components",
             },
             {
-                title: "Default Children",
-                url: "/default-children",
-            },
-            {
-                title: "Custom Components",
-                url: "/custom-components",
+                title: "Advanced Component Configuration",
+                url: "/docs/field-overrides",
             }
         ],
     },
@@ -57,43 +107,39 @@ export const MENU_DATA: DocPageNavItem[] = [
         items: [
             {
                 title: "Canvas Editor",
-                url: "/canvas-editor",
+                url: "/docs/canvas-editor",
             },
             {
                 title: "Pages Panel",
-                url: "/pages-panel",
+                url: "/docs/pages-panel",
             },
             {
                 title: "Immutable Pages",
-                url: "/immutable-pages",
+                url: "/docs/immutable-pages",
             },
             {
                 title: "Appearance Panel",
-                url: "/appearance-panel",
+                url: "/docs/appearance-panel",
             },
             {
                 title: "Props Panel",
-                url: "/props-panel",
+                url: "/docs/props-panel",
             },
             {
                 title: "Variables Panel",
-                url: "/variables-panel",
+                url: "/docs/variables-panel",
             },
             {
                 title: "Panel Configuration",
-                url: "/panel-configuration",
+                url: "/docs/panel-configuration",
             },
             {
                 title: "Editor Panel Config",
-                url: "/editor-panel-config",
-            },
-            {
-                title: "NavBar Customization",
-                url: "/navbar-customization",
+                url: "/docs/editor-panel-config",
             },
             {
                 title: "Props Panel Customization",
-                url: "/props-panel-customization",
+                url: "/docs/props-panel-customization",
             },
         ],
     },
@@ -102,19 +148,19 @@ export const MENU_DATA: DocPageNavItem[] = [
         items: [
             {
                 title: "Variables",
-                url: "/variables",
+                url: "/docs/variables",
             },
             {
                 title: "Variable Binding",
-                url: "/variable-binding",
+                url: "/docs/variable-binding",
             },
             {
-                title: "Read-Only Mode",
-                url: "/read-only-mode",
+                title: "Read Only Mode",
+                url: "/docs/read-only-mode",
             },
             {
                 title: "Data Binding",
-                url: "/data-binding",
+                url: "/docs/data-binding",
             },
         ],
     },
@@ -123,15 +169,11 @@ export const MENU_DATA: DocPageNavItem[] = [
         items: [
             {
                 title: "Layer Structure",
-                url: "/layer-structure",
+                url: "/docs/layer-structure",
             },
             {
-                title: "Persistence",
-                url: "/persistence",
-            },
-            {
-                title: "Persist Layer Store",
-                url: "/persist-layer-store",
+                title: "State Management & Persistence",
+                url: "/docs/persistence",
             },
         ],
     },
@@ -140,27 +182,14 @@ export const MENU_DATA: DocPageNavItem[] = [
         items: [
             {
                 title: "Rendering Pages",
-                url: "/rendering-pages",
+                url: "/docs/rendering-pages",
             },
             {
                 title: "Page Theming",
-                url: "/page-theming",
+                url: "/docs/page-theming",
             },
         ],
-    },
-    {
-        title: "Code & Extensibility",
-        items: [
-            {
-                title: "Code Generation",
-                url: "/code-generation",
-            },
-            {
-                title: "Blocks (Planned)",
-                url: "/blocks-planned",
-            },
-        ],
-    },
+    }
 ] as const;
 
 
