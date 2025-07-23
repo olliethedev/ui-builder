@@ -806,6 +806,7 @@ export const BuilderDragDropTest = () => {
       allowPagesCreation={true}
       allowPagesDeletion={true}
       allowVariableEditing={true}
+      persistLayerStore={false}
     />
   );
 }; 

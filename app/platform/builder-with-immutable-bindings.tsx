@@ -363,6 +363,7 @@ export const BuilderWithImmutableBindings = () => {
       allowPagesCreation={true}
       allowPagesDeletion={true}
       allowVariableEditing={false}
+      persistLayerStore={false}
     />
   );
 };

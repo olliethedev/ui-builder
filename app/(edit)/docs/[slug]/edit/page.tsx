@@ -1,7 +1,7 @@
 
 import {  notFound } from "next/navigation";
 import { DocEditor } from "@/app/platform/doc-editor";
-import { getDocPageForSlug } from "../../docs-data/data";
+import { getDocPageForSlug } from "../../../../docs/docs-data/data";
 
 export default async function DocEditPage({
     params,

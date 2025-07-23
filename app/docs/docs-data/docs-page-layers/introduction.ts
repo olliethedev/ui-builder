@@ -45,7 +45,7 @@ export const INTRODUCTION_LAYER = {
                 "type": "span",
                 "name": "span",
                 "props": {},
-                "children": "Example"
+                "children": "Live Demo"
               }
             ]
           },
@@ -62,8 +62,8 @@ export const INTRODUCTION_LAYER = {
                 "type": "iframe",
                 "name": "iframe",
                 "props": {
-                  "src": "http://localhost:3000/examples/basic",
-                  "title": "",
+                  "src": "/examples/basic",
+                  "title": "UI Builder Basic Example",
                   "className": "aspect-square md:aspect-video"
                 },
                 "children": []
@@ -77,7 +77,35 @@ export const INTRODUCTION_LAYER = {
         "type": "Markdown",
         "name": "Markdown",
         "props": {},
-        "children": "### How it unlocks novel product features:\n\n- **Give users no‑code superpowers** — add a full visual builder to your SaaS with one install\n- **Design with components you already ship** — nothing new to build or maintain\n- **Store layouts as human‑readable JSON** — render inside your product to ship changes immediately\n- **Create dynamic, data-driven interfaces** — bind component properties to variables for personalized content\n\n### Key Benefits\n\n1. **One‑step installation**\\\n   Get up and running with a single `npx shadcn@latest add …` command.\n\n2. **Figma‑style editing**\\\n   Intuitive drag‑and‑drop canvas, properties panel, and live preview.\n\n3. **Full React code export**\\\n   Generate clean, type‑safe React code that matches your project structure.\n\n4. **Runtime variable binding**\\\n   Create dynamic templates with string, number, and boolean variables—perfect for personalization, A/B testing, or multi‑tenant branding.\n\n### Compatibility Notes\n\n**Tailwind 4 + React 19**: Migration coming soon. Currently blocked by 3rd party component compatibility. If using latest shadcn/ui CLI fails, try: `npx shadcn@2.1.8 add ...`\n\n**Server Components**: Not supported. RSC can't be re-rendered client-side for live preview. A separate RSC renderer for final page rendering is possible."
+        "children": "## How UI Builder Works\n\nUI Builder empowers you to visually construct and modify user interfaces by leveraging your own React components. Here's how it works:\n\n**🧩 Component-Driven Foundation**\\\nOperates on your existing React components. You provide a `componentRegistry` detailing which components are available in the editor.\n\n**🎨 Layer-Based Canvas**\\\nThe UI is constructed as a tree of \"layers.\" Each layer represents a component instance that users can visually add, remove, reorder, and nest on an interactive canvas.\n\n**⚙️ Dynamic Props Editing**\\\nEach component uses a Zod schema to automatically generate a properties panel, allowing users to configure component instances in real-time.\n\n**🔗 Variable-Driven Dynamic Content**\\\nVariables transform static designs into dynamic, data-driven interfaces. Bind component properties to typed variables for personalization, theming, and reusable templates.\n\n**📦 Flexible State Management**\\\nBy default, the editor's state persists in local storage. For production apps, provide `initialLayers` and use the `onChange` callback to persist state to your backend.\n\n**⚡ React Code Generation**\\\nExport visually designed pages as clean, readable React code that correctly references your components.\n\n**🚀 Runtime Variable Resolution**\\\nWhen rendering pages with `LayerRenderer`, provide `variableValues` to override defaults with real data from APIs, databases, or user input."
+      },
+      {
+        "id": "understanding-variables",
+        "type": "Markdown",
+        "name": "Markdown",
+        "props": {},
+        "children": "## Understanding Variables\n\n**Variables are the key to creating dynamic, data-driven interfaces.** Instead of hardcoding static values, variables allow you to bind component properties to dynamic data that changes at runtime.\n\n**Variable Types:**\n- **String**: For text content, names, descriptions, etc.\n- **Number**: For counts, ages, prices, quantities, etc.\n- **Boolean**: For feature flags, visibility toggles, active states, etc.\n\n**Powerful Use Cases:**\n- **Personalized content** that adapts to user data\n- **Reusable templates** that work across different contexts\n- **Multi‑tenant applications** with customized branding per client\n- **A/B testing** and feature flags through boolean variables\n- **Content management** where non‑technical users can update dynamic content"
+      },
+      {
+        "id": "key-benefits",
+        "type": "Markdown",
+        "name": "Markdown",
+        "props": {},
+        "children": "## Key Benefits\n\n**🎯 One‑step Installation**\\\nGet up and running with a single `npx shadcn@latest add …` command.\n\n**🎨 Figma‑style Editing**\\\nIntuitive drag‑and‑drop canvas, properties panel, and live preview.\n\n**⚡ Full React Code Export**\\\nGenerate clean, type‑safe React code that matches your project structure.\n\n**🔗 Runtime Variable Binding**\\\nCreate dynamic templates with string, number, and boolean variables—perfect for personalization, A/B testing, or multi‑tenant branding.\n\n**🧩 Bring Your Own Components**\\\nUse your existing React component library—no need to rebuild from scratch.\n\n**💾 Flexible Persistence**\\\nControl how and when editor state is saved, with built‑in local storage support or custom database integration."
+      },
+      {
+        "id": "live-examples",
+        "type": "Markdown",
+        "name": "Markdown",
+        "props": {},
+        "children": "## Live Examples\n\nExplore different UI Builder features with these interactive examples:\n\n**🎨 [Basic Editor](/examples/basic)** - Simple drag‑and‑drop interface with basic components\n\n**🔧 [Full Featured Editor](/examples/editor)** - Complete editor with all panels and advanced features\n\n**📄 [Static Renderer](/examples/renderer)** - See how pages render without the editor interface\n\n**🔗 [Variables in Action](/examples/renderer/variables)** - Dynamic content with runtime variable binding"
+      },
+      {
+        "id": "next-steps",
+        "type": "Markdown",
+        "name": "Markdown",
+        "props": {},
+        "children": "## Next Steps\n\nReady to get started?\n\n1. **Quick Start** - Install and set up your first UI Builder\n2. **Components Intro** - Learn about the component registry system\n3. **Variables** - Create dynamic, data-driven interfaces\n4. **Custom Components** - Add your own React components to the editor"
       }
     ]
   } as const satisfies ComponentLayer;
