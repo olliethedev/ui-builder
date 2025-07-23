@@ -990,6 +990,7 @@ export const BuilderWithPages = ({fixedPages = false}: {fixedPages?: boolean}) =
     }}
     allowPagesCreation={!fixedPages}
     allowPagesDeletion={!fixedPages}
+    persistLayerStore={false}
     panelConfig={getDefaultPanelConfigValues(defaultConfigTabsContent())}
     />;
 };

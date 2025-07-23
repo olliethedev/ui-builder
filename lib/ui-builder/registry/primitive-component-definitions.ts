@@ -61,4 +61,73 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     },
     defaultChildren: "Text"
   },
+  'h1': {
+    schema: z.object({
+      className: z.string().optional(),
+      children: z.string().optional(),
+    }),
+    fieldOverrides: {
+      ...commonFieldOverrides(),
+      children: (layer) => childrenAsTextareaFieldOverrides(layer)
+    },
+    defaultChildren: "Heading 1"
+  },
+  'h2': {
+    schema: z.object({
+      className: z.string().optional(),
+      children: z.string().optional(),
+    }),
+    fieldOverrides: {
+      ...commonFieldOverrides(),
+      children: (layer) => childrenAsTextareaFieldOverrides(layer)
+    },
+    defaultChildren: "Heading 2"
+  },
+  'h3': {
+    schema: z.object({
+      className: z.string().optional(),
+      children: z.string().optional(),
+    }),
+    fieldOverrides: {
+      ...commonFieldOverrides(),
+      children: (layer) => childrenAsTextareaFieldOverrides(layer)
+    },
+    defaultChildren: "Heading 3"
+  },
+  'p': {
+    schema: z.object({
+      className: z.string().optional(),
+      children: z.string().optional(),
+    }),
+    fieldOverrides: {
+      ...commonFieldOverrides(),
+      children: (layer) => childrenAsTextareaFieldOverrides(layer)
+    },
+    defaultChildren: "Paragraph text"
+  },
+  'li': {
+    schema: z.object({
+      className: z.string().optional(),
+      children: z.string().optional(),
+    }),
+    fieldOverrides: {
+      ...commonFieldOverrides(),
+      children: (layer) => childrenAsTextareaFieldOverrides(layer)
+    },
+    defaultChildren: "List item"
+  },
+  'ul': {
+    schema: z.object({
+      className: z.string().optional(),
+      children: z.string().optional(),
+    }),
+    fieldOverrides: commonFieldOverrides()
+  },
+  'ol': {
+    schema: z.object({
+      className: z.string().optional(),
+      children: z.string().optional(),
+    }),
+    fieldOverrides: commonFieldOverrides()
+  }
 };

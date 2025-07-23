@@ -632,7 +632,6 @@ npm run test
 
 ## Roadmap
 
-- [ ] Documentation site for UI Builder with more hands-on examples
 - [ ] Add variable binding to layer children and not just props
 - [ ] Update to React 19
 - [ ] Update to latest Shadcn/ui + Tailwind CSS v4

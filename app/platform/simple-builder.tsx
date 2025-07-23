@@ -11,7 +11,7 @@ const initialLayers = [
     type: "div",
     name: "Page",
     props: {
-      className: "bg-gray-200 flex flex-col justify-center items-center gap-4 p-2 w-full h-96",
+      className: "bg-gray-200 flex flex-col justify-center items-center gap-4 p-2 w-full h-screen",
     },
     children: [
       {
@@ -19,7 +19,7 @@ const initialLayers = [
         type: "div",
         name: "Box A",
         props: {
-          className: "bg-red-300 p-2 w-1/2 h-1/3 text-center",
+          className: "flex flex-row justify-center items-center bg-red-300 p-2 w-full md:w-1/2 h-1/3 text-center",
         },
         children: [
           {
@@ -27,7 +27,7 @@ const initialLayers = [
             type: "span",
             name: "Text",
             props: {
-              className: "text-4xl font-bold text-white",
+              className: "text-4xl font-bold text-secondary",
             },
             children: "A",
           }
@@ -38,7 +38,7 @@ const initialLayers = [
         type: "div",
         name: "Box B",
         props: {
-          className: "bg-green-300 p-2 w-1/2 h-1/3 text-center",
+          className: "flex flex-row justify-center items-center bg-green-300 p-2 w-full md:w-1/2 h-1/3 text-center",
         },
         children: [
           {
@@ -46,7 +46,7 @@ const initialLayers = [
             type: "span",
             name: "Text",
             props: {
-              className: "text-4xl font-bold text-white",
+              className: "text-4xl font-bold text-secondary",
             },
             children: "B",
           }
@@ -57,7 +57,7 @@ const initialLayers = [
         type: "div",
         name: "Box C",
         props: {
-          className: "flex flex-row justify-center items-center bg-blue-300 p-2 w-1/2 h-1/3 p-2 w-1/2 h-1/3 text-center",
+          className: "flex flex-row justify-center items-center bg-blue-300 p-2 w-full md:w-1/2 h-1/3 p-2 w-1/2 h-1/3 text-center",
         },
         children: [
           {
@@ -65,19 +65,21 @@ const initialLayers = [
             type: "div",
             name: "Inner Box D",
             props: {
-              className: "bg-yellow-300 p-2 w-1/2 h-1/3 p-2 w-1/2 h-1/3 text-center",
+              className: "bg-yellow-300 p-2 w-1/2 p-2 w-1/2 h-auto text-center",
             },
-            children: [],
+            children: [
+              {
+                id: "7",
+                type: "span",
+                name: "Text",
+                props: {
+                  className: "text-4xl font-bold text-secondary-foreground",
+                },
+                children: "C",
+              }
+            ],
           },
-          {
-            id: "7",
-            type: "span",
-            name: "Text",
-            props: {
-              className: "text-4xl font-bold text-white",
-            },
-            children: "C",
-          }
+          
         ],
       },
     ],
