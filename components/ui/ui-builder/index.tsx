@@ -8,6 +8,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import LayersPanel from "@/components/ui/ui-builder/internal/layers-panel";
 import EditorPanel from "@/components/ui/ui-builder/internal/editor-panel";
+import SandpackPanel from "@/components/ui/ui-builder/internal/sandpack-panel";
 import PropsPanel from "@/components/ui/ui-builder/internal/props-panel";
 import { NavBar } from "@/components/ui/ui-builder/internal/components/nav";
 import { ThemeProvider } from "next-themes";
@@ -67,6 +68,7 @@ interface UIBuilderProps<TRegistry extends ComponentRegistry = ComponentRegistry
   allowVariableEditing?: boolean;
   allowPagesCreation?: boolean;
   allowPagesDeletion?: boolean;
+  useSandpack?: boolean;
 }
 
 /**
@@ -86,6 +88,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
   allowVariableEditing = true,
   allowPagesCreation = true,
   allowPagesDeletion = true,
+  useSandpack = false,
 }: UIBuilderProps<TRegistry>) => {
   const layerStore = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
@@ -97,7 +100,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
 
   const currentPanelConfig = useMemo(() => {
     const effectiveTabsContent = userPanelConfig?.pageConfigPanelTabsContent || memoizedDefaultTabsContent;
-    const defaultPanels = getDefaultPanelConfigValues(effectiveTabsContent);
+    const defaultPanels = getDefaultPanelConfigValues(effectiveTabsContent, useSandpack);
 
     return {
       navBar: userPanelConfig?.navBar ?? defaultPanels.navBar,
@@ -105,7 +108,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
       editorPanel: userPanelConfig?.editorPanel ?? defaultPanels.editorPanel,
       propsPanel: userPanelConfig?.propsPanel ?? defaultPanels.propsPanel,
     };
-  }, [userPanelConfig, memoizedDefaultTabsContent]);
+  }, [userPanelConfig, memoizedDefaultTabsContent, useSandpack]);
 
   // Effect 1: Initialize Editor Store with registry and page form props
   useEffect(() => {
@@ -375,15 +378,20 @@ export function LoadingSkeleton() {
  * Returns the default panel configuration values for the UI Builder.
  *
  * @param {TabsContentConfig} tabsContent - The content for the page config panel tabs.
+ * @param {boolean} useSandpack - Whether to use SandpackPanel instead of EditorPanel.
  * @returns {PanelConfig} The default panel configuration.
  */
-export const getDefaultPanelConfigValues = ( tabsContent: TabsContentConfig) => {
+export const getDefaultPanelConfigValues = ( tabsContent: TabsContentConfig, useSandpack = false) => {
   return {
     navBar: <NavBar />,
     pageConfigPanel: (
       <PageConfigPanel className="pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" tabsContent={tabsContent} />
     ),
-    editorPanel: (
+    editorPanel: useSandpack ? (
+      <SandpackPanel
+        className="pb-20 md:pb-0 overflow-y-auto"
+      />
+    ) : (
       <EditorPanel
         className="pb-20 md:pb-0 overflow-y-auto"
       />
