@@ -31,6 +31,7 @@ import {
 import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
 import { VariablesPanel } from "@/components/ui/ui-builder/internal/variables-panel";
+import { SandpackComponentCreator } from "@/components/ui/ui-builder/internal/sandpack-component-creator";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 /**
@@ -40,6 +41,7 @@ export interface TabsContentConfig {
   layers: { title: string; content: React.ReactNode };
   appearance?: { title: string; content: React.ReactNode };
   data?: { title: string; content: React.ReactNode };
+  components?: { title: string; content: React.ReactNode };
 }
 
 /**
@@ -299,8 +301,8 @@ export function PageConfigPanel({
   className: string;
   tabsContent: TabsContentConfig;
 }) {
-  const { layers, appearance, data } = tabsContent;
-  const tabCount = 1 + (appearance ? 1 : 0) + (data ? 1 : 0);
+  const { layers, appearance, data, components } = tabsContent;
+  const tabCount = 1 + (appearance ? 1 : 0) + (data ? 1 : 0) + (components ? 1 : 0);
   
   return (
     <Tabs
@@ -312,6 +314,7 @@ export function PageConfigPanel({
         <TabsTrigger value="layers">{layers.title}</TabsTrigger>
         {appearance && <TabsTrigger value="appearance">{appearance.title}</TabsTrigger>}
         {data && <TabsTrigger value="variables">{data.title}</TabsTrigger>}
+        {components && <TabsTrigger value="components">{components.title}</TabsTrigger>}
       </TabsList>
       <TabsContent value="layers">
         {layers.content}
@@ -324,6 +327,11 @@ export function PageConfigPanel({
       {data && (
         <TabsContent value="variables">
           {data.content}
+        </TabsContent>
+      )}
+      {components && (
+        <TabsContent value="components">
+          {components.content}
         </TabsContent>
       )}
     </Tabs>
@@ -346,7 +354,8 @@ export function defaultConfigTabsContent() {
         </div>
       ),
     },
-    data: { title: "Data", content: <VariablesPanel /> }
+    data: { title: "Data", content: <VariablesPanel /> },
+    components: { title: "Components", content: <SandpackComponentCreator /> }
   }
 }
 

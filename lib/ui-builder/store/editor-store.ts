@@ -3,16 +3,26 @@ import { create, StateCreator } from 'zustand';
 import { ComponentType as ReactComponentType } from "react";
 import { RegistryEntry, ComponentRegistry } from '@/components/ui/ui-builder/types';
 
-
+export interface CustomComponent {
+    id: string;
+    name: string;
+    code: string;
+    schema: string;
+    createdAt: Date;
+}
 
 export interface EditorStore {
     previewMode: 'mobile' | 'tablet' | 'desktop' | 'responsive';
     setPreviewMode: (mode: 'mobile' | 'tablet' | 'desktop' | 'responsive') => void;
 
     registry: ComponentRegistry;
+    customComponents: CustomComponent[];
 
     initialize: (registry: ComponentRegistry, persistLayerStoreConfig: boolean, allowPagesCreation: boolean, allowPagesDeletion: boolean, allowVariableEditing: boolean) => void;
     getComponentDefinition: (type: string) => RegistryEntry<ReactComponentType<any>> | undefined;
+    addCustomComponent: (component: CustomComponent, registryEntry: RegistryEntry<ReactComponentType<any>>) => void;
+    removeCustomComponent: (componentId: string) => void;
+    updateCustomComponent: (componentId: string, component: CustomComponent, registryEntry: RegistryEntry<ReactComponentType<any>>) => void;
 
     persistLayerStoreConfig: boolean;
     setPersistLayerStoreConfig: (shouldPersist: boolean) => void;
@@ -40,6 +50,7 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
     setPreviewMode: (mode) => set({ previewMode: mode }),
 
     registry: {},
+    customComponents: [],
 
     initialize: (registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing) => {
         set(state => ({ ...state, registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing }));
@@ -51,6 +62,49 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
             return undefined;
         }
         return registry[type];
+    },
+    addCustomComponent: (component: CustomComponent, registryEntry: RegistryEntry<ReactComponentType<any>>) => {
+        set(state => ({
+            customComponents: [...state.customComponents, component],
+            registry: {
+                ...state.registry,
+                [component.name]: registryEntry
+            }
+        }));
+    },
+    removeCustomComponent: (componentId: string) => {
+        set(state => {
+            const componentToRemove = state.customComponents.find(c => c.id === componentId);
+            if (!componentToRemove) return state;
+            
+            const newRegistry = { ...state.registry };
+            delete newRegistry[componentToRemove.name];
+            
+            return {
+                customComponents: state.customComponents.filter(c => c.id !== componentId),
+                registry: newRegistry
+            };
+        });
+    },
+    updateCustomComponent: (componentId: string, component: CustomComponent, registryEntry: RegistryEntry<ReactComponentType<any>>) => {
+        set(state => {
+            const oldComponent = state.customComponents.find(c => c.id === componentId);
+            if (!oldComponent) return state;
+            
+            const newRegistry = { ...state.registry };
+            // Remove old component name if it changed
+            if (oldComponent.name !== component.name) {
+                delete newRegistry[oldComponent.name];
+            }
+            newRegistry[component.name] = registryEntry;
+            
+            return {
+                customComponents: state.customComponents.map(c => 
+                    c.id === componentId ? component : c
+                ),
+                registry: newRegistry
+            };
+        });
     },
 
     persistLayerStoreConfig: true,
