@@ -44,11 +44,56 @@ function generateImports(complexComponents: Set<string>): string {
   // Group components by their import path
   const importsByPath = new Map<string, string[]>();
 
+  // List of parent components that have children
+  const PARENT_COMPONENTS = [
+    "card",
+    "accordion",
+    "alertdialog",
+    "dialog",
+    "dropdownmenu",
+    "menubar",
+    "navigationmenu",
+    "popover",
+    "select",
+    "sidebar",
+    "skeleton",
+    "tabs",
+    "tooltip",
+  ];
+
   complexComponents.forEach((componentType) => {
     const componentDef = complexComponentDefinitions[componentType];
-    const componentName = componentDef?.component?.displayName;
+    const componentName: string | undefined =
+      componentDef?.component?.displayName;
 
-    registryDependencies.push(componentName?.toLocaleLowerCase());
+    if (!componentName) return;
+
+    const componentNameLower = componentName.toLowerCase();
+
+    if (registryDependencies.includes(componentNameLower)) return;
+
+    const isChildComponent = PARENT_COMPONENTS.some((parent) => {
+      return (
+        componentNameLower.startsWith(parent) && componentNameLower !== parent
+      );
+    });
+
+    if (isChildComponent) {
+      // For child components, find the parent
+      const parentComponent = PARENT_COMPONENTS.find((parent) =>
+        componentNameLower.startsWith(parent)
+      );
+
+      if (parentComponent) {
+        const parentExists = registryDependencies.includes(parentComponent);
+
+        if (!parentExists) {
+          registryDependencies.push(parentComponent);
+        }
+      }
+    } else {
+      registryDependencies.push(componentNameLower);
+    }
     if (componentDef?.from) {
       const importPath = componentDef.from;
       if (!importsByPath.has(importPath)) {
@@ -219,7 +264,9 @@ export function generateRegistryItem({
     dependencies: dependencies,
     devDependencies: devDependencies,
     tailwind: tailwindConfiguration,
-    registryDependencies: registryDependencies,
+    registryDependencies: registryDependencies
+      ? registryDependencies
+      : ["card"],
     files,
   };
 }
