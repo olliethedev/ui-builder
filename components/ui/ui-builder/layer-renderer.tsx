@@ -40,7 +40,7 @@ const LayerRenderer = React.memo<LayerRendererProps>(function LayerRenderer({
   );
 }) as <TRegistry extends ComponentRegistry = ComponentRegistry>(
   props: LayerRendererProps<TRegistry>
-) => JSX.Element;
+) => React.JSX.Element;
 
 export default LayerRenderer;
 

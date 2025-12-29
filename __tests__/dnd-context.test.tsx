@@ -441,7 +441,7 @@ describe('Drag Event Handlers', () => {
   beforeEach(() => {
     // We'll capture the DndContext instance to access its handlers
     const CaptureDndContext = React.forwardRef<any, any>((props, ref) => {
-      const contextRef = React.useRef<any>();
+      const contextRef = React.useRef<any>(null);
       
       React.useImperativeHandle(ref, () => ({
         triggerDragStart: (event: any) => {

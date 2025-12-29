@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { ZodObject, ZodSchema } from "zod";
 import { ComponentType as ReactComponentType, ReactNode } from 'react';
 import {

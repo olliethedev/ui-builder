@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { create, StateCreator } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { produce } from 'immer';
 import { temporal } from 'zundo';
 import isDeepEqual from 'fast-deep-equal';
 
-import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3, createComponentLayer, moveLayer } from '@/lib/ui-builder/store/layer-utils';
+import { visitLayer, addLayer, hasLayerChildren, findLayerRecursive, createId, countLayers, duplicateWithNewIdsAndName, findAllParentLayersRecursive, migrateV1ToV2, migrateV2ToV3, migrateV5ToV6, createComponentLayer, moveLayer } from '@/lib/ui-builder/store/layer-utils';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 import { ComponentLayer, Variable, PropValue, VariableValueType, isVariableReference } from '@/components/ui/ui-builder/types';
@@ -485,7 +485,7 @@ const useLayerStore = create(persist(temporal<LayerStore>(store,
   }
 ), {
   name: "layer-store",
-  version: 5,
+  version: 6,
   storage: createJSONStorage(() => conditionalLocalStorage),
   migrate: (persistedState: unknown, version: number) => {
     /* istanbul ignore if*/
@@ -499,6 +499,9 @@ const useLayerStore = create(persist(temporal<LayerStore>(store,
     } else if (version === 4) {
       // New immutable bindings support: ensure immutableBindings object exists
       return { ...(persistedState as LayerStore), immutableBindings: {} } as LayerStore;
+    } else if (version === 5) {
+      // Tailwind v4 migration: clean up old-format theme styles from page layers
+      return migrateV5ToV6(persistedState as LayerStore);
     }
     return persistedState;
   }

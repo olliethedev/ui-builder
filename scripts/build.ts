@@ -1,106 +1,119 @@
 import { readFile, writeFile } from "fs/promises";
-import { z } from "zod";
-import { registryItemSchema } from "./schema";
+import { 
+    registrySchema, 
+    registryItemSchema, 
+    type Registry, 
+    type RegistryItem, 
+    type RegistryItemType,
+    type RegistryItemFile 
+} from "./schema";
 import { glob } from "glob";
 
-console.log("Building unified registry...");
-
-// Define the RegistryConfig interface using a single RegistryType
-type RegistryType = z.infer<typeof registryItemSchema>["type"];
+console.log("Building shadcn registry (v4 format)...");
 
 interface RegistryConfig {
-    type: RegistryType;
+    type: RegistryItemType;
     path: string;
-    targetFunction: (path: string) => string;
+    /** Only needed for registry:page and registry:file types */
+    targetFunction?: (path: string) => string;
 }
 
 const registryConfigs: RegistryConfig[] = [
     {
         type: "registry:ui",
         path: "./components/ui/ui-builder/**/*",
-        targetFunction: (path: string) => path.replace("components/ui/ui-builder", "components/ui/ui-builder"),
     },
     {
         type: "registry:lib",
         path: "./lib/ui-builder/**/*",
-        targetFunction: (path: string) => path.replace("lib/ui-builder", "lib/ui-builder"),
     },
     {
         type: "registry:hook",
         path: "./hooks/**/*",
-        targetFunction: (path: string) => path,
     },
     {
-        type: "registry:example",
+        type: "registry:page",
         path: "./app/example/page.tsx",
-        targetFunction: (path: string) => path.replace("app/example", "/app/ui-builder"),
+        targetFunction: (path: string) => path.replace("app/example", "app/ui-builder"),
     },
     {
         type: "registry:ui",
         path: "./components/ui/date-picker.tsx",
-        targetFunction: (path: string) => path,
     },
 ];
 
 async function buildRegistry() {
-    const unifiedRegistry: z.infer<typeof registryItemSchema> = {
-        name: "unified-registry",
+    const files: RegistryItemFile[] = [];
+
+    // Process all files from configs
+    for (const config of registryConfigs) {
+        const matchedFiles = await glob(config.path, { nodir: true });
+        for (const file of matchedFiles) {
+            const content = await readFile(file, "utf-8");
+            
+            // Only set target for registry:page and registry:file types
+            const needsTarget = config.type === "registry:page" || config.type === "registry:file";
+            const targetPath = needsTarget && config.targetFunction ? config.targetFunction(file) : undefined;
+            
+            console.log("Processing file", { file, type: config.type, ...(targetPath && { target: targetPath }) });
+
+            files.push({
+                path: file,
+                content,
+                type: config.type,
+                ...(targetPath && { target: targetPath }),
+            });
+        }
+    }
+
+    // Create the main registry item
+    const uiBuilderItem: RegistryItem = {
+        name: "ui-builder",
         type: "registry:block",
+        title: "UI Builder",
+        description: "A Figma-style visual editor for React applications that allows non-developers to compose pages using existing React components.",
         registryDependencies: getRegistryDependencies(),
         dependencies: getDependencies(),
         devDependencies: getDevDependencies(),
-        tailwind: {
-            config: {
-                plugins: ["require(\"tailwindcss-animate\")", "require(\"@tailwindcss/typography\")"],
-                theme: {
-                    extend: {
-                        typography: {
-                            DEFAULT: {
-                                css: {
-                                    'code::before': {
-                                        content: `''`,
-                                    },
-                                    'code::after': {
-                                        content: `''`,
-                                    },
-                                    code: {
-                                        background: '#f3f3f3',
-                                        wordWrap: 'break-word',
-                                        padding: '.1rem .2rem',
-                                        borderRadius: '.2rem',
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+        files,
+        cssVars: {
+            theme: {
+                "radius": "0.5rem",
             },
+            light: {},
+            dark: {},
         },
-        cssVars: {},
-        files: [],
     };
 
-    for (const config of registryConfigs) {
-        const files = await glob(config.path, { nodir: true });
-        for (const file of files) {
-            await processFile(file, unifiedRegistry, config);
-        }
+    // Create the full registry
+    const registry: Registry = {
+        $schema: "https://ui.shadcn.com/schema/registry.json",
+        name: "ui-builder",
+        homepage: "https://uibuilder.app",
+        items: [uiBuilderItem],
+    };
+
+    // Validate the registry against the schema
+    const validationResult = registrySchema.safeParse(registry);
+    if (!validationResult.success) {
+        console.error("Registry validation failed:", validationResult.error);
+        process.exit(1);
     }
 
     const registryFileName = "block-registry.json";
 
     await writeFile(
         `./registry/${registryFileName}`,
-        JSON.stringify(unifiedRegistry, null, 2)
+        JSON.stringify(registry, null, 2)
     );
 
-    console.log(`Unified registry (${ registryFileName }) built successfully!`);
+    console.log(`Registry (${registryFileName}) built successfully!`);
+    console.log(`  - ${files.length} files processed`);
+    console.log(`  - ${getDependencies().length} dependencies`);
+    console.log(`  - ${getRegistryDependencies().length} registry dependencies`);
 }
 
-
-
 function getDependencies(): string[] {
-    // Consolidate dependencies or define as needed
     return [
         "@use-gesture/react",
         "react-error-boundary",
@@ -132,7 +145,6 @@ function getDevDependencies(): string[] {
         "@types/lodash.template",
         "@types/react-syntax-highlighter",
         "react-docgen-typescript",
-        "tailwindcss-animate",
         "ts-morph",
         "ts-to-zod",
         "@types/object-hash"
@@ -140,7 +152,8 @@ function getDevDependencies(): string[] {
 }
 
 function getRegistryDependencies(): string[] {
-    return ["https://raw.githubusercontent.com/better-stack-ai/form-builder/refs/heads/main/registry/auto-form.json",
+    return [
+        "https://raw.githubusercontent.com/better-stack-ai/form-builder/refs/heads/main/registry/auto-form.json",
         "https://raw.githubusercontent.com/olliethedev/shadcn-minimal-tiptap/refs/heads/feat/markdown/registry/block-registry.json",
         "badge",
         "command",
@@ -148,27 +161,6 @@ function getRegistryDependencies(): string[] {
         "tabs",
         "resizable",
     ];
-}
-
-async function processFile(
-    file: string,
-    registry: z.infer<typeof registryItemSchema>,
-    config: RegistryConfig
-) {
-
-    const targetPath = config.targetFunction(file);
-    console.log("Processing file", { file, type: config.type, target: targetPath });
-
-    const content = await readFile(file, "utf-8");
-
-    const fileEntry = {
-        path: file,
-        content,
-        type: config.type,
-        target: targetPath,
-    };
-
-    registry.files!.push(fileEntry);
 }
 
 buildRegistry();

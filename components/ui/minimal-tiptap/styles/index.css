@@ -1,3 +1,5 @@
+@reference "../../../../styles/globals.css";
+
 @import "./partials/code.css";
 @import "./partials/placeholder.css";
 @import "./partials/lists.css";
@@ -146,7 +148,7 @@
 
 .minimal-tiptap-editor .ProseMirror blockquote::before,
 .minimal-tiptap-editor .ProseMirror blockquote.is-empty::before {
-  @apply absolute bottom-0 left-0 top-0 h-full w-1 rounded-sm bg-accent-foreground/15 content-[''];
+  @apply bg-accent-foreground/15 absolute top-0 bottom-0 left-0 h-full w-1 rounded-sm content-[''];
 }
 
 .minimal-tiptap-editor .ProseMirror hr {
@@ -154,7 +156,7 @@
 }
 
 .minimal-tiptap-editor .ProseMirror-focused hr.ProseMirror-selectednode {
-  @apply rounded-full outline outline-2 outline-offset-1 outline-muted-foreground;
+  @apply outline-muted-foreground rounded-full outline-2 outline-offset-1;
 }
 
 .minimal-tiptap-editor .ProseMirror .ProseMirror-gapcursor {
@@ -178,8 +180,7 @@
 }
 
 .minimal-tiptap-editor .ProseMirror .selection,
-.minimal-tiptap-editor .ProseMirror *::selection,
-::selection {
+.minimal-tiptap-editor .ProseMirror *::selection {
   @apply bg-primary/25;
 }
 

@@ -30,7 +30,7 @@ export const QUICK_START_LAYER = {
         "type": "Markdown",
         "name": "Markdown",
         "props": {},
-        "children": "## Compatibility Notes\n\n⚠️ **Tailwind 4 + React 19**: Migration coming soon. Currently blocked by 3rd party component compatibility. If using latest shadcn/ui CLI fails, try: `npx shadcn@2.1.8 add ...`\n\n⚠️ **Server Components**: Not supported. RSC can't be re-rendered client-side for live preview. A separate RSC renderer for final page rendering is possible."
+        "children": "⚠️ **Server Components**: Not supported. RSC can't be re-rendered client-side for live preview. A separate RSC renderer for final page rendering is possible."
       },
       {
         "id": "quick-start-install",

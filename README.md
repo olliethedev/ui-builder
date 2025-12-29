@@ -25,9 +25,6 @@ See the [docs site](https://uibuilder.app/) for more information.
 
 ---
 
-## Compatibility Notes
-
-**Tailwind 4 + React 19**: Migration coming soon. Currently blocked by 3rd party component compatibility. If using latest shadcn/ui CLI fails, try: `npx shadcn@2.1.8 add ...`
 
 **Server Components**: Not supported. RSC can't be re-rendered client-side for live preview. A separate RSC renderer for final page rendering is possible — open an issue if you have a use case.
 

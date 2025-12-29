@@ -1,7 +1,6 @@
 import * as React from "react"
 import type { ShouldShowProps } from "../../types"
-import type { Editor } from "@tiptap/react"
-import { BubbleMenu } from "@tiptap/react"
+import { type Editor, BubbleMenu } from "@tiptap/react"
 import { LinkEditBlock } from "../link/link-edit-block"
 import { LinkPopoverBlock } from "../link/link-popover-block"
 
@@ -94,7 +93,7 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor }) => {
       shouldShow={shouldShow}
       tippyOptions={{
         placement: "bottom-start",
-        onHidden: () => setShowEdit(false),
+        onHide: () => setShowEdit(false),
       }}
     >
       {showEdit ? (
@@ -103,7 +102,7 @@ export const LinkBubbleMenu: React.FC<LinkBubbleMenuProps> = ({ editor }) => {
           defaultText={selectedText}
           defaultIsNewTab={linkAttrs.target === "_blank"}
           onSave={onSetLink}
-          className="w-full min-w-80 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none"
+          className="bg-popover text-popover-foreground w-full min-w-80 rounded-md border p-4 shadow-md outline-hidden"
         />
       ) : (
         <LinkPopoverBlock

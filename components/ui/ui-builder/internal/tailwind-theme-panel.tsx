@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   baseColors,
   BaseColor,
+  TAILWIND_V4_COLOR_KEYS,
 } from "@/components/ui/ui-builder/internal/utils/base-colors";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -270,16 +271,38 @@ function themeToStyleVars(
   if (!colors) {
     return undefined;
   }
-  const styleVariables = Object.entries(colors).reduce(
-    (acc, [key, value]) => {
-      acc[`--${key}`] = value;
-      return acc;
-    },
-    {} as { [key: string]: string }
-  );
+  
+  const styleVariables: { [key: string]: string } = {};
+  
+  // Set base CSS variables (e.g., --foreground: "222.2 84% 4.9%")
+  Object.entries(colors).forEach(([key, value]) => {
+    styleVariables[`--${key}`] = value;
+  });
+  
+  // Also set --color-* variables for Tailwind v4 compatibility
+  // Tailwind v4's @theme block defines these at :root, but we need to override them
+  // at the element level for custom themes to work
+  TAILWIND_V4_COLOR_KEYS.forEach((key) => {
+    const value = colors[key as keyof typeof colors];
+    if (value) {
+      styleVariables[`--color-${key}`] = `hsl(${value})`;
+    }
+  });
+  
+  // Set radius variables for Tailwind v4
+  const radiusValue = (colors as { radius?: string }).radius;
+  if (radiusValue) {
+    styleVariables["--radius-lg"] = radiusValue;
+    styleVariables["--radius-md"] = `calc(${radiusValue} - 2px)`;
+    styleVariables["--radius-sm"] = `calc(${radiusValue} - 4px)`;
+  }
+  
+  // Global overrides for text and border colors
   const globalOverrides = {
     color: `hsl(${colors.foreground})`,
     borderColor: `hsl(${colors.border})`,
+    backgroundColor: `hsl(${colors.background})`,
   };
+  
   return { ...styleVariables, ...globalOverrides };
 }
