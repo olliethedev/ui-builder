@@ -1,5 +1,6 @@
-import { FieldValues, UseFormWatch } from "react-hook-form";
-import { Dependency, DependencyType, EnumValues } from "./types";
+import type { FieldValues, UseFormWatch } from "react-hook-form";
+import type { Dependency, EnumValues } from "./types";
+import { DependencyType } from "./types";
 import * as z from "zod";
 
 export default function resolveDependencies<

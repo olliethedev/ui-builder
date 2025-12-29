@@ -8,19 +8,39 @@ import { Separator } from "@/components/ui/separator";
 import { Plus, Trash } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
-import { beautifyObjectName } from "../utils";
+import { beautifyObjectName } from "../helpers";
 import AutoFormObject from "./object";
 
-function isZodArray(
-  item: z.ZodArray<any> | z.ZodDefault<any>,
-): item is z.ZodArray<any> {
-  return item instanceof z.ZodArray;
+/**
+ * Get the def type from a Zod schema (Zod v4 compatible).
+ */
+function getDefType(schema: z.ZodType): string {
+  return (schema as any)._zod?.def?.type || "";
 }
 
-function isZodDefault(
-  item: z.ZodArray<any> | z.ZodDefault<any>,
-): item is z.ZodDefault<any> {
-  return item instanceof z.ZodDefault;
+/**
+ * Get the element type from an array or wrapped array schema.
+ * Handles: array, optional array, default array, nullable array
+ * In Zod v4, array element type is at _zod.def.element
+ */
+function getArrayElementType(item: z.ZodType): z.ZodType | null {
+  const def = (item as any)._zod?.def;
+  const defType = getDefType(item);
+
+  // Direct array
+  if (defType === "array") {
+    return def?.element || null;
+  }
+
+  // Wrapped types (default, optional, nullable) - unwrap and recurse
+  if (["default", "optional", "nullable"].includes(defType)) {
+    const innerType = def?.innerType;
+    if (innerType) {
+      return getArrayElementType(innerType);
+    }
+  }
+
+  return null;
 }
 
 export default function AutoFormArray({
@@ -36,17 +56,16 @@ export default function AutoFormArray({
   path?: string[];
   fieldConfig?: any;
 }) {
+  // The full path for useFieldArray - path already includes the array name
+  const fieldPath = path.join(".");
+  
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name,
+    name: fieldPath,
   });
-  const title = item._def.description ?? beautifyObjectName(name);
+  const title = fieldConfig?.label ?? beautifyObjectName(name);
 
-  const itemDefType = isZodArray(item)
-    ? item._def.type
-    : isZodDefault(item)
-    ? item._def.innerType._def.type
-    : null;
+  const itemDefType = getArrayElementType(item);
 
   return (
     <AccordionItem value={name} className="border-none">

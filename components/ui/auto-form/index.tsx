@@ -1,12 +1,12 @@
 "use client";
 import { Form } from "@/components/ui/form";
 import React from "react";
-import {
+import type {
   DefaultValues,
   FormState,
-  useForm,
   UseFormReturn,
 } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,9 @@ import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import AutoFormObject from "./fields/object";
-import { Dependency, FieldConfig } from "./types";
-import {
-  getDefaultValues,
-  getObjectFormSchema,
-  ZodObjectOrWrapped,
-} from "./utils";
+import type { Dependency, FieldConfig } from "./types";
+import type { ZodObjectOrWrapped } from "./helpers";
+import { getDefaultValues, getObjectFormSchema } from "./helpers";
 
 export function AutoFormSubmit({
   children,
@@ -73,25 +70,26 @@ function AutoForm<SchemaType extends ZodObjectOrWrapped>({
   const defaultValues: DefaultValues<z.infer<typeof objectFormSchema>> | null =
     getDefaultValues(objectFormSchema, fieldConfig);
 
-  const form = useForm<z.infer<typeof objectFormSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: defaultValues ?? undefined,
-    values: valuesProp,
+  const form = useForm<Record<string, unknown>>({
+    // Cast to any to handle Zod v4 type compatibility with @hookform/resolvers
+    resolver: zodResolver(formSchema as any) as any,
+    defaultValues: (defaultValues ?? undefined) as any,
+    values: valuesProp as any,
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: Record<string, unknown>) {
     const parsedValues = formSchema.safeParse(values);
     if (parsedValues.success) {
-      onSubmitProp?.(parsedValues.data, form);
+      onSubmitProp?.(parsedValues.data as z.infer<SchemaType>, form as any);
     }
   }
 
   React.useEffect(() => {
     const subscription = form.watch((values) => {
-      onValuesChangeProp?.(values, form);
+      onValuesChangeProp?.(values as any, form as any);
       const parsedValues = formSchema.safeParse(values);
       if (parsedValues.success) {
-        onParsedValuesChange?.(parsedValues.data, form);
+        onParsedValuesChange?.(parsedValues.data as any, form as any);
       }
     });
 
@@ -114,9 +112,9 @@ function AutoForm<SchemaType extends ZodObjectOrWrapped>({
         >
           <AutoFormObject
             schema={objectFormSchema}
-            form={form}
-            dependencies={dependencies}
-            fieldConfig={fieldConfig}
+            form={form as any}
+            dependencies={dependencies as any}
+            fieldConfig={fieldConfig as any}
           />
 
           {renderChildren}
