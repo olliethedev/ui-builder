@@ -49,8 +49,6 @@ export const getOutput = (
       return editor.getJSON()
     case "html":
       return editor.isEmpty ? "" : editor.getHTML()
-    case "markdown":
-      return editor.isEmpty ? "" : editor.storage.markdown.getMarkdown()
     default:
       return editor.getText()
   }
