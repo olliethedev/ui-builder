@@ -2,7 +2,7 @@ import { FormControl, FormItem } from "@/components/ui/form";
 import { Switch } from "@/components/ui/switch";
 import AutoFormLabel from "../common/label";
 import AutoFormTooltip from "../common/tooltip";
-import { AutoFormInputComponentProps } from "../types";
+import type { AutoFormInputComponentProps } from "../types";
 
 export default function AutoFormSwitch({
   label,

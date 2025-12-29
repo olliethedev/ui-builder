@@ -193,7 +193,7 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
           } else {
             // Handle date serialization
             if (
-              baseType === z.ZodFirstPartyTypeKind.ZodDate &&
+              baseType === "ZodDate" &&
               newValue instanceof Date
             ) {
               preservedProps[key] = newValue.toISOString();
@@ -243,11 +243,11 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
         const fieldDef = schemaShape[key];
         if (fieldDef) {
           const baseType = getBaseType(fieldDef as z.ZodAny);
-          if (baseType === z.ZodFirstPartyTypeKind.ZodEnum) {
+          if (baseType === "ZodEnum") {
             // Convert enum value to string if it's not already a string
             transformedProps[key] =
               typeof value === "string" ? value : String(value);
-          } else if (baseType === z.ZodFirstPartyTypeKind.ZodDate) {
+          } else if (baseType === "ZodDate") {
             // Convert string to Date if necessary
             if (value instanceof Date) {
               transformedProps[key] = value;

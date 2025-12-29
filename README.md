@@ -632,18 +632,15 @@ npm run test
 
 ## Roadmap
 
-- [ ] Add variable binding to layer children and not just props
+
 - [ ] Update to React 19
 - [ ] Update to latest Shadcn/ui + Tailwind CSS v4
+- [ ] Add variable binding to layer children and not just props
 - [ ] Add Blocks. Reusable component blocks that can be used in multiple pages
 - [ ] Move component schemas to separate shadcn registry to keep main registry light
 - [ ] Move prop form field components (overrides) to separate shadcn registry to keep main registry light
 - [ ] Add visual data model editor + code gen for backend code for CRUD operations. (ex Zenstack schema editor)
 - [ ] Add event handlers to component layers (onClick, onSubmit, etc)
-- [ ] Update to new AutoForm when stable
-- [ ] Update to Zod v4 (when stable) for native json schema conversion to enforce safety in layer props
-- [ ] React Native support
-- [ ] VS Code plugin integration for UI Builder
 
 ## Contributing
 
