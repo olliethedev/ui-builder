@@ -303,7 +303,7 @@ export function sortFieldsByOrder<SchemaType extends z.ZodObject<any, any>>(
 }
 
 // Import shared JSON Schema property type for consistency with form-builder
-import type { JSONSchemaPropertyBase } from "../shared-form-types";
+import type { JSONSchemaPropertyBase } from "./shared-form-types";
 
 /**
  * JSON schema property shape that includes FieldConfigItem-compatible metadata.

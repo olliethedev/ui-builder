@@ -1,13 +1,4 @@
-/**
- * Shared types between form-builder and auto-form.
- * 
- * These types ensure consistency when:
- * - form-builder creates JSON Schema properties
- * - auto-form consumes JSON Schema properties
- * - inputProps flow from form-builder → JSON Schema → auto-form
- */
-
-import type { INPUT_COMPONENTS } from "./auto-form/config";
+import type { INPUT_COMPONENTS } from "./config";
 
 // ============================================================================
 // INPUT PROPS BY BACKING TYPE

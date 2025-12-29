@@ -15,8 +15,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import AutoFormObject from "./fields/object";
 import type { Dependency, FieldConfig } from "./types";
-import type { ZodObjectOrWrapped } from "./utils";
-import { getDefaultValues, getObjectFormSchema } from "./utils";
+import type { ZodObjectOrWrapped } from "./helpers";
+import { getDefaultValues, getObjectFormSchema } from "./helpers";
 
 export function AutoFormSubmit({
   children,

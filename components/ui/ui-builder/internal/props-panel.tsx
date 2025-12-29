@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
 import { generateFieldOverrides } from "@/lib/ui-builder/store/editor-utils";
 import { addDefaultValues } from "@/lib/ui-builder/store/schema-utils";
-import { getBaseType } from "@/components/ui/auto-form/utils";
+import { getBaseType } from "@/components/ui/auto-form/helpers";
 import { isVariableReference } from "@/lib/ui-builder/utils/variable-resolver";
 import { resolveVariableReferences } from "@/lib/ui-builder/utils/variable-resolver";
 

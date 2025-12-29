@@ -9,7 +9,7 @@ import type {
   DateInputProps,
   EnumInputProps,
   TypedInputProps,
-} from "../shared-form-types";
+} from "./shared-form-types";
 
 // Re-export discriminated input prop types for field components
 export type {

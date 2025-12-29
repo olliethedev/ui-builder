@@ -15,7 +15,7 @@ import {
   getBaseType,
   sortFieldsByOrder,
   zodToHtmlInputProps,
-} from "../utils";
+} from "../helpers";
 import AutoFormArray from "./array";
 import resolveDependencies from "../dependencies";
 
