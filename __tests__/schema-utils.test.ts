@@ -570,3 +570,210 @@ describe('addDefaultValues', () => {
     expect(result.metadata).toEqual(['tag1', 'tag2']);
   });
 });
+
+describe('hasAnyChildrenField', () => {
+  // Import the function for testing
+  const { hasAnyChildrenField } = require('@/lib/ui-builder/store/schema-utils');
+
+  it('should return true when children field is of type any', () => {
+    const schema = z.object({
+      children: z.any(),
+      title: z.string(),
+    });
+    
+    expect(hasAnyChildrenField(schema)).toBe(true);
+  });
+
+  it('should return true when optional children field is of type any', () => {
+    const schema = z.object({
+      children: z.any().optional(),
+      title: z.string(),
+    });
+    
+    expect(hasAnyChildrenField(schema)).toBe(true);
+  });
+
+  it('should return true when nullable children field is of type any', () => {
+    const schema = z.object({
+      children: z.any().nullable(),
+      title: z.string(),
+    });
+    
+    expect(hasAnyChildrenField(schema)).toBe(true);
+  });
+
+  it('should return true when nullable and optional children field is of type any', () => {
+    const schema = z.object({
+      children: z.any().nullable().optional(),
+      title: z.string(),
+    });
+    
+    expect(hasAnyChildrenField(schema)).toBe(true);
+  });
+
+  it('should return false when children field is of type string', () => {
+    const schema = z.object({
+      children: z.string(),
+      title: z.string(),
+    });
+    
+    expect(hasAnyChildrenField(schema)).toBe(false);
+  });
+
+  it('should return false when there is no children field', () => {
+    const schema = z.object({
+      title: z.string(),
+      content: z.string(),
+    });
+    
+    expect(hasAnyChildrenField(schema)).toBe(false);
+  });
+
+  it('should return false when children field is of type array', () => {
+    const schema = z.object({
+      children: z.array(z.string()),
+      title: z.string(),
+    });
+    
+    expect(hasAnyChildrenField(schema)).toBe(false);
+  });
+});
+
+describe('hasChildrenFieldOfTypeString', () => {
+  const { hasChildrenFieldOfTypeString } = require('@/lib/ui-builder/store/schema-utils');
+
+  it('should return true when children field is of type string', () => {
+    const schema = z.object({
+      children: z.string(),
+      title: z.string(),
+    });
+    
+    expect(hasChildrenFieldOfTypeString(schema)).toBe(true);
+  });
+
+  it('should return true when optional children field is of type string', () => {
+    const schema = z.object({
+      children: z.string().optional(),
+      title: z.string(),
+    });
+    
+    expect(hasChildrenFieldOfTypeString(schema)).toBe(true);
+  });
+
+  it('should return true when nullable children field is of type string', () => {
+    const schema = z.object({
+      children: z.string().nullable(),
+      title: z.string(),
+    });
+    
+    expect(hasChildrenFieldOfTypeString(schema)).toBe(true);
+  });
+
+  it('should return true when nullable and optional children field is of type string', () => {
+    const schema = z.object({
+      children: z.string().nullable().optional(),
+      title: z.string(),
+    });
+    
+    expect(hasChildrenFieldOfTypeString(schema)).toBe(true);
+  });
+
+  it('should return false when children field is of type any', () => {
+    const schema = z.object({
+      children: z.any(),
+      title: z.string(),
+    });
+    
+    expect(hasChildrenFieldOfTypeString(schema)).toBe(false);
+  });
+
+  it('should return false when there is no children field', () => {
+    const schema = z.object({
+      title: z.string(),
+      content: z.string(),
+    });
+    
+    expect(hasChildrenFieldOfTypeString(schema)).toBe(false);
+  });
+
+  it('should return false when children field is of type number', () => {
+    const schema = z.object({
+      children: z.number(),
+      title: z.string(),
+    });
+    
+    expect(hasChildrenFieldOfTypeString(schema)).toBe(false);
+  });
+});
+
+describe('patchSchema advanced cases', () => {
+  it('should handle tuple types in schemas', () => {
+    const schema = z.object({
+      coordinates: z.tuple([
+        z.union([z.literal('x'), z.literal('y')]),
+        z.union([z.literal('1'), z.literal('2')])
+      ]),
+    });
+
+    const patchedSchema = patchSchema(schema);
+    
+    // Should parse correctly with transformed tuple values
+    const result = patchedSchema.parse({ 
+      coordinates: ['x', '1'],
+      className: 'test'
+    });
+    expect(result.coordinates).toEqual(['x', '1']);
+  });
+
+  it('should handle enum types in addCoerceToNumberAndDate without modification', () => {
+    const schema = z.object({
+      status: z.enum(['active', 'inactive', 'pending']),
+      count: z.number(),
+    });
+
+    const patchedSchema = patchSchema(schema);
+    
+    const result = patchedSchema.parse({ 
+      status: 'active',
+      count: '42',
+      className: 'test'
+    });
+    expect(result.status).toBe('active');
+    expect(result.count).toBe(42);
+  });
+
+  it('should handle arrays with number elements', () => {
+    const schema = z.object({
+      values: z.array(z.number()),
+    });
+
+    const patchedSchema = patchSchema(schema);
+    
+    const result = patchedSchema.parse({ 
+      values: ['1', '2', '3'],
+      className: 'test'
+    });
+    expect(result.values).toEqual([1, 2, 3]);
+  });
+});
+
+describe('getDefaultProps with function defaults', () => {
+  it('should call default value function when default is a function', () => {
+    // Create a schema with a factory function default
+    const schema = z.object({
+      timestamp: z.date().default(() => new Date('2024-01-01')),
+    });
+
+    const defaults = getDefaultProps(schema);
+    expect(defaults.timestamp).toEqual(new Date('2024-01-01'));
+  });
+
+  it('should handle factory function defaults for arrays', () => {
+    const schema = z.object({
+      items: z.array(z.string()).default(() => ['item1', 'item2']),
+    });
+
+    const defaults = getDefaultProps(schema);
+    expect(defaults.items).toEqual(['item1', 'item2']);
+  });
+});
