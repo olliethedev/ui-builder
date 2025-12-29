@@ -5,9 +5,9 @@ import { StarterKit } from "@tiptap/starter-kit"
 import { useEditor } from "@tiptap/react"
 import { Typography } from "@tiptap/extension-typography"
 import { TextStyle } from "@tiptap/extension-text-style"
-import { Placeholder, Selection } from "@tiptap/extensions"
-import { Link } from "@tiptap/extension-link"
 import { Underline } from "@tiptap/extension-underline"
+import { Placeholder, Selection } from "@tiptap/extensions"
+import { Markdown } from "tiptap-markdown"
 import {
   Image,
   HorizontalRule,
@@ -24,7 +24,7 @@ import { toast } from "sonner"
 
 export interface UseMinimalTiptapEditorProps extends UseEditorOptions {
   value?: Content
-  output?: "html" | "json" | "text"
+  output?: "html" | "json" | "text" | "markdown"
   placeholder?: string
   editorClassName?: string
   throttleDelay?: number
@@ -68,19 +68,20 @@ const createExtensions = ({
     // italic
     // listItem
     // listKeymap
+    link: {
+      enableClickSelection: true,
+      openOnClick: false,
+      HTMLAttributes: {
+        class: "link",
+      },
+    },
     orderedList: { HTMLAttributes: { class: "list-node" } },
     paragraph: { HTMLAttributes: { class: "text-node" } },
     // strike
     // text
+    // underline
     // trailingNode
   }),
-  Link.configure({
-    openOnClick: false,
-    HTMLAttributes: {
-      class: "link",
-    },
-  }),
-  Underline,
   Image.configure({
     allowedMimeTypes: ["image/*"],
     maxFileSize: 5 * 1024 * 1024,
@@ -177,11 +178,17 @@ const createExtensions = ({
   TextStyle,
   Selection,
   Typography,
+  Underline,
   UnsetAllMarks,
   HorizontalRule,
   ResetMarksOnEnter,
   CodeBlockLowlight,
   Placeholder.configure({ placeholder: () => placeholder }),
+  Markdown.configure({
+    html: true,
+    transformCopiedText: true,
+    transformPastedText: true,
+  }),
 ]
 
 export const useMinimalTiptapEditor = ({
