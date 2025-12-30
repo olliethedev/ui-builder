@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { Plus, Crosshair, ZoomIn, ZoomOut, MousePointer } from "lucide-react";
 import { countLayers, useLayerStore } from "@/lib/ui-builder/store/layer-store";
-import { ComponentLayer } from "@/components/ui/ui-builder/types";
+import { ComponentLayer, PropValue } from "@/components/ui/ui-builder/types";
 import {
   TransformWrapper,
   TransformComponent,
@@ -44,9 +44,9 @@ const TRANSFORM_DIV_STYLE = {
 const WHEEL_CONFIG = { step: 0.1 } as const;
 const DOUBLE_CLICK_CONFIG = { disabled: false } as const;
 
-const ZoomControls: React.FC<{ onPointerEventsToggle: (enabled: boolean) => void; pointerEventsEnabled: boolean }> = ({ 
-  onPointerEventsToggle, 
-  pointerEventsEnabled 
+const ZoomControls: React.FC<{ onPointerEventsToggle: (enabled: boolean) => void; pointerEventsEnabled: boolean }> = ({
+  onPointerEventsToggle,
+  pointerEventsEnabled
 }) => {
   const { zoomIn, zoomOut, resetTransform } = useControls();
 
@@ -76,7 +76,7 @@ const ZoomControls: React.FC<{ onPointerEventsToggle: (enabled: boolean) => void
             <p>Zoom in</p>
           </TooltipContent>
         </Tooltip>
-        
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -93,7 +93,7 @@ const ZoomControls: React.FC<{ onPointerEventsToggle: (enabled: boolean) => void
             <p>Zoom out</p>
           </TooltipContent>
         </Tooltip>
-        
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -110,7 +110,7 @@ const ZoomControls: React.FC<{ onPointerEventsToggle: (enabled: boolean) => void
             <p>Reset zoom and position</p>
           </TooltipContent>
         </Tooltip>
-        
+
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -220,7 +220,7 @@ interface EditorPanelContentProps {
 }
 
 // Inner component that can access ComponentDragContext
-const EditorPanelContent: React.FC<EditorPanelContentProps> = ({ 
+const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
   className,
   selectedPageId,
   selectedLayerId,
@@ -237,13 +237,13 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
 }) => {
   const { isDragging: isComponentDragging } = useComponentDragContext();
   const [resizing, setResizing] = useState(false);
-  const [frameSize, setFrameSize] = useState<{ width: number; height: number }>({ 
-    width: 1000, 
-    height: 1000 
+  const [frameSize, setFrameSize] = useState<{ width: number; height: number }>({
+    width: 1000,
+    height: 1000
   });
   const [pointerEventsEnabled, setPointerEventsEnabled] = useState(true);
   const frameRef = useRef<HTMLIFrameElement>(null);
-  
+
   const handleResizingChange = useCallback((isDragging: boolean) => {
     setResizing(isDragging);
   }, []);
@@ -256,11 +256,14 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
     setPointerEventsEnabled(enabled);
   }, []);
 
-  const layers = selectedPage.children;
+  let layers: string | ComponentLayer<Record<string, PropValue>>[] | null = '';
+  if (selectedPage && selectedPage?.children) {
+    layers = selectedPage.children;
+  }
 
   // Memoize totalLayers calculation separately to avoid recalculating on every render
   const totalLayers = useMemo(() => countLayers(layers), [layers]);
-  
+
   const editorConfig = useMemo(
     () => ({
       zIndex: 1,
@@ -354,7 +357,7 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
     [resizableProps, widthClass, autoFrameProps, layerRendererProps]
   );
 
-  
+
   // Use static objects for consistent styles (defined outside component would be better)
   const wrapperStyle = WRAPPER_STYLE;
   const contentStyle = CONTENT_STYLE;
@@ -363,8 +366,8 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
   const doubleClickConfig = DOUBLE_CLICK_CONFIG;
 
   // Disable panning when either resizing the viewport OR dragging components
-  const panningConfig = useMemo(() => ({ 
-    disabled: resizing || isComponentDragging 
+  const panningConfig = useMemo(() => ({
+    disabled: resizing || isComponentDragging
   }), [resizing, isComponentDragging]);
 
   return (
@@ -387,14 +390,14 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
         centerOnInit={false}
         limitToBounds={false}
       >
-        <ZoomControls 
+        <ZoomControls
           onPointerEventsToggle={handlePointerEventsToggle}
           pointerEventsEnabled={pointerEventsEnabled}
         />
-        {autoZoomToSelected && <AutoZoomToSelected 
-            selectedLayerId={selectedLayerId} 
-            autoZoomToSelected={autoZoomToSelected} 
-          /> }
+        {autoZoomToSelected && <AutoZoomToSelected
+          selectedLayerId={selectedLayerId}
+          autoZoomToSelected={autoZoomToSelected}
+        />}
         <TransformComponent
           wrapperStyle={wrapperStyle}
           contentStyle={contentStyle}
