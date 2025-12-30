@@ -264,9 +264,8 @@ export function generateRegistryItem({
     dependencies: dependencies,
     devDependencies: devDependencies,
     tailwind: tailwindConfig,
-    registryDependencies: registryDependencies
-      ? registryDependencies
-      : ["card"],
+    registryDependencies:
+      registryDependencies.length > 0 ? registryDependencies : ["card"],
     files,
   };
 }
