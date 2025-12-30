@@ -256,7 +256,7 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
     setPointerEventsEnabled(enabled);
   }, []);
 
-  let layers: string | ComponentLayer<Record<string, PropValue>>[] | null = '';
+  let layers: string | ComponentLayer<Record<string, PropValue>>[] = '';
   if (selectedPage && selectedPage?.children) {
     layers = selectedPage.children;
   }
