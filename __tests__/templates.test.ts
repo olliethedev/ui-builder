@@ -3,7 +3,6 @@
 import { pageLayerToCode, generateLayerCode, generatePropsString } from "../components/ui/ui-builder/internal/utils/templates";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { Variable } from '@/components/ui/ui-builder/types';
-import template from "lodash/template";
 import { normalizeSchema } from "./test-utils";
 import { z } from "zod";
 
@@ -68,18 +67,6 @@ const mockVariables: Variable[] = [
     defaultValue: true
   }
 ];
-
-// Mock lodash/template
-jest.mock("lodash/template", () => {
-  return jest.fn().mockImplementation((str: string) => (data: any) => {
-    return str
-      .replace("<%= imports %>", data.imports)
-      .replace("<%= variablePropsInterface %>", data.variablePropsInterface || "")
-      .replace("<%= variablePropsParam %>", data.variablePropsParam || "()")
-      .replace("<%= pageProps %>", data.pageProps)
-      .replace("<%= children %>", data.children);
-  });
-});
 
 describe("templates.ts", () => {
 
@@ -216,32 +203,6 @@ describe("templates.ts", () => {
   });
 
   describe("pageLayerToCode", () => {
-    const mockTemplate = `
-import React from "react";
-<%= imports %>
-
-<%= variablePropsInterface %>const Page = (<%= variablePropsParam %>) => {
-  return (
-    <div<%= pageProps %>>
-<%= children %>
-  </div>
-    );
-};
-
-export default Page;
-`;
-
-    beforeEach(() => {
-      (template as jest.Mock).mockImplementation(() => (data: any) => {
-        return mockTemplate
-          .replace("<%= imports %>", data.imports)
-          .replace("<%= variablePropsInterface %>", data.variablePropsInterface || "")
-          .replace("<%= variablePropsParam %>", data.variablePropsParam || "()")
-          .replace("<%= pageProps %>", data.pageProps)
-          .replace("<%= children %>", data.children);
-      });
-    });
-
     it("should generate correct code for an empty page layer", () => {
       const page: ComponentLayer = {
         id: "page1",
