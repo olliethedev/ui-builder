@@ -121,7 +121,6 @@ function getDependencies(): string[] {
         "remark-gfm",
         "remark-math",
         "react-syntax-highlighter",
-        "eta",
         "he-tree-react",
         "@dnd-kit/core",
         "@dnd-kit/sortable",

@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
  
-import { Eta } from "eta";
-
-const eta = new Eta();
+// Simple template renderer using native string replacement
+// Replaces variables in the format <%~ it.variableName %>
+const renderTemplate = (template: string, data: Record<string, any>): string => {
+  return template.replace(/<%~\s*it\.(\w+)\s*%>/g, (_, key) => {
+    return data[key] ?? '';
+  });
+};
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
 import { ComponentRegistry, ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
 import { isVariableReference } from '@/lib/ui-builder/utils/variable-resolver';
@@ -104,7 +108,7 @@ export const pageLayerToCode = (page: ComponentLayer, componentRegistry: Compone
   const variablePropsInterface = generateVariablePropsInterface(variables, variableIdentifiers);
   const variablePropsParam = variables.length > 0 ? "{ variables }: PageProps" : "";
 
-  const finalCode = eta.renderString(reactComponentTemplate, {
+  const finalCode = renderTemplate(reactComponentTemplate, {
     imports: importsString,
     variablePropsInterface,
     variablePropsParam,
