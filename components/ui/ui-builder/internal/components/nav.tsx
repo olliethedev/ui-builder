@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useCallback, useMemo, useState } from "react";
+import { forwardRef, useCallback, useMemo, useState, useEffect, Dispatch, SetStateAction } from "react";
 import {
   Eye,
   FileUp,
@@ -76,17 +76,23 @@ import {
   useKeyboardShortcuts,
 } from "@/hooks/use-keyboard-shortcuts";
 import { useStore } from "zustand";
+import axios from "axios";
+import { generateRegistryItem } from "@/lib/registry-utils";
+
+import { Tailwind } from "@/components/ui/ui-builder/types";
 
 const Z_INDEX = 1000;
 
 
 
 export function NavBar() {
+  const [tailwindConfig, setTailwindConfig] = useState<Tailwind | null>(null);
+
   const selectedPageId = useLayerStore((state) => state.selectedPageId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const componentRegistry = useEditorStore((state) => state.registry);
   const incrementRevision = useEditorStore((state) => state.incrementRevision);
-  
+
   // Panel visibility state
   const showLeftPanel = useEditorStore((state) => state.showLeftPanel);
   const setShowLeftPanel = useEditorStore((state) => state.setShowLeftPanel);
@@ -187,42 +193,43 @@ export function NavBar() {
     >
       <div className="flex items-center gap-2">
         <div className="hidden md:contents">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleToggleLeftPanel}
-              variant={showLeftPanel ? "secondary" : "outline"}
-              size="icon"
-              className="flex flex-col justify-center"
-            >
-              <span className="sr-only">Toggle Left Panel</span>
-              <PanelLeft className="w-4 h-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {showLeftPanel ? "Hide" : "Show"} Left Panel
-          </TooltipContent>
-        </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleToggleLeftPanel}
+                variant={showLeftPanel ? "secondary" : "outline"}
+                size="icon"
+                className="flex flex-col justify-center"
+              >
+                <span className="sr-only">Toggle Left Panel</span>
+                <PanelLeft className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {showLeftPanel ? "Hide" : "Show"} Left Panel
+            </TooltipContent>
+          </Tooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleToggleRightPanel}
-              variant={showRightPanel ? "secondary" : "outline"}
-              size="icon"
-              className="flex flex-col justify-center"
-            >
-              <span className="sr-only">Toggle Right Panel</span>
-              <PanelRight className="w-4 h-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {showRightPanel ? "Hide" : "Show"} Right Panel
-          </TooltipContent>
-        </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={handleToggleRightPanel}
+                variant={showRightPanel ? "secondary" : "outline"}
+                size="icon"
+                className="flex flex-col justify-center"
+              >
+                <span className="sr-only">Toggle Right Panel</span>
+                <PanelRight className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {showRightPanel ? "Hide" : "Show"} Right Panel
+            </TooltipContent>
+          </Tooltip>
         </div>
         <div className="hidden md:flex h-10 w-px bg-border"></div>
         <PagesPopover />
+        <ExportProjectFeature tailwindConfig={tailwindConfig} setTailwindConfig={setTailwindConfig} />
         <PreviewModeToggle />
       </div>
 
@@ -540,6 +547,71 @@ const CodeDialog: React.FC<CodeDialogProps> = ({ isOpen, onOpenChange }) => {
   );
 };
 
+function ExportProjectFeature({ tailwindConfig, setTailwindConfig }: { tailwindConfig: Tailwind | null, setTailwindConfig: Dispatch<SetStateAction<Tailwind | null>> }) {
+  const { pages } = useLayerStore();
+
+  // let tailwindConfiguration: Tailwind | null = null;
+
+
+
+  useEffect(() => {
+    const fetchTailwindConfiguration = () =>
+      axios
+        .get("/api/getTailwindConfig")
+        .then((response) => {
+          console.log(response?.data?.data, "response from call")
+          setTailwindConfig(response.data.data)
+        })
+        .catch((err) => {
+          console.error("Error fetching config:", err);
+          return err;
+        });
+    fetchTailwindConfiguration()
+  }, [setTailwindConfig])
+
+  const exportProject = useCallback(() => {
+    const registryItem = generateRegistryItem({
+      name: "MyProject",
+      tailwindConfig,
+      pages
+    });
+    console.log(registryItem, "registryItem");
+    // Create a downloadable JSON file
+    const dataStr = JSON.stringify(registryItem, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+    const exportFileDefaultName = `${registryItem.name}.json`;
+
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+
+    console.log('Registry item generated:', registryItem);
+    console.log('You can now use this with: npx shadcn@latest init <your-api-endpoint>');
+  }, [pages, tailwindConfig])
+
+  return (
+    <div className="p-4 border rounded-lg bg-muted/50">
+      <h3 className="text-sm font-medium mb-2">Export as shadcn Registry</h3>
+      <p className="text-xs text-muted-foreground mb-3">
+        Generate a registry-item.json that can be used with shadcn CLI to scaffold a complete React project
+      </p>
+      <div className="text-xs text-muted-foreground mb-3 space-y-1">
+        <p>After export, use:</p>
+        <code className="block bg-muted px-2 py-1 rounded text-xs">
+          npx shadcn@latest init &lt;your-api-endpoint&gt;
+        </code>
+      </div>
+      <button
+        onClick={exportProject}
+        className="w-full px-3 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+      >
+        Export Registry Item
+      </button>
+    </div>
+  )
+}
 function ModeToggle() {
   const { setTheme } = useTheme();
 

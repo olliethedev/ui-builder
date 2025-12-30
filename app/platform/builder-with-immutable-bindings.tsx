@@ -1,12 +1,10 @@
 "use client"
 
-import React from "react";
 import UIBuilder from "@/components/ui/ui-builder";
-import { demoComponentRegistry } from "./demo-components";
-import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
-import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 import { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
-import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
+import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
+import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
+import { demoComponentRegistry } from "./demo-components";
 
 // Initial page structure showcasing immutable bindings
 const initialLayers: ComponentLayer[] = [{
@@ -36,7 +34,7 @@ const initialLayers: ComponentLayer[] = [{
         },
         {
           "id": "subtitle",
-          "type": "span", 
+          "type": "span",
           "name": "Subtitle",
           "props": {
             "className": "text-lg text-gray-600 block mb-8"
@@ -56,7 +54,7 @@ const initialLayers: ComponentLayer[] = [{
         {
           "id": "user-profile-section",
           "type": "div",
-          "name": "User Profile Section", 
+          "name": "User Profile Section",
           "props": {
             "className": "space-y-4"
           },
@@ -104,7 +102,7 @@ const initialLayers: ComponentLayer[] = [{
             {
               "id": "button-section-title",
               "type": "span",
-              "name": "Button Section Title", 
+              "name": "Button Section Title",
               "props": {
                 "className": "text-2xl font-semibold text-gray-800 block"
               },
@@ -129,7 +127,7 @@ const initialLayers: ComponentLayer[] = [{
               "children": [
                 {
                   "id": "primary-button-demo",
-                  "type": "BrandedButton", 
+                  "type": "BrandedButton",
                   "name": "Primary Button",
                   "props": {
                     "text": { "__variableRef": "button_text" },
@@ -143,7 +141,7 @@ const initialLayers: ComponentLayer[] = [{
                 {
                   "id": "secondary-button-demo",
                   "type": "BrandedButton",
-                  "name": "Secondary Button", 
+                  "name": "Secondary Button",
                   "props": {
                     "text": "Learn More",
                     "brandColor": { "__variableRef": "company_brand_color" },
@@ -175,7 +173,7 @@ const initialLayers: ComponentLayer[] = [{
               "children": "⚠️ System Alert Component"
             },
             {
-              "id": "alert-description", 
+              "id": "alert-description",
               "type": "span",
               "name": "Alert Description",
               "props": {
@@ -227,7 +225,7 @@ const initialLayers: ComponentLayer[] = [{
             {
               "id": "instruction-1",
               "type": "span",
-              "name": "Instruction 1", 
+              "name": "Instruction 1",
               "props": {
                 "className": "block"
               },
@@ -252,7 +250,7 @@ const initialLayers: ComponentLayer[] = [{
               "children": "3. Notice the 🔗 variable binding indicators and 🔒 'Immutable' badges"
             },
             {
-              "id": "instruction-4", 
+              "id": "instruction-4",
               "type": "span",
               "name": "Instruction 4",
               "props": {
@@ -263,7 +261,7 @@ const initialLayers: ComponentLayer[] = [{
             {
               "id": "instruction-5",
               "type": "span",
-              "name": "Instruction 5", 
+              "name": "Instruction 5",
               "props": {
                 "className": "block"
               },
@@ -286,7 +284,7 @@ const initialVariables: Variable[] = [
     defaultValue: "usr_789xyz"
   },
   {
-    id: "current_user_name", 
+    id: "current_user_name",
     name: "Current User Name",
     type: "string",
     defaultValue: "Alex Rivera"
@@ -294,7 +292,7 @@ const initialVariables: Variable[] = [
   {
     id: "current_user_email",
     name: "Current User Email",
-    type: "string", 
+    type: "string",
     defaultValue: "alex.rivera@company.com"
   },
   {
@@ -313,7 +311,7 @@ const initialVariables: Variable[] = [
   },
   {
     id: "company_name",
-    name: "Company Name", 
+    name: "Company Name",
     type: "string",
     defaultValue: "TechCorp Inc."
   },
@@ -334,7 +332,7 @@ const initialVariables: Variable[] = [
   {
     id: "maintenance_mode",
     name: "Maintenance Mode",
-    type: "boolean", 
+    type: "boolean",
     defaultValue: false
   },
   {
@@ -351,7 +349,7 @@ export const BuilderWithImmutableBindings = () => {
   };
 
   return (
-    <UIBuilder 
+    <UIBuilder
       initialLayers={initialLayers}
       initialVariables={initialVariables}
       componentRegistry={{
