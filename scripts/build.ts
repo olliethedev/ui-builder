@@ -121,7 +121,7 @@ function getDependencies(): string[] {
         "remark-gfm",
         "remark-math",
         "react-syntax-highlighter",
-        "lodash.template",
+        "eta",
         "he-tree-react",
         "@dnd-kit/core",
         "@dnd-kit/sortable",
@@ -136,7 +136,6 @@ function getDependencies(): string[] {
 function getDevDependencies(): string[] {
     return [
         "@tailwindcss/typography",
-        "@types/lodash.template",
         "@types/react-syntax-highlighter",
         "@types/object-hash"
     ];
