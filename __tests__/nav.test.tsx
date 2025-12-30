@@ -67,7 +67,7 @@ describe('NavBar', () => {
   const mockSetShowLeftPanel = jest.fn();
   const mockSetShowRightPanel = jest.fn();
   const mockSetPreviewMode = jest.fn();
-  
+
   const mockPage: ComponentLayer = {
     id: 'page-1',
     type: 'page',
@@ -86,14 +86,14 @@ describe('NavBar', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset window.innerWidth for each test
     Object.defineProperty(window, 'innerWidth', {
       writable: true,
       configurable: true,
       value: 1024,
     });
-    
+
     // Mock LayerStore with temporal property
     const mockLayerStore = {
       selectedPageId: 'page-1',
@@ -163,54 +163,54 @@ describe('NavBar', () => {
   describe('Basic Rendering', () => {
     it('should render the navbar with basic structure', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const navbar = document.querySelector('.flex.items-center.justify-between.bg-background');
       expect(navbar).toBeInTheDocument();
     });
 
     it('should render undo and redo buttons', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const undoButton = buttons.find(button => button.textContent?.includes('Undo'));
       const redoButton = buttons.find(button => button.textContent?.includes('Redo'));
-      
+
       expect(undoButton).toBeInTheDocument();
       expect(redoButton).toBeInTheDocument();
     });
 
     it('should render preview and export buttons', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const previewButton = buttons.find(button => button.textContent?.includes('Preview'));
       const exportButton = buttons.find(button => button.textContent?.includes('Export'));
-      
+
       expect(previewButton).toBeInTheDocument();
       expect(exportButton).toBeInTheDocument();
     });
 
     it('should render theme toggle button', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const themeButton = buttons.find(button => button.textContent?.includes('Toggle theme'));
-      
+
       expect(themeButton).toBeInTheDocument();
     });
 
     it('should render page selector button', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       expect(screen.getByText('Test Page')).toBeInTheDocument();
     });
 
     it('should render preview mode toggle', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const previewModeButton = buttons.find(button => button.textContent?.includes('Select screen size'));
-      
+
       expect(previewModeButton).toBeInTheDocument();
     });
   });
@@ -229,7 +229,7 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const undoButton = buttons.find(button => button.textContent?.includes('Undo'));
       expect(undoButton).toBeDisabled();
@@ -248,7 +248,7 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const undoButton = buttons.find(button => button.textContent?.includes('Undo'));
       expect(undoButton).not.toBeDisabled();
@@ -267,7 +267,7 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const redoButton = buttons.find(button => button.textContent?.includes('Redo'));
       expect(redoButton).toBeDisabled();
@@ -286,7 +286,7 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const redoButton = buttons.find(button => button.textContent?.includes('Redo'));
       expect(redoButton).not.toBeDisabled();
@@ -305,12 +305,12 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const undoButton = buttons.find(button => button.textContent?.includes('Undo'));
       if (undoButton) {
         fireEvent.click(undoButton);
-        
+
         expect(mockUndo).toHaveBeenCalled();
         expect(mockIncrementRevision).toHaveBeenCalled();
       }
@@ -329,12 +329,12 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const redoButton = buttons.find(button => button.textContent?.includes('Redo'));
       if (redoButton) {
         fireEvent.click(redoButton);
-        
+
         expect(mockRedo).toHaveBeenCalled();
         expect(mockIncrementRevision).toHaveBeenCalled();
       }
@@ -344,13 +344,13 @@ describe('NavBar', () => {
   describe('Preview Dialog', () => {
     it('should open preview dialog when preview button is clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const previewButton = buttons.find(button => button.textContent?.includes('Preview'));
-      
+
       if (previewButton) {
         fireEvent.click(previewButton);
-        
+
         await waitFor(() => {
           expect(screen.getByText('Page Preview')).toBeInTheDocument();
         });
@@ -359,13 +359,13 @@ describe('NavBar', () => {
 
     it('should close preview dialog when close button is clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const previewButton = buttons.find(button => button.textContent?.includes('Preview'));
-      
+
       if (previewButton) {
         fireEvent.click(previewButton);
-        
+
         await waitFor(() => {
           expect(screen.getByText('Page Preview')).toBeInTheDocument();
         });
@@ -374,7 +374,7 @@ describe('NavBar', () => {
         const closeButton = closeButtons.find(button => button.textContent?.includes('Close'));
         if (closeButton) {
           fireEvent.click(closeButton);
-          
+
           await waitFor(() => {
             expect(screen.queryByText('Page Preview')).not.toBeInTheDocument();
           });
@@ -386,13 +386,13 @@ describe('NavBar', () => {
   describe('Code Export Dialog', () => {
     it('should open export dialog when export button is clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
-      const exportButton = buttons.find(button => button.textContent?.includes('Export'));
-      
+      const exportButton = buttons.find(button => button.textContent?.includes('Export Code'));
+
       if (exportButton) {
         fireEvent.click(exportButton);
-        
+
         await waitFor(() => {
           expect(screen.getByText('Generated Code')).toBeInTheDocument();
         });
@@ -401,13 +401,13 @@ describe('NavBar', () => {
 
     it('should close export dialog when close button is clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const exportButton = buttons.find(button => button.textContent?.includes('Export'));
-      
+
       if (exportButton) {
         fireEvent.click(exportButton);
-        
+
         await waitFor(() => {
           expect(screen.getByText('Generated Code')).toBeInTheDocument();
         });
@@ -416,7 +416,7 @@ describe('NavBar', () => {
         const closeButton = closeButtons.find(button => button.textContent?.includes('Close'));
         if (closeButton) {
           fireEvent.click(closeButton);
-          
+
           await waitFor(() => {
             expect(screen.queryByText('Generated Code')).not.toBeInTheDocument();
           });
@@ -428,7 +428,7 @@ describe('NavBar', () => {
   describe('Theme Toggle', () => {
     it('should render theme toggle with light and dark icons', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const themeButton = buttons.find(button => button.textContent?.includes('Toggle theme'));
       expect(themeButton).toBeInTheDocument();
@@ -436,13 +436,13 @@ describe('NavBar', () => {
 
     it('should open theme dropdown when clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const themeButton = buttons.find(button => button.textContent?.includes('Toggle theme'));
-      
+
       if (themeButton) {
         fireEvent.click(themeButton);
-        
+
         await waitFor(async () => {
           const dropdownItems = screen.queryAllByText('Light');
           if (dropdownItems.length > 0) {
@@ -458,13 +458,13 @@ describe('NavBar', () => {
 
     it('should call setTheme with light when Light option is clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const themeButton = buttons.find(button => button.textContent?.includes('Toggle theme'));
-      
+
       if (themeButton) {
         fireEvent.click(themeButton);
-        
+
         await waitFor(async () => {
           const lightOption = screen.queryByText('Light');
           if (lightOption) {
@@ -477,13 +477,13 @@ describe('NavBar', () => {
 
     it('should call setTheme with dark when Dark option is clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const themeButton = buttons.find(button => button.textContent?.includes('Toggle theme'));
-      
+
       if (themeButton) {
         fireEvent.click(themeButton);
-        
+
         await waitFor(async () => {
           const darkOption = screen.queryByText('Dark');
           if (darkOption) {
@@ -496,13 +496,13 @@ describe('NavBar', () => {
 
     it('should call setTheme with system when System option is clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const themeButton = buttons.find(button => button.textContent?.includes('Toggle theme'));
-      
+
       if (themeButton) {
         fireEvent.click(themeButton);
-        
+
         await waitFor(async () => {
           const systemOption = screen.queryByText('System');
           if (systemOption) {
@@ -517,22 +517,22 @@ describe('NavBar', () => {
   describe('Preview Mode Toggle', () => {
     it('should render preview mode toggle button', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const previewModeButton = buttons.find(button => button.textContent?.includes('Select screen size'));
-      
+
       expect(previewModeButton).toBeInTheDocument();
     });
 
     it('should open preview mode dropdown when clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const previewModeButton = buttons.find(button => button.textContent?.includes('Select screen size'));
-      
+
       if (previewModeButton) {
         fireEvent.click(previewModeButton);
-        
+
         await waitFor(async () => {
           const mobileOption = screen.queryByText('Mobile');
           if (mobileOption) {
@@ -546,13 +546,13 @@ describe('NavBar', () => {
 
     it('should call setPreviewMode with mobile when Mobile option is clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const previewModeButton = buttons.find(button => button.textContent?.includes('Select screen size'));
-      
+
       if (previewModeButton) {
         fireEvent.click(previewModeButton);
-        
+
         await waitFor(async () => {
           const mobileOption = screen.queryByText('Mobile');
           if (mobileOption) {
@@ -565,13 +565,13 @@ describe('NavBar', () => {
 
     it('should call setPreviewMode with tablet when Tablet option is clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const previewModeButton = buttons.find(button => button.textContent?.includes('Select screen size'));
-      
+
       if (previewModeButton) {
         fireEvent.click(previewModeButton);
-        
+
         await waitFor(async () => {
           const tabletOption = screen.queryByText('Tablet');
           if (tabletOption) {
@@ -584,13 +584,13 @@ describe('NavBar', () => {
 
     it('should call setPreviewMode with desktop when Desktop option is clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const previewModeButton = buttons.find(button => button.textContent?.includes('Select screen size'));
-      
+
       if (previewModeButton) {
         fireEvent.click(previewModeButton);
-        
+
         await waitFor(async () => {
           const desktopOption = screen.queryByText('Desktop');
           if (desktopOption) {
@@ -603,13 +603,13 @@ describe('NavBar', () => {
 
     it('should call setPreviewMode with responsive when Responsive option is clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const previewModeButton = buttons.find(button => button.textContent?.includes('Select screen size'));
-      
+
       if (previewModeButton) {
         fireEvent.click(previewModeButton);
-        
+
         await waitFor(async () => {
           const responsiveOption = screen.queryByText('Responsive');
           if (responsiveOption) {
@@ -624,16 +624,16 @@ describe('NavBar', () => {
   describe('Pages Popover', () => {
     it('should render current page name in button', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       expect(screen.getByText('Test Page')).toBeInTheDocument();
     });
 
     it('should open pages popover when page button is clicked', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const pageButton = screen.getByText('Test Page');
       fireEvent.click(pageButton);
-      
+
       await waitFor(() => {
         expect(screen.getByPlaceholderText('Select page or create new...')).toBeInTheDocument();
       });
@@ -667,10 +667,10 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const pageButton = screen.getByText('Test Page');
       fireEvent.click(pageButton);
-      
+
       await waitFor(() => {
         const pageItems = screen.getAllByText('Test Page');
         const page2Items = screen.getAllByText('Page 2');
@@ -681,10 +681,10 @@ describe('NavBar', () => {
 
     it('should allow creating new pages when allowPagesCreation is true', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const pageButton = screen.getByText('Test Page');
       fireEvent.click(pageButton);
-      
+
       await waitFor(() => {
         expect(screen.getByPlaceholderText('New page name...')).toBeInTheDocument();
       });
@@ -692,14 +692,14 @@ describe('NavBar', () => {
 
     it('should create new page when form is submitted', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const pageButton = screen.getByText('Test Page');
       fireEvent.click(pageButton);
-      
+
       await waitFor(() => {
         const input = screen.getByPlaceholderText('New page name...');
         fireEvent.change(input, { target: { value: 'New Page' } });
-        
+
         const form = input.closest('form');
         if (form) {
           fireEvent.submit(form);
@@ -710,15 +710,15 @@ describe('NavBar', () => {
 
     it('should create new page when Enter key is pressed', async () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const pageButton = screen.getByText('Test Page');
       fireEvent.click(pageButton);
-      
+
       await waitFor(() => {
         const input = screen.getByPlaceholderText('New page name...');
         fireEvent.change(input, { target: { value: 'Another Page' } });
         fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
-        
+
         expect(mockAddPageLayer).toHaveBeenCalledWith('Another Page');
       });
     });
@@ -751,16 +751,16 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const pageButton = screen.getByText('Test Page');
       fireEvent.click(pageButton);
-      
+
       await waitFor(() => {
         const page2Items = screen.getAllByText('Page 2');
-        const selectablePage2 = page2Items.find(item => 
+        const selectablePage2 = page2Items.find(item =>
           item.closest('[cmdk-item]') || item.closest('[role="option"]')
         );
-        
+
         if (selectablePage2) {
           fireEvent.click(selectablePage2);
           expect(mockSelectPage).toHaveBeenCalledWith('page-2');
@@ -772,7 +772,7 @@ describe('NavBar', () => {
   describe('Panel Toggles', () => {
     it('should render left panel toggle button', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const leftPanelButton = buttons.find(button => button.textContent?.includes('Toggle Left Panel'));
       expect(leftPanelButton).toBeInTheDocument();
@@ -780,7 +780,7 @@ describe('NavBar', () => {
 
     it('should render right panel toggle button', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const rightPanelButton = buttons.find(button => button.textContent?.includes('Toggle Right Panel'));
       expect(rightPanelButton).toBeInTheDocument();
@@ -788,10 +788,10 @@ describe('NavBar', () => {
 
     it('should toggle left panel when left panel button is clicked', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const leftPanelButton = buttons.find(button => button.textContent?.includes('Toggle Left Panel'));
-      
+
       if (leftPanelButton) {
         fireEvent.click(leftPanelButton);
         expect(mockSetShowLeftPanel).toHaveBeenCalledWith(false); // Since showLeftPanel is true by default
@@ -800,10 +800,10 @@ describe('NavBar', () => {
 
     it('should toggle right panel when right panel button is clicked', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const rightPanelButton = buttons.find(button => button.textContent?.includes('Toggle Right Panel'));
-      
+
       if (rightPanelButton) {
         fireEvent.click(rightPanelButton);
         expect(mockSetShowRightPanel).toHaveBeenCalledWith(false); // Since showRightPanel is true by default
@@ -831,11 +831,11 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const leftPanelButton = buttons.find(button => button.textContent?.includes('Toggle Left Panel'));
       const rightPanelButton = buttons.find(button => button.textContent?.includes('Toggle Right Panel'));
-      
+
       expect(leftPanelButton).toBeInTheDocument();
       expect(rightPanelButton).toBeInTheDocument();
     });
@@ -850,7 +850,7 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const moreButton = buttons.find(button => button.textContent?.includes('Actions'));
       expect(moreButton).toBeInTheDocument();
@@ -864,13 +864,13 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const moreButton = buttons.find(button => button.textContent?.includes('Actions'));
-      
+
       if (moreButton) {
         fireEvent.click(moreButton);
-        
+
         await waitFor(() => {
           const undoOption = screen.queryByText('Undo');
           if (undoOption) {
@@ -899,19 +899,19 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const moreButton = buttons.find(button => button.textContent?.includes('Actions'));
-      
+
       if (moreButton) {
         fireEvent.click(moreButton);
-        
+
         await waitFor(async () => {
           const undoOptions = screen.queryAllByText('Undo');
-          const clickableUndo = undoOptions.find(option => 
+          const clickableUndo = undoOptions.find(option =>
             option.closest('[role="menuitem"]') || option.closest('[cmdk-item]')
           );
-          
+
           if (clickableUndo) {
             fireEvent.click(clickableUndo);
             expect(mockUndo).toHaveBeenCalled();
@@ -925,15 +925,15 @@ describe('NavBar', () => {
   describe('Keyboard Shortcuts', () => {
     it('should register keyboard shortcuts', () => {
       const { useKeyboardShortcuts } = require('@/hooks/use-keyboard-shortcuts');
-      
+
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       expect(useKeyboardShortcuts).toHaveBeenCalled();
-      
+
       // Check that the shortcuts include undo and redo
       const call = useKeyboardShortcuts.mock.calls[0];
       const shortcuts = call[0];
-      
+
       expect(shortcuts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -950,12 +950,12 @@ describe('NavBar', () => {
 
     it('should register fun keyboard shortcuts for animations', () => {
       const { useKeyboardShortcuts } = require('@/hooks/use-keyboard-shortcuts');
-      
+
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const call = useKeyboardShortcuts.mock.calls[0];
       const shortcuts = call[0];
-      
+
       expect(shortcuts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -974,9 +974,9 @@ describe('NavBar', () => {
   describe('Edge Cases', () => {
     it('should handle missing page gracefully', () => {
       mockFindLayerById.mockReturnValue(null);
-      
+
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       // Should not crash
       expect(screen.getByRole('button', { name: /toggle theme/i })).toBeInTheDocument();
     });
@@ -1008,7 +1008,7 @@ describe('NavBar', () => {
       mockFindLayerById.mockReturnValue(null);
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       // Should render without crashing
       expect(screen.getByRole('button', { name: /toggle theme/i })).toBeInTheDocument();
     });
@@ -1034,10 +1034,10 @@ describe('NavBar', () => {
       });
 
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const pageButton = screen.getByText('Test Page');
       fireEvent.click(pageButton);
-      
+
       await waitFor(() => {
         // Should not show the new page input when creation is disabled
         expect(screen.queryByPlaceholderText('New page name...')).not.toBeInTheDocument();
@@ -1048,14 +1048,14 @@ describe('NavBar', () => {
   describe('Data Test IDs', () => {
     it('should have proper accessibility labels', () => {
       render(<NavBar />, { wrapper: TestWrapper });
-      
+
       const buttons = screen.getAllByRole('button');
       const undoButton = buttons.find(button => button.textContent?.includes('Undo'));
       const redoButton = buttons.find(button => button.textContent?.includes('Redo'));
       const previewButton = buttons.find(button => button.textContent?.includes('Preview'));
       const exportButton = buttons.find(button => button.textContent?.includes('Export'));
       const themeButton = buttons.find(button => button.textContent?.includes('Toggle theme'));
-      
+
       expect(undoButton).toBeInTheDocument();
       expect(redoButton).toBeInTheDocument();
       expect(previewButton).toBeInTheDocument();
