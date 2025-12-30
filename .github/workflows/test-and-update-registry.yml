@@ -55,6 +55,16 @@ jobs:
         run: |
           git diff --exit-code registry/block-registry.json || echo "changed=true" >> $GITHUB_OUTPUT
 
+      - name: Wait for other checks to complete
+        if: steps.git-check.outputs.changed == 'true'
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.head_ref }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+          running-workflow-name: 'Test Registry Installation'
+          allowed-conclusions: success,skipped,neutral
+
       - name: Commit updated registry
         if: steps.git-check.outputs.changed == 'true'
         run: |
