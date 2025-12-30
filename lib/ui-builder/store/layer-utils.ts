@@ -295,8 +295,8 @@ export function migrateV5ToV6(persistedState: unknown): LayerStore {
     const migratedPages = migratedState.pages.map((page: ComponentLayer) => {
       // Only process top-level pages (divs)
       if (page.type === "div" && page.props) {
-        const hasStyle = 'style' in page.props && page.props.style !== undefined;
-        const hasCustomTheme = 'data-color-theme' in page.props && page.props["data-color-theme"] !== undefined;
+        const hasStyle = 'style' in page.props && page.props.style != null;
+        const hasCustomTheme = 'data-color-theme' in page.props && page.props["data-color-theme"] != null;
         
         // If page has style with custom theme, convert to Tailwind v4 format
         if (hasStyle && hasCustomTheme) {

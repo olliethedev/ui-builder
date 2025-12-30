@@ -15,20 +15,6 @@ async function waitForBuilderReady(page: Page) {
   await expect(page.getByTestId('loading-skeleton')).not.toBeVisible({ timeout: 10000 });
 }
 
-// Helper to expand a layer in the tree by clicking the chevron
-async function expandLayerInTree(page: Page, layerName: string) {
-  // Find the layer row and look for the chevron button before it
-  const layerButton = page.getByRole('button', { name: layerName }).first();
-  const row = layerButton.locator('..').locator('..');
-  const chevron = row.locator('button:has(svg)').first();
-  
-  // Check if there's a chevron-right (collapsed state)
-  if (await chevron.isVisible()) {
-    await chevron.click();
-    await page.waitForTimeout(300);
-  }
-}
-
 test.describe('UI Builder Smoke Tests', () => {
   
   test.describe('Empty Builder (/smoke/new)', () => {

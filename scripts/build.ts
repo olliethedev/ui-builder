@@ -85,26 +85,19 @@ async function buildRegistry() {
         },
     };
 
-    // Create the full registry
-    const registry: Registry = {
-        $schema: "https://ui.shadcn.com/schema/registry.json",
-        name: "ui-builder",
-        homepage: "https://uibuilder.app",
-        items: [uiBuilderItem],
-    };
-
-    // Validate the registry against the schema
-    const validationResult = registrySchema.safeParse(registry);
+    // Validate the registry item against the schema
+    const validationResult = registryItemSchema.safeParse(uiBuilderItem);
     if (!validationResult.success) {
-        console.error("Registry validation failed:", validationResult.error);
+        console.error("Registry item validation failed:", validationResult.error);
         process.exit(1);
     }
 
     const registryFileName = "block-registry.json";
 
+    // Output as single registry item (not collection) for compatibility with `shadcn init <url>`
     await writeFile(
         `./registry/${registryFileName}`,
-        JSON.stringify(registry, null, 2)
+        JSON.stringify(uiBuilderItem, null, 2)
     );
 
     console.log(`Registry (${registryFileName}) built successfully!`);
@@ -124,7 +117,7 @@ function getDependencies(): string[] {
         "immer",
         "fast-deep-equal",
         "next-themes",
-        "react-markdown",
+        "react-markdown@^9.0.0",
         "remark-gfm",
         "remark-math",
         "react-syntax-highlighter",
@@ -135,7 +128,8 @@ function getDependencies(): string[] {
         "@dnd-kit/utilities",
         "react-zoom-pan-pinch",
         "object-hash",
-        "@floating-ui/react"
+        "@floating-ui/react",
+        "react-resizable-panels@^2.0.0"
     ];
 }
 
@@ -144,9 +138,6 @@ function getDevDependencies(): string[] {
         "@tailwindcss/typography",
         "@types/lodash.template",
         "@types/react-syntax-highlighter",
-        "react-docgen-typescript",
-        "ts-morph",
-        "ts-to-zod",
         "@types/object-hash"
     ];
 }
@@ -155,9 +146,13 @@ function getRegistryDependencies(): string[] {
     return [
         "https://raw.githubusercontent.com/better-stack-ai/form-builder/refs/heads/main/registry/auto-form.json",
         "https://raw.githubusercontent.com/olliethedev/shadcn-minimal-tiptap/refs/heads/feat/markdown/registry/block-registry.json",
+        "accordion",
         "badge",
+        "calendar",
+        "card",
         "command",
         "dropdown-menu",
+        "scroll-area",
         "tabs",
         "resizable",
     ];

@@ -1494,6 +1494,61 @@ describe("Layer Utils", () => {
       
       expect(migratedState.pages[0].props).toEqual({});
     });
+
+    it("should handle pages with null style property", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "div",
+            name: "Page 1",
+            props: {
+              "data-color-theme": "custom",
+              style: null // null value should not crash
+            },
+            children: []
+          }
+        ],
+        selectedPageId: "page1"
+      };
+
+      // Should not throw TypeError when accessing properties on null
+      expect(() => migrateV5ToV6(persistedState)).not.toThrow();
+      
+      const migratedState = migrateV5ToV6(persistedState);
+      
+      // null style should be preserved (not processed)
+      expect(migratedState.pages[0].props.style).toBeNull();
+    });
+
+    it("should handle pages with null data-color-theme property", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "div",
+            name: "Page 1",
+            props: {
+              "data-color-theme": null, // null value should not crash
+              style: {
+                "--foreground": "222.2 84% 4.9%"
+              }
+            },
+            children: []
+          }
+        ],
+        selectedPageId: "page1"
+      };
+
+      // Should not crash with null theme
+      expect(() => migrateV5ToV6(persistedState)).not.toThrow();
+      
+      const migratedState = migrateV5ToV6(persistedState);
+      
+      // Style should be removed since theme is null (no custom theme)
+      expect(migratedState.pages[0].props.style).toBeUndefined();
+      expect(migratedState.pages[0].props["data-color-theme"]).toBeNull();
+    });
   });
 
   describe("moveLayer", () => {
