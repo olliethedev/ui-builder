@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useCallback, useMemo, useState } from "react";
+import { forwardRef, useCallback, useMemo, useState, useEffect, Dispatch, SetStateAction } from "react";
 import {
   Eye,
   FileUp,
@@ -86,6 +86,8 @@ const Z_INDEX = 1000;
 
 
 export function NavBar() {
+  const [tailwindConfig, setTailwindConfig] = useState<Tailwind | null>(null);
+
   const selectedPageId = useLayerStore((state) => state.selectedPageId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const componentRegistry = useEditorStore((state) => state.registry);
@@ -227,7 +229,7 @@ export function NavBar() {
         </div>
         <div className="hidden md:flex h-10 w-px bg-border"></div>
         <PagesPopover />
-        <ExportProjectFeature />
+        <ExportProjectFeature tailwindConfig={tailwindConfig} setTailwindConfig={setTailwindConfig} />
         <PreviewModeToggle />
       </div>
 
@@ -544,28 +546,32 @@ const CodeDialog: React.FC<CodeDialogProps> = ({ isOpen, onOpenChange }) => {
     </Dialog>
   );
 };
-function ExportProjectFeature() {
+
+function ExportProjectFeature({ tailwindConfig, setTailwindConfig }: { tailwindConfig: Tailwind | null, setTailwindConfig: Dispatch<SetStateAction<Tailwind | null>> }) {
   const { pages } = useLayerStore();
-  let tailwindConfiguration: Tailwind | null = null;
+
+  // let tailwindConfiguration: Tailwind | null = null;
 
   const fetchTailwindConfiguration = () =>
     axios
       .get("/api/getTailwindConfig")
       .then((response) => {
-        console.log(tailwindConfiguration, "tailwindConfig");
-        tailwindConfiguration = response.data.data.plugins[0];
+        console.log(response, "response from call")
+        setTailwindConfig(response.data.data.plugins[0])
       })
       .catch((err) => {
         console.error("Error fetching config:", err);
         return err;
       });
 
-  fetchTailwindConfiguration()
+  useEffect(() => {
+    fetchTailwindConfiguration()
+  }, [])
 
   const exportProject = useCallback(() => {
     const registryItem = generateRegistryItem({
       name: "MyProject",
-      tailwindConfiguration,
+      tailwindConfig,
       pages
     });
     console.log(registryItem, "registryItem");
@@ -582,7 +588,7 @@ function ExportProjectFeature() {
 
     console.log('Registry item generated:', registryItem);
     console.log('You can now use this with: npx shadcn@latest init <your-api-endpoint>');
-  }, [pages])
+  }, [pages, tailwindConfig])
 
   return (
     <div className="p-4 border rounded-lg bg-muted/50">

@@ -185,12 +185,12 @@ export default ${componentName};
  */
 export function generateRegistryItem({
   name,
-  tailwindConfiguration,
+  tailwindConfig,
   pages,
 }: {
   name: string;
   pages: ComponentLayer<Record<string, PropValue>>[];
-  tailwindConfiguration: Tailwind | null;
+  tailwindConfig: Tailwind | null;
 }): {
   $schema: string;
   name: string;
@@ -263,7 +263,7 @@ export function generateRegistryItem({
     description: `A Next.js project generated from UI Builder: ${name}`,
     dependencies: dependencies,
     devDependencies: devDependencies,
-    tailwind: tailwindConfiguration,
+    tailwind: tailwindConfig,
     registryDependencies: registryDependencies
       ? registryDependencies
       : ["card"],
