@@ -1,12 +1,9 @@
-import { Config, PluginCreator } from "tailwindcss/types/config";
-
 import {
   ComponentLayer,
   PropValue,
   Tailwind,
 } from "@/components/ui/ui-builder/types";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
-import { ComponentType } from "react";
 
 /**
  * Recursively collects all complex component types from a ComponentLayer tree
