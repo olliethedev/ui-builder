@@ -44,6 +44,7 @@
   ],
   "exclude": [
     "node_modules",
-    "components/ui/auto-form/**/*"
+    "components/ui/auto-form/**/*",
+    "components/ui/minimal-tiptap/**/*"
   ]
 }
