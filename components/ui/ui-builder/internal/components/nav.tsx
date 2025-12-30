@@ -552,20 +552,22 @@ function ExportProjectFeature({ tailwindConfig, setTailwindConfig }: { tailwindC
 
   // let tailwindConfiguration: Tailwind | null = null;
 
-  const fetchTailwindConfiguration = () =>
-    axios
-      .get("/api/getTailwindConfig")
-      .then((response) => {
-        setTailwindConfig(response.data.data)
-      })
-      .catch((err) => {
-        console.error("Error fetching config:", err);
-        return err;
-      });
+
 
   useEffect(() => {
+    const fetchTailwindConfiguration = () =>
+      axios
+        .get("/api/getTailwindConfig")
+        .then((response) => {
+          console.log(response?.data?.data, "response from call")
+          setTailwindConfig(response.data.data)
+        })
+        .catch((err) => {
+          console.error("Error fetching config:", err);
+          return err;
+        });
     fetchTailwindConfiguration()
-  }, [])
+  }, [setTailwindConfig])
 
   const exportProject = useCallback(() => {
     const registryItem = generateRegistryItem({
