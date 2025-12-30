@@ -556,8 +556,7 @@ function ExportProjectFeature({ tailwindConfig, setTailwindConfig }: { tailwindC
     axios
       .get("/api/getTailwindConfig")
       .then((response) => {
-        console.log(response, "response from call")
-        setTailwindConfig(response.data.data.plugins[0])
+        setTailwindConfig(response.data.data)
       })
       .catch((err) => {
         console.error("Error fetching config:", err);
