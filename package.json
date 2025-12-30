@@ -9,6 +9,7 @@
     "start": "next start",
     "test": "jest --coverage",
     "test:ci": "jest --ci",
+    "test:e2e": "playwright test",
     "lint": "next lint",
     "scan": "next dev & npx react-scan@latest http://localhost:3000",
     "build-registry": "npx tsx scripts/build.ts",
@@ -89,6 +90,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
     "@next/eslint-plugin-next": "^16.1.1",
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@tailwindcss/typography": "^0.5.19",
     "@testing-library/dom": "^10.4.0",
