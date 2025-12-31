@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { ComponentLayer, RegistryEntry } from '@/components/ui/ui-builder/types';
 import { FieldConfigItem } from "@/components/ui/auto-form/types";

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import React, { memo, Suspense, useMemo, useRef } from "react";
 import isDeepEqual from "fast-deep-equal";
 
@@ -99,7 +99,7 @@ export const RenderLayer: React.FC<{
       componentDefinition.component;
     let isPrimitive = false;
     if (isPrimitiveComponent(componentDefinition)) {
-      Component = layer.type as keyof JSX.IntrinsicElements;
+      Component = layer.type as keyof React.JSX.IntrinsicElements;
       isPrimitive = true;
     }
 

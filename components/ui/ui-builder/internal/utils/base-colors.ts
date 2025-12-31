@@ -754,3 +754,29 @@ export const baseColors = [
   ] as const
   
   export type BaseColor = (typeof baseColors)[number]
+
+/**
+ * Color keys that need --color-* variables for Tailwind v4 compatibility.
+ * These are used to generate inline style overrides when applying custom themes.
+ */
+export const TAILWIND_V4_COLOR_KEYS = [
+  "background",
+  "foreground",
+  "card",
+  "card-foreground",
+  "popover",
+  "popover-foreground",
+  "primary",
+  "primary-foreground",
+  "secondary",
+  "secondary-foreground",
+  "muted",
+  "muted-foreground",
+  "accent",
+  "accent-foreground",
+  "destructive",
+  "destructive-foreground",
+  "border",
+  "input",
+  "ring",
+] as const;

@@ -25,9 +25,6 @@ See the [docs site](https://uibuilder.app/) for more information.
 
 ---
 
-## Compatibility Notes
-
-**Tailwind 4 + React 19**: Migration coming soon. Currently blocked by 3rd party component compatibility. If using latest shadcn/ui CLI fails, try: `npx shadcn@2.1.8 add ...`
 
 **Server Components**: Not supported. RSC can't be re-rendered client-side for live preview. A separate RSC renderer for final page rendering is possible — open an issue if you have a use case.
 
@@ -36,31 +33,33 @@ See the [docs site](https://uibuilder.app/) for more information.
 
 ## Installation
 
-If you are using shadcn/ui in your project, you can install the component directly from the registry. 
+If you are using shadcn/ui in your project, you can install the component directly from the registry:
 
 ```bash
 npx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json
 ```
 
-Or you can start a new project with the UI Builder:
+Or start a new Next.js project with UI Builder:
 
 ```bash
-npx shadcn@latest init https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json
+npx shadcn@latest init https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json --base-color zinc
 ```
 
-Note: You need to use [style variables](https://ui.shadcn.com/docs/theming) to have page theming working correctly.
+**Note:** You need to use [style variables](https://ui.shadcn.com/docs/theming) to have page theming working correctly.
 
-If you are not using shadcn/ui, you can install the component simply by copying the files in this repo into your project.
+If you are not using shadcn/ui, you can install the component by copying the files in this repo into your project.
 
-### Fixing Dependencies after shadcn `init` or `add`
+### Handling Peer Dependencies
 
-Add dev dependencies, since there currently seems to be an issue with shadcn/ui not installing them from the registry:
+If you encounter peer dependency warnings during installation (common with React 19 projects), create a `.npmrc` file in your project root:
 
 ```bash
-npm install -D @types/lodash.template @tailwindcss/typography @types/react-syntax-highlighter tailwindcss-animate @types/object-hash
+echo "legacy-peer-deps=true" > .npmrc
 ```
 
-And that's it! You have a UI Builder that you can use to build your UI.
+Then re-run the installation command.
+
+That's it! You now have a fully functional UI Builder ready to use.
 
 ## Usage
 
@@ -626,15 +625,41 @@ npx shadcn@latest add http://127.0.0.1:8080/block-registry.json -o
 
 ## Running Tests
 
+### Unit Tests
+
 ```bash
 npm run test
 ```
 
+### Registry Installation Test
+
+Test the complete installation and build process:
+
+```bash
+./scripts/test-registry.sh
+```
+
+This script:
+- Builds the registry
+- Hosts it locally
+- Creates a fresh Next.js project
+- Installs the registry via `shadcn init`
+- Verifies the project builds successfully
+- Cleans up afterward (preserves on failure for debugging)
+
+### CI/CD
+
+Pull requests automatically run the registry test via GitHub Actions. If the test passes and there are changes to the registry, the workflow will:
+- Commit the updated `block-registry.json` back to the PR branch
+- Add a comment confirming the test passed
+
+This ensures:
+- No breaking changes are introduced to the shadcn registry
+- The registry file is always up-to-date with code changes
+- Installation works for end users
+
 ## Roadmap
 
-
-- [ ] Update to React 19
-- [ ] Update to latest Shadcn/ui + Tailwind CSS v4
 - [ ] Add variable binding to layer children and not just props
 - [ ] Add Blocks. Reusable component blocks that can be used in multiple pages
 - [ ] Move component schemas to separate shadcn registry to keep main registry light

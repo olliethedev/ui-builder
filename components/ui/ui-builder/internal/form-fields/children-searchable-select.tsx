@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import React, { useCallback } from "react";
 
 import { X as XIcon, ChevronsUpDown } from "lucide-react";

@@ -256,8 +256,9 @@ jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/cla
   ),
 }));
 
-jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/utils", () => ({
+jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/helpers", () => ({
   isTailwindClass: jest.fn((arr: string[], token: string) => arr.includes(token)),
+  filterClassnameArray: jest.fn((arr: string[], types: string[]) => arr.filter((item) => types.includes(item))),
 }));
 
 jest.mock("@/lib/utils", () => ({

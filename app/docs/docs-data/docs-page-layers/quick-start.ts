@@ -30,14 +30,14 @@ export const QUICK_START_LAYER = {
         "type": "Markdown",
         "name": "Markdown",
         "props": {},
-        "children": "## Compatibility Notes\n\n⚠️ **Tailwind 4 + React 19**: Migration coming soon. Currently blocked by 3rd party component compatibility. If using latest shadcn/ui CLI fails, try: `npx shadcn@2.1.8 add ...`\n\n⚠️ **Server Components**: Not supported. RSC can't be re-rendered client-side for live preview. A separate RSC renderer for final page rendering is possible."
+        "children": "⚠️ **Server Components**: Not supported. RSC can't be re-rendered client-side for live preview. A separate RSC renderer for final page rendering is possible."
       },
       {
         "id": "quick-start-install",
         "type": "Markdown",
         "name": "Markdown",
         "props": {},
-        "children": "## Installation\n\nIf you are using shadcn/ui in your project, install the component directly from the registry:\n\n```bash\nnpx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json\n```\n\nOr start a new project with UI Builder:\n\n```bash\nnpx shadcn@latest init https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json\n```\n\n**Note:** You need to use [style variables](https://ui.shadcn.com/docs/theming) to have page theming working correctly.\n\n### Fix Dependencies\n\nAdd dev dependencies (current shadcn/ui registry limitation):\n\n```bash\nnpm install -D @types/lodash.template @tailwindcss/typography @types/react-syntax-highlighter tailwindcss-animate @types/object-hash\n```"
+        "children": "## Installation\n\nIf you are using shadcn/ui in your project, install the component directly from the registry:\n\n```bash\nnpx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json\n```\n\nOr start a new Next.js project with UI Builder:\n\n```bash\nnpx shadcn@latest init https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json --base-color zinc\n```\n\n**Note:** You need to use [style variables](https://ui.shadcn.com/docs/theming) to have page theming working correctly.\n\n### Handling Peer Dependencies\n\nIf you encounter peer dependency warnings during installation (common with React 19 projects), create a `.npmrc` file in your project root:\n\n```bash\necho \"legacy-peer-deps=true\" > .npmrc\n```\n\nThen re-run the installation command."
       },
       {
         "id": "quick-start-basic-setup",

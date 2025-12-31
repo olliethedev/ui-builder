@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { CONFIG, LAYOUT_GROUPS, LAYOUT_ORDER, StateType } from "@/components/ui/ui-builder/internal/form-fields/classname-control/config";
 import { ClassNameGroupControl } from "@/components/ui/ui-builder/internal/form-fields/classname-control/classname-group-control";
 import { cn } from "@/lib/utils";
-import { isTailwindClass } from "@/components/ui/ui-builder/internal/form-fields/classname-control/utils";
+import { isTailwindClass } from "@/components/ui/ui-builder/internal/form-fields/classname-control/helpers";
 
 interface ClassNameItemControlProps {
     value: string;

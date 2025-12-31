@@ -10,7 +10,10 @@ import {
   duplicateWithNewIdsAndName,
   migrateV1ToV2,
   migrateV2ToV3,
-  createComponentLayer
+  migrateV5ToV6,
+  createComponentLayer,
+  moveLayer,
+  canLayerAcceptChildren
 } from "../lib/ui-builder/store/layer-utils";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
@@ -1343,6 +1346,469 @@ describe("Layer Utils", () => {
       const layer = createComponentLayer('EmptyComponent', registryWithEmptyChildren);
 
       expect(layer.children).toEqual([]);
+    });
+  });
+
+  describe("migrateV5ToV6", () => {
+    it("should convert old style props to Tailwind v4 format for custom themed pages", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "div",
+            name: "Page 1",
+            props: {
+              "data-color-theme": "custom",
+              style: {
+                "--foreground": "222.2 84% 4.9%",
+                "--background": "0 0% 100%",
+                "--radius": "0.5rem"
+              }
+            },
+            children: []
+          }
+        ],
+        selectedPageId: "page1"
+      };
+
+      const migratedState = migrateV5ToV6(persistedState);
+      
+      const migratedPage = migratedState.pages[0];
+      const style = migratedPage.props.style as Record<string, string>;
+      expect(style).toHaveProperty("--color-foreground");
+      expect(style["--color-foreground"]).toBe("hsl(222.2 84% 4.9%)");
+      expect(style).toHaveProperty("--radius-lg");
+      expect(style["--radius-lg"]).toBe("0.5rem");
+      expect(style).toHaveProperty("backgroundColor");
+    });
+
+    it("should remove old style from pages without custom theme", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "div",
+            name: "Page 1",
+            props: {
+              style: {
+                "--foreground": "222.2 84% 4.9%",
+                "--background": "0 0% 100%"
+              }
+            },
+            children: []
+          }
+        ],
+        selectedPageId: "page1"
+      };
+
+      const migratedState = migrateV5ToV6(persistedState);
+      
+      const migratedPage = migratedState.pages[0];
+      expect(migratedPage.props.style).toBeUndefined();
+    });
+
+    it("should not modify pages without style props", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "div",
+            name: "Page 1",
+            props: {
+              className: "test-class"
+            },
+            children: []
+          }
+        ],
+        selectedPageId: "page1"
+      };
+
+      const migratedState = migrateV5ToV6(persistedState);
+      
+      const migratedPage = migratedState.pages[0];
+      expect(migratedPage.props).toEqual({ className: "test-class" });
+    });
+
+    it("should not modify non-div page types", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "container",
+            name: "Page 1",
+            props: {
+              style: {
+                "--foreground": "222.2 84% 4.9%"
+              }
+            },
+            children: []
+          }
+        ],
+        selectedPageId: "page1"
+      };
+
+      const migratedState = migrateV5ToV6(persistedState);
+      
+      // Non-div pages should remain unchanged
+      expect(migratedState.pages[0]).toEqual(persistedState.pages[0]);
+    });
+
+    it("should preserve other state properties", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "div",
+            name: "Page 1",
+            props: {},
+            children: []
+          }
+        ],
+        selectedPageId: "page1",
+        selectedLayerId: "layer1",
+        variables: [{ id: "var1", value: "test" }]
+      };
+
+      const migratedState = migrateV5ToV6(persistedState);
+      
+      expect(migratedState.selectedPageId).toBe("page1");
+      expect(migratedState.selectedLayerId).toBe("layer1");
+      expect((migratedState as any).variables).toEqual([{ id: "var1", value: "test" }]);
+    });
+
+    it("should handle pages with empty props", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "div",
+            name: "Page 1",
+            props: {},
+            children: []
+          }
+        ],
+        selectedPageId: "page1"
+      };
+
+      const migratedState = migrateV5ToV6(persistedState);
+      
+      expect(migratedState.pages[0].props).toEqual({});
+    });
+
+    it("should handle pages with null style property", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "div",
+            name: "Page 1",
+            props: {
+              "data-color-theme": "custom",
+              style: null // null value should not crash
+            },
+            children: []
+          }
+        ],
+        selectedPageId: "page1"
+      };
+
+      // Should not throw TypeError when accessing properties on null
+      expect(() => migrateV5ToV6(persistedState)).not.toThrow();
+      
+      const migratedState = migrateV5ToV6(persistedState);
+      
+      // null style should be preserved (not processed)
+      expect(migratedState.pages[0].props.style).toBeNull();
+    });
+
+    it("should handle pages with null data-color-theme property", () => {
+      const persistedState = {
+        pages: [
+          {
+            id: "page1",
+            type: "div",
+            name: "Page 1",
+            props: {
+              "data-color-theme": null, // null value should not crash
+              style: {
+                "--foreground": "222.2 84% 4.9%"
+              }
+            },
+            children: []
+          }
+        ],
+        selectedPageId: "page1"
+      };
+
+      // Should not crash with null theme
+      expect(() => migrateV5ToV6(persistedState)).not.toThrow();
+      
+      const migratedState = migrateV5ToV6(persistedState);
+      
+      // Style should be removed since theme is null (no custom theme)
+      expect(migratedState.pages[0].props.style).toBeUndefined();
+      expect(migratedState.pages[0].props["data-color-theme"]).toBeNull();
+    });
+  });
+
+  describe("moveLayer", () => {
+    it("should move a layer to a new parent", () => {
+      const layers: ComponentLayer[] = [
+        {
+          id: "page1",
+          type: "div",
+          name: "Page 1",
+          props: {},
+          children: [
+            {
+              id: "container1",
+              type: "div",
+              name: "Container 1",
+              props: {},
+              children: [
+                {
+                  id: "button1",
+                  type: "button",
+                  name: "Button 1",
+                  props: {},
+                  children: []
+                }
+              ]
+            },
+            {
+              id: "container2",
+              type: "div",
+              name: "Container 2",
+              props: {},
+              children: []
+            }
+          ]
+        }
+      ];
+
+      const result = moveLayer(layers, "button1", "container2", 0);
+      
+      const container1 = (result[0].children as ComponentLayer[]).find(c => c.id === "container1");
+      const container2 = (result[0].children as ComponentLayer[]).find(c => c.id === "container2");
+      
+      expect((container1?.children as ComponentLayer[]).length).toBe(0);
+      expect((container2?.children as ComponentLayer[]).length).toBe(1);
+      expect((container2?.children as ComponentLayer[])[0].id).toBe("button1");
+    });
+
+    it("should handle moving layer within the same parent", () => {
+      const layers: ComponentLayer[] = [
+        {
+          id: "page1",
+          type: "div",
+          name: "Page 1",
+          props: {},
+          children: [
+            {
+              id: "button1",
+              type: "button",
+              name: "Button 1",
+              props: {},
+              children: []
+            },
+            {
+              id: "button2",
+              type: "button",
+              name: "Button 2",
+              props: {},
+              children: []
+            },
+            {
+              id: "button3",
+              type: "button",
+              name: "Button 3",
+              props: {},
+              children: []
+            }
+          ]
+        }
+      ];
+
+      const result = moveLayer(layers, "button3", "page1", 0);
+      
+      const pageChildren = result[0].children as ComponentLayer[];
+      expect(pageChildren[0].id).toBe("button3");
+      expect(pageChildren[1].id).toBe("button1");
+      expect(pageChildren[2].id).toBe("button2");
+    });
+
+    it("should return unchanged layers when source layer not found", () => {
+      const layers: ComponentLayer[] = [
+        {
+          id: "page1",
+          type: "div",
+          name: "Page 1",
+          props: {},
+          children: []
+        }
+      ];
+
+      console.warn = jest.fn();
+      const result = moveLayer(layers, "nonexistent", "page1", 0);
+      
+      expect(result).toEqual(layers);
+      expect(console.warn).toHaveBeenCalledWith("Source layer with ID nonexistent not found");
+    });
+
+    it("should handle moving deeply nested layers", () => {
+      const layers: ComponentLayer[] = [
+        {
+          id: "page1",
+          type: "div",
+          name: "Page 1",
+          props: {},
+          children: [
+            {
+              id: "container1",
+              type: "div",
+              name: "Container 1",
+              props: {},
+              children: [
+                {
+                  id: "nested1",
+                  type: "div",
+                  name: "Nested 1",
+                  props: {},
+                  children: [
+                    {
+                      id: "deep-button",
+                      type: "button",
+                      name: "Deep Button",
+                      props: {},
+                      children: []
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ];
+
+      const result = moveLayer(layers, "deep-button", "page1", 0);
+      
+      const pageChildren = result[0].children as ComponentLayer[];
+      expect(pageChildren[0].id).toBe("deep-button");
+      
+      const container1 = pageChildren.find(c => c.id === "container1");
+      const nested1 = (container1?.children as ComponentLayer[])[0];
+      expect((nested1.children as ComponentLayer[]).length).toBe(0);
+    });
+  });
+
+  describe("canLayerAcceptChildren", () => {
+    const mockRegistry = {
+      div: {
+        component: () => null,
+        schema: z.object({
+          children: z.any().optional(),
+          className: z.string().optional()
+        })
+      },
+      span: {
+        component: () => null,
+        schema: z.object({
+          children: z.string().optional(),
+          className: z.string().optional()
+        })
+      },
+      button: {
+        component: () => null,
+        schema: z.object({
+          label: z.string(),
+          className: z.string().optional()
+        })
+      }
+    } as any;
+
+    it("should return true for layers with children field and array children", () => {
+      const layer: ComponentLayer = {
+        id: "div1",
+        type: "div",
+        name: "Div Layer",
+        props: {},
+        children: []
+      };
+
+      expect(canLayerAcceptChildren(layer, mockRegistry)).toBe(true);
+    });
+
+    it("should return false for layers with string children", () => {
+      const layer: ComponentLayer = {
+        id: "span1",
+        type: "span",
+        name: "Span Layer",
+        props: {},
+        children: "text content"
+      };
+
+      expect(canLayerAcceptChildren(layer, mockRegistry)).toBe(false);
+    });
+
+    it("should return false for layers without children field in schema", () => {
+      const layer: ComponentLayer = {
+        id: "button1",
+        type: "button",
+        name: "Button Layer",
+        props: {},
+        children: []
+      };
+
+      expect(canLayerAcceptChildren(layer, mockRegistry)).toBe(false);
+    });
+
+    it("should return false for unknown component types", () => {
+      const layer: ComponentLayer = {
+        id: "unknown1",
+        type: "unknown",
+        name: "Unknown Layer",
+        props: {},
+        children: []
+      };
+
+      expect(canLayerAcceptChildren(layer, mockRegistry)).toBe(false);
+    });
+  });
+
+  describe("addLayer edge cases", () => {
+    it("should not add child to layer with string children", () => {
+      const layers: ComponentLayer[] = [
+        {
+          id: "page1",
+          type: "div",
+          name: "Page 1",
+          props: {},
+          children: [
+            {
+              id: "span1",
+              type: "span",
+              name: "Text Layer",
+              props: {},
+              children: "some text content"
+            }
+          ]
+        }
+      ];
+
+      const newLayer: ComponentLayer = {
+        id: "button1",
+        type: "button",
+        name: "Button",
+        props: {},
+        children: []
+      };
+
+      // Try to add to the span which has string children
+      const result = addLayer(layers, newLayer, "span1");
+      
+      // Should not modify the span's children
+      const span = (result[0].children as ComponentLayer[]).find(c => c.id === "span1");
+      expect(span?.children).toBe("some text content");
     });
   });
 });

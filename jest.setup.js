@@ -18,6 +18,20 @@ jest.mock("lowlight", () => ({
   })),
 }));
 
+// Mock @tiptap/extension-code-block-lowlight to avoid ESM/CJS issues in Jest
+jest.mock("@tiptap/extension-code-block-lowlight", () => {
+  const mockExtension = {
+    extend: jest.fn(() => mockExtension),
+    configure: jest.fn(() => mockExtension),
+    name: "codeBlock",
+  };
+  return {
+    __esModule: true,
+    default: mockExtension,
+    CodeBlockLowlight: mockExtension,
+  };
+});
+
 jest.mock("react-medium-image-zoom", () => ({
   __esModule: true,
   default: ({ children }) => children,

@@ -1,6 +1,7 @@
 import { LayerStore } from "@/lib/ui-builder/store/layer-store";
 import { ComponentLayer, ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { getDefaultProps } from '@/lib/ui-builder/store/schema-utils';
+import { TAILWIND_V4_COLOR_KEYS } from '@/components/ui/ui-builder/internal/utils/base-colors';
 
 /**
  * Recursively visits each layer in the layer tree and applies the provided visitor function to each layer.
@@ -159,7 +160,7 @@ export function migrateV1ToV2(persistedState: unknown): LayerStore {
         id: string;
         name?: string;
         type: '_text_';
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         props: Record<string, any>;
         text: string;
         textType: 'text' | 'markdown';
@@ -204,7 +205,7 @@ export function migrateV2ToV3(persistedState: unknown): LayerStore {
         id: string;
         name?: string;
         type: '_page_';
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         props: Record<string, any>;
         children: ComponentLayer[];
       }
@@ -246,6 +247,93 @@ export function migrateV2ToV3(persistedState: unknown): LayerStore {
         ...migratedState,
         pages: migratedPages,
       } satisfies LayerStore;
+}
+
+/**
+ * Converts old-format theme styles to Tailwind v4 format.
+ * Adds --color-* variables and --radius-* variables.
+ */
+function convertStyleToTailwindV4(oldStyle: Record<string, string>): Record<string, string> {
+  const newStyle: Record<string, string> = { ...oldStyle };
+  
+  // Add --color-* variables based on existing base variables
+  TAILWIND_V4_COLOR_KEYS.forEach((key) => {
+    const baseVar = `--${key}`;
+    if (oldStyle[baseVar] && !oldStyle[`--color-${key}`]) {
+      newStyle[`--color-${key}`] = `hsl(${oldStyle[baseVar]})`;
+    }
+  });
+  
+  // Add radius variables if --radius exists
+  const radiusValue = oldStyle["--radius"];
+  if (radiusValue && !oldStyle["--radius-lg"]) {
+    newStyle["--radius-lg"] = radiusValue;
+    newStyle["--radius-md"] = `calc(${radiusValue} - 2px)`;
+    newStyle["--radius-sm"] = `calc(${radiusValue} - 4px)`;
+  }
+  
+  // Add backgroundColor if background exists
+  if (oldStyle["--background"] && !oldStyle["backgroundColor"]) {
+    newStyle["backgroundColor"] = `hsl(${oldStyle["--background"]})`;
+  }
+  
+  return newStyle;
+}
+
+/**
+ * Migration from v5 to v6: Convert old-format theme styles to Tailwind v4 format.
+ * 
+ * In Tailwind v4, utility classes use `--color-foreground`, `--color-background`, etc.
+ * Old page layers may have a `style` prop with just `--foreground`, `--background`, etc.
+ * This migration adds the required `--color-*` and `--radius-*` variables.
+ */
+export function migrateV5ToV6(persistedState: unknown): LayerStore {
+    console.log("Migrating store", { persistedState, version: 5 });
+
+    const migratedState = persistedState as LayerStore;
+
+    const migratedPages = migratedState.pages.map((page: ComponentLayer) => {
+      // Only process top-level pages (divs)
+      if (page.type === "div" && page.props) {
+        const hasStyle = 'style' in page.props && page.props.style != null;
+        const hasCustomTheme = 'data-color-theme' in page.props && page.props["data-color-theme"] != null;
+        
+        // If page has style with custom theme, convert to Tailwind v4 format
+        if (hasStyle && hasCustomTheme) {
+          console.log("Converting style to Tailwind v4 format", { 
+            pageId: page.id, 
+            pageName: page.name,
+            colorTheme: page.props["data-color-theme"]
+          });
+          const oldStyle = page.props.style as Record<string, string>;
+          const newStyle = convertStyleToTailwindV4(oldStyle);
+          return {
+            ...page,
+            props: {
+              ...page.props,
+              style: newStyle,
+            },
+          };
+        }
+        
+        // If page has old style but no custom theme, remove the style to use default theme
+        if (hasStyle && !hasCustomTheme) {
+          console.log("Removing old-format style from page (no custom theme)", { pageId: page.id, pageName: page.name });
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { style: _removedStyle, ...restProps } = page.props;
+          return {
+            ...page,
+            props: restProps,
+          };
+        }
+      }
+      return page;
+    }) satisfies ComponentLayer[];
+
+    return {
+      ...migratedState,
+      pages: migratedPages,
+    } satisfies LayerStore;
 }
 
 /**

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { create, StateCreator } from 'zustand';
 import { ComponentType as ReactComponentType } from "react";
 import { RegistryEntry, ComponentRegistry } from '@/components/ui/ui-builder/types';

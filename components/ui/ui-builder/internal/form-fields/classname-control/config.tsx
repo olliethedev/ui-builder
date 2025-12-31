@@ -68,7 +68,7 @@ import {
   ShadowIcon,
   PaddingIcon,
 } from "@/components/ui/ui-builder/internal/form-fields/classname-control/icons";
-import { filterClassnameArray } from "@/components/ui/ui-builder/internal/form-fields/classname-control/utils";
+import { filterClassnameArray } from "@/components/ui/ui-builder/internal/form-fields/classname-control/helpers";
 import {
   THEME_AWARE_BORDER_COLOR_ITEMS,
   THEME_AWARE_BACKGROUND_COLOR_ITEMS,

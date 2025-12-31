@@ -660,3 +660,214 @@ describe('TreeRowPlaceholder', () => {
     expect(placeholder).toHaveAttribute('data-node-box', 'true');
   });
 });
+
+describe('TreeRowNode edge cases', () => {
+  const mockSelectLayer = jest.fn();
+  const mockRemoveLayer = jest.fn();
+  const mockDuplicateLayer = jest.fn();
+  const mockUpdateLayer = jest.fn();
+  const mockOnToggle = jest.fn();
+
+  const defaultProps = {
+    id: 'node-1',
+    level: 0,
+    open: false,
+    draggable: true,
+    onToggle: mockOnToggle,
+    selectedLayerId: null,
+    selectLayer: mockSelectLayer,
+    removeLayer: mockRemoveLayer,
+    duplicateLayer: mockDuplicateLayer,
+    updateLayer: mockUpdateLayer,
+    nodeAttributes: {
+      key: 'test-key',
+      'data-key': 'test-key',
+      'data-level': '0',
+      'data-node-box': true,
+    } as NodeAttrs,
+  };
+
+  const createMockRegistry = (componentType: string, hasChildren = true, childrenIsString = false) => ({
+    [componentType]: {
+      schema: {
+        shape: hasChildren ? { children: 'mock-children-field' } : {}
+      }
+    }
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    const mockUseEditorStore = useEditorStore as jest.MockedFunction<typeof useEditorStore>;
+    mockUseEditorStore.mockImplementation((selector) => {
+      const state = {
+        allowPagesCreation: true,
+        allowPagesDeletion: true,
+        registry: createMockRegistry('div', true, false),
+      };
+      return selector(state as any);
+    });
+
+    const mockUseLayerStore = useLayerStore as jest.MockedFunction<typeof useLayerStore>;
+    mockUseLayerStore.mockImplementation((selector) => {
+      const state = {
+        isLayerAPage: jest.fn().mockReturnValue(false),
+      };
+      return selector(state as any);
+    });
+
+    const { hasLayerChildren } = require('@/lib/ui-builder/store/layer-utils');
+    hasLayerChildren.mockImplementation((layer: ComponentLayer) => {
+      return Array.isArray(layer.children) && typeof layer.children !== 'string';
+    });
+
+    const { hasAnyChildrenField, hasChildrenFieldOfTypeString } = require('@/lib/ui-builder/store/schema-utils');
+    hasAnyChildrenField.mockReturnValue(true);
+    hasChildrenFieldOfTypeString.mockReturnValue(false);
+  });
+
+
+  describe('Memo equality function behavior', () => {
+    const mockNode: ComponentLayer = {
+      id: 'memo-test-node',
+      type: 'div',
+      name: 'Memo Test Node',
+      props: { testProp: 'value' },
+      children: []
+    };
+
+    it('should re-render when node id changes', () => {
+      const { rerender } = render(
+        <TreeRowNode {...defaultProps} node={mockNode} />
+      );
+
+      const updatedNode = { ...mockNode, id: 'different-id' };
+      rerender(<TreeRowNode {...defaultProps} node={updatedNode} />);
+
+      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
+    });
+
+    it('should re-render when node props change', () => {
+      const { rerender } = render(
+        <TreeRowNode {...defaultProps} node={mockNode} />
+      );
+
+      const updatedNode = { ...mockNode, props: { testProp: 'different-value' } };
+      rerender(<TreeRowNode {...defaultProps} node={updatedNode} />);
+
+      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
+    });
+
+    it('should re-render when level changes', () => {
+      const { rerender } = render(
+        <TreeRowNode {...defaultProps} node={mockNode} level={0} />
+      );
+
+      rerender(<TreeRowNode {...defaultProps} node={mockNode} level={2} />);
+
+      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
+    });
+
+    it('should re-render when open state changes', () => {
+      const { rerender } = render(
+        <TreeRowNode {...defaultProps} node={mockNode} open={false} />
+      );
+
+      rerender(<TreeRowNode {...defaultProps} node={mockNode} open={true} />);
+
+      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
+    });
+
+    it('should re-render when draggable changes', () => {
+      const { rerender } = render(
+        <TreeRowNode {...defaultProps} node={mockNode} draggable={true} />
+      );
+
+      rerender(<TreeRowNode {...defaultProps} node={mockNode} draggable={false} />);
+
+      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
+    });
+
+    it('should re-render when selectedLayerId changes', () => {
+      const { rerender } = render(
+        <TreeRowNode {...defaultProps} node={mockNode} selectedLayerId={null} />
+      );
+
+      rerender(<TreeRowNode {...defaultProps} node={mockNode} selectedLayerId="memo-test-node" />);
+
+      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
+    });
+
+    it('should re-render when nodeAttributes change', () => {
+      const { rerender } = render(
+        <TreeRowNode {...defaultProps} node={mockNode} />
+      );
+
+      const newAttributes = {
+        key: 'new-key',
+        'data-key': 'new-key',
+        'data-level': '1',
+        'data-node-box': true,
+      } as NodeAttrs;
+
+      rerender(<TreeRowNode {...defaultProps} node={mockNode} nodeAttributes={newAttributes} />);
+
+      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
+    });
+
+    it('should re-render when onToggle callback changes', () => {
+      const newOnToggle = jest.fn();
+      const { rerender } = render(
+        <TreeRowNode {...defaultProps} node={mockNode} />
+      );
+
+      rerender(<TreeRowNode {...defaultProps} node={mockNode} onToggle={newOnToggle} />);
+
+      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
+    });
+
+    it('should re-render when selectLayer callback changes', () => {
+      const newSelectLayer = jest.fn();
+      const { rerender } = render(
+        <TreeRowNode {...defaultProps} node={mockNode} />
+      );
+
+      rerender(<TreeRowNode {...defaultProps} node={mockNode} selectLayer={newSelectLayer} />);
+
+      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
+    });
+
+    it('should re-render when removeLayer callback changes', () => {
+      const newRemoveLayer = jest.fn();
+      const { rerender } = render(
+        <TreeRowNode {...defaultProps} node={mockNode} />
+      );
+
+      rerender(<TreeRowNode {...defaultProps} node={mockNode} removeLayer={newRemoveLayer} />);
+
+      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
+    });
+
+    it('should re-render when duplicateLayer callback changes', () => {
+      const newDuplicateLayer = jest.fn();
+      const { rerender } = render(
+        <TreeRowNode {...defaultProps} node={mockNode} />
+      );
+
+      rerender(<TreeRowNode {...defaultProps} node={mockNode} duplicateLayer={newDuplicateLayer} />);
+
+      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
+    });
+
+    it('should re-render when updateLayer callback changes', () => {
+      const newUpdateLayer = jest.fn();
+      const { rerender } = render(
+        <TreeRowNode {...defaultProps} node={mockNode} />
+      );
+
+      rerender(<TreeRowNode {...defaultProps} node={mockNode} updateLayer={newUpdateLayer} />);
+
+      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
+    });
+  });
+});

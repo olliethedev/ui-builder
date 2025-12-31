@@ -4,6 +4,7 @@ import { Plugin } from "@tiptap/pm/state"
 export const Color = TiptapColor.extend({
   addProseMirrorPlugins() {
     return [
+      // @ts-expect-error - Tiptap types don't expose `parent` for extensions
       ...(this.parent?.() || []),
       new Plugin({
         props: {
