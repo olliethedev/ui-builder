@@ -6,6 +6,8 @@ import {
 import { getIframeElements } from '@/lib/ui-builder/context/dnd-utils';
 import { debugCollisionDetection } from '@/lib/ui-builder/context/collision-debug';
 
+// Debug flag - only enable in development
+const DEBUG_COLLISION = process.env.NODE_ENV === 'development' && false;
 
 // Transform state interface
 interface TransformState {
@@ -145,7 +147,7 @@ export const createTransformAwareCollisionDetection = (): CollisionDetection => 
         };
 
         // Only log when there's significant scrolling or at top to debug the up/down issue
-        if (Math.abs(iframeScrollOffset.y) > 50 || isAtTop) {
+        if (DEBUG_COLLISION && (Math.abs(iframeScrollOffset.y) > 50 || isAtTop)) {
             console.debug('Collision detection scroll debug:', debugInfo);
         }
 
@@ -178,18 +180,20 @@ export const createTransformAwareCollisionDetection = (): CollisionDetection => 
         const pointerCollisions = pointerWithin(adjustedArgs);
 
         if (pointerCollisions.length > 0) {
-            if (Math.abs(iframeScrollOffset.y) > 50 || isAtTop) {
+            if (DEBUG_COLLISION && (Math.abs(iframeScrollOffset.y) > 50 || isAtTop)) {
                 console.debug(`Found pointer collisions with fresh rects ${ isAtTop ? '(at top)' : '(mid-scroll)' }:`, pointerCollisions.map(c => c.id));
             }
             
             // Debug visualization for successful collisions
-            debugCollisionDetection(
-                pointerCoordinates, 
-                adjustedPointerCoordinates, 
-                freshDroppableRects, 
-                pointerCollisions,
-                { method: 'pointerWithin', scrollState: isAtTop ? 'at top' : 'mid-scroll', ...debugInfo }
-            );
+            if (DEBUG_COLLISION) {
+                debugCollisionDetection(
+                    pointerCoordinates, 
+                    adjustedPointerCoordinates, 
+                    freshDroppableRects, 
+                    pointerCollisions,
+                    { method: 'pointerWithin', scrollState: isAtTop ? 'at top' : 'mid-scroll', ...debugInfo }
+                );
+            }
             
             return pointerCollisions;
         }
@@ -198,18 +202,20 @@ export const createTransformAwareCollisionDetection = (): CollisionDetection => 
         const rectCollisions = rectIntersection(adjustedArgs);
 
         if (rectCollisions.length > 0) {
-            if (Math.abs(iframeScrollOffset.y) > 50 || isAtTop) {
+            if (DEBUG_COLLISION && (Math.abs(iframeScrollOffset.y) > 50 || isAtTop)) {
                 console.debug(`Found rect collisions with fresh rects ${ isAtTop ? '(at top)' : '(mid-scroll)' }:`, rectCollisions.map(c => c.id));
             }
             
             // Debug visualization for successful rect collisions
-            debugCollisionDetection(
-                pointerCoordinates, 
-                adjustedPointerCoordinates, 
-                freshDroppableRects, 
-                rectCollisions,
-                { method: 'rectIntersection', scrollState: isAtTop ? 'at top' : 'mid-scroll', ...debugInfo }
-            );
+            if (DEBUG_COLLISION) {
+                debugCollisionDetection(
+                    pointerCoordinates, 
+                    adjustedPointerCoordinates, 
+                    freshDroppableRects, 
+                    rectCollisions,
+                    { method: 'rectIntersection', scrollState: isAtTop ? 'at top' : 'mid-scroll', ...debugInfo }
+                );
+            }
             
             return rectCollisions;
         }
@@ -226,7 +232,7 @@ export const createTransformAwareCollisionDetection = (): CollisionDetection => 
 
         const simpleCollisions = pointerWithin(simpleArgs);
         if (simpleCollisions.length > 0) {
-            if (Math.abs(iframeScrollOffset.y) > 50 || isAtTop) {
+            if (DEBUG_COLLISION && (Math.abs(iframeScrollOffset.y) > 50 || isAtTop)) {
                 console.debug(`Found collisions with simple coords ${ isAtTop ? '(at top)' : '(mid-scroll)' }:`, simpleCollisions.map(c => c.id));
             }
             return simpleCollisions;
@@ -244,7 +250,7 @@ export const createTransformAwareCollisionDetection = (): CollisionDetection => 
 
         const cachedCollisions = pointerWithin(cachedArgs);
         if (cachedCollisions.length > 0) {
-            if (Math.abs(iframeScrollOffset.y) > 50 || isAtTop) {
+            if (DEBUG_COLLISION && (Math.abs(iframeScrollOffset.y) > 50 || isAtTop)) {
                 console.debug(`Found collisions with cached rects ${ isAtTop ? '(at top)' : '(mid-scroll)' }:`, cachedCollisions.map(c => c.id));
             }
             return cachedCollisions;
@@ -261,12 +267,12 @@ export const createTransformAwareCollisionDetection = (): CollisionDetection => 
         };
 
         const originalCollisions = pointerWithin(originalArgs);
-        if ((Math.abs(iframeScrollOffset.y) > 50 || isAtTop) && originalCollisions.length === 0) {
+        if (DEBUG_COLLISION && (Math.abs(iframeScrollOffset.y) > 50 || isAtTop) && originalCollisions.length === 0) {
             console.debug(`No collisions found with any method ${ isAtTop ? '(at top)' : '(mid-scroll)' }`);
         }
 
         // Debug visualization for when no collisions are found
-        if (originalCollisions.length === 0 && (Math.abs(iframeScrollOffset.y) > 50 || isAtTop)) {
+        if (DEBUG_COLLISION && originalCollisions.length === 0 && (Math.abs(iframeScrollOffset.y) > 50 || isAtTop)) {
             debugCollisionDetection(
                 pointerCoordinates, 
                 adjustedPointerCoordinates, 
@@ -275,6 +281,7 @@ export const createTransformAwareCollisionDetection = (): CollisionDetection => 
                 { method: 'no collisions found', scrollState: isAtTop ? 'at top' : 'mid-scroll', ...debugInfo }
             );
         }
+
 
         return originalCollisions;
     };
