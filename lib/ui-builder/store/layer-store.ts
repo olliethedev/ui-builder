@@ -65,7 +65,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       set(produce((state: LayerStore) => {
         // Set the basic state
         state.pages = pages;
-        state.selectedPageId = selectedPageId || pages[0].id;
+        state.selectedPageId = selectedPageId || (pages.length > 0 ? pages[0].id : '');
         state.selectedLayerId = selectedLayerId || null;
         state.variables = variables || [];
         
