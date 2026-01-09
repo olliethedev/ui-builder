@@ -16,8 +16,8 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   
-  /* Opt out of parallel tests on CI for stability */
-  workers: process.env.CI ? 1 : undefined,
+  /* Limit workers for stability - smoke tests can have race conditions with shared state */
+  workers: process.env.CI ? 1 : 4,
   
   /* Reporter to use */
   reporter: process.env.CI ? 'github' : 'html',

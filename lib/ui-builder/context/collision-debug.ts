@@ -267,8 +267,8 @@ export const disableCollisionDebug = () => {
   return DEBUG;
 };
 
-// Make debug functions available globally for console access
-if (typeof window !== 'undefined') {
+// Make debug functions available globally for console access (development only)
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
   (window as any).toggleCollisionDebug = toggleCollisionDebug;
   (window as any).enableCollisionDebug = enableCollisionDebug;
   (window as any).disableCollisionDebug = disableCollisionDebug;

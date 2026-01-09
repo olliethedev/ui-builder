@@ -228,18 +228,25 @@ const LazyComponentPreview = memo(({
     const element = ref.current;
     if (!element) return;
 
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           // Delay loading slightly to improve tab switching performance
-          setTimeout(() => setShouldLoad(true), 50);
+          timeoutId = setTimeout(() => setShouldLoad(true), 50);
         }
       },
       { threshold: 0.1 }
     );
 
     observer.observe(element);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   return (

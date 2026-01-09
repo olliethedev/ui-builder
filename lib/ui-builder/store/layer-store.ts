@@ -65,7 +65,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       set(produce((state: LayerStore) => {
         // Set the basic state
         state.pages = pages;
-        state.selectedPageId = selectedPageId || pages[0].id;
+        state.selectedPageId = selectedPageId || (pages.length > 0 ? pages[0].id : '');
         state.selectedLayerId = selectedLayerId || null;
         state.variables = variables || [];
         
@@ -488,22 +488,30 @@ const useLayerStore = create(persist(temporal<LayerStore>(store,
   version: 6,
   storage: createJSONStorage(() => conditionalLocalStorage),
   migrate: (persistedState: unknown, version: number) => {
+    // Chain migrations sequentially - each migration builds on the previous one
+    let state = persistedState as LayerStore;
+    
     /* istanbul ignore if*/
-    if (version === 1) {
-      return migrateV1ToV2(persistedState as LayerStore);
-    } else if (version === 2) {
-      return migrateV2ToV3(persistedState as LayerStore);
-    } else if (version === 3) {
-      // New variable support: ensure variables array exists
-      return { ...(persistedState as LayerStore), variables: [] as Variable[], immutableBindings: {} } as LayerStore;
-    } else if (version === 4) {
-      // New immutable bindings support: ensure immutableBindings object exists
-      return { ...(persistedState as LayerStore), immutableBindings: {} } as LayerStore;
-    } else if (version === 5) {
-      // Tailwind v4 migration: clean up old-format theme styles from page layers
-      return migrateV5ToV6(persistedState as LayerStore);
+    if (version < 2) {
+      state = migrateV1ToV2(state);
     }
-    return persistedState;
+    if (version < 3) {
+      state = migrateV2ToV3(state);
+    }
+    if (version < 4) {
+      // New variable support: ensure variables array exists
+      state = { ...state, variables: [] as Variable[], immutableBindings: {} };
+    }
+    if (version < 5) {
+      // New immutable bindings support: ensure immutableBindings object exists
+      state = { ...state, immutableBindings: {} };
+    }
+    if (version < 6) {
+      // Tailwind v4 migration: clean up old-format theme styles from page layers
+      state = migrateV5ToV6(state);
+    }
+    
+    return state;
   }
 }))
 
