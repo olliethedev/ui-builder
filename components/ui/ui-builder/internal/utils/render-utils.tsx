@@ -16,14 +16,9 @@ import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { resolveVariableReferences } from "@/lib/ui-builder/utils/variable-resolver";
 
-// Custom hook to safely use DND context
-const useSafeDndContext = () => {
-  try {
-    return useDndContext();
-  } catch {
-    return null; // Not inside DndContextProvider
-  }
-};
+// Note: useDndContext has default values defined in dnd-contexts.tsx,
+// so it will return { isDragging: false, activeLayerId: null, canDropOnLayer: () => false }
+// when used outside DndContextProvider. No try-catch needed.
 
 export interface EditorConfig {
   zIndex: number;
@@ -48,7 +43,7 @@ export const RenderLayer: React.FC<{
     const storeVariables = useLayerStore((state) => state.variables);
     const isLayerAPage = useLayerStore((state) => state.isLayerAPage(layer.id));
     const registry = useEditorStore((state) => state.registry);
-    const dndContext = useSafeDndContext();
+    const dndContext = useDndContext();
     
     // Use provided variables or fall back to store variables
     const effectiveVariables = variables || storeVariables;
@@ -83,8 +78,8 @@ export const RenderLayer: React.FC<{
     // Check if this layer can accept children and if drag is active (must be before early returns)
     const canAcceptChildren = useMemo(() => canLayerAcceptChildren(layer, registry), [layer, registry]);
     const showDropZones = useMemo(() => 
-      editorConfig && dndContext?.isDragging && canAcceptChildren,
-      [editorConfig, dndContext?.isDragging, canAcceptChildren]
+      editorConfig && dndContext.isDragging && canAcceptChildren,
+      [editorConfig, dndContext.isDragging, canAcceptChildren]
     );
 
     if (!componentDefinition) {
@@ -219,7 +214,9 @@ export const RenderLayer: React.FC<{
       nextProps.editorConfig?.selectedLayer?.id
     );
     const layerEqual = isDeepEqual(prevProps.layer, nextProps.layer);
-    return editorConfigEqual && layerEqual;
+    const variablesEqual = isDeepEqual(prevProps.variables, nextProps.variables);
+    const variableValuesEqual = isDeepEqual(prevProps.variableValues, nextProps.variableValues);
+    return editorConfigEqual && layerEqual && variablesEqual && variableValuesEqual;
   }
 );
 
@@ -241,4 +238,3 @@ const ErrorSuspenseWrapper: React.FC<{
 const LoadingComponent: React.FC = () => (
   <div>Loading...</div>
 );
-
