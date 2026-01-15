@@ -204,7 +204,14 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
         });
       }
 
-      if (typeof children === "string") {
+      // Preserve children variable references
+      const originalChildren = selectedLayer?.children;
+      const shouldPreserveChildrenBinding = isVariableReference(originalChildren);
+
+      if (shouldPreserveChildrenBinding) {
+        // Keep the variable reference - the form should not override children variable bindings
+        updateLayer(selectedLayerId, preservedProps);
+      } else if (typeof children === "string") {
         updateLayer(selectedLayerId, preservedProps, { children: children });
       } else if (children && children.layerType) {
         updateLayer(selectedLayerId, preservedProps, {

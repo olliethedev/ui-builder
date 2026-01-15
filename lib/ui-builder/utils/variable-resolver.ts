@@ -1,5 +1,32 @@
 import React from 'react';
-import { Variable, PropValue, isVariableReference } from '@/components/ui/ui-builder/types';
+import { Variable, PropValue, isVariableReference, ComponentLayer } from '@/components/ui/ui-builder/types';
+
+/**
+ * Resolves a variable reference in layer children to its actual value
+ * @param children - The children value which may be a VariableReference, string, or ComponentLayer[]
+ * @param variables - Array of available variables
+ * @param variableValues - Object mapping variable IDs to their resolved values
+ * @returns The resolved children value (string for variable references, or original value)
+ */
+export function resolveChildrenVariableReference(
+  children: ComponentLayer['children'],
+  variables: Variable[],
+  variableValues?: Record<string, PropValue>
+): ComponentLayer['children'] {
+  if (isVariableReference(children)) {
+    const variable = variables.find(v => v.id === children.__variableRef);
+    if (variable) {
+      // Use provided value or fall back to default value
+      const resolvedValue = variableValues?.[variable.id] ?? variable.defaultValue;
+      // Ensure we return a string for text content
+      return String(resolvedValue);
+    }
+    // Variable not found, return empty string
+    return '';
+  }
+  // Return original value for string or ComponentLayer[]
+  return children;
+}
 
 /**
  * Resolves variable references in props using provided variable values

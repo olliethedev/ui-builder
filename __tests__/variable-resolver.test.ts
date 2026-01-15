@@ -1,5 +1,5 @@
-import { isVariableReference, resolveVariableReferences } from '@/lib/ui-builder/utils/variable-resolver';
-import { Variable } from '@/components/ui/ui-builder/types';
+import { isVariableReference, resolveVariableReferences, resolveChildrenVariableReference } from '@/lib/ui-builder/utils/variable-resolver';
+import { Variable, ComponentLayer } from '@/components/ui/ui-builder/types';
 
 describe('Variable Resolver', () => {
   const mockVariables: Variable[] = [
@@ -181,6 +181,78 @@ describe('Variable Resolver', () => {
         },
         simpleRef: 25,
       });
+    });
+  });
+
+  describe('resolveChildrenVariableReference', () => {
+    it('should resolve variable reference to default value', () => {
+      const children: ComponentLayer['children'] = { __variableRef: 'var1' };
+      
+      const resolved = resolveChildrenVariableReference(children, mockVariables);
+      
+      expect(resolved).toBe('John Doe');
+    });
+
+    it('should use provided variable values over defaults', () => {
+      const children: ComponentLayer['children'] = { __variableRef: 'var1' };
+      const variableValues = { var1: 'Custom Text' };
+      
+      const resolved = resolveChildrenVariableReference(children, mockVariables, variableValues);
+      
+      expect(resolved).toBe('Custom Text');
+    });
+
+    it('should convert non-string variable values to string', () => {
+      const children: ComponentLayer['children'] = { __variableRef: 'var2' };
+      
+      const resolved = resolveChildrenVariableReference(children, mockVariables);
+      
+      expect(resolved).toBe('25');
+    });
+
+    it('should convert boolean variable values to string', () => {
+      const children: ComponentLayer['children'] = { __variableRef: 'var3' };
+      
+      const resolved = resolveChildrenVariableReference(children, mockVariables);
+      
+      expect(resolved).toBe('true');
+    });
+
+    it('should return empty string for missing variable', () => {
+      const children: ComponentLayer['children'] = { __variableRef: 'nonexistent' };
+      
+      const resolved = resolveChildrenVariableReference(children, mockVariables);
+      
+      expect(resolved).toBe('');
+    });
+
+    it('should pass through string children unchanged', () => {
+      const children: ComponentLayer['children'] = 'Static text content';
+      
+      const resolved = resolveChildrenVariableReference(children, mockVariables);
+      
+      expect(resolved).toBe('Static text content');
+    });
+
+    it('should pass through ComponentLayer array unchanged', () => {
+      const childLayers: ComponentLayer[] = [
+        { id: 'child1', type: 'span', props: {}, children: 'Text' },
+        { id: 'child2', type: 'div', props: {}, children: [] },
+      ];
+      const children: ComponentLayer['children'] = childLayers;
+      
+      const resolved = resolveChildrenVariableReference(children, mockVariables);
+      
+      expect(resolved).toBe(childLayers);
+      expect(Array.isArray(resolved)).toBe(true);
+    });
+
+    it('should handle empty variables array', () => {
+      const children: ComponentLayer['children'] = { __variableRef: 'var1' };
+      
+      const resolved = resolveChildrenVariableReference(children, []);
+      
+      expect(resolved).toBe('');
     });
   });
 }); 

@@ -664,7 +664,6 @@ This ensures:
 
 ## Roadmap
 
-- [ ] Add variable binding to layer children and not just props
 - [ ] Add Blocks. Reusable component blocks that can be used in multiple pages
 - [ ] Move component schemas to separate shadcn registry to keep main registry light
 - [ ] Move prop form field components (overrides) to separate shadcn registry to keep main registry light

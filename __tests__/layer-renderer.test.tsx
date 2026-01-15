@@ -142,4 +142,126 @@ describe("LayerRenderer", () => {
     // Should render without crashing, even with missing variable
     expect(screen.getByTestId("page1")).toBeInTheDocument();
   });
+
+  it("renders with layer.children as variable reference", () => {
+    const pageWithChildrenVarRef: ComponentLayer = {
+      id: "page1",
+      type: "div",
+      name: "Test Page",
+      props: { className: "p-4" },
+      children: [
+        {
+          id: "span1",
+          type: "span",
+          name: "Test Span",
+          props: {},
+          children: { __variableRef: "var1" }, // Variable reference in layer.children
+        },
+      ],
+    };
+
+    render(
+      <LayerRenderer
+        page={pageWithChildrenVarRef}
+        componentRegistry={mockComponentRegistry}
+        variables={mockVariables}
+      />
+    );
+
+    // The variable reference in children should be resolved
+    expect(screen.getByText("Hello World")).toBeInTheDocument();
+  });
+
+  it("renders with layer.children variable reference and value override", () => {
+    const pageWithChildrenVarRef: ComponentLayer = {
+      id: "page1",
+      type: "div",
+      name: "Test Page",
+      props: { className: "p-4" },
+      children: [
+        {
+          id: "span1",
+          type: "span",
+          name: "Test Span",
+          props: {},
+          children: { __variableRef: "var1" }, // Variable reference in layer.children
+        },
+      ],
+    };
+
+    const variableValues = {
+      var1: "Overridden Children Text",
+    };
+
+    render(
+      <LayerRenderer
+        page={pageWithChildrenVarRef}
+        componentRegistry={mockComponentRegistry}
+        variables={mockVariables}
+        variableValues={variableValues}
+      />
+    );
+
+    // The variable reference should use the override value
+    expect(screen.getByText("Overridden Children Text")).toBeInTheDocument();
+  });
+
+  it("handles missing variable in layer.children gracefully", () => {
+    const pageWithMissingChildrenVar: ComponentLayer = {
+      id: "page1",
+      type: "div",
+      name: "Test Page",
+      props: { className: "p-4" },
+      children: [
+        {
+          id: "span1",
+          type: "span",
+          name: "Test Span",
+          props: {},
+          children: { __variableRef: "nonexistent" }, // Missing variable
+        },
+      ],
+    };
+
+    render(
+      <LayerRenderer
+        page={pageWithMissingChildrenVar}
+        componentRegistry={mockComponentRegistry}
+        variables={mockVariables}
+      />
+    );
+
+    // Should render without crashing - the span should exist but be empty
+    expect(screen.getByTestId("span1")).toBeInTheDocument();
+    expect(screen.getByTestId("span1")).toHaveTextContent("");
+  });
+
+  it("renders number variable as string in layer.children", () => {
+    const pageWithNumberVar: ComponentLayer = {
+      id: "page1",
+      type: "div",
+      name: "Test Page",
+      props: { className: "p-4" },
+      children: [
+        {
+          id: "span1",
+          type: "span",
+          name: "Test Span",
+          props: {},
+          children: { __variableRef: "var2" }, // Number variable
+        },
+      ],
+    };
+
+    render(
+      <LayerRenderer
+        page={pageWithNumberVar}
+        componentRegistry={mockComponentRegistry}
+        variables={mockVariables}
+      />
+    );
+
+    // Number should be converted to string
+    expect(screen.getByText("42")).toBeInTheDocument();
+  });
 }); 
