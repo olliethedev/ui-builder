@@ -281,10 +281,12 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
         page={page}
         componentRegistry={componentRegistry}
       />
-      <CodeDialog
-        isOpen={isExportModalOpen}
-        onOpenChange={setIsExportModalOpen}
-      />
+      {showExport && (
+        <CodeDialog
+          isOpen={isExportModalOpen}
+          onOpenChange={setIsExportModalOpen}
+        />
+      )}
     </div>
   );
 }

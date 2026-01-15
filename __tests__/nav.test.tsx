@@ -971,6 +971,103 @@ describe('NavBar', () => {
     });
   });
 
+  describe('showExport prop', () => {
+    it('should hide export button when showExport is false', () => {
+      render(<NavBar showExport={false} />, { wrapper: TestWrapper });
+      
+      const buttons = screen.getAllByRole('button');
+      const exportButton = buttons.find(button => button.textContent?.includes('Export'));
+      
+      expect(exportButton).toBeUndefined();
+    });
+
+    it('should show export button when showExport is true', () => {
+      render(<NavBar showExport={true} />, { wrapper: TestWrapper });
+      
+      const buttons = screen.getAllByRole('button');
+      const exportButton = buttons.find(button => button.textContent?.includes('Export'));
+      
+      expect(exportButton).toBeInTheDocument();
+    });
+
+    it('should show export button by default when showExport prop is not provided', () => {
+      render(<NavBar />, { wrapper: TestWrapper });
+      
+      const buttons = screen.getAllByRole('button');
+      const exportButton = buttons.find(button => button.textContent?.includes('Export'));
+      
+      expect(exportButton).toBeInTheDocument();
+    });
+
+    it('should not register export keyboard shortcut when showExport is false', () => {
+      const { useKeyboardShortcuts } = require('@/hooks/use-keyboard-shortcuts');
+      useKeyboardShortcuts.mockClear();
+      
+      render(<NavBar showExport={false} />, { wrapper: TestWrapper });
+      
+      // Check that the export shortcut (Cmd+Shift+E) is not registered
+      const calls = useKeyboardShortcuts.mock.calls;
+      const allShortcuts = calls.flatMap((call: any) => call[0]);
+      
+      const exportShortcut = allShortcuts.find((shortcut: any) => 
+        shortcut.keys?.metaKey === true && 
+        shortcut.keys?.shiftKey === true && 
+        shortcut.key === 'e'
+      );
+      
+      expect(exportShortcut).toBeUndefined();
+    });
+
+    it('should register export keyboard shortcut when showExport is true', () => {
+      const { useKeyboardShortcuts } = require('@/hooks/use-keyboard-shortcuts');
+      useKeyboardShortcuts.mockClear();
+      
+      render(<NavBar showExport={true} />, { wrapper: TestWrapper });
+      
+      // Check that the export shortcut (Cmd+Shift+E) is registered
+      const calls = useKeyboardShortcuts.mock.calls;
+      const allShortcuts = calls.flatMap((call: any) => call[0]);
+      
+      const exportShortcut = allShortcuts.find((shortcut: any) => 
+        shortcut.keys?.metaKey === true && 
+        shortcut.keys?.shiftKey === true && 
+        shortcut.key === 'e'
+      );
+      
+      expect(exportShortcut).toBeDefined();
+    });
+
+    it('should hide export option in responsive dropdown when showExport is false', async () => {
+      Object.defineProperty(window, 'innerWidth', {
+        writable: true,
+        configurable: true,
+        value: 500,
+      });
+
+      render(<NavBar showExport={false} />, { wrapper: TestWrapper });
+      
+      const buttons = screen.getAllByRole('button');
+      const moreButton = buttons.find(button => button.textContent?.includes('Actions'));
+      
+      if (moreButton) {
+        fireEvent.click(moreButton);
+        
+        await waitFor(() => {
+          // Preview should still be there
+          const previewOption = screen.queryByText('Preview');
+          expect(previewOption).toBeInTheDocument();
+          
+          // Export should not be in the dropdown
+          const exportOptions = screen.queryAllByText('Export');
+          const dropdownExport = exportOptions.find(option => 
+            option.closest('[role="menuitem"]')
+          );
+          expect(dropdownExport).toBeUndefined();
+        }, { timeout: 1000 });
+      }
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle missing page gracefully', () => {
       mockFindLayerById.mockReturnValue(null);
