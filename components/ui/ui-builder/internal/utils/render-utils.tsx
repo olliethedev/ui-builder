@@ -11,10 +11,10 @@ import { ErrorFallback } from "@/components/ui/ui-builder/internal/components/er
 import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
 import { hasLayerChildren, canLayerAcceptChildren } from "@/lib/ui-builder/store/layer-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/components/dev-profiler";
-import { ComponentRegistry, ComponentLayer, Variable, PropValue } from '@/components/ui/ui-builder/types';
+import { ComponentRegistry, ComponentLayer, Variable, PropValue, isVariableReference } from '@/components/ui/ui-builder/types';
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
-import { resolveVariableReferences } from "@/lib/ui-builder/utils/variable-resolver";
+import { resolveVariableReferences, resolveChildrenVariableReference } from "@/lib/ui-builder/utils/variable-resolver";
 
 // Note: useDndContext has default values defined in dnd-contexts.tsx,
 // so it will return { isDragging: false, activeLayerId: null, canDropOnLayer: () => false }
@@ -146,6 +146,12 @@ export const RenderLayer: React.FC<{
       }
 
       childProps.children = childElements;
+    } else if (isVariableReference(layer.children)) {
+      // Resolve variable reference for children
+      const resolvedChildren = resolveChildrenVariableReference(
+        layer.children, effectiveVariables, variableValues
+      );
+      childProps.children = resolvedChildren;
     } else if (typeof layer.children === "string") {
       childProps.children = layer.children;
     } else if (showDropZones && hasLayerChildren(layer)) {

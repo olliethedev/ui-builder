@@ -38,7 +38,10 @@ export interface LayerStore {
   removeVariable: (variableId: string) => void;
   bindPropToVariable: (layerId: string, propName: string, variableId: string) => void;
   unbindPropFromVariable: (layerId: string, propName: string) => void;
+  bindChildrenToVariable: (layerId: string, variableId: string) => void;
+  unbindChildrenFromVariable: (layerId: string) => void;
   isBindingImmutable: (layerId: string, propName: string) => boolean;
+  isChildrenBindingImmutable: (layerId: string) => boolean;
   setImmutableBinding: (layerId: string, propName: string, isImmutable: boolean) => void; // Test helper
 }
 
@@ -350,15 +353,16 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
     // Remove a variable
     removeVariable: (variableId) => set(produce((state: LayerStore) => {
       state.variables = state.variables.filter(v => v.id !== variableId);
-      
+
       // Remove any references to the variable in the layers and set default value from schema
       const { registry } = useEditorStore.getState();
-      
-      // Helper function to clean variable references from props
+
+      // Helper function to clean variable references from props and children
       const cleanVariableReferences = (layer: ComponentLayer): ComponentLayer => {
         const updatedProps = { ...layer.props };
         let hasChanges = false;
-        
+        let updatedChildren = layer.children;
+
         // Check each prop for variable references
         Object.entries(updatedProps).forEach(([propName, propValue]) => {
           if (isVariableReference(propValue) && propValue.__variableRef === variableId) {
@@ -376,12 +380,22 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
             }
           }
         });
-        
-        return hasChanges ? { ...layer, props: updatedProps } : layer;
+
+        // Check if children is a variable reference to the removed variable
+        if (isVariableReference(layer.children) && layer.children.__variableRef === variableId) {
+          // Reset children to empty string when the bound variable is removed
+          updatedChildren = '';
+          hasChanges = true;
+        }
+
+        if (hasChanges) {
+          return { ...layer, props: updatedProps, children: updatedChildren };
+        }
+        return layer;
       };
-      
+
       // Update all pages and their layers
-      state.pages = state.pages.map(page => 
+      state.pages = state.pages.map(page =>
         visitLayer(page, null, cleanVariableReferences)
       );
     })),
@@ -425,10 +439,40 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       get().updateLayer(layerId, { [propName]: defaultValue });
     },
 
+    // Bind layer children to a variable reference
+    bindChildrenToVariable: (layerId, variableId) => {
+      get().updateLayer(layerId, {}, { children: { __variableRef: variableId } });
+    },
+
+    // Unbind layer children from a variable reference and reset to empty string
+    unbindChildrenFromVariable: (layerId) => {
+      // Check if the children binding is immutable
+      if (get().isChildrenBindingImmutable(layerId)) {
+        console.warn(`Cannot unbind immutable children variable binding on layer ${layerId}`);
+        return;
+      }
+
+      const layer = get().findLayerById(layerId);
+      
+      if (!layer) {
+        console.warn(`Layer with ID ${layerId} not found.`);
+        return;
+      }
+
+      // Reset children to empty string when unbinding
+      get().updateLayer(layerId, {}, { children: '' });
+    },
+
     // Check if a binding is immutable
     isBindingImmutable: (layerId: string, propName: string) => {
       const { immutableBindings } = get();
       return immutableBindings[layerId]?.[propName] === true;
+    },
+
+    // Check if children binding is immutable (uses special key '__children__')
+    isChildrenBindingImmutable: (layerId: string) => {
+      const { immutableBindings } = get();
+      return immutableBindings[layerId]?.['__children__'] === true;
     },
 
     // Test helper

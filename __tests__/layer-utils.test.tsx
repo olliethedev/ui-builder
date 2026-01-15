@@ -452,6 +452,18 @@ describe("Layer Utils", () => {
       };
       expect(hasLayerChildren(layer)).toBe(false);
     });
+
+    it("should return false if the layer has VariableReference children", () => {
+      const layer: ComponentLayer = {
+        id: "varRef1",
+        type: "span",
+        name: "Variable Reference Layer",
+        props: {},
+        children: { __variableRef: "some-variable-id" },
+      };
+      // VariableReference is an object, not an array, so hasLayerChildren should return false
+      expect(hasLayerChildren(layer)).toBe(false);
+    });
   });
 
   describe("findAllParentLayersRecursive", () => {

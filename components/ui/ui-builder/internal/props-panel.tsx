@@ -164,6 +164,9 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
     duplicateLayer(selectedLayerId);
   }, [duplicateLayer, selectedLayerId]);
 
+  // Memoize variables to avoid accessing store state on every render
+  const variables = useLayerStore((state) => state.variables);
+
   const onParsedValuesChange = useCallback(
     (
       parsedValues: z.infer<typeof schema> & {
@@ -186,10 +189,17 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
           const baseType = fieldDef
             ? getBaseType(fieldDef as z.ZodAny)
             : undefined;
-          // If the original value was a variable reference, preserve it
+          // If the original value was a variable reference and the variable still exists, preserve it
+          // If the variable no longer exists, allow the user's new value to be saved
           if (isVariableReference(originalValue)) {
-            // Keep the variable reference - the form should not override variable bindings
-            preservedProps[key] = originalValue;
+            const variableExists = variables.some(v => v.id === originalValue.__variableRef);
+            if (variableExists) {
+              // Keep the variable reference - the form should not override variable bindings
+              preservedProps[key] = originalValue;
+            } else {
+              // Variable was deleted - use the new value from the form
+              preservedProps[key] = newValue;
+            }
           } else {
             // Handle date serialization
             if (
@@ -204,7 +214,15 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
         });
       }
 
-      if (typeof children === "string") {
+      // Preserve children variable references only if the referenced variable still exists
+      const originalChildren = selectedLayer?.children;
+      const shouldPreserveChildrenBinding = isVariableReference(originalChildren) && 
+        variables.some(v => v.id === originalChildren.__variableRef);
+
+      if (shouldPreserveChildrenBinding) {
+        // Keep the variable reference - the form should not override children variable bindings
+        updateLayer(selectedLayerId, preservedProps);
+      } else if (typeof children === "string") {
         updateLayer(selectedLayerId, preservedProps, { children: children });
       } else if (children && children.layerType) {
         updateLayer(selectedLayerId, preservedProps, {
@@ -219,11 +237,8 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
         updateLayer(selectedLayerId, preservedProps);
       }
     },
-    [updateLayer, selectedLayerId, selectedLayer, addComponentLayer, schema]
+    [updateLayer, selectedLayerId, selectedLayer, addComponentLayer, schema, variables]
   );
-
-  // Memoize variables to avoid accessing store state on every render
-  const variables = useLayerStore((state) => state.variables);
 
   // Prepare values for AutoForm, converting enum values to strings as select elements only accept string values
   const formValues = useMemo(() => {

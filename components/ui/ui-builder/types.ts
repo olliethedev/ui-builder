@@ -26,12 +26,16 @@ export type PropValue =
 export type ComponentProps<TProps extends Record<string, PropValue> = Record<string, PropValue>> = TProps;
 
 // Enhanced ComponentLayer with generic prop typing
+// Children can be:
+// - ComponentLayer[] for nested components
+// - string for text content
+// - VariableReference for dynamic text content bound to a variable
 export interface ComponentLayer<TProps extends Record<string, PropValue> = Record<string, PropValue>> {
     id: string;
     name?: string;
     type: string;
     props: ComponentProps<TProps>;
-    children: ComponentLayer[] | string;
+    children: ComponentLayer[] | string | VariableReference;
 }
 
 // Variable value types - more specific than before
@@ -70,7 +74,7 @@ export interface RegistryEntry<T extends ReactComponentType<any>> {
   schema: ZodObject<any> | ZodSchema<any>;
   from?: string;
   isFromDefaultExport?: boolean;
-  defaultChildren?: ComponentLayer[] | string;
+  defaultChildren?: ComponentLayer[] | string | VariableReference;
   defaultVariableBindings?: DefaultVariableBinding[];
   fieldOverrides?: Record<string, FieldConfigFunction>;
 }

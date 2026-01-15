@@ -107,10 +107,18 @@ export const iconNameFieldOverrides: FieldConfigFunction = (layer) => {
   };
 };
 
-export const childrenAsTextareaFieldOverrides: FieldConfigFunction = (
-  layer
+export const childrenAsTextareaFieldOverrides = (
+  layer: ComponentLayer,
+  allowVariableBinding = false
 ) => {
   return {
+    renderParent: allowVariableBinding
+      ? ({ children }: { children: React.ReactNode }) => (
+          <ChildrenVariableBindingWrapper>
+            {children}
+          </ChildrenVariableBindingWrapper>
+        )
+      : undefined,
     fieldType: ({
       label,
       isRequired,
@@ -124,7 +132,7 @@ export const childrenAsTextareaFieldOverrides: FieldConfigFunction = (
         fieldConfigItem={fieldConfigItem}
       >
         <Textarea
-          value={layer.children as string}
+          value={typeof layer.children === 'string' ? layer.children : ''}
           onChange={field.onChange}
           {...fieldProps}
         />
@@ -133,10 +141,18 @@ export const childrenAsTextareaFieldOverrides: FieldConfigFunction = (
   };
 };
 
-export const childrenAsTipTapFieldOverrides: FieldConfigFunction = (
-  layer,
+export const childrenAsTipTapFieldOverrides = (
+  layer: ComponentLayer,
+  allowVariableBinding = false
 ) => {
   return {
+    renderParent: allowVariableBinding
+      ? ({ children }: { children: React.ReactNode }) => (
+          <ChildrenVariableBindingWrapper>
+            {children}
+          </ChildrenVariableBindingWrapper>
+        )
+      : undefined,
     fieldType: ({
       label,
       isRequired,
@@ -153,7 +169,7 @@ export const childrenAsTipTapFieldOverrides: FieldConfigFunction = (
           immediatelyRender={false}
           output="markdown"
           editable={true}
-          value={layer.children as string}
+          value={typeof layer.children === 'string' ? layer.children : ''}
           editorClassName="focus:outline-none px-4 py-2 h-full"
           onChange={(content) => {
             //if string call field.onChange
@@ -397,5 +413,152 @@ export function FormFieldWrapper({
         <FormDescription>{fieldConfigItem.description}</FormDescription>
       )}
     </FormItem>
+  );
+}
+
+/**
+ * Wrapper component for children variable binding.
+ * Similar to VariableBindingWrapper but specifically for layer.children.
+ */
+export function ChildrenVariableBindingWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const variables = useLayerStore((state) => state.variables);
+  const selectedLayerId = useLayerStore((state) => state.selectedLayerId);
+  const findLayerById = useLayerStore((state) => state.findLayerById);
+  const isChildrenBindingImmutable = useLayerStore((state) => state.isChildrenBindingImmutable);
+  const incrementRevision = useEditorStore((state) => state.incrementRevision);
+  const unbindChildrenFromVariable = useLayerStore(
+    (state) => state.unbindChildrenFromVariable
+  );
+  const bindChildrenToVariable = useLayerStore((state) => state.bindChildrenToVariable);
+
+  const selectedLayer = findLayerById(selectedLayerId);
+
+  if (!selectedLayer) {
+    return <>{children}</>;
+  }
+
+  const currentValue = selectedLayer.children;
+  const isCurrentlyBound = isVariableReference(currentValue);
+  const boundVariable = isCurrentlyBound
+    ? variables.find((v) => v.id === currentValue.__variableRef)
+    : null;
+  const isImmutable = isChildrenBindingImmutable(selectedLayer.id);
+
+  const handleBindToVariable = (variableId: string) => {
+    bindChildrenToVariable(selectedLayer.id, variableId);
+    incrementRevision();
+  };
+
+  const handleUnbind = () => {
+    unbindChildrenFromVariable(selectedLayer.id);
+    incrementRevision();
+  };
+
+  return (
+    <div className="flex w-full gap-2 items-end">
+      {isCurrentlyBound && boundVariable ? (
+        // Bound state - show variable info and unbind button
+        <div className="flex flex-col gap-2 w-full">
+          <Label>Children</Label>
+          <div className="flex items-end gap-2 w-full">
+            <Card className="w-full">
+              <CardContent className="py-1 px-4">
+                <div className="flex items-center gap-2 w-full">
+                  <Link className="h-4 w-4 flex-shrink-0" />
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <div className="flex items-center gap-2 w-full">
+                      <span className="font-medium">{boundVariable.name}</span>
+                      <span className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">
+                        {boundVariable.type}
+                      </span>
+                      {isImmutable && (
+                        <Badge data-testid="immutable-children-badge" className="rounded">
+                          <LockKeyhole strokeWidth={3} className="w-3 h-3" />
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {String(boundVariable.defaultValue)}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            {!isImmutable && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={handleUnbind}
+                    className="px-3 h-10"
+                  >
+                    <Unlink className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Unbind Variable</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </div>
+      ) : (
+        // Unbound state - show normal field with bind button
+        <>
+          <div className="flex-1">{children}</div>
+          <div className="flex justify-end">
+            <DropdownMenu>
+              <Tooltip>
+                <DropdownMenuTrigger asChild>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" size="sm" className="px-3 h-10">
+                      <Link className="h-4 w-4 my-1" />
+                    </Button>
+                  </TooltipTrigger>
+                </DropdownMenuTrigger>
+                <TooltipContent>Bind Children to Variable</TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">
+                  Bind Children to Variable
+                </div>
+                {variables.filter(v => v.type === 'string').length > 0 ? (
+                  variables
+                    .filter(v => v.type === 'string')
+                    .map((variable) => (
+                      <DropdownMenuItem
+                        key={variable.id}
+                        onClick={() => handleBindToVariable(variable.id)}
+                        className="flex flex-col items-start p-3"
+                      >
+                        <div className="flex items-center gap-2 w-full">
+                          <Link className="h-4 w-4 flex-shrink-0" />
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <div className="flex items-center gap-2 ">
+                              <span className="font-medium">{variable.name}</span>
+                              <span className="px-1.5 py-0.5 bg-muted rounded text-xs font-mono">
+                                {variable.type}
+                              </span>
+                            </div>
+                            <span className="text-xs text-muted-foreground truncate">
+                              {String(variable.defaultValue)}
+                            </span>
+                          </div>
+                        </div>
+                      </DropdownMenuItem>
+                    ))
+                ) : (
+                  <div className="px-3 py-2 text-xs text-muted-foreground">
+                    No string variables defined
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

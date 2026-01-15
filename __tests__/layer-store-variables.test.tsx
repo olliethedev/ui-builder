@@ -499,4 +499,140 @@ describe('Layer Store - Variables', () => {
       expect(result.current.isBindingImmutable('nonExistentLayer', 'label')).toBe(false);
     });
   });
+
+  describe('Children Variable Binding', () => {
+    it('should bind layer children to a variable', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add a layer and variable
+      act(() => {
+        result.current.addComponentLayer('Button', result.current.selectedPageId!);
+        result.current.addVariable('buttonText', 'string', 'Click Here');
+      });
+
+      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
+      const variableId = result.current.variables[0].id;
+
+      // Bind children to the variable
+      act(() => {
+        result.current.bindChildrenToVariable(layerId, variableId);
+      });
+
+      const layer = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layer.children).toEqual({ __variableRef: variableId });
+    });
+
+    it('should unbind layer children from a variable and reset to empty string', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add a layer and variable
+      act(() => {
+        result.current.addComponentLayer('Button', result.current.selectedPageId!);
+        result.current.addVariable('buttonText', 'string', 'Click Here');
+      });
+
+      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
+      const variableId = result.current.variables[0].id;
+
+      // First bind children
+      act(() => {
+        result.current.bindChildrenToVariable(layerId, variableId);
+      });
+
+      // Then unbind
+      act(() => {
+        result.current.unbindChildrenFromVariable(layerId);
+      });
+
+      const layer = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layer.children).toBe('');
+    });
+
+    it('should prevent unbinding immutable children bindings', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add a layer and variable
+      act(() => {
+        result.current.addComponentLayer('Button', result.current.selectedPageId!);
+        result.current.addVariable('buttonText', 'string', 'Click Here');
+      });
+
+      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
+      const variableId = result.current.variables[0].id;
+
+      // Bind children and mark as immutable
+      act(() => {
+        result.current.bindChildrenToVariable(layerId, variableId);
+        // Use special key '__children__' for children immutable bindings
+        result.current.setImmutableBinding(layerId, '__children__', true);
+      });
+
+      // Verify it's immutable
+      expect(result.current.isChildrenBindingImmutable(layerId)).toBe(true);
+
+      // Try to unbind (should fail)
+      act(() => {
+        result.current.unbindChildrenFromVariable(layerId);
+      });
+
+      // Children binding should still exist
+      const layer = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layer.children).toEqual({ __variableRef: variableId });
+    });
+
+    it('should clean up children variable references when variable is removed', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add a layer and variable
+      act(() => {
+        result.current.addComponentLayer('Button', result.current.selectedPageId!);
+        result.current.addVariable('buttonText', 'string', 'Click Here');
+      });
+
+      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
+      const variableId = result.current.variables[0].id;
+
+      // Bind children to the variable
+      act(() => {
+        result.current.bindChildrenToVariable(layerId, variableId);
+      });
+
+      // Verify binding exists
+      let layer = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layer.children).toEqual({ __variableRef: variableId });
+
+      // Remove the variable
+      act(() => {
+        result.current.removeVariable(variableId);
+      });
+
+      // Children should be reset to empty string
+      layer = result.current.findLayerById(layerId) as ComponentLayer;
+      expect(layer.children).toBe('');
+    });
+
+    it('should check isChildrenBindingImmutable correctly', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      // Add a layer
+      act(() => {
+        result.current.addComponentLayer('Button', result.current.selectedPageId!);
+      });
+
+      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
+
+      // By default, children binding should not be immutable
+      expect(result.current.isChildrenBindingImmutable(layerId)).toBe(false);
+
+      // Set it as immutable
+      act(() => {
+        result.current.setImmutableBinding(layerId, '__children__', true);
+      });
+
+      expect(result.current.isChildrenBindingImmutable(layerId)).toBe(true);
+
+      // Non-existent layer should return false
+      expect(result.current.isChildrenBindingImmutable('nonexistent')).toBe(false);
+    });
+  });
 }); 
