@@ -25,6 +25,10 @@ See the [docs site](https://uibuilder.app/) for more information.
 
 ---
 
+> **UI Builder is now part of [Better Stack](https://better-stack.ai/)** — ship full-stack features faster with production-ready plugins that generate database schemas, API routes, and pages for Next.js, TanStack Start, and React Router. Stop rebuilding. Start shipping.
+
+---
+
 
 **Server Components**: Not supported. RSC can't be re-rendered client-side for live preview. A separate RSC renderer for final page rendering is possible — open an issue if you have a use case.
 

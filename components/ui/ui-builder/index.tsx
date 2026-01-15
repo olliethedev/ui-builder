@@ -44,30 +44,73 @@ export interface TabsContentConfig {
 
 /**
  * PanelConfig defines the configuration for the main panels in the UI Builder.
+ * When navBar is provided, navbar customization props on UIBuilder are ignored.
  */
-interface PanelConfig {
-  navBar?: React.ReactNode;
+interface PanelConfigWithNavBar {
+  navBar: React.ReactNode;
   pageConfigPanel?: React.ReactNode;
   pageConfigPanelTabsContent?: TabsContentConfig;
   editorPanel?: React.ReactNode;
   propsPanel?: React.ReactNode;
 }
 
+interface PanelConfigWithoutNavBar {
+  navBar?: undefined;
+  pageConfigPanel?: React.ReactNode;
+  pageConfigPanelTabsContent?: TabsContentConfig;
+  editorPanel?: React.ReactNode;
+  propsPanel?: React.ReactNode;
+}
+
+type PanelConfig = PanelConfigWithNavBar | PanelConfigWithoutNavBar;
+
 /**
- * UIBuilderProps defines the props for the UIBuilder component with enhanced type safety.
+ * Base props shared by all UIBuilder configurations.
  */
-interface UIBuilderProps<TRegistry extends ComponentRegistry = ComponentRegistry> {
+interface UIBuilderBaseProps<TRegistry extends ComponentRegistry = ComponentRegistry> {
   initialLayers?: ComponentLayer[];
   onChange?: LayerChangeHandler<TRegistry>;
   initialVariables?: Variable[];
   onVariablesChange?: VariableChangeHandler;
   componentRegistry: TRegistry;
-  panelConfig?: PanelConfig;
   persistLayerStore?: boolean;
   allowVariableEditing?: boolean;
   allowPagesCreation?: boolean;
   allowPagesDeletion?: boolean;
 }
+
+/**
+ * Props available when using the default NavBar (no custom navBar in panelConfig).
+ */
+interface UIBuilderDefaultNavBarProps<TRegistry extends ComponentRegistry = ComponentRegistry> 
+  extends UIBuilderBaseProps<TRegistry> {
+  panelConfig?: PanelConfigWithoutNavBar;
+  /** Content to render on the left side of the NavBar */
+  navLeftChildren?: React.ReactNode;
+  /** Content to render on the right side of the NavBar */
+  navRightChildren?: React.ReactNode;
+  /** Whether to show the Export button in the NavBar. Defaults to true. */
+  showExport?: boolean;
+}
+
+/**
+ * Props when using a custom NavBar (navBar provided in panelConfig).
+ * NavBar customization props are not available.
+ */
+interface UIBuilderCustomNavBarProps<TRegistry extends ComponentRegistry = ComponentRegistry> 
+  extends UIBuilderBaseProps<TRegistry> {
+  panelConfig: PanelConfigWithNavBar;
+  navLeftChildren?: never;
+  navRightChildren?: never;
+  showExport?: never;
+}
+
+/**
+ * UIBuilderProps - Union type that provides proper type safety based on panelConfig.
+ */
+type UIBuilderProps<TRegistry extends ComponentRegistry = ComponentRegistry> = 
+  | UIBuilderDefaultNavBarProps<TRegistry>
+  | UIBuilderCustomNavBarProps<TRegistry>;
 
 /**
  * UIBuilder component manages the initialization of editor and layer stores, and renders the serializable layout.
@@ -86,6 +129,9 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
   allowVariableEditing = true,
   allowPagesCreation = true,
   allowPagesDeletion = true,
+  navLeftChildren,
+  navRightChildren,
+  showExport = true,
 }: UIBuilderProps<TRegistry>) => {
   const layerStore = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
@@ -97,7 +143,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
 
   const currentPanelConfig = useMemo(() => {
     const effectiveTabsContent = userPanelConfig?.pageConfigPanelTabsContent || memoizedDefaultTabsContent;
-    const defaultPanels = getDefaultPanelConfigValues(effectiveTabsContent);
+    const defaultPanels = getDefaultPanelConfigValues(effectiveTabsContent, navLeftChildren, navRightChildren, showExport);
 
     return {
       navBar: userPanelConfig?.navBar ?? defaultPanels.navBar,
@@ -105,7 +151,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
       editorPanel: userPanelConfig?.editorPanel ?? defaultPanels.editorPanel,
       propsPanel: userPanelConfig?.propsPanel ?? defaultPanels.propsPanel,
     };
-  }, [userPanelConfig, memoizedDefaultTabsContent]);
+  }, [userPanelConfig, memoizedDefaultTabsContent, navLeftChildren, navRightChildren, showExport]);
 
   // Effect 1: Initialize Editor Store with registry and page form props
   useEffect(() => {
@@ -375,11 +421,13 @@ export function LoadingSkeleton() {
  * Returns the default panel configuration values for the UI Builder.
  *
  * @param {TabsContentConfig} tabsContent - The content for the page config panel tabs.
+ * @param {React.ReactNode} navLeftChildren - Content to render on the left side of the NavBar.
+ * @param {React.ReactNode} navRightChildren - Content to render on the right side of the NavBar.
  * @returns {PanelConfig} The default panel configuration.
  */
-export const getDefaultPanelConfigValues = ( tabsContent: TabsContentConfig) => {
+export const getDefaultPanelConfigValues = ( tabsContent: TabsContentConfig, navLeftChildren?: React.ReactNode, navRightChildren?: React.ReactNode, showExport?: boolean) => {
   return {
-    navBar: <NavBar />,
+    navBar: <NavBar leftChildren={navLeftChildren} rightChildren={navRightChildren} showExport={showExport} />,
     pageConfigPanel: (
       <PageConfigPanel className="pt-4 pb-20 md:pb-4 overflow-y-auto relative size-full" tabsContent={tabsContent} />
     ),

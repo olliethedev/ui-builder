@@ -79,9 +79,14 @@ import { useStore } from "zustand";
 
 const Z_INDEX = 1000;
 
+export interface NavBarProps {
+  leftChildren?: React.ReactNode;
+  rightChildren?: React.ReactNode;
+  /** Whether to show the Export button. Defaults to true. */
+  showExport?: boolean;
+}
 
-
-export function NavBar() {
+export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBarProps = {}) {
   const selectedPageId = useLayerStore((state) => state.selectedPageId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const componentRegistry = useEditorStore((state) => state.registry);
@@ -186,6 +191,8 @@ export function NavBar() {
       style={style}
     >
       <div className="flex items-center gap-2">
+        {leftChildren}
+        {leftChildren && <div className="hidden md:flex h-10 w-px bg-border"></div>}
         <div className="hidden md:contents">
         <Tooltip>
           <TooltipTrigger asChild>
@@ -236,6 +243,7 @@ export function NavBar() {
             onRedo={handleRedo}
             onOpenPreview={handleOpenPreview}
             onOpenExport={handleOpenExport}
+            showExport={showExport}
           />
           <div className="h-10 flex w-px bg-border"></div>
         </div>
@@ -252,8 +260,18 @@ export function NavBar() {
             onRedo={handleRedo}
             onOpenPreview={handleOpenPreview}
             onOpenExport={handleOpenExport}
-          />
+            showExport={showExport}
+          >
+            {rightChildren}
+          </ResponsiveDropdown>
         </div>
+        {/* Right children - hidden on mobile (shown in dropdown instead) */}
+        {rightChildren && (
+          <div className="hidden md:flex items-center gap-2">
+            <div className="h-10 w-px bg-border"></div>
+            {rightChildren}
+          </div>
+        )}
       </div>
 
       {/* **Dialogs Controlled by NavBar State** */}
@@ -263,10 +281,12 @@ export function NavBar() {
         page={page}
         componentRegistry={componentRegistry}
       />
-      <CodeDialog
-        isOpen={isExportModalOpen}
-        onOpenChange={setIsExportModalOpen}
-      />
+      {showExport && (
+        <CodeDialog
+          isOpen={isExportModalOpen}
+          onOpenChange={setIsExportModalOpen}
+        />
+      )}
     </div>
   );
 }
@@ -281,6 +301,7 @@ interface ActionButtonsProps {
   onRedo: () => void;
   onOpenPreview: () => void;
   onOpenExport: () => void;
+  showExport?: boolean;
 }
 
 const ActionButtons: React.FC<ActionButtonsProps> = ({
@@ -290,6 +311,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   onRedo,
   onOpenPreview,
   onOpenExport,
+  showExport = true,
 }) => {
   return (
     <>
@@ -355,25 +377,27 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         </TooltipContent>
       </Tooltip>
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            onClick={onOpenExport}
-            variant="secondary"
-            size="icon"
-            className="flex flex-col justify-center"
-          >
-            <span className="sr-only">Export</span>
-            <FileUp className="w-4 h-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent className="flex items-center gap-2">
-          Export Code
-          <CommandShortcut className="ml-0 text-sm leading-3">
-            ⌘+⇧+E
-          </CommandShortcut>
-        </TooltipContent>
-      </Tooltip>
+      {showExport && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={onOpenExport}
+              variant="secondary"
+              size="icon"
+              className="flex flex-col justify-center"
+            >
+              <span className="sr-only">Export</span>
+              <FileUp className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="flex items-center gap-2">
+            Export Code
+            <CommandShortcut className="ml-0 text-sm leading-3">
+              ⌘+⇧+E
+            </CommandShortcut>
+          </TooltipContent>
+        </Tooltip>
+      )}
     </>
   );
 };
@@ -388,6 +412,9 @@ interface ResponsiveDropdownProps {
   onRedo: () => void;
   onOpenPreview: () => void;
   onOpenExport: () => void;
+  showExport?: boolean;
+  /** Content to render at the bottom of the dropdown (for rightChildren on mobile) */
+  children?: React.ReactNode;
 }
 
 const ResponsiveDropdown: React.FC<ResponsiveDropdownProps> = ({
@@ -397,6 +424,8 @@ const ResponsiveDropdown: React.FC<ResponsiveDropdownProps> = ({
   onRedo,
   onOpenPreview,
   onOpenExport,
+  showExport = true,
+  children,
 }) => {
   const style = useMemo(() => ({ zIndex: Z_INDEX + 1 }), []);
 
@@ -433,11 +462,21 @@ const ResponsiveDropdown: React.FC<ResponsiveDropdownProps> = ({
           Preview
           <span className="ml-auto text-xs text-muted-foreground">⌘+⇧+P</span>
         </DropdownMenuItem>
-        <DropdownMenuItem className="gap-2" onClick={onOpenExport}>
-          <FileUp className="w-4 h-4" />
-          Export
-          <span className="ml-auto text-xs text-muted-foreground">⌘+⇧+E</span>
-        </DropdownMenuItem>
+        {showExport && (
+          <DropdownMenuItem className="gap-2" onClick={onOpenExport}>
+            <FileUp className="w-4 h-4" />
+            Export
+            <span className="ml-auto text-xs text-muted-foreground">⌘+⇧+E</span>
+          </DropdownMenuItem>
+        )}
+        {children && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="p-2">
+              {children}
+            </div>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

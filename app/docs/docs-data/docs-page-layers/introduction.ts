@@ -19,6 +19,23 @@ export const INTRODUCTION_LAYER = {
         }
       },
       {
+        "id": "better-stack-callout",
+        "type": "div",
+        "name": "Better Stack Callout",
+        "props": {
+          "className": "bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-l-4 border-primary rounded-r-lg p-4 my-4"
+        },
+        "children": [
+          {
+            "id": "better-stack-callout-text",
+            "type": "Markdown",
+            "name": "Markdown",
+            "props": {},
+            "children": "**UI Builder is now part of [Better Stack](https://better-stack.ai/)** — ship full-stack features faster with production-ready plugins that generate database schemas, API routes, and pages for Next.js, TanStack Start, and React Router. Stop rebuilding. Start shipping."
+          }
+        ]
+      },
+      {
         "id": "JKiqXGV",
         "type": "Markdown",
         "name": "Markdown",

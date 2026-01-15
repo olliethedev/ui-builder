@@ -371,6 +371,7 @@ export const PanelConfigDemo = () => {
       title: 'Custom Tab Names',
       description: 'Same content with custom tab labels',
       panelConfig: {
+        navBar: undefined,
         pageConfigPanelTabsContent: {
           layers: { title: "Structure", content: defaultConfigTabsContent().layers.content },
           appearance: { title: "Design", content: defaultConfigTabsContent().appearance?.content },
@@ -382,6 +383,7 @@ export const PanelConfigDemo = () => {
       title: 'Custom Panel Content',
       description: 'Custom components in each panel tab',
       panelConfig: {
+        navBar: undefined,
         pageConfigPanelTabsContent: {
           layers: { title: "Layers", content: defaultConfigTabsContent().layers.content },
           appearance: { title: "Theme", content: <CustomAppearancePanel /> },
@@ -394,6 +396,7 @@ export const PanelConfigDemo = () => {
       title: 'Minimal',
       description: 'Only essential panels shown',
       panelConfig: {
+        navBar: undefined,
         pageConfigPanelTabsContent: {
           layers: { title: "Structure", content: defaultConfigTabsContent().layers.content }
         } as TabsContentConfig
@@ -454,7 +457,7 @@ export const PanelConfigDemo = () => {
             ...complexComponentDefinitions,
             ...primitiveComponentDefinitions,
           }}
-          panelConfig={currentConfig.panelConfig}
+          panelConfig={currentConfig.panelConfig as typeof currentConfig.panelConfig & { navBar?: undefined }}
           persistLayerStore={false}
           onChange={(updatedPages) => {
             console.log(`[${mode}] Pages updated:`, updatedPages);
