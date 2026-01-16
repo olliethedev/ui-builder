@@ -26,13 +26,6 @@ export const QUICK_START_LAYER = {
         "children": "Get up and running with UI Builder in minutes. This guide covers installation, basic setup, and your first working editor."
       },
       {
-        "id": "quick-start-compatibility",
-        "type": "Markdown",
-        "name": "Markdown",
-        "props": {},
-        "children": "⚠️ **Server Components**: Not supported. RSC can't be re-rendered client-side for live preview. A separate RSC renderer for final page rendering is possible."
-      },
-      {
         "id": "quick-start-install",
         "type": "Markdown",
         "name": "Markdown",
@@ -112,7 +105,7 @@ export const QUICK_START_LAYER = {
         "type": "Markdown",
         "name": "Markdown",
         "props": {},
-        "children": "## Rendering Without the Editor\n\nTo display pages in production without the editor interface, use `LayerRenderer`:\n\n```tsx\nimport LayerRenderer from \"@/components/ui/ui-builder/layer-renderer\";\n\n// Basic rendering\nexport function MyPage({ page }) {\n  return (\n    <LayerRenderer \n      page={page}\n      componentRegistry={componentRegistry}\n    />\n  );\n}\n\n// With variables for dynamic content\nexport function DynamicPage({ page, userData }) {\n  const variableValues = {\n    \"welcome-msg\": `Welcome back, ${userData.name}!`\n  };\n  \n  return (\n    <LayerRenderer \n      page={page}\n      componentRegistry={componentRegistry}\n      variables={variables}\n      variableValues={variableValues}\n    />\n  );\n}\n```\n\n🎯 **Try it**: Check out the **[Renderer Demo](/examples/renderer)** and **[Variables Demo](/examples/renderer/variables)** to see LayerRenderer in action."
+        "children": "## Rendering Without the Editor\n\nTo display pages in production without the editor interface, use `LayerRenderer` (client) or `ServerLayerRenderer` (SSR/RSC):\n\n```tsx\nimport LayerRenderer from \"@/components/ui/ui-builder/layer-renderer\";\n\n// Basic rendering (client component)\nexport function MyPage({ page }) {\n  return (\n    <LayerRenderer \n      page={page}\n      componentRegistry={componentRegistry}\n    />\n  );\n}\n\n// With variables for dynamic content\nexport function DynamicPage({ page, userData }) {\n  const variableValues = {\n    \"welcome-msg\": `Welcome back, ${userData.name}!`\n  };\n  \n  return (\n    <LayerRenderer \n      page={page}\n      componentRegistry={componentRegistry}\n      variables={variables}\n      variableValues={variableValues}\n    />\n  );\n}\n```\n\n### Server-Side Rendering (SSR/RSC)\n\nFor React Server Components or SSG, use `ServerLayerRenderer`:\n\n```tsx\nimport { ServerLayerRenderer } from \"@/components/ui/ui-builder/server-layer-renderer\";\n\n// Server Component (no 'use client' needed)\nexport default async function MyPage() {\n  const page = await fetchPageFromDB();\n  return (\n    <ServerLayerRenderer \n      page={page}\n      componentRegistry={componentRegistry}\n    />\n  );\n}\n```\n\n🎯 **Try it**: Check out the **[Renderer Demo](/examples/renderer)**, **[Variables Demo](/examples/renderer/variables)**, and **[SSR Demo](/examples/ssr)** to see the renderers in action."
       },
       {
         "id": "quick-start-advanced-demo",
