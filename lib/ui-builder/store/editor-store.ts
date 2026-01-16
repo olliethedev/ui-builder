@@ -1,8 +1,7 @@
  
 import { create, StateCreator } from 'zustand';
 import { ComponentType as ReactComponentType } from "react";
-import { RegistryEntry, ComponentRegistry } from '@/components/ui/ui-builder/types';
-import { BlockRegistry } from '@/lib/ui-builder/registry/block-definitions';
+import { RegistryEntry, ComponentRegistry, BlockRegistry } from '@/components/ui/ui-builder/types';
 
 
 
