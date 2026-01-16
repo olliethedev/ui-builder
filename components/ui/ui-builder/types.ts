@@ -134,6 +134,30 @@ export const createVariable: CreateVariable = <T extends VariableValueType>(
   defaultValue,
 });
 
+/**
+ * Block definition for UI Builder.
+ * Blocks are pre-built component compositions that can be inserted as templates.
+ */
+export interface BlockDefinition {
+  /** Unique block name, e.g., "login-01" */
+  name: string;
+  /** Block category for grouping in UI, e.g., "login", "sidebar", "chart" */
+  category: string;
+  /** Human-readable description */
+  description?: string;
+  /** The ComponentLayer tree to insert when this block is selected */
+  template: ComponentLayer;
+  /** Optional preview image URL */
+  thumbnail?: string;
+  /** Required shadcn components for this block */
+  requiredComponents?: string[];
+}
+
+/**
+ * Block registry type - a record of block name to block definition
+ */
+export type BlockRegistry = Record<string, BlockDefinition>;
+
 
 
 

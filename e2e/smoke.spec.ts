@@ -51,14 +51,22 @@ test.describe('UI Builder Smoke Tests', () => {
       // Wait for the component picker popover/dialog
       await page.waitForTimeout(500);
       
-      // Find and click Button in the list
-      const buttonItem = page.locator('[cmdk-item]').filter({ hasText: /^Button$/ }).first();
-      if (await buttonItem.isVisible()) {
-        await buttonItem.click();
-      } else {
-        // Try alternate selector
-        await page.getByRole('option', { name: 'Button' }).first().click();
-      }
+      // Components are grouped by category in tabs. Button is under the "Ui" tab 
+      // which contains @/components/ui components. Click on that tab first.
+      // The tab has name "Ui @/components/ui" - we need to avoid matching "Ui Builder"
+      const uiTab = page.getByRole('tab', { name: 'Ui @/components/ui' });
+      await uiTab.click();
+      await page.waitForTimeout(300);
+      
+      // Now search for Button within the Ui tab
+      const searchInput = page.getByPlaceholder(/find components/i);
+      await searchInput.fill('Button');
+      await page.waitForTimeout(300);
+      
+      // Find and click Button in the filtered list (use getByRole with exact name)
+      // The option has a preview that renders "Button" and a label "Button"
+      const buttonItem = page.getByRole('option', { name: /^Button/ }).first();
+      await buttonItem.click();
       
       // Wait for component to be added
       await page.waitForTimeout(500);
@@ -87,7 +95,6 @@ test.describe('UI Builder Smoke Tests', () => {
       await waitForBuilderReady(page);
       
       // Click on Page to expand it (using chevron)
-      const pageRow = page.getByTestId('layers-tree').locator('button', { hasText: 'Page' }).first();
       const expandButton = page.getByTestId('layers-tree').locator('button:has(svg[class*="lucide-chevron"])').first();
       
       if (await expandButton.isVisible()) {

@@ -1,28 +1,7 @@
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import { ComponentLayer, BlockDefinition, BlockRegistry } from '@/components/ui/ui-builder/types';
 
-/**
- * Block definition for UI Builder.
- * Blocks are pre-built component compositions that can be inserted as templates.
- */
-export interface BlockDefinition {
-    /** Unique block name, e.g., "login-01" */
-    name: string;
-    /** Block category for grouping in UI, e.g., "login", "sidebar", "chart" */
-    category: string;
-    /** Human-readable description */
-    description?: string;
-    /** The ComponentLayer tree to insert when this block is selected */
-    template: ComponentLayer;
-    /** Optional preview image URL */
-    thumbnail?: string;
-    /** Required shadcn components for this block */
-    requiredComponents?: string[];
-}
-
-/**
- * Block registry type - a record of block name to block definition
- */
-export type BlockRegistry = Record<string, BlockDefinition>;
+// Re-export types for backward compatibility
+export type { BlockDefinition, BlockRegistry } from '@/components/ui/ui-builder/types';
 
 /**
  * Helper to create a simple text span layer

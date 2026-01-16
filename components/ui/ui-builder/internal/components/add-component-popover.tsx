@@ -19,9 +19,8 @@ import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { cn } from "@/lib/utils";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
-import { ComponentLayer, ComponentRegistry } from "@/components/ui/ui-builder/types";
+import { ComponentLayer, ComponentRegistry, BlockDefinition } from "@/components/ui/ui-builder/types";
 import { createComponentLayer } from "@/lib/ui-builder/store/layer-utils";
-import { BlockDefinition } from "@/lib/ui-builder/registry/block-definitions";
 
 const fallback = <div className="w-full h-full bg-muted rounded border animate-pulse" />;
 
@@ -596,15 +595,15 @@ const ComponentPreview = memo(({
   componentType: string;
   componentRegistry: ComponentRegistry;
 }) => {
-  // Check if this is a child-only component that can't render without parent
-  if (CHILD_ONLY_COMPONENTS.has(componentType)) {
-    return <ChildOnlyPlaceholder componentType={componentType} />;
-  }
+  const isChildOnly = CHILD_ONLY_COMPONENTS.has(componentType);
 
-  const style = { width: '200%', height: '200%' } as const;
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // useMemo must be called unconditionally to follow React's Rules of Hooks
   const previewLayer = useMemo(() => {
+    // Skip creating layer for child-only components
+    if (isChildOnly) {
+      return null;
+    }
+
     // Check cache first
     const cacheKey = `${componentType}-${JSON.stringify(componentRegistry[componentType as keyof typeof componentRegistry]?.schema)}`;
     if (previewLayerCache.has(cacheKey)) {
@@ -624,11 +623,18 @@ const ComponentPreview = memo(({
       console.warn(`Failed to create preview for component ${componentType}:`, error);
       return null;
     }
-  }, [componentType, componentRegistry]);
+  }, [componentType, componentRegistry, isChildOnly]);
+
+  // Render child-only placeholder after hooks are called
+  if (isChildOnly) {
+    return <ChildOnlyPlaceholder componentType={componentType} />;
+  }
 
   if (!previewLayer) {
     return <div className="w-full h-full bg-muted rounded border" />;
   }
+
+  const style = { width: '200%', height: '200%' } as const;
 
   return (
     <div 
