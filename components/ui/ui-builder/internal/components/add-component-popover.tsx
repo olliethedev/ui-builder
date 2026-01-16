@@ -28,247 +28,39 @@ const fallback = <div className="w-full h-full bg-muted rounded border animate-p
 const previewLayerCache = new Map<string, ComponentLayer>();
 
 /**
- * Components that require a parent context to render properly.
- * These will show a placeholder instead of a live preview.
+ * Check if a component can be added as a child of the given parent type.
+ * A component is valid if:
+ * - It has no `childOf` constraint (can be added anywhere)
+ * - OR its `childOf` array includes the parent type
  */
-const CHILD_ONLY_COMPONENTS = new Set([
-  // Accordion
-  "AccordionItem",
-  "AccordionTrigger", 
-  "AccordionContent",
-  // Tabs
-  "TabsList",
-  "TabsTrigger",
-  "TabsContent",
-  // Card
-  "CardHeader",
-  "CardTitle",
-  "CardDescription",
-  "CardContent",
-  "CardFooter",
-  // Dialog
-  "DialogTrigger",
-  "DialogContent",
-  "DialogHeader",
-  "DialogFooter",
-  "DialogTitle",
-  "DialogDescription",
-  "DialogClose",
-  // Sheet
-  "SheetTrigger",
-  "SheetContent",
-  "SheetHeader",
-  "SheetFooter",
-  "SheetTitle",
-  "SheetDescription",
-  "SheetClose",
-  // Alert Dialog
-  "AlertDialogTrigger",
-  "AlertDialogContent",
-  "AlertDialogHeader",
-  "AlertDialogFooter",
-  "AlertDialogTitle",
-  "AlertDialogDescription",
-  "AlertDialogAction",
-  "AlertDialogCancel",
-  // Dropdown Menu
-  "DropdownMenuTrigger",
-  "DropdownMenuContent",
-  "DropdownMenuItem",
-  "DropdownMenuCheckboxItem",
-  "DropdownMenuRadioItem",
-  "DropdownMenuLabel",
-  "DropdownMenuSeparator",
-  "DropdownMenuShortcut",
-  "DropdownMenuGroup",
-  "DropdownMenuPortal",
-  "DropdownMenuSub",
-  "DropdownMenuSubContent",
-  "DropdownMenuSubTrigger",
-  "DropdownMenuRadioGroup",
-  // Select
-  "SelectTrigger",
-  "SelectContent",
-  "SelectItem",
-  "SelectLabel",
-  "SelectSeparator",
-  "SelectGroup",
-  "SelectValue",
-  // Command
-  "CommandInput",
-  "CommandList",
-  "CommandEmpty",
-  "CommandGroup",
-  "CommandItem",
-  "CommandShortcut",
-  "CommandSeparator",
-  // Table
-  "TableHeader",
-  "TableBody",
-  "TableFooter",
-  "TableHead",
-  "TableRow",
-  "TableCell",
-  "TableCaption",
-  // Breadcrumb
-  "BreadcrumbList",
-  "BreadcrumbItem",
-  "BreadcrumbLink",
-  "BreadcrumbPage",
-  "BreadcrumbSeparator",
-  "BreadcrumbEllipsis",
-  // Popover
-  "PopoverTrigger",
-  "PopoverContent",
-  // Tooltip
-  "TooltipTrigger",
-  "TooltipContent",
-  // Resizable
-  "ResizablePanel",
-  "ResizableHandle",
-  // Toggle Group
-  "ToggleGroupItem",
-  // Radio Group
-  "RadioGroupItem",
-  // Avatar
-  "AvatarImage",
-  "AvatarFallback",
-  // Sidebar
-  "SidebarHeader",
-  "SidebarContent",
-  "SidebarFooter",
-  "SidebarGroup",
-  "SidebarGroupLabel",
-  "SidebarGroupContent",
-  "SidebarMenu",
-  "SidebarMenuItem",
-  "SidebarMenuButton",
-  "SidebarMenuAction",
-  "SidebarMenuBadge",
-  "SidebarMenuSkeleton",
-  "SidebarMenuSub",
-  "SidebarMenuSubItem",
-  "SidebarMenuSubButton",
-  "SidebarGroupAction",
-  "SidebarInput",
-  "SidebarInset",
-  "SidebarRail",
-  "SidebarSeparator",
-  "SidebarTrigger",
-  // Alert
-  "AlertTitle",
-  "AlertDescription",
-  // Carousel
-  "CarouselContent",
-  "CarouselItem",
-  "CarouselPrevious",
-  "CarouselNext",
-  // Chart
-  "ChartTooltip",
-  "ChartTooltipContent",
-  "ChartLegend",
-  "ChartLegendContent",
-  // Collapsible
-  "CollapsibleTrigger",
-  "CollapsibleContent",
-  // Context Menu
-  "ContextMenuTrigger",
-  "ContextMenuContent",
-  "ContextMenuItem",
-  "ContextMenuCheckboxItem",
-  "ContextMenuRadioItem",
-  "ContextMenuLabel",
-  "ContextMenuSeparator",
-  "ContextMenuShortcut",
-  "ContextMenuGroup",
-  "ContextMenuSub",
-  "ContextMenuSubContent",
-  "ContextMenuSubTrigger",
-  "ContextMenuRadioGroup",
-  // Drawer
-  "DrawerTrigger",
-  "DrawerContent",
-  "DrawerHeader",
-  "DrawerFooter",
-  "DrawerTitle",
-  "DrawerDescription",
-  "DrawerClose",
-  // Hover Card
-  "HoverCardTrigger",
-  "HoverCardContent",
-  // Input OTP
-  "InputOTPGroup",
-  "InputOTPSlot",
-  "InputOTPSeparator",
-  // Menubar
-  "MenubarMenu",
-  "MenubarTrigger",
-  "MenubarContent",
-  "MenubarItem",
-  "MenubarSeparator",
-  "MenubarLabel",
-  "MenubarCheckboxItem",
-  "MenubarRadioGroup",
-  "MenubarRadioItem",
-  "MenubarShortcut",
-  "MenubarSub",
-  "MenubarSubContent",
-  "MenubarSubTrigger",
-  "MenubarGroup",
-  // Navigation Menu
-  "NavigationMenuList",
-  "NavigationMenuItem",
-  "NavigationMenuContent",
-  "NavigationMenuTrigger",
-  "NavigationMenuLink",
-  "NavigationMenuIndicator",
-  "NavigationMenuViewport",
-  // Pagination
-  "PaginationContent",
-  "PaginationItem",
-  "PaginationLink",
-  "PaginationPrevious",
-  "PaginationNext",
-  "PaginationEllipsis",
-  // Scroll Area
-  "ScrollBar",
-  // Button Group
-  "ButtonGroupText",
-  "ButtonGroupSeparator",
-  // Empty
-  "EmptyHeader",
-  "EmptyTitle",
-  "EmptyDescription",
-  "EmptyContent",
-  "EmptyMedia",
-  // Kbd
-  "KbdGroup",
-  // Field
-  "FieldLabel",
-  "FieldDescription",
-  "FieldError",
-  "FieldGroup",
-  "FieldLegend",
-  "FieldSeparator",
-  "FieldSet",
-  "FieldContent",
-  "FieldTitle",
-  // Input Group
-  "InputGroupAddon",
-  "InputGroupButton",
-  "InputGroupText",
-  "InputGroupInput",
-  "InputGroupTextarea",
-  // Item
-  "ItemMedia",
-  "ItemContent",
-  "ItemTitle",
-  "ItemDescription",
-  "ItemActions",
-  "ItemSeparator",
-  "ItemHeader",
-  "ItemFooter",
-]);
+function isValidChildOfParent(
+  componentRegistry: ComponentRegistry,
+  componentType: string,
+  parentType: string | undefined
+): boolean {
+  const def = componentRegistry[componentType];
+  if (!def?.childOf) {
+    // No constraint - can be added anywhere
+    return true;
+  }
+  if (!parentType) {
+    // Component has childOf but no parent type provided - hide it
+    return false;
+  }
+  return def.childOf.includes(parentType);
+}
+
+/**
+ * Check if a component requires a parent context to render properly.
+ * Components with childOf defined are child-only components.
+ */
+function isChildOnlyComponent(
+  componentRegistry: ComponentRegistry,
+  componentType: string
+): boolean {
+  const def = componentRegistry[componentType];
+  return Boolean(def?.childOf);
+}
 
 type AddComponentsPopoverProps = {
   className?: string;
@@ -300,14 +92,24 @@ export function AddComponentsPopover({
 
   const componentRegistry = useEditorStore((state) => state.registry);
   const blocks = useEditorStore((state) => state.blocks);
+  const findLayerById = useLayerStore((state) => state.findLayerById);
+
+  // Get the parent layer type to filter valid child components
+  const parentLayerType = useMemo(() => {
+    const parentLayer = findLayerById(parentLayerId);
+    return parentLayer?.type;
+  }, [findLayerById, parentLayerId]);
 
   const groupedOptions = useMemo(() => {
-    const componentOptions = Object.keys(componentRegistry).map((name) => ({
-      value: name,
-      label: name,
-      type: "component",
-      from: componentRegistry[name as keyof typeof componentRegistry].from,
-    }));
+    const componentOptions = Object.keys(componentRegistry)
+      // Filter to only show components that are valid children of the parent
+      .filter((name) => isValidChildOfParent(componentRegistry, name, parentLayerType))
+      .map((name) => ({
+        value: name,
+        label: name,
+        type: "component",
+        from: componentRegistry[name as keyof typeof componentRegistry].from,
+      }));
     return componentOptions.reduce(
       (acc, option) => {
         const fromRoot = option.from?.split("/").slice(0, -1).join("/"); // removes file name from path
@@ -321,7 +123,7 @@ export function AddComponentsPopover({
       },
       {} as Record<string, typeof componentOptions>
     );
-  }, [componentRegistry]);
+  }, [componentRegistry, parentLayerType]);
 
   // Get categories for tabs
   const categories = useMemo(() => {
@@ -720,7 +522,7 @@ const ComponentPreview = memo(({
   componentType: string;
   componentRegistry: ComponentRegistry;
 }) => {
-  const isChildOnly = CHILD_ONLY_COMPONENTS.has(componentType);
+  const isChildOnly = isChildOnlyComponent(componentRegistry, componentType);
 
   // useMemo must be called unconditionally to follow React's Rules of Hooks
   const previewLayer = useMemo(() => {

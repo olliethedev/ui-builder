@@ -24,6 +24,8 @@ import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 const mockUseLayerStore = useLayerStore as jest.MockedFunction<typeof useLayerStore>;
 const mockUseEditorStore = useEditorStore as jest.MockedFunction<typeof useEditorStore>;
 
+const mockFindLayerById = jest.fn();
+
 describe('AddComponentsPopover', () => {
   const mockAddComponentLayer = jest.fn();
   const mockOnChange = jest.fn();
@@ -60,10 +62,20 @@ describe('AddComponentsPopover', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Default mock for findLayerById returns a div layer
+    mockFindLayerById.mockReturnValue({
+      id: 'parent-1',
+      type: 'div',
+      name: 'Parent Div',
+      props: {},
+      children: []
+    });
+
     // Mock LayerStore
     mockUseLayerStore.mockImplementation((selector) => {
       const state = {
         addComponentLayer: mockAddComponentLayer,
+        findLayerById: mockFindLayerById,
       };
       return selector(state as any);
     });
@@ -468,6 +480,161 @@ describe('AddComponentsPopover', () => {
 
       // Should only be called once due to popover closing
       expect(mockAddComponentLayer).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('childOf Filtering', () => {
+    const registryWithChildOf = {
+      Accordion: {
+        component: () => null,
+        name: 'Accordion',
+        from: '@/components/ui/accordion',
+        schema: { safeParse: jest.fn() }
+      },
+      AccordionItem: {
+        component: () => null,
+        name: 'AccordionItem',
+        from: '@/components/ui/accordion',
+        childOf: ['Accordion'],
+        schema: { safeParse: jest.fn() }
+      },
+      AccordionTrigger: {
+        component: () => null,
+        name: 'AccordionTrigger',
+        from: '@/components/ui/accordion',
+        childOf: ['AccordionItem'],
+        schema: { safeParse: jest.fn() }
+      },
+      Button: {
+        component: () => null,
+        name: 'Button',
+        from: '@/components/ui/button',
+        schema: { safeParse: jest.fn() }
+      },
+      Card: {
+        component: () => null,
+        name: 'Card',
+        from: '@/components/ui/card',
+        schema: { safeParse: jest.fn() }
+      },
+      CardHeader: {
+        component: () => null,
+        name: 'CardHeader',
+        from: '@/components/ui/card',
+        childOf: ['Card'],
+        schema: { safeParse: jest.fn() }
+      },
+    };
+
+    beforeEach(() => {
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          registry: registryWithChildOf,
+        };
+        return selector(state as any);
+      });
+    });
+
+    it('should show child-only components when parent type matches childOf constraint', async () => {
+      // Parent is an Accordion, so AccordionItem should be visible
+      mockFindLayerById.mockReturnValue({
+        id: 'accordion-1',
+        type: 'Accordion',
+        name: 'Accordion',
+        props: {},
+        children: []
+      });
+
+      render(
+        <AddComponentsPopover parentLayerId="accordion-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        expect(screen.getByText('AccordionItem')).toBeInTheDocument();
+      });
+    });
+
+    it('should hide child-only components when parent type does not match childOf constraint', async () => {
+      // Parent is a Card, so AccordionItem should NOT be visible
+      mockFindLayerById.mockReturnValue({
+        id: 'card-1',
+        type: 'Card',
+        name: 'Card',
+        props: {},
+        children: []
+      });
+
+      render(
+        <AddComponentsPopover parentLayerId="card-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        // CardHeader should be visible (childOf: ['Card'])
+        expect(screen.getByText('CardHeader')).toBeInTheDocument();
+      });
+
+      // AccordionItem should NOT be visible (childOf: ['Accordion'])
+      expect(screen.queryByText('AccordionItem')).not.toBeInTheDocument();
+    });
+
+    it('should always show components without childOf constraint', async () => {
+      // Parent is an Accordion
+      mockFindLayerById.mockReturnValue({
+        id: 'accordion-1',
+        type: 'Accordion',
+        name: 'Accordion',
+        props: {},
+        children: []
+      });
+
+      render(
+        <AddComponentsPopover parentLayerId="accordion-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        // Button has no childOf, should always be visible
+        expect(screen.getByText('Button')).toBeInTheDocument();
+      });
+    });
+
+    it('should show all non-childOf components when parent type is not found', async () => {
+      // Parent layer not found
+      mockFindLayerById.mockReturnValue(undefined);
+
+      render(
+        <AddComponentsPopover parentLayerId="non-existent">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        // Components without childOf should be visible
+        expect(screen.getByText('Button')).toBeInTheDocument();
+        expect(screen.getByText('Card')).toBeInTheDocument();
+        expect(screen.getByText('Accordion')).toBeInTheDocument();
+      });
+
+      // Components with childOf should NOT be visible since no parent type
+      expect(screen.queryByText('AccordionItem')).not.toBeInTheDocument();
+      expect(screen.queryByText('CardHeader')).not.toBeInTheDocument();
     });
   });
 });

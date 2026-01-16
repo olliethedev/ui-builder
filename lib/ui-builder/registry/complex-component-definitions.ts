@@ -133,6 +133,7 @@ const essentialShadcnComponents: ComponentRegistry = {
             value: z.string(),
         }),
         from: "@/components/ui/accordion",
+        childOf: ["Accordion"],
         defaultChildren: [
             {
                 id: "acc-trigger-default",
@@ -162,6 +163,7 @@ const essentialShadcnComponents: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/accordion",
+        childOf: ["AccordionItem"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer),
             children: (layer) => childrenFieldOverrides(layer)
@@ -174,6 +176,7 @@ const essentialShadcnComponents: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/accordion",
+        childOf: ["AccordionItem"],
         fieldOverrides: commonFieldOverrides()
     },
     Card: {
@@ -238,6 +241,7 @@ const essentialShadcnComponents: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: '@/components/ui/card',
+        childOf: ["Card"],
         fieldOverrides: commonFieldOverrides()
     },
     CardFooter: {
@@ -247,6 +251,7 @@ const essentialShadcnComponents: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: '@/components/ui/card',
+        childOf: ["Card"],
         fieldOverrides: commonFieldOverrides()
     },
     CardTitle: {
@@ -256,6 +261,7 @@ const essentialShadcnComponents: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: '@/components/ui/card',
+        childOf: ["CardHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     CardDescription: {
@@ -265,6 +271,7 @@ const essentialShadcnComponents: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: '@/components/ui/card',
+        childOf: ["CardHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     CardContent: {
@@ -274,6 +281,7 @@ const essentialShadcnComponents: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: '@/components/ui/card',
+        childOf: ["Card"],
         fieldOverrides: commonFieldOverrides()
     },
 };

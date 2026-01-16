@@ -77,6 +77,12 @@ export interface RegistryEntry<T extends ReactComponentType<any>> {
   defaultChildren?: ComponentLayer[] | string | VariableReference;
   defaultVariableBindings?: DefaultVariableBinding[];
   fieldOverrides?: Record<string, FieldConfigFunction>;
+  /** 
+   * If defined, this component can only be added as a child of the specified parent types.
+   * Used to filter component options in the add popover and validate drag-and-drop.
+   * Example: TabsTrigger has childOf: ["TabsList"]
+   */
+  childOf?: string[];
 }
 
 // Improved field config function type

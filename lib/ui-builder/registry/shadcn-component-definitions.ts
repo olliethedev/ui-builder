@@ -193,6 +193,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             disabled: z.boolean().optional(),
         }),
         from: "@/components/ui/accordion",
+        childOf: ["Accordion"],
         defaultChildren: [
             {
                 id: "acc-trigger-default",
@@ -222,6 +223,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/accordion",
+        childOf: ["AccordionItem"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer),
             children: (layer) => childrenFieldOverrides(layer)
@@ -234,6 +236,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/accordion",
+        childOf: ["AccordionItem"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -302,6 +305,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: '@/components/ui/card',
+        childOf: ["Card"],
         fieldOverrides: commonFieldOverrides()
     },
     CardFooter: {
@@ -311,6 +315,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: '@/components/ui/card',
+        childOf: ["Card"],
         fieldOverrides: commonFieldOverrides()
     },
     CardTitle: {
@@ -320,6 +325,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: '@/components/ui/card',
+        childOf: ["CardHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     CardDescription: {
@@ -329,6 +335,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: '@/components/ui/card',
+        childOf: ["CardHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     CardContent: {
@@ -338,6 +345,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: '@/components/ui/card',
+        childOf: ["Card"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -435,6 +443,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/dialog",
+        childOf: ["Dialog"],
         fieldOverrides: commonFieldOverrides()
     },
     DialogContent: {
@@ -444,6 +453,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/dialog",
+        childOf: ["Dialog"],
         fieldOverrides: commonFieldOverrides()
     },
     DialogHeader: {
@@ -453,6 +463,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/dialog",
+        childOf: ["DialogContent"],
         fieldOverrides: commonFieldOverrides()
     },
     DialogFooter: {
@@ -462,6 +473,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/dialog",
+        childOf: ["DialogContent"],
         fieldOverrides: commonFieldOverrides()
     },
     DialogTitle: {
@@ -471,6 +483,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/dialog",
+        childOf: ["DialogHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     DialogDescription: {
@@ -480,6 +493,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/dialog",
+        childOf: ["DialogHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     DialogClose: {
@@ -490,6 +504,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/dialog",
+        childOf: ["DialogContent"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -570,6 +585,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/sheet",
+        childOf: ["Sheet"],
         fieldOverrides: commonFieldOverrides()
     },
     SheetContent: {
@@ -580,6 +596,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             side: z.enum(["top", "bottom", "left", "right"]).default("right"),
         }),
         from: "@/components/ui/sheet",
+        childOf: ["Sheet"],
         fieldOverrides: commonFieldOverrides()
     },
     SheetHeader: {
@@ -589,6 +606,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sheet",
+        childOf: ["SheetContent"],
         fieldOverrides: commonFieldOverrides()
     },
     SheetFooter: {
@@ -598,6 +616,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sheet",
+        childOf: ["SheetContent"],
         fieldOverrides: commonFieldOverrides()
     },
     SheetTitle: {
@@ -607,6 +626,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sheet",
+        childOf: ["SheetHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     SheetDescription: {
@@ -616,6 +636,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sheet",
+        childOf: ["SheetHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     SheetClose: {
@@ -626,6 +647,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/sheet",
+        childOf: ["SheetContent"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -698,6 +720,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/tabs",
+        childOf: ["Tabs"],
         fieldOverrides: commonFieldOverrides()
     },
     TabsTrigger: {
@@ -709,6 +732,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             disabled: z.boolean().optional(),
         }),
         from: "@/components/ui/tabs",
+        childOf: ["TabsList"],
         fieldOverrides: commonFieldOverrides()
     },
     TabsContent: {
@@ -720,6 +744,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             forceMount: z.boolean().optional(),
         }),
         from: "@/components/ui/tabs",
+        childOf: ["Tabs"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -780,6 +805,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/table",
+        childOf: ["Table"],
         fieldOverrides: commonFieldOverrides()
     },
     TableBody: {
@@ -789,6 +815,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/table",
+        childOf: ["Table"],
         fieldOverrides: commonFieldOverrides()
     },
     TableFooter: {
@@ -798,6 +825,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/table",
+        childOf: ["Table"],
         fieldOverrides: commonFieldOverrides()
     },
     TableHead: {
@@ -807,6 +835,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/table",
+        childOf: ["TableRow"],
         fieldOverrides: commonFieldOverrides()
     },
     TableRow: {
@@ -816,6 +845,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/table",
+        childOf: ["TableHeader", "TableBody", "TableFooter"],
         fieldOverrides: commonFieldOverrides()
     },
     TableCell: {
@@ -825,6 +855,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/table",
+        childOf: ["TableRow"],
         fieldOverrides: commonFieldOverrides()
     },
     TableCaption: {
@@ -834,6 +865,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/table",
+        childOf: ["Table"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -916,6 +948,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenu"],
         fieldOverrides: commonFieldOverrides()
     },
     DropdownMenuContent: {
@@ -928,6 +961,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             side: z.enum(["top", "right", "bottom", "left"]).optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenu"],
         fieldOverrides: commonFieldOverrides()
     },
     DropdownMenuItem: {
@@ -939,6 +973,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             disabled: z.boolean().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenuContent", "DropdownMenuGroup", "DropdownMenuSubContent"],
         fieldOverrides: commonFieldOverrides()
     },
     DropdownMenuCheckboxItem: {
@@ -950,6 +985,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             disabled: z.boolean().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenuContent", "DropdownMenuGroup", "DropdownMenuSubContent"],
         fieldOverrides: commonFieldOverrides()
     },
     DropdownMenuRadioItem: {
@@ -961,6 +997,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             disabled: z.boolean().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenuRadioGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     DropdownMenuLabel: {
@@ -971,6 +1008,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             inset: z.boolean().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenuContent", "DropdownMenuGroup", "DropdownMenuSubContent"],
         fieldOverrides: commonFieldOverrides()
     },
     DropdownMenuSeparator: {
@@ -979,6 +1017,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenuContent", "DropdownMenuGroup", "DropdownMenuSubContent"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -990,6 +1029,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenuItem", "DropdownMenuCheckboxItem", "DropdownMenuRadioItem"],
         fieldOverrides: commonFieldOverrides()
     },
     DropdownMenuGroup: {
@@ -998,6 +1038,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenuContent"],
         fieldOverrides: {
             children: (layer) => childrenFieldOverrides(layer)
         }
@@ -1010,6 +1051,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             open: z.boolean().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenuContent", "DropdownMenuGroup"],
         fieldOverrides: {
             children: (layer) => childrenFieldOverrides(layer)
         }
@@ -1021,6 +1063,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenuSub"],
         fieldOverrides: commonFieldOverrides()
     },
     DropdownMenuSubTrigger: {
@@ -1031,6 +1074,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             inset: z.boolean().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenuSub"],
         fieldOverrides: commonFieldOverrides()
     },
     DropdownMenuRadioGroup: {
@@ -1040,6 +1084,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             value: z.string().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
+        childOf: ["DropdownMenuContent", "DropdownMenuGroup", "DropdownMenuSubContent"],
         fieldOverrides: {
             children: (layer) => childrenFieldOverrides(layer)
         }
@@ -1093,6 +1138,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/select",
+        childOf: ["SelectContent"],
         fieldOverrides: {
             children: (layer) => childrenFieldOverrides(layer)
         }
@@ -1104,6 +1150,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             placeholder: z.string().optional(),
         }),
         from: "@/components/ui/select",
+        childOf: ["SelectTrigger"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -1115,6 +1162,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/select",
+        childOf: ["Select"],
         fieldOverrides: commonFieldOverrides()
     },
     SelectContent: {
@@ -1125,6 +1173,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             position: z.enum(["popper", "item-aligned"]).optional(),
         }),
         from: "@/components/ui/select",
+        childOf: ["Select"],
         fieldOverrides: commonFieldOverrides()
     },
     SelectLabel: {
@@ -1134,6 +1183,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/select",
+        childOf: ["SelectContent", "SelectGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     SelectItem: {
@@ -1145,6 +1195,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             disabled: z.boolean().optional(),
         }),
         from: "@/components/ui/select",
+        childOf: ["SelectContent", "SelectGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     SelectSeparator: {
@@ -1153,6 +1204,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/select",
+        childOf: ["SelectContent", "SelectGroup"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -1210,6 +1262,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/popover",
+        childOf: ["Popover"],
         fieldOverrides: commonFieldOverrides()
     },
     PopoverContent: {
@@ -1222,6 +1275,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             sideOffset: z.number().optional(),
         }),
         from: "@/components/ui/popover",
+        childOf: ["Popover"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -1289,6 +1343,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/tooltip",
+        childOf: ["Tooltip"],
         fieldOverrides: commonFieldOverrides()
     },
     TooltipContent: {
@@ -1300,6 +1355,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             sideOffset: z.number().optional(),
         }),
         from: "@/components/ui/tooltip",
+        childOf: ["Tooltip"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -1344,6 +1400,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             placeholder: z.string().optional(),
         }),
         from: "@/components/ui/command",
+        childOf: ["Command"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -1355,6 +1412,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/command",
+        childOf: ["Command"],
         fieldOverrides: commonFieldOverrides()
     },
     CommandEmpty: {
@@ -1364,6 +1422,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/command",
+        childOf: ["CommandList"],
         fieldOverrides: commonFieldOverrides()
     },
     CommandGroup: {
@@ -1374,6 +1433,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             heading: z.string().optional(),
         }),
         from: "@/components/ui/command",
+        childOf: ["CommandList"],
         fieldOverrides: commonFieldOverrides()
     },
     CommandItem: {
@@ -1384,6 +1444,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             disabled: z.boolean().optional(),
         }),
         from: "@/components/ui/command",
+        childOf: ["CommandGroup", "CommandList"],
         fieldOverrides: commonFieldOverrides()
     },
     CommandShortcut: {
@@ -1393,6 +1454,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/command",
+        childOf: ["CommandItem"],
         fieldOverrides: commonFieldOverrides()
     },
     CommandSeparator: {
@@ -1401,6 +1463,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/command",
+        childOf: ["CommandList", "CommandGroup"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -1498,6 +1561,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             disabled: z.boolean().optional(),
         }),
         from: "@/components/ui/radio-group",
+        childOf: ["RadioGroup"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -1589,6 +1653,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             disabled: z.boolean().optional(),
         }),
         from: "@/components/ui/toggle-group",
+        childOf: ["ToggleGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     Calendar: {
@@ -1654,6 +1719,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/breadcrumb",
+        childOf: ["Breadcrumb"],
         fieldOverrides: commonFieldOverrides()
     },
     BreadcrumbItem: {
@@ -1663,6 +1729,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/breadcrumb",
+        childOf: ["BreadcrumbList"],
         fieldOverrides: commonFieldOverrides()
     },
     BreadcrumbLink: {
@@ -1674,6 +1741,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/breadcrumb",
+        childOf: ["BreadcrumbItem"],
         fieldOverrides: commonFieldOverrides()
     },
     BreadcrumbPage: {
@@ -1683,6 +1751,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/breadcrumb",
+        childOf: ["BreadcrumbItem"],
         fieldOverrides: commonFieldOverrides()
     },
     BreadcrumbSeparator: {
@@ -1692,6 +1761,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/breadcrumb",
+        childOf: ["BreadcrumbList"],
         fieldOverrides: commonFieldOverrides()
     },
     BreadcrumbEllipsis: {
@@ -1700,6 +1770,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/breadcrumb",
+        childOf: ["BreadcrumbItem"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -1751,6 +1822,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             collapsedSize: z.number().optional(),
         }),
         from: "@/components/ui/resizable",
+        childOf: ["ResizablePanelGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     ResizableHandle: {
@@ -1760,6 +1832,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             withHandle: z.boolean().optional(),
         }),
         from: "@/components/ui/resizable",
+        childOf: ["ResizablePanelGroup"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -1803,6 +1876,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["Sidebar"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarContent: {
@@ -1812,6 +1886,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["Sidebar"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarFooter: {
@@ -1821,6 +1896,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["Sidebar"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarGroup: {
@@ -1830,6 +1906,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarContent", "SidebarHeader", "SidebarFooter"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarGroupLabel: {
@@ -1840,6 +1917,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarGroupAction: {
@@ -1850,6 +1928,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarGroupContent: {
@@ -1859,6 +1938,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarMenu: {
@@ -1868,6 +1948,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarGroupContent", "SidebarHeader", "SidebarFooter"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarMenuItem: {
@@ -1877,6 +1958,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarMenu"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarMenuButton: {
@@ -1890,6 +1972,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             size: z.enum(["default", "sm", "lg"]).optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarMenuItem"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarMenuAction: {
@@ -1901,6 +1984,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             showOnHover: z.boolean().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarMenuItem"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarMenuBadge: {
@@ -1910,6 +1994,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarMenuItem"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarMenuSkeleton: {
@@ -1919,6 +2004,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             showIcon: z.boolean().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarMenuItem"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -1930,6 +2016,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarMenuItem"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarMenuSubItem: {
@@ -1939,6 +2026,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarMenuSub"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarMenuSubButton: {
@@ -1951,6 +2039,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             isActive: z.boolean().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarMenuSubItem"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarInput: {
@@ -1959,6 +2048,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarHeader", "SidebarGroup"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -1970,6 +2060,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarProvider"],
         fieldOverrides: commonFieldOverrides()
     },
     SidebarRail: {
@@ -1978,6 +2069,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["Sidebar"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -1988,6 +2080,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["Sidebar", "SidebarContent", "SidebarGroup"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -1998,6 +2091,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/sidebar",
+        childOf: ["SidebarHeader", "SidebarInset"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer)
         }
@@ -2027,6 +2121,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/alert",
+        childOf: ["Alert"],
         fieldOverrides: commonFieldOverrides()
     },
     AlertDescription: {
@@ -2036,6 +2131,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/alert",
+        childOf: ["Alert"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -2073,6 +2169,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/alert-dialog",
+        childOf: ["AlertDialog"],
         fieldOverrides: commonFieldOverrides()
     },
     AlertDialogContent: {
@@ -2082,6 +2179,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/alert-dialog",
+        childOf: ["AlertDialog"],
         fieldOverrides: commonFieldOverrides()
     },
     AlertDialogHeader: {
@@ -2091,6 +2189,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/alert-dialog",
+        childOf: ["AlertDialogContent"],
         fieldOverrides: commonFieldOverrides()
     },
     AlertDialogFooter: {
@@ -2100,6 +2199,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/alert-dialog",
+        childOf: ["AlertDialogContent"],
         fieldOverrides: commonFieldOverrides()
     },
     AlertDialogTitle: {
@@ -2109,6 +2209,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/alert-dialog",
+        childOf: ["AlertDialogHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     AlertDialogDescription: {
@@ -2118,6 +2219,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/alert-dialog",
+        childOf: ["AlertDialogHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     AlertDialogAction: {
@@ -2127,6 +2229,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/alert-dialog",
+        childOf: ["AlertDialogFooter"],
         fieldOverrides: commonFieldOverrides()
     },
     AlertDialogCancel: {
@@ -2136,6 +2239,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/alert-dialog",
+        childOf: ["AlertDialogFooter"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -2177,6 +2281,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             alt: z.string().optional(),
         }),
         from: "@/components/ui/avatar",
+        childOf: ["Avatar"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
     AvatarFallback: {
@@ -2186,6 +2291,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/avatar",
+        childOf: ["Avatar"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -2218,6 +2324,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/carousel",
+        childOf: ["Carousel"],
         fieldOverrides: commonFieldOverrides()
     },
     CarouselItem: {
@@ -2227,6 +2334,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/carousel",
+        childOf: ["CarouselContent"],
         fieldOverrides: commonFieldOverrides()
     },
     CarouselPrevious: {
@@ -2235,6 +2343,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/carousel",
+        childOf: ["Carousel"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
     CarouselNext: {
@@ -2243,6 +2352,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/carousel",
+        childOf: ["Carousel"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
 
@@ -2265,6 +2375,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             content: z.any().optional(),
         }),
         from: "@/components/ui/chart",
+        childOf: ["ChartContainer"],
         fieldOverrides: {}
     },
     ChartTooltipContent: {
@@ -2278,6 +2389,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             labelKey: z.string().optional(),
         }),
         from: "@/components/ui/chart",
+        childOf: ["ChartTooltip"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
     ChartLegend: {
@@ -2286,6 +2398,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             content: z.any().optional(),
         }),
         from: "@/components/ui/chart",
+        childOf: ["ChartContainer"],
         fieldOverrides: {}
     },
     ChartLegendContent: {
@@ -2296,6 +2409,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             nameKey: z.string().optional(),
         }),
         from: "@/components/ui/chart",
+        childOf: ["ChartLegend"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
 
@@ -2326,6 +2440,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/collapsible",
+        childOf: ["Collapsible"],
         fieldOverrides: commonFieldOverrides()
     },
     CollapsibleContent: {
@@ -2335,6 +2450,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/collapsible",
+        childOf: ["Collapsible"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -2363,6 +2479,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenu"],
         fieldOverrides: commonFieldOverrides()
     },
     ContextMenuContent: {
@@ -2372,6 +2489,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenu"],
         fieldOverrides: commonFieldOverrides()
     },
     ContextMenuItem: {
@@ -2382,6 +2500,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             inset: z.boolean().optional(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenuContent", "ContextMenuGroup", "ContextMenuSubContent"],
         fieldOverrides: commonFieldOverrides()
     },
     ContextMenuCheckboxItem: {
@@ -2392,6 +2511,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             checked: z.boolean().optional(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenuContent", "ContextMenuGroup", "ContextMenuSubContent"],
         fieldOverrides: commonFieldOverrides()
     },
     ContextMenuRadioItem: {
@@ -2402,6 +2522,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             value: z.string(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenuRadioGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     ContextMenuLabel: {
@@ -2412,6 +2533,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             inset: z.boolean().optional(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenuContent", "ContextMenuGroup", "ContextMenuSubContent"],
         fieldOverrides: commonFieldOverrides()
     },
     ContextMenuSeparator: {
@@ -2420,6 +2542,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenuContent", "ContextMenuGroup", "ContextMenuSubContent"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
     ContextMenuShortcut: {
@@ -2429,6 +2552,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenuItem", "ContextMenuCheckboxItem", "ContextMenuRadioItem"],
         fieldOverrides: commonFieldOverrides()
     },
     ContextMenuGroup: {
@@ -2438,6 +2562,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenuContent"],
         fieldOverrides: commonFieldOverrides()
     },
     ContextMenuSub: {
@@ -2446,6 +2571,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenuContent", "ContextMenuGroup"],
         fieldOverrides: { children: (layer) => childrenFieldOverrides(layer) }
     },
     ContextMenuSubContent: {
@@ -2455,6 +2581,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenuSub"],
         fieldOverrides: commonFieldOverrides()
     },
     ContextMenuSubTrigger: {
@@ -2465,6 +2592,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             inset: z.boolean().optional(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenuSub"],
         fieldOverrides: commonFieldOverrides()
     },
     ContextMenuRadioGroup: {
@@ -2475,6 +2603,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             value: z.string().optional(),
         }),
         from: "@/components/ui/context-menu",
+        childOf: ["ContextMenuContent", "ContextMenuGroup", "ContextMenuSubContent"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -2510,6 +2639,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/drawer",
+        childOf: ["Drawer"],
         fieldOverrides: commonFieldOverrides()
     },
     DrawerContent: {
@@ -2519,6 +2649,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/drawer",
+        childOf: ["Drawer"],
         fieldOverrides: commonFieldOverrides()
     },
     DrawerHeader: {
@@ -2528,6 +2659,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/drawer",
+        childOf: ["DrawerContent"],
         fieldOverrides: commonFieldOverrides()
     },
     DrawerFooter: {
@@ -2537,6 +2669,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/drawer",
+        childOf: ["DrawerContent"],
         fieldOverrides: commonFieldOverrides()
     },
     DrawerTitle: {
@@ -2546,6 +2679,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/drawer",
+        childOf: ["DrawerHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     DrawerDescription: {
@@ -2555,6 +2689,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/drawer",
+        childOf: ["DrawerHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     DrawerClose: {
@@ -2565,6 +2700,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/drawer",
+        childOf: ["DrawerContent", "DrawerFooter"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -2593,6 +2729,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/hover-card",
+        childOf: ["HoverCard"],
         fieldOverrides: commonFieldOverrides()
     },
     HoverCardContent: {
@@ -2604,6 +2741,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             sideOffset: z.coerce.number().optional(),
         }),
         from: "@/components/ui/hover-card",
+        childOf: ["HoverCard"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -2638,6 +2776,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/input-otp",
+        childOf: ["InputOTP"],
         fieldOverrides: commonFieldOverrides()
     },
     InputOTPSlot: {
@@ -2647,6 +2786,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             index: z.coerce.number(),
         }),
         from: "@/components/ui/input-otp",
+        childOf: ["InputOTPGroup"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
     InputOTPSeparator: {
@@ -2655,6 +2795,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/input-otp",
+        childOf: ["InputOTPGroup"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
 
@@ -2687,6 +2828,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/pagination",
+        childOf: ["Pagination"],
         fieldOverrides: commonFieldOverrides()
     },
     PaginationItem: {
@@ -2696,6 +2838,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/pagination",
+        childOf: ["PaginationContent"],
         fieldOverrides: commonFieldOverrides()
     },
     PaginationLink: {
@@ -2708,6 +2851,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             size: z.enum(["default", "sm", "lg", "icon"]).optional(),
         }),
         from: "@/components/ui/pagination",
+        childOf: ["PaginationItem"],
         fieldOverrides: commonFieldOverrides()
     },
     PaginationPrevious: {
@@ -2717,6 +2861,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             href: z.string().optional(),
         }),
         from: "@/components/ui/pagination",
+        childOf: ["PaginationItem"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
     PaginationNext: {
@@ -2726,6 +2871,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             href: z.string().optional(),
         }),
         from: "@/components/ui/pagination",
+        childOf: ["PaginationItem"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
     PaginationEllipsis: {
@@ -2734,6 +2880,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/pagination",
+        childOf: ["PaginationItem"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
 
@@ -2769,6 +2916,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             orientation: z.enum(["vertical", "horizontal"]).optional(),
         }),
         from: "@/components/ui/scroll-area",
+        childOf: ["ScrollArea"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
 
@@ -2823,6 +2971,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["Menubar"],
         fieldOverrides: { children: (layer) => childrenFieldOverrides(layer) }
     },
     MenubarTrigger: {
@@ -2832,6 +2981,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarMenu"],
         fieldOverrides: commonFieldOverrides()
     },
     MenubarContent: {
@@ -2844,6 +2994,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             sideOffset: z.coerce.number().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarMenu"],
         fieldOverrides: commonFieldOverrides()
     },
     MenubarItem: {
@@ -2854,6 +3005,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             inset: z.boolean().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarContent", "MenubarGroup", "MenubarSubContent"],
         fieldOverrides: commonFieldOverrides()
     },
     MenubarSeparator: {
@@ -2862,6 +3014,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarContent", "MenubarGroup", "MenubarSubContent"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
     MenubarLabel: {
@@ -2872,6 +3025,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             inset: z.boolean().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarContent", "MenubarGroup", "MenubarSubContent"],
         fieldOverrides: commonFieldOverrides()
     },
     MenubarCheckboxItem: {
@@ -2882,6 +3036,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             checked: z.boolean().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarContent", "MenubarGroup", "MenubarSubContent"],
         fieldOverrides: commonFieldOverrides()
     },
     MenubarRadioGroup: {
@@ -2892,6 +3047,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             value: z.string().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarContent", "MenubarGroup", "MenubarSubContent"],
         fieldOverrides: commonFieldOverrides()
     },
     MenubarRadioItem: {
@@ -2902,6 +3058,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             value: z.string(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarRadioGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     MenubarShortcut: {
@@ -2911,6 +3068,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarItem", "MenubarCheckboxItem", "MenubarRadioItem"],
         fieldOverrides: commonFieldOverrides()
     },
     MenubarSub: {
@@ -2919,6 +3077,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarContent", "MenubarGroup"],
         fieldOverrides: { children: (layer) => childrenFieldOverrides(layer) }
     },
     MenubarSubContent: {
@@ -2928,6 +3087,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarSub"],
         fieldOverrides: commonFieldOverrides()
     },
     MenubarSubTrigger: {
@@ -2938,6 +3098,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             inset: z.boolean().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarSub"],
         fieldOverrides: commonFieldOverrides()
     },
     MenubarGroup: {
@@ -2947,6 +3108,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/menubar",
+        childOf: ["MenubarContent"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -2980,6 +3142,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/navigation-menu",
+        childOf: ["NavigationMenu"],
         fieldOverrides: commonFieldOverrides()
     },
     NavigationMenuItem: {
@@ -2989,6 +3152,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/navigation-menu",
+        childOf: ["NavigationMenuList"],
         fieldOverrides: commonFieldOverrides()
     },
     NavigationMenuContent: {
@@ -2998,6 +3162,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/navigation-menu",
+        childOf: ["NavigationMenuItem"],
         fieldOverrides: commonFieldOverrides()
     },
     NavigationMenuTrigger: {
@@ -3007,6 +3172,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/navigation-menu",
+        childOf: ["NavigationMenuItem"],
         fieldOverrides: commonFieldOverrides()
     },
     NavigationMenuLink: {
@@ -3016,6 +3182,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/navigation-menu",
+        childOf: ["NavigationMenuItem", "NavigationMenuContent"],
         fieldOverrides: commonFieldOverrides()
     },
     NavigationMenuIndicator: {
@@ -3024,6 +3191,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/navigation-menu",
+        childOf: ["NavigationMenuList"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
     NavigationMenuViewport: {
@@ -3032,6 +3200,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/navigation-menu",
+        childOf: ["NavigationMenu"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
 
@@ -3061,6 +3230,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
         }),
         from: "@/components/ui/button-group",
+        childOf: ["ButtonGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     ButtonGroupSeparator: {
@@ -3070,6 +3240,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             orientation: z.enum(["horizontal", "vertical"]).optional(),
         }),
         from: "@/components/ui/button-group",
+        childOf: ["ButtonGroup"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
 
@@ -3099,6 +3270,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/empty",
+        childOf: ["Empty"],
         fieldOverrides: commonFieldOverrides()
     },
     EmptyTitle: {
@@ -3108,6 +3280,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/empty",
+        childOf: ["EmptyHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     EmptyDescription: {
@@ -3117,6 +3290,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/empty",
+        childOf: ["EmptyHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     EmptyContent: {
@@ -3126,6 +3300,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/empty",
+        childOf: ["Empty"],
         fieldOverrides: commonFieldOverrides()
     },
     EmptyMedia: {
@@ -3136,6 +3311,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             variant: z.enum(["default", "icon"]).optional(),
         }),
         from: "@/components/ui/empty",
+        childOf: ["EmptyHeader"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -3161,6 +3337,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/kbd",
+        childOf: ["Kbd"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -3200,6 +3377,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/field",
+        childOf: ["Field"],
         fieldOverrides: commonFieldOverrides()
     },
     FieldLegend: {
@@ -3210,6 +3388,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             variant: z.enum(["legend", "label"]).optional(),
         }),
         from: "@/components/ui/field",
+        childOf: ["FieldSet"],
         fieldOverrides: commonFieldOverrides()
     },
     FieldGroup: {
@@ -3219,6 +3398,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/field",
+        childOf: ["FieldSet", "Field"],
         fieldOverrides: commonFieldOverrides()
     },
     FieldContent: {
@@ -3228,6 +3408,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/field",
+        childOf: ["Field"],
         fieldOverrides: commonFieldOverrides()
     },
     FieldLabel: {
@@ -3237,6 +3418,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/field",
+        childOf: ["Field"],
         fieldOverrides: commonFieldOverrides()
     },
     FieldTitle: {
@@ -3246,6 +3428,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/field",
+        childOf: ["Field"],
         fieldOverrides: commonFieldOverrides()
     },
     FieldDescription: {
@@ -3255,6 +3438,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/field",
+        childOf: ["Field"],
         fieldOverrides: commonFieldOverrides()
     },
     FieldSeparator: {
@@ -3264,6 +3448,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/field",
+        childOf: ["FieldSet", "FieldGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     FieldError: {
@@ -3273,6 +3458,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/field",
+        childOf: ["Field"],
         fieldOverrides: commonFieldOverrides()
     },
 
@@ -3300,6 +3486,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             align: z.enum(["inline-start", "inline-end", "block-start", "block-end"]).optional(),
         }),
         from: "@/components/ui/input-group",
+        childOf: ["InputGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     InputGroupButton: {
@@ -3311,6 +3498,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             size: z.enum(["xs", "sm", "icon-xs", "icon-sm"]).optional(),
         }),
         from: "@/components/ui/input-group",
+        childOf: ["InputGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     InputGroupText: {
@@ -3320,6 +3508,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/input-group",
+        childOf: ["InputGroup"],
         fieldOverrides: commonFieldOverrides()
     },
     InputGroupInput: {
@@ -3331,6 +3520,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             disabled: z.boolean().optional(),
         }),
         from: "@/components/ui/input-group",
+        childOf: ["InputGroup"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
     InputGroupTextarea: {
@@ -3341,6 +3531,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             disabled: z.boolean().optional(),
         }),
         from: "@/components/ui/input-group",
+        childOf: ["InputGroup"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
 
@@ -3373,6 +3564,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/item",
+        childOf: ["Item"],
         fieldOverrides: commonFieldOverrides()
     },
     ItemSeparator: {
@@ -3381,6 +3573,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
         }),
         from: "@/components/ui/item",
+        childOf: ["ItemGroup"],
         fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
     ItemMedia: {
@@ -3391,6 +3584,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             variant: z.enum(["default", "icon", "image"]).optional(),
         }),
         from: "@/components/ui/item",
+        childOf: ["Item"],
         fieldOverrides: commonFieldOverrides()
     },
     ItemContent: {
@@ -3400,6 +3594,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/item",
+        childOf: ["Item"],
         fieldOverrides: commonFieldOverrides()
     },
     ItemTitle: {
@@ -3409,6 +3604,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/item",
+        childOf: ["ItemContent", "ItemHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     ItemDescription: {
@@ -3418,6 +3614,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/item",
+        childOf: ["ItemContent", "ItemHeader"],
         fieldOverrides: commonFieldOverrides()
     },
     ItemActions: {
@@ -3427,6 +3624,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/item",
+        childOf: ["Item"],
         fieldOverrides: commonFieldOverrides()
     },
     ItemHeader: {
@@ -3436,6 +3634,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/item",
+        childOf: ["Item"],
         fieldOverrides: commonFieldOverrides()
     },
     ItemFooter: {
@@ -3445,6 +3644,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
         }),
         from: "@/components/ui/item",
+        childOf: ["Item"],
         fieldOverrides: commonFieldOverrides()
     },
 };

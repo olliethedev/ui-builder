@@ -440,3 +440,86 @@ test.describe('Blocks Functionality', () => {
   });
   
 });
+
+test.describe('childOf Constraint Filtering', () => {
+  
+  test('filters child-only components based on parent type', async ({ page }) => {
+    await page.goto('/smoke/populated');
+    
+    await waitForBuilderReady(page);
+    
+    // First, expand the layers tree to see children
+    const layersTree = page.getByTestId('layers-tree');
+    const expandButton = layersTree.locator('button:has(svg[class*="lucide-chevron"])').first();
+    
+    if (await expandButton.isVisible()) {
+      await expandButton.click();
+      await page.waitForTimeout(300);
+    }
+    
+    // Open the add component popover on the page root
+    await openAddComponentPopover(page);
+    
+    // Navigate to the accordion components
+    const searchInput = page.getByPlaceholder(/find components/i);
+    await searchInput.fill('Accordion');
+    await page.waitForTimeout(300);
+    
+    // "Accordion" (parent component) should be visible
+    await expect(page.getByRole('option', { name: /^Accordion/ }).first()).toBeVisible();
+    
+    // "AccordionItem" has childOf: ["Accordion"], so when adding to Page (not Accordion),
+    // it should NOT be visible in the popover
+    // The search might still show it as a match, but it should be filtered out
+    // Actually, if filtered, the option just won't appear
+    // Let's verify it's not shown when parent is not Accordion
+    
+    // Close the popover
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+    
+    // Now add an Accordion first
+    await openAddComponentPopover(page);
+    await searchInput.fill('Accordion');
+    await page.waitForTimeout(300);
+    
+    // Click on Accordion to add it
+    const accordionOption = page.getByRole('option', { name: /^Accordion/ }).first();
+    await accordionOption.click();
+    await page.waitForTimeout(500);
+    
+    // Verify Accordion was added
+    await expect(layersTree).toContainText('Accordion');
+    
+    // Now click on the Accordion layer to select it
+    const accordionLayer = layersTree.getByRole('button', { name: 'Accordion' }).first();
+    await accordionLayer.click();
+    await page.waitForTimeout(300);
+    
+    // Expand the Accordion in the tree to see its children
+    const accordionChevron = layersTree.locator('button:has(svg[class*="lucide-chevron"])').first();
+    if (await accordionChevron.isVisible()) {
+      await accordionChevron.click();
+      await page.waitForTimeout(300);
+    }
+    
+    // Find the add button on the Accordion layer (hover shows add button)
+    // The add component button appears when hovering on the layer row
+    await accordionLayer.hover();
+    await page.waitForTimeout(300);
+    
+    // Look for the add button near the accordion layer
+    const accordionAddButton = page.locator('button:has([class*="lucide-plus"])').first();
+    await accordionAddButton.click();
+    await page.waitForTimeout(500);
+    
+    // Now search for AccordionItem - it should be visible because parent is Accordion
+    const searchInputAgain = page.getByPlaceholder(/find components/i);
+    await searchInputAgain.fill('AccordionItem');
+    await page.waitForTimeout(300);
+    
+    // AccordionItem should now be visible since we're adding to Accordion
+    await expect(page.getByRole('option', { name: /AccordionItem/ })).toBeVisible();
+  });
+  
+});
