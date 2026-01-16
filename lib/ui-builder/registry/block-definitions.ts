@@ -526,13 +526,13 @@ const calendarBlocks: BlockDefinition[] = Array.from({ length: 32 }, (_, i) =>
 );
 
 // ============================================
-// CHART BLOCKS (placeholder templates - require Chart component)
+// CHART BLOCKS (templates with ChartContainer - charts require Recharts data integration)
 // ============================================
 const createChartPlaceholder = (name: string, category: string, description: string): BlockDefinition => ({
     name,
     category,
     description,
-    requiredComponents: ["Card", "CardHeader", "CardContent", "CardTitle"],
+    requiredComponents: ["Card", "CardHeader", "CardContent", "CardTitle", "CardDescription", "ChartContainer"],
     template: {
         id: `${name}-root`,
         type: "Card",
@@ -546,16 +546,19 @@ const createChartPlaceholder = (name: string, category: string, description: str
                 props: {},
                 children: [
                     { id: `${name}-title`, type: "CardTitle", name: "CardTitle", props: {}, children: [textSpan(`${name}-title-text`, description)] },
+                    { id: `${name}-desc`, type: "CardDescription", name: "CardDescription", props: {}, children: [textSpan(`${name}-desc-text`, "Chart visualization")] },
                 ],
             },
             {
                 id: `${name}-content`,
                 type: "CardContent",
                 name: "CardContent",
-                props: { className: "h-[300px] flex items-center justify-center" },
+                props: { className: "h-[300px] flex flex-col items-center justify-center gap-4" },
                 children: [
-                    divContainer(`${name}-placeholder`, "text-muted-foreground text-sm", [
-                        textSpan(`${name}-placeholder-text`, `[${name} - requires Chart component]`),
+                    divContainer(`${name}-placeholder`, "text-muted-foreground text-center space-y-2", [
+                        { id: `${name}-icon`, type: "div", name: "div", props: { className: "text-4xl" }, children: "📊" },
+                        textSpan(`${name}-placeholder-text`, description),
+                        { id: `${name}-hint`, type: "p", name: "p", props: { className: "text-xs max-w-[250px]" }, children: "Charts require Recharts data integration. Use ChartContainer with AreaChart, BarChart, LineChart, etc." },
                     ]),
                 ],
             },
@@ -563,10 +566,42 @@ const createChartPlaceholder = (name: string, category: string, description: str
     },
 });
 
-// Chart Area blocks
+// Chart Area blocks - use AreaChartDemo for the first one, placeholders for variants
 const chartAreaBlocks: BlockDefinition[] = [
+    {
+        name: "chart-area-default",
+        category: "chart",
+        description: "Default area chart with sample data",
+        requiredComponents: ["Card", "CardHeader", "CardContent", "CardTitle", "CardDescription", "AreaChartDemo"],
+        template: {
+            id: "chart-area-default-root",
+            type: "Card",
+            name: "chart-area-default",
+            props: {},
+            children: [
+                {
+                    id: "chart-area-default-header",
+                    type: "CardHeader",
+                    name: "CardHeader",
+                    props: {},
+                    children: [
+                        { id: "chart-area-default-title", type: "CardTitle", name: "CardTitle", props: {}, children: [textSpan("chart-area-default-title-text", "Area Chart")] },
+                        { id: "chart-area-default-desc", type: "CardDescription", name: "CardDescription", props: {}, children: [textSpan("chart-area-default-desc-text", "Showing desktop and mobile visitors")] },
+                    ],
+                },
+                {
+                    id: "chart-area-default-content",
+                    type: "CardContent",
+                    name: "CardContent",
+                    props: {},
+                    children: [
+                        { id: "chart-area-default-chart", type: "AreaChartDemo", name: "AreaChartDemo", props: {}, children: [] },
+                    ],
+                },
+            ],
+        },
+    },
     createChartPlaceholder("chart-area-axes", "chart", "Area chart with axes"),
-    createChartPlaceholder("chart-area-default", "chart", "Default area chart"),
     createChartPlaceholder("chart-area-gradient", "chart", "Area chart with gradient"),
     createChartPlaceholder("chart-area-icons", "chart", "Area chart with icons"),
     createChartPlaceholder("chart-area-interactive", "chart", "Interactive area chart"),
@@ -577,10 +612,42 @@ const chartAreaBlocks: BlockDefinition[] = [
     createChartPlaceholder("chart-area-step", "chart", "Step area chart"),
 ];
 
-// Chart Bar blocks
+// Chart Bar blocks - use BarChartDemo for the first one
 const chartBarBlocks: BlockDefinition[] = [
+    {
+        name: "chart-bar-default",
+        category: "chart",
+        description: "Default bar chart with sample data",
+        requiredComponents: ["Card", "CardHeader", "CardContent", "CardTitle", "CardDescription", "BarChartDemo"],
+        template: {
+            id: "chart-bar-default-root",
+            type: "Card",
+            name: "chart-bar-default",
+            props: {},
+            children: [
+                {
+                    id: "chart-bar-default-header",
+                    type: "CardHeader",
+                    name: "CardHeader",
+                    props: {},
+                    children: [
+                        { id: "chart-bar-default-title", type: "CardTitle", name: "CardTitle", props: {}, children: [textSpan("chart-bar-default-title-text", "Bar Chart")] },
+                        { id: "chart-bar-default-desc", type: "CardDescription", name: "CardDescription", props: {}, children: [textSpan("chart-bar-default-desc-text", "Showing desktop and mobile visitors")] },
+                    ],
+                },
+                {
+                    id: "chart-bar-default-content",
+                    type: "CardContent",
+                    name: "CardContent",
+                    props: {},
+                    children: [
+                        { id: "chart-bar-default-chart", type: "BarChartDemo", name: "BarChartDemo", props: {}, children: [] },
+                    ],
+                },
+            ],
+        },
+    },
     createChartPlaceholder("chart-bar-active", "chart", "Bar chart with active state"),
-    createChartPlaceholder("chart-bar-default", "chart", "Default bar chart"),
     createChartPlaceholder("chart-bar-horizontal", "chart", "Horizontal bar chart"),
     createChartPlaceholder("chart-bar-interactive", "chart", "Interactive bar chart"),
     createChartPlaceholder("chart-bar-label", "chart", "Bar chart with labels"),
@@ -591,9 +658,41 @@ const chartBarBlocks: BlockDefinition[] = [
     createChartPlaceholder("chart-bar-stacked", "chart", "Stacked bar chart"),
 ];
 
-// Chart Line blocks
+// Chart Line blocks - use LineChartDemo for the first one
 const chartLineBlocks: BlockDefinition[] = [
-    createChartPlaceholder("chart-line-default", "chart", "Default line chart"),
+    {
+        name: "chart-line-default",
+        category: "chart",
+        description: "Default line chart with sample data",
+        requiredComponents: ["Card", "CardHeader", "CardContent", "CardTitle", "CardDescription", "LineChartDemo"],
+        template: {
+            id: "chart-line-default-root",
+            type: "Card",
+            name: "chart-line-default",
+            props: {},
+            children: [
+                {
+                    id: "chart-line-default-header",
+                    type: "CardHeader",
+                    name: "CardHeader",
+                    props: {},
+                    children: [
+                        { id: "chart-line-default-title", type: "CardTitle", name: "CardTitle", props: {}, children: [textSpan("chart-line-default-title-text", "Line Chart")] },
+                        { id: "chart-line-default-desc", type: "CardDescription", name: "CardDescription", props: {}, children: [textSpan("chart-line-default-desc-text", "Showing desktop and mobile visitors")] },
+                    ],
+                },
+                {
+                    id: "chart-line-default-content",
+                    type: "CardContent",
+                    name: "CardContent",
+                    props: {},
+                    children: [
+                        { id: "chart-line-default-chart", type: "LineChartDemo", name: "LineChartDemo", props: {}, children: [] },
+                    ],
+                },
+            ],
+        },
+    },
     createChartPlaceholder("chart-line-dots", "chart", "Line chart with dots"),
     createChartPlaceholder("chart-line-dots-colors", "chart", "Line chart with colored dots"),
     createChartPlaceholder("chart-line-dots-custom", "chart", "Line chart with custom dots"),
@@ -605,9 +704,41 @@ const chartLineBlocks: BlockDefinition[] = [
     createChartPlaceholder("chart-line-step", "chart", "Step line chart"),
 ];
 
-// Chart Pie blocks
+// Chart Pie blocks - use PieChartDemo for the first one
 const chartPieBlocks: BlockDefinition[] = [
-    createChartPlaceholder("chart-pie-donut", "chart", "Donut chart"),
+    {
+        name: "chart-pie-donut",
+        category: "chart",
+        description: "Donut chart with sample data",
+        requiredComponents: ["Card", "CardHeader", "CardContent", "CardTitle", "CardDescription", "PieChartDemo"],
+        template: {
+            id: "chart-pie-donut-root",
+            type: "Card",
+            name: "chart-pie-donut",
+            props: {},
+            children: [
+                {
+                    id: "chart-pie-donut-header",
+                    type: "CardHeader",
+                    name: "CardHeader",
+                    props: {},
+                    children: [
+                        { id: "chart-pie-donut-title", type: "CardTitle", name: "CardTitle", props: {}, children: [textSpan("chart-pie-donut-title-text", "Pie Chart")] },
+                        { id: "chart-pie-donut-desc", type: "CardDescription", name: "CardDescription", props: {}, children: [textSpan("chart-pie-donut-desc-text", "Browser visitors breakdown")] },
+                    ],
+                },
+                {
+                    id: "chart-pie-donut-content",
+                    type: "CardContent",
+                    name: "CardContent",
+                    props: {},
+                    children: [
+                        { id: "chart-pie-donut-chart", type: "PieChartDemo", name: "PieChartDemo", props: {}, children: [] },
+                    ],
+                },
+            ],
+        },
+    },
     createChartPlaceholder("chart-pie-donut-active", "chart", "Donut chart with active state"),
     createChartPlaceholder("chart-pie-donut-text", "chart", "Donut chart with text"),
     createChartPlaceholder("chart-pie-interactive", "chart", "Interactive pie chart"),

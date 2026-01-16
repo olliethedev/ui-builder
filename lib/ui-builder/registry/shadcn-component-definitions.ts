@@ -55,6 +55,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Field, FieldLabel, FieldDescription, FieldError, FieldGroup, FieldLegend, FieldSeparator, FieldSet, FieldContent, FieldTitle } from "@/components/ui/field";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGroupInput, InputGroupTextarea } from "@/components/ui/input-group";
 import { Item, ItemMedia, ItemContent, ItemActions, ItemGroup, ItemSeparator, ItemTitle, ItemDescription, ItemHeader, ItemFooter } from "@/components/ui/item";
+import { AreaChartDemo, BarChartDemo, LineChartDemo, PieChartDemo } from "@/components/ui/chart-demos";
 
 import { classNameFieldOverrides, childrenFieldOverrides, commonFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
@@ -3646,5 +3647,41 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
         from: "@/components/ui/item",
         childOf: ["Item"],
         fieldOverrides: commonFieldOverrides()
+    },
+
+    // ============================================
+    // CHART DEMOS (pre-built charts with sample data)
+    // ============================================
+    AreaChartDemo: {
+        component: AreaChartDemo,
+        schema: z.object({
+            className: z.string().optional(),
+        }),
+        from: "@/components/ui/chart-demos",
+        fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
+    },
+    BarChartDemo: {
+        component: BarChartDemo,
+        schema: z.object({
+            className: z.string().optional(),
+        }),
+        from: "@/components/ui/chart-demos",
+        fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
+    },
+    LineChartDemo: {
+        component: LineChartDemo,
+        schema: z.object({
+            className: z.string().optional(),
+        }),
+        from: "@/components/ui/chart-demos",
+        fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
+    },
+    PieChartDemo: {
+        component: PieChartDemo,
+        schema: z.object({
+            className: z.string().optional(),
+        }),
+        from: "@/components/ui/chart-demos",
+        fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
     },
 };
