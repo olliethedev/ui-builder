@@ -18,6 +18,12 @@ interface RegistryConfig {
     targetFunction?: (path: string) => string;
 }
 
+// Files to exclude from the core registry (they go in shadcn-components-registry.json)
+const excludePatterns = [
+    'shadcn-component-definitions.ts',
+    'block-definitions.ts',
+];
+
 const registryConfigs: RegistryConfig[] = [
     {
         type: "registry:ui",
@@ -49,6 +55,12 @@ async function buildRegistry() {
     for (const config of registryConfigs) {
         const matchedFiles = await glob(config.path, { nodir: true });
         for (const file of matchedFiles) {
+            // Skip files that should be excluded from core registry
+            if (excludePatterns.some(pattern => file.includes(pattern))) {
+                console.log("Skipping file (in shadcn registry)", { file });
+                continue;
+            }
+            
             const content = await readFile(file, "utf-8");
             
             // Only set target for registry:page and registry:file types

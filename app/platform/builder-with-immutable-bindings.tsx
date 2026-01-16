@@ -5,8 +5,9 @@ import UIBuilder from "@/components/ui/ui-builder";
 import { demoComponentRegistry } from "./demo-components";
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
+import { shadcnComponentDefinitions } from "@/lib/ui-builder/registry/shadcn-component-definitions";
+import { blockDefinitions } from "@/lib/ui-builder/registry/block-definitions";
 import { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
-import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 
 // Initial page structure showcasing immutable bindings
 const initialLayers: ComponentLayer[] = [{
@@ -351,14 +352,16 @@ export const BuilderWithImmutableBindings = () => {
   };
 
   return (
-    <UIBuilder 
+    <UIBuilder
       initialLayers={initialLayers}
       initialVariables={initialVariables}
       componentRegistry={{
         ...demoComponentRegistry,
         ...complexComponentDefinitions,
         ...primitiveComponentDefinitions,
+        ...shadcnComponentDefinitions,
       }}
+      blocks={blockDefinitions}
       onChange={handleChange}
       allowPagesCreation={true}
       allowPagesDeletion={true}

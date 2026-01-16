@@ -10,6 +10,7 @@ on:
       - 'lib/ui-builder/**'
       - 'hooks/**'
       - 'scripts/build.ts'
+      - 'scripts/build-shadcn-registry.ts'
       - 'scripts/test-registry.sh'
       - 'package.json'
 
@@ -39,8 +40,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build registry
-        run: npm run build-registry
+      - name: Build all registries
+        run: npm run build-all-registries
 
       - name: Make test script executable
         run: chmod +x ./scripts/test-registry.sh
@@ -53,7 +54,7 @@ jobs:
       - name: Check for registry changes
         id: git-check
         run: |
-          git diff --exit-code registry/block-registry.json || echo "changed=true" >> $GITHUB_OUTPUT
+          git diff --exit-code registry/block-registry.json registry/shadcn-components-registry.json || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Wait for other checks to complete
         if: steps.git-check.outputs.changed == 'true'
@@ -65,13 +66,13 @@ jobs:
           running-workflow-name: 'Test Registry Installation'
           allowed-conclusions: success,skipped,neutral
 
-      - name: Commit updated registry
+      - name: Commit updated registries
         if: steps.git-check.outputs.changed == 'true'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add registry/block-registry.json
-          git commit -m "chore: update block-registry.json [skip ci]"
+          git add registry/block-registry.json registry/shadcn-components-registry.json
+          git commit -m "chore: update registry files [skip ci]"
           git push
 
       - name: Comment on PR
@@ -83,7 +84,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ Registry test passed! The `block-registry.json` file has been automatically updated with your changes.'
+              body: '✅ Registry test passed! The registry files have been automatically updated with your changes.'
             })
 
       - name: Comment on PR if no changes
@@ -95,7 +96,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '✅ Registry test passed! No changes to `block-registry.json` were needed.'
+              body: '✅ Registry test passed! No changes to registry files were needed.'
             })
 
       - name: Upload test artifacts on failure

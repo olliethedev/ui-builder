@@ -22,6 +22,7 @@ export interface LayerStore {
   immutableBindings: Record<string, Record<string, boolean>>; // layerId -> propName -> isImmutable
   initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string, variables?: Variable[]) => void;
   addComponentLayer: (layerType: string, parentId: string, parentPosition?: number) => void;
+  addLayerDirect: (layer: ComponentLayer, parentId: string, parentPosition?: number) => void;
   addPageLayer: (pageId: string) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
@@ -155,6 +156,13 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       // Directly mutate the state instead of returning a new object
       state.pages = updatedPages;
       state.selectedLayerId = newLayer.id;
+    })),
+
+    addLayerDirect: (layer: ComponentLayer, parentId: string, parentPosition?: number) => set(produce((state: LayerStore) => {
+      // Add the pre-built layer directly to the tree (used for blocks)
+      const updatedPages = addLayer(state.pages, layer, parentId, parentPosition);
+      state.pages = updatedPages;
+      state.selectedLayerId = layer.id;
     })),
 
     addPageLayer: (pageName: string) => set(produce((state: LayerStore) => {

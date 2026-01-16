@@ -3,6 +3,8 @@
 import UIBuilder, { defaultConfigTabsContent, getDefaultPanelConfigValues } from "@/components/ui/ui-builder";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
+import { shadcnComponentDefinitions } from "@/lib/ui-builder/registry/shadcn-component-definitions";
+import { blockDefinitions } from "@/lib/ui-builder/registry/block-definitions";
 import { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 
@@ -1010,7 +1012,9 @@ export const BuilderWithPages = ({fixedPages = false}: {fixedPages?: boolean}) =
     componentRegistry={{
         ...complexComponentDefinitions,
         ...primitiveComponentDefinitions,
+        ...shadcnComponentDefinitions,
     }}
+    blocks={blockDefinitions}
     allowPagesCreation={!fixedPages}
     allowPagesDeletion={!fixedPages}
     persistLayerStore={false}

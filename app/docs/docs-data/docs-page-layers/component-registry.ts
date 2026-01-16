@@ -84,7 +84,7 @@ export const COMPONENT_REGISTRY_LAYER = {
         "type": "Markdown",
         "name": "Markdown",
         "props": {},
-        "children": "## Next Steps\n\nNow that you understand the component registry:\n\n- **Custom Components** - Learn how to add complex custom components with advanced features\n- **Advanced Component Config** - Explore field overrides, default children, and variable bindings\n- **Variables** - Create dynamic content with variable binding\n\nRemember: The registry is just a configuration object. The real power comes from how you design your components and their schemas to create the best editing experience for your users."
+        "children": "## Next Steps\n\nNow that you understand the component registry:\n\n- **Shadcn Registry** - Use all 54 shadcn/ui components and 124 block templates pre-configured\n- **Custom Components** - Learn how to add complex custom components with advanced features\n- **Advanced Component Config** - Explore field overrides, default children, and variable bindings\n- **Variables** - Create dynamic content with variable binding\n\nRemember: The registry is just a configuration object. The real power comes from how you design your components and their schemas to create the best editing experience for your users."
       }
     ]
   } as const satisfies ComponentLayer; 

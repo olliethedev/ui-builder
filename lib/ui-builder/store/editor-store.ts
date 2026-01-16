@@ -2,6 +2,7 @@
 import { create, StateCreator } from 'zustand';
 import { ComponentType as ReactComponentType } from "react";
 import { RegistryEntry, ComponentRegistry } from '@/components/ui/ui-builder/types';
+import { BlockRegistry } from '@/lib/ui-builder/registry/block-definitions';
 
 
 
@@ -10,8 +11,9 @@ export interface EditorStore {
     setPreviewMode: (mode: 'mobile' | 'tablet' | 'desktop' | 'responsive') => void;
 
     registry: ComponentRegistry;
+    blocks: BlockRegistry | undefined;
 
-    initialize: (registry: ComponentRegistry, persistLayerStoreConfig: boolean, allowPagesCreation: boolean, allowPagesDeletion: boolean, allowVariableEditing: boolean) => void;
+    initialize: (registry: ComponentRegistry, persistLayerStoreConfig: boolean, allowPagesCreation: boolean, allowPagesDeletion: boolean, allowVariableEditing: boolean, blocks?: BlockRegistry) => void;
     getComponentDefinition: (type: string) => RegistryEntry<ReactComponentType<any>> | undefined;
 
     persistLayerStoreConfig: boolean;
@@ -40,9 +42,10 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
     setPreviewMode: (mode) => set({ previewMode: mode }),
 
     registry: {},
+    blocks: undefined,
 
-    initialize: (registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing) => {
-        set(state => ({ ...state, registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing }));
+    initialize: (registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks) => {
+        set(state => ({ ...state, registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks }));
     },
     getComponentDefinition: (type: string) => {
         const { registry } = get();

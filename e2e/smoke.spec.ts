@@ -15,6 +15,13 @@ async function waitForBuilderReady(page: Page) {
   await expect(page.getByTestId('loading-skeleton')).not.toBeVisible({ timeout: 10000 });
 }
 
+// Helper to open the add component popover
+async function openAddComponentPopover(page: Page) {
+  const addButtons = page.locator('button:has([class*="lucide-plus"])');
+  await addButtons.first().click();
+  await page.waitForTimeout(500);
+}
+
 test.describe('UI Builder Smoke Tests', () => {
   
   test.describe('Empty Builder (/smoke/new)', () => {
@@ -269,6 +276,158 @@ test.describe('UI Builder Smoke Tests', () => {
       
       // Close dialog
       await page.keyboard.press('Escape');
+    });
+    
+  });
+  
+});
+
+test.describe('Blocks Functionality', () => {
+  
+  test.describe('Builder with Blocks (/smoke/with-blocks)', () => {
+    
+    test('loads without errors and displays main panels', async ({ page }) => {
+      await page.goto('/smoke/with-blocks');
+      
+      await waitForBuilderReady(page);
+      
+      // Verify main panels are present
+      await expect(page.getByTestId('page-config-panel')).toBeVisible();
+      await expect(page.getByTestId('auto-frame').first()).toBeVisible();
+    });
+    
+    test('shows Components and Blocks toggle when blocks are provided', async ({ page }) => {
+      await page.goto('/smoke/with-blocks');
+      
+      await waitForBuilderReady(page);
+      
+      // Open the add component popover
+      await openAddComponentPopover(page);
+      
+      // Should show both Components and Blocks toggle buttons
+      await expect(page.getByRole('button', { name: 'Components' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Blocks' })).toBeVisible();
+    });
+    
+    test('can switch to Blocks tab and see block categories', async ({ page }) => {
+      await page.goto('/smoke/with-blocks');
+      
+      await waitForBuilderReady(page);
+      
+      // Open the add component popover
+      await openAddComponentPopover(page);
+      
+      // Click the Blocks toggle
+      await page.getByRole('button', { name: 'Blocks' }).click();
+      await page.waitForTimeout(300);
+      
+      // Should show block category tabs (login, sidebar, dashboard, etc.)
+      // Check for at least one category tab
+      const loginTab = page.getByRole('tab', { name: /login/i });
+      const sidebarTab = page.getByRole('tab', { name: /sidebar/i });
+      const dashboardTab = page.getByRole('tab', { name: /dashboard/i });
+      
+      // At least one of these should be visible
+      const hasLoginTab = await loginTab.isVisible().catch(() => false);
+      const hasSidebarTab = await sidebarTab.isVisible().catch(() => false);
+      const hasDashboardTab = await dashboardTab.isVisible().catch(() => false);
+      
+      expect(hasLoginTab || hasSidebarTab || hasDashboardTab).toBe(true);
+    });
+    
+    test('can search for blocks', async ({ page }) => {
+      await page.goto('/smoke/with-blocks');
+      
+      await waitForBuilderReady(page);
+      
+      // Open the add component popover
+      await openAddComponentPopover(page);
+      
+      // Click the Blocks toggle
+      await page.getByRole('button', { name: 'Blocks' }).click();
+      await page.waitForTimeout(300);
+      
+      // Find the search input and type a search term
+      const searchInput = page.getByPlaceholder(/find blocks/i);
+      await searchInput.fill('login');
+      await page.waitForTimeout(300);
+      
+      // Should filter to show login-related blocks
+      // The command list should still contain items
+      const commandList = page.locator('[cmdk-list]');
+      await expect(commandList).toBeVisible();
+    });
+    
+    test('can add a block to the canvas', async ({ page }) => {
+      await page.goto('/smoke/with-blocks');
+      
+      await waitForBuilderReady(page);
+      
+      // Open the add component popover
+      await openAddComponentPopover(page);
+      
+      // Click the Blocks toggle
+      await page.getByRole('button', { name: 'Blocks' }).click();
+      await page.waitForTimeout(300);
+      
+      // Click on the first available block
+      const blockItem = page.locator('[cmdk-item]').first();
+      if (await blockItem.isVisible()) {
+        await blockItem.click();
+        await page.waitForTimeout(500);
+        
+        // The layers tree should now contain more than just the Page
+        const layersTree = page.getByTestId('layers-tree');
+        const layerButtons = layersTree.locator('button');
+        const buttonCount = await layerButtons.count();
+        
+        // Should have more than 1 layer button now (Page + block contents)
+        expect(buttonCount).toBeGreaterThan(1);
+      }
+    });
+    
+    test('can switch between Components and Blocks tabs', async ({ page }) => {
+      await page.goto('/smoke/with-blocks');
+      
+      await waitForBuilderReady(page);
+      
+      // Open the add component popover
+      await openAddComponentPopover(page);
+      
+      // Verify Components is active by default
+      const componentsButton = page.getByRole('button', { name: 'Components' });
+      const blocksButton = page.getByRole('button', { name: 'Blocks' });
+      
+      // Switch to Blocks
+      await blocksButton.click();
+      await page.waitForTimeout(300);
+      
+      // Verify blocks content is visible (search for blocks)
+      await expect(page.getByPlaceholder(/find blocks/i)).toBeVisible();
+      
+      // Switch back to Components
+      await componentsButton.click();
+      await page.waitForTimeout(300);
+      
+      // Verify components content is visible (search for components)
+      await expect(page.getByPlaceholder(/find components/i)).toBeVisible();
+    });
+    
+  });
+  
+  test.describe('Builder with Blocks on smoke/new', () => {
+    
+    test('shows Blocks toggle on smoke/new page (now has blocks enabled)', async ({ page }) => {
+      await page.goto('/smoke/new');
+      
+      await waitForBuilderReady(page);
+      
+      // Open the add component popover
+      await openAddComponentPopover(page);
+      
+      // Should show both Components and Blocks toggle buttons since blocks are now enabled
+      await expect(page.getByRole('button', { name: 'Components' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Blocks' })).toBeVisible();
     });
     
   });
