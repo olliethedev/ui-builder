@@ -10,6 +10,7 @@ import { READ_ONLY_MODE_LAYER } from "@/app/docs/docs-data/docs-page-layers/read
 import { LAYER_STRUCTURE_LAYER } from "@/app/docs/docs-data/docs-page-layers/layer-structure";
 import { PERSISTENCE_LAYER } from "@/app/docs/docs-data/docs-page-layers/persistence";
 import { RENDERING_PAGES_LAYER } from "@/app/docs/docs-data/docs-page-layers/rendering-pages";
+import { SHADCN_REGISTRY_LAYER } from "@/app/docs/docs-data/docs-page-layers/shadcn-registry";
 
 export const DOCS_PAGES = [
     // Core
@@ -18,6 +19,7 @@ export const DOCS_PAGES = [
     
     // Component System
     COMPONENT_REGISTRY_LAYER,
+    SHADCN_REGISTRY_LAYER,
     CUSTOM_COMPONENTS_LAYER,
     FIELD_OVERRIDES_LAYER,
     PANEL_CONFIGURATION_LAYER,
@@ -69,6 +71,10 @@ export const MENU_DATA: DocPageNavItem[] = [
             {
                 title: "Components Intro",
                 url: "/docs/component-registry",
+            },
+            {
+                title: "Shadcn Registry",
+                url: "/docs/shadcn-registry",
             },
             {
                 title: "Custom Components",

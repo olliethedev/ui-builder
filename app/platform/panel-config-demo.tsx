@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import UIBuilder, { defaultConfigTabsContent, TabsContentConfig } from "@/components/ui/ui-builder";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
+import { shadcnComponentDefinitions } from "@/lib/ui-builder/registry/shadcn-component-definitions";
+import { blockDefinitions } from "@/lib/ui-builder/registry/block-definitions";
 import { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -456,7 +458,9 @@ export const PanelConfigDemo = () => {
           componentRegistry={{
             ...complexComponentDefinitions,
             ...primitiveComponentDefinitions,
+            ...shadcnComponentDefinitions,
           }}
+          blocks={blockDefinitions}
           panelConfig={currentConfig.panelConfig as typeof currentConfig.panelConfig & { navBar?: undefined }}
           persistLayerStore={false}
           onChange={(updatedPages) => {

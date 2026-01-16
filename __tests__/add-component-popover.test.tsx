@@ -417,9 +417,9 @@ describe('AddComponentsPopover', () => {
 
       // Check for preview containers - these should exist even if lazy loading is happening
       const previewContainers = screen.getAllByRole('generic').filter(el => 
-        el.className.includes('flex-shrink-0') && 
+        el.className.includes('shrink-0') && 
         el.className.includes('w-10') && 
-        el.className.includes('h-8')
+        el.className.includes('h-6')
       );
       
       // Should have at least one preview container for components in the active tab

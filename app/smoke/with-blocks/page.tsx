@@ -4,16 +4,16 @@ import React from "react";
 import UIBuilder from "@/components/ui/ui-builder";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
-import { shadcnComponentDefinitions } from "@/lib/ui-builder/registry/shadcn-component-definitions";
 import { blockDefinitions } from "@/lib/ui-builder/registry/block-definitions";
+import { shadcnComponentDefinitions } from "@/lib/ui-builder/registry/shadcn-component-definitions";
 
 /**
- * Smoke test page with an empty builder (no initial layers).
- * Used for testing component creation flows.
+ * Smoke test page with blocks enabled.
+ * Used for testing blocks tab functionality.
  */
 const initialLayers = [
   {
-    id: "smoke-page-1",
+    id: "smoke-blocks-page",
     type: "div",
     name: "Page",
     props: {
@@ -23,9 +23,9 @@ const initialLayers = [
   },
 ];
 
-export default function SmokeNewPage() {
+export default function SmokeBlocksPage() {
   return (
-    <main data-testid="smoke-new-page" className="flex flex-col h-dvh">
+    <main data-testid="smoke-blocks-page" className="flex flex-col h-dvh">
       <UIBuilder
         initialLayers={initialLayers}
         persistLayerStore={false}
@@ -39,4 +39,3 @@ export default function SmokeNewPage() {
     </main>
   );
 }
-

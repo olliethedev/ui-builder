@@ -64,6 +64,8 @@ interface PanelConfigWithoutNavBar {
 
 type PanelConfig = PanelConfigWithNavBar | PanelConfigWithoutNavBar;
 
+import { BlockRegistry } from "@/lib/ui-builder/registry/block-definitions";
+
 /**
  * Base props shared by all UIBuilder configurations.
  */
@@ -77,6 +79,8 @@ interface UIBuilderBaseProps<TRegistry extends ComponentRegistry = ComponentRegi
   allowVariableEditing?: boolean;
   allowPagesCreation?: boolean;
   allowPagesDeletion?: boolean;
+  /** Optional block registry for the Blocks tab in the add component popover */
+  blocks?: BlockRegistry;
 }
 
 /**
@@ -132,6 +136,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
   navLeftChildren,
   navRightChildren,
   showExport = true,
+  blocks,
 }: UIBuilderProps<TRegistry>) => {
   const layerStore = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
@@ -156,7 +161,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
   // Effect 1: Initialize Editor Store with registry and page form props
   useEffect(() => {
     if (editorStore && componentRegistry && !editorStoreInitialized) {
-      editorStore.initialize(componentRegistry, persistLayerStore, allowPagesCreation, allowPagesDeletion, allowVariableEditing);
+      editorStore.initialize(componentRegistry, persistLayerStore, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks);
       setEditorStoreInitialized(true);
     }
   }, [
@@ -167,6 +172,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
     allowPagesCreation,
     allowPagesDeletion,
     allowVariableEditing,
+    blocks,
   ]);
 
   // Effect 2: Conditionally initialize Layer Store *after* Editor Store is initialized

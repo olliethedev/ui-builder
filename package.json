@@ -13,6 +13,9 @@
     "lint": "next lint",
     "scan": "next dev & npx react-scan@latest http://localhost:3000",
     "build-registry": "npx tsx scripts/build.ts",
+    "build-shadcn-registry": "npx tsx scripts/build-shadcn-registry.ts",
+    "build-all-registries": "npm run build-registry && npm run build-shadcn-registry",
+    "sync-shadcn": "npx tsx scripts/sync-shadcn-components.ts",
     "host-registry": "npx http-server registry"
   },
   "dependencies": {
