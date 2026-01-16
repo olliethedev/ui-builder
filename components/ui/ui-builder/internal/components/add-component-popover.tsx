@@ -206,7 +206,7 @@ export function AddComponentsPopover({
   // Group blocks by category
   const groupedBlocks = useMemo(() => {
     if (!blocks) return {};
-    return Object.values(blocks).reduce(
+    return Object.values(blocks).reduce<Record<string, BlockDefinition[]>>(
       (acc, block) => {
         if (!acc[block.category]) {
           acc[block.category] = [];
@@ -214,7 +214,7 @@ export function AddComponentsPopover({
         acc[block.category].push(block);
         return acc;
       },
-      {} as Record<string, BlockDefinition[]>
+      {}
     );
   }, [blocks]);
 
