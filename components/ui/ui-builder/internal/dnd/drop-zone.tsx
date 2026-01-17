@@ -156,8 +156,9 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
     },
   });
 
-  // Get parent element to determine actual layout type
+  // State for calculated position and layout
   const [layoutType, setLayoutType] = React.useState<'flex-row' | 'flex-col' | 'grid' | 'inline' | 'block'>('block');
+  const [calculatedStyle, setCalculatedStyle] = React.useState<React.CSSProperties | null>(null);
   const [element, setElement] = React.useState<HTMLDivElement | null>(null);
   
   // Get the DND context to check what's being dragged
@@ -166,39 +167,148 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
   React.useLayoutEffect(() => {
     if (!isActive || !element) return;
     
-    // Find the parent element to determine layout - walk up to find the actual container
-    let parentElement = element.parentElement;
+    // Find the parent container (the element with data-layer-id that contains us)
+    const parentContainer = element.closest(`[data-layer-id="${parentId}"]`) as HTMLElement;
+    if (!parentContainer) return;
     
-    // Walk up until we find the actual layout container (skip relative wrapper)
-    while (parentElement && parentElement.classList.contains('relative') && parentElement.children.length === 2) {
-      parentElement = parentElement.parentElement;
-    }
+    // Detect the layout type from the parent container
+    let detectedLayout = getLayoutType(parentContainer);
     
-    if (parentElement) {
-      let detectedLayout = getLayoutType(parentElement);
+    // Override: If we're dragging an inline element, and parent is block,
+    // treat it as inline flow to avoid breaking text layout
+    if (dndContext?.activeLayerId) {
+      const draggedElement = document.querySelector(`[data-layer-id="${dndContext.activeLayerId}"]`) as HTMLElement;
       
-      // Override: If we're dragging an inline element, and parent is block,
-      // treat it as inline flow to avoid breaking text layout
-      if (dndContext?.activeLayerId) {
-        // Find the actual DOM element being dragged by looking for elements with matching layer ID
-        const draggedElement = document.querySelector(`[data-layer-id="${dndContext.activeLayerId}"]`) as HTMLElement;
+      if (draggedElement) {
+        const draggedTagName = draggedElement.tagName.toLowerCase();
+        const draggedDisplay = window.getComputedStyle(draggedElement).display;
         
-        if (draggedElement) {
-          const draggedTagName = draggedElement.tagName.toLowerCase();
-          const draggedDisplay = window.getComputedStyle(draggedElement).display;
-          
-          // Check if the dragged element is inline or inline-block
-          const isInlineElement = draggedDisplay === 'inline' || 
-                                 draggedDisplay === 'inline-block' ||
-                                 ['span', 'a', 'strong', 'em', 'code', 'small', 'mark', 'del', 'ins', 'sub', 'sup'].includes(draggedTagName);
-          
-          if (isInlineElement && detectedLayout === 'block') {
-            detectedLayout = 'inline';
-          }
+        const isInlineElement = draggedDisplay === 'inline' || 
+                               draggedDisplay === 'inline-block' ||
+                               ['span', 'a', 'strong', 'em', 'code', 'small', 'mark', 'del', 'ins', 'sub', 'sup'].includes(draggedTagName);
+        
+        if (isInlineElement && detectedLayout === 'block') {
+          detectedLayout = 'inline';
         }
       }
+    }
+    
+    setLayoutType(detectedLayout);
+    
+    // Calculate position based on sibling element
+    // The drop placeholder should position relative to the next sibling (the actual child element)
+    // Note: The sibling might be wrapped in DevProfiler/ElementSelector, so we need to find
+    // the actual element with data-layer-id within the sibling subtree
+    const nextSibling = element.nextElementSibling as HTMLElement;
+    let siblingElement: HTMLElement | null = null;
+    
+    if (nextSibling) {
+      // Check if the sibling itself has data-layer-id
+      if (nextSibling.hasAttribute('data-layer-id')) {
+        siblingElement = nextSibling;
+      } else {
+        // Search within the sibling subtree for the element with data-layer-id
+        siblingElement = nextSibling.querySelector('[data-layer-id]') as HTMLElement;
+      }
+    }
+    
+    const parentRect = parentContainer.getBoundingClientRect();
+    
+    if (siblingElement) {
+      const siblingRect = siblingElement.getBoundingClientRect();
       
-      setLayoutType(detectedLayout);
+      // Calculate position relative to parent container
+      const positionStyle: React.CSSProperties = {
+        position: 'absolute',
+        pointerEvents: 'auto',
+        zIndex: 999,
+      };
+      
+      // Position based on layout type
+      if (detectedLayout === 'flex-row') {
+        // Vertical line on the left edge of sibling
+        positionStyle.left = siblingRect.left - parentRect.left - 4;
+        positionStyle.top = siblingRect.top - parentRect.top;
+        positionStyle.width = 8;
+        positionStyle.height = siblingRect.height;
+      } else if (detectedLayout === 'inline') {
+        // Inline indicator
+        positionStyle.left = siblingRect.left - parentRect.left - 3;
+        positionStyle.top = siblingRect.top - parentRect.top;
+        positionStyle.width = 6;
+        positionStyle.height = siblingRect.height;
+      } else if (detectedLayout === 'grid') {
+        // Corner indicator
+        positionStyle.left = siblingRect.left - parentRect.left - 4;
+        positionStyle.top = siblingRect.top - parentRect.top - 4;
+        positionStyle.width = 8;
+        positionStyle.height = 8;
+      } else {
+        // Vertical layout (flex-col, block): horizontal line above sibling
+        positionStyle.left = siblingRect.left - parentRect.left;
+        positionStyle.top = siblingRect.top - parentRect.top - 4;
+        positionStyle.width = siblingRect.width;
+        positionStyle.height = 8;
+      }
+      
+      setCalculatedStyle(positionStyle);
+    } else {
+      // No sibling (this is the last drop zone), position at the end
+      // Get all child elements with data-layer-id (may be nested in wrapper elements)
+      const childLayers = parentContainer.querySelectorAll('[data-layer-id]');
+      // Filter to only include direct children of the parent (not nested grandchildren)
+      const directChildLayers = Array.from(childLayers).filter(el => {
+        // Walk up to find if the closest data-layer-id parent is the parentContainer itself
+        const closestLayerParent = el.parentElement?.closest('[data-layer-id]');
+        return closestLayerParent === parentContainer || closestLayerParent === null;
+      });
+      const lastChild = directChildLayers[directChildLayers.length - 1] as HTMLElement;
+      
+      if (lastChild) {
+        const lastChildRect = lastChild.getBoundingClientRect();
+        const positionStyle: React.CSSProperties = {
+          position: 'absolute',
+          pointerEvents: 'auto',
+          zIndex: 999,
+        };
+        
+        if (detectedLayout === 'flex-row') {
+          // After the last child in a row
+          positionStyle.left = lastChildRect.right - parentRect.left - 4;
+          positionStyle.top = lastChildRect.top - parentRect.top;
+          positionStyle.width = 8;
+          positionStyle.height = lastChildRect.height;
+        } else if (detectedLayout === 'inline') {
+          positionStyle.left = lastChildRect.right - parentRect.left - 3;
+          positionStyle.top = lastChildRect.top - parentRect.top;
+          positionStyle.width = 6;
+          positionStyle.height = lastChildRect.height;
+        } else if (detectedLayout === 'grid') {
+          positionStyle.left = lastChildRect.right - parentRect.left - 4;
+          positionStyle.top = lastChildRect.top - parentRect.top - 4;
+          positionStyle.width = 8;
+          positionStyle.height = 8;
+        } else {
+          // Below the last child
+          positionStyle.left = lastChildRect.left - parentRect.left;
+          positionStyle.top = lastChildRect.bottom - parentRect.top - 4;
+          positionStyle.width = lastChildRect.width;
+          positionStyle.height = 8;
+        }
+        
+        setCalculatedStyle(positionStyle);
+      } else {
+        // Empty container - position at start
+        setCalculatedStyle({
+          position: 'absolute',
+          pointerEvents: 'auto',
+          zIndex: 999,
+          left: 0,
+          top: 0,
+          right: 0,
+          height: 8,
+        });
+      }
     }
   }, [isActive, element, parentId, position, dndContext?.activeLayerId]);
   
@@ -210,61 +320,84 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
 
   if (!isActive) return null;
 
-  // CRITICAL FIX: Use absolute positioning with precise calculations
+  // Use calculated style if available, otherwise fall back to CSS classes
+  const useCalculatedPositioning = calculatedStyle !== null;
+
   return (
     <div
       ref={combinedRef}
       className={cn(
+        // Always apply absolute positioning base classes
         "absolute pointer-events-auto z-[999]",
         "before:content-[''] before:absolute",
         BEFORE_TRANSITION,
         "before:pointer-events-none",
-        // Use custom style if provided, otherwise use default layout-based positioning
-        !style && [
-          // Flex-row layout: vertical lines on the left edge
+        // Fallback positioning classes when calculatedStyle is not available
+        !useCalculatedPositioning && !style && [
+          // Flex-row layout: vertical lines on left edge
           layoutType === 'flex-row' && [
-            "-left-4 top-0 bottom-0 w-8",
+            "-left-1 top-0 bottom-0 w-2",
             BEFORE_CENTER_TRANSFORM,
             "before:w-1 before:h-8",
             isOver
-              ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:w-6 before:h-20`
+              ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:w-2 before:h-16`
               : `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT} before:w-1 before:h-6`
           ],
-          // Inline layout: subtle vertical indicators for text flow
+          // Inline layout: subtle vertical indicators
           layoutType === 'inline' && [
-            "-left-3 top-0 bottom-0 w-6",
+            "-left-1 top-0 bottom-0 w-2",
             BEFORE_CENTER_TRANSFORM,
             "before:w-0.5 before:h-4",
             isOver
-              ? `${DROP_INDICATOR_INLINE_HOVER} ${BEFORE_ROUNDED_HOVER} before:w-4 before:h-10`
+              ? `${DROP_INDICATOR_INLINE_HOVER} ${BEFORE_ROUNDED_HOVER} before:w-1 before:h-8`
               : `${DROP_INDICATOR_INLINE_DEFAULT} ${BEFORE_ROUNDED_DEFAULT} before:w-0.5 before:h-3`
           ],
-          // Vertical layout (flex-col, block): horizontal lines on the top edge
+          // Vertical layout (flex-col, block): horizontal lines on top edge
           (layoutType === 'flex-col' || layoutType === 'block') && [
-            "left-0 right-0 -top-4 h-8",
+            "left-0 right-0 -top-1 h-2",
             BEFORE_CENTER_TRANSFORM,
             "before:h-1 before:w-8",
             isOver
-              ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:h-6 before:w-20`
+              ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:h-2 before:w-16`
               : `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT} before:h-1 before:w-6`
           ],
           // Grid layout: corner indicator
           layoutType === 'grid' && [
-            "-left-4 -top-4 w-8 h-8",
+            "-left-1 -top-1 w-2 h-2",
             BEFORE_CENTER_TRANSFORM,
             "before:h-2 before:w-2",
             isOver
-              ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:h-6 before:w-6`
+              ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:h-4 before:w-4`
               : `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT} before:h-2 before:w-2`
           ]
         ],
-        // Custom style overrides for absolute positioning
+        // When using calculated positioning, only apply visual indicator classes
+        useCalculatedPositioning && [
+          BEFORE_CENTER_TRANSFORM,
+          layoutType === 'flex-row' && [
+            "before:w-1 before:h-8",
+            isOver ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:w-2 before:h-16` : `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT}`
+          ],
+          layoutType === 'inline' && [
+            "before:w-0.5 before:h-4",
+            isOver ? `${DROP_INDICATOR_INLINE_HOVER} ${BEFORE_ROUNDED_HOVER}` : `${DROP_INDICATOR_INLINE_DEFAULT} ${BEFORE_ROUNDED_DEFAULT}`
+          ],
+          (layoutType === 'flex-col' || layoutType === 'block') && [
+            "before:h-1 before:w-8",
+            isOver ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:h-2 before:w-16` : `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT}`
+          ],
+          layoutType === 'grid' && [
+            "before:h-2 before:w-2",
+            isOver ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER}` : `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT}`
+          ]
+        ],
+        // Custom style overrides
         style && [
           "before:bg-blue-500/60 before:rounded-sm",
           isOver && "before:bg-blue-600 before:shadow-md"
         ]
       )}
-      style={style}
+      style={useCalculatedPositioning ? calculatedStyle! : style}
       data-testid={`drop-placeholder-${parentId}-${position}`}
       data-drop-indicator
     />

@@ -1,5 +1,5 @@
  
-import React, { memo, Suspense, useMemo, useRef } from "react";
+import React, { memo, Suspense, useMemo, useRef, Fragment } from "react";
 import isDeepEqual from "fast-deep-equal";
 
 import { ElementSelector } from "@/components/ui/ui-builder/internal/components/element-selector";
@@ -102,6 +102,16 @@ export const RenderLayer: React.FC<{
     
     // Handle children rendering with improved drop zones
     if (hasLayerChildren(layer) && layer.children.length > 0) {
+      // CRITICAL: Add position:relative to parent when showing drop zones
+      // This ensures absolutely positioned DropPlaceholders position correctly
+      if (showDropZones) {
+        const existingClassName = childProps.className as string || '';
+        // Only add 'relative' if not already present to avoid duplication
+        if (!existingClassName.includes('relative')) {
+          childProps.className = existingClassName ? `${existingClassName} relative` : 'relative';
+        }
+      }
+      
       const childElements = layer.children.map((child, index) => {
         const childElement = (
           <RenderLayer
@@ -114,35 +124,35 @@ export const RenderLayer: React.FC<{
           />
         );
 
-        // For drop zones, we create a wrapper that allows absolute positioning
+        // CRITICAL FIX: Use Fragment to render drop placeholders as siblings
+        // This prevents wrapper divs from breaking flex/grid layouts
+        // The DropPlaceholder calculates its position based on its next sibling
         if (showDropZones) {
           return (
-            <div key={child.id} className="relative">
+            <Fragment key={child.id}>
               <DropPlaceholder
                 parentId={layer.id}
                 position={index}
                 isActive={true}
               />
               {childElement}
-            </div>
+            </Fragment>
           );
         }
 
         return childElement;
       });
 
-      // Add drop zone after the last child using a similar wrapper approach
+      // Add drop zone after the last child (no wrapper needed)
       if (showDropZones) {
-        const lastDropZone = (
-          <div key={`drop-${layer.id}-${layer.children.length}`} className="relative">
-            <DropPlaceholder
-              parentId={layer.id}
-              position={layer.children.length}
-              isActive={true}
-            />
-          </div>
+        childElements.push(
+          <DropPlaceholder
+            key={`drop-${layer.id}-${layer.children.length}`}
+            parentId={layer.id}
+            position={layer.children.length}
+            isActive={true}
+          />
         );
-        childElements.push(lastDropZone);
       }
 
       childProps.children = childElements;
@@ -156,8 +166,14 @@ export const RenderLayer: React.FC<{
       childProps.children = layer.children;
     } else if (showDropZones && hasLayerChildren(layer)) {
       // Show drop zone for empty containers
+      // Add position:relative to parent for proper placeholder positioning
+      const existingClassName = childProps.className as string || '';
+      if (!existingClassName.includes('relative')) {
+        childProps.className = existingClassName ? `${existingClassName} relative` : 'relative';
+      }
+      // Also add min-height so empty containers are droppable
       childProps.children = (
-        <div className="relative min-h-[2rem]">
+        <div className="min-h-[2rem] w-full">
           <DropPlaceholder
             parentId={layer.id}
             position={0}

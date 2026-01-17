@@ -322,12 +322,13 @@ describe('DropPlaceholder', () => {
     );
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
-    // Check that element exists and has proper class-based styling
+    // Check that element exists and has visual indicator classes (before: pseudo-elements)
     expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveClass('before:bg-blue-500');
+    // The hover state applies before:bg-blue-500 class for the drop indicator
+    expect(placeholder).toHaveClass('before:content-[\'\']');
   });
 
-  it('renders with absolute positioning for flex-col layout', () => {
+  it('renders with positioning for flex-col layout', () => {
     render(
       <TestWrapper>
         <DropPlaceholder {...defaultProps} isActive={true} />
@@ -335,13 +336,14 @@ describe('DropPlaceholder', () => {
     );
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
-    // Check that flex-col layout classes are applied (absolute positioning with horizontal lines)
+    // Check that placeholder exists with proper data attributes
     expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
-    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-4', 'h-8');
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+    // Should have visual indicator classes
+    expect(placeholder).toHaveClass('before:content-[\'\']', 'before:absolute');
   });
 
-  it('applies correct layout classes for flex-col layout', () => {
+  it('applies visual indicator classes for flex-col layout', () => {
     render(
       <TestWrapper>
         <DropPlaceholder {...defaultProps} position={0} isActive={true} />
@@ -349,13 +351,13 @@ describe('DropPlaceholder', () => {
     );
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-0');
-    // Check that flex-col layout classes are applied (absolute positioning)
+    // Check that placeholder exists with visual indicator classes
     expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
-    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-4', 'h-8');
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+    expect(placeholder).toHaveClass('before:transition-all', 'before:duration-200');
   });
 
-  it('shows vertical drop lines for horizontal layout (flex-row)', () => {
+  it('shows drop indicator for horizontal layout (flex-row)', () => {
     // Mock getComputedStyle to return flex-row
     mockGetComputedStyle.mockReturnValue({
       display: 'flex',
@@ -377,12 +379,12 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // For horizontal layout, should show vertical lines with absolute positioning
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
-    expect(placeholder).toHaveClass('-left-4', 'top-0', 'bottom-0', 'w-8');
+    // Should have visual indicator classes for the drop line
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+    expect(placeholder).toHaveClass('before:absolute', 'before:pointer-events-none');
   });
 
-  it('shows horizontal drop lines for vertical layout (flex-col)', () => {
+  it('shows drop indicator for vertical layout (flex-col)', () => {
     // Already using flex-col from beforeEach setup
     render(
       <TestWrapper>
@@ -392,9 +394,9 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // For vertical layout, should show horizontal lines with absolute positioning
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
-    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-4', 'h-8');
+    // Should have visual indicator classes
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+    expect(placeholder).toHaveClass('before:content-[\'\']');
   });
 
   it('handles block layout correctly', () => {
@@ -419,9 +421,9 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // Should default to horizontal lines with absolute positioning (block layout)
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
-    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-4', 'h-8');
+    // Should have data-drop-indicator attribute
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+    expect(placeholder).toHaveClass('before:transition-all');
   });
 
   it('handles inline element detection when dragging span', () => {
@@ -470,8 +472,8 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // Should use inline layout classes for inline elements with absolute positioning
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
-    expect(placeholder).toHaveClass('-left-3', 'top-0', 'bottom-0', 'w-6');
+    // Should have data-drop-indicator attribute for inline elements
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+    expect(placeholder).toHaveClass('before:absolute');
   });
 });
