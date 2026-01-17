@@ -1,6 +1,6 @@
 /**
  * Auto-generated block scaffolds
- * Generated at: 2026-01-16T21:15:48.890Z
+ * Generated at: 2026-01-17T01:20:44.726Z
  * 
  * Copy these definitions to block-definitions.ts and customize as needed.
  */
@@ -800,22 +800,6 @@ const scaffoldedBlocks: BlockDefinition[] = [
     },
 
     {
-        name: "chart-area-default",
-        category: "chart",
-        description: "TODO: Add description for chart-area-default",
-        requiredComponents: [],
-        template: {
-            id: "chart_area_default-root",
-            type: "div",
-            name: "chart-area-default",
-            props: { className: "" },
-            children: [
-                { id: "chart_area_default-text", type: "span", name: "span", props: {}, children: "chart-area-default" },
-            ],
-        },
-    },
-
-    {
         name: "chart-area-gradient",
         category: "chart",
         description: "TODO: Add description for chart-area-gradient",
@@ -960,22 +944,6 @@ const scaffoldedBlocks: BlockDefinition[] = [
     },
 
     {
-        name: "chart-bar-default",
-        category: "chart",
-        description: "TODO: Add description for chart-bar-default",
-        requiredComponents: [],
-        template: {
-            id: "chart_bar_default-root",
-            type: "div",
-            name: "chart-bar-default",
-            props: { className: "" },
-            children: [
-                { id: "chart_bar_default-text", type: "span", name: "span", props: {}, children: "chart-bar-default" },
-            ],
-        },
-    },
-
-    {
         name: "chart-bar-horizontal",
         category: "chart",
         description: "TODO: Add description for chart-bar-horizontal",
@@ -1099,22 +1067,6 @@ const scaffoldedBlocks: BlockDefinition[] = [
             props: { className: "" },
             children: [
                 { id: "chart_bar_stacked-text", type: "span", name: "span", props: {}, children: "chart-bar-stacked" },
-            ],
-        },
-    },
-
-    {
-        name: "chart-line-default",
-        category: "chart",
-        description: "TODO: Add description for chart-line-default",
-        requiredComponents: [],
-        template: {
-            id: "chart_line_default-root",
-            type: "div",
-            name: "chart-line-default",
-            props: { className: "" },
-            children: [
-                { id: "chart_line_default-text", type: "span", name: "span", props: {}, children: "chart-line-default" },
             ],
         },
     },
@@ -1291,22 +1243,6 @@ const scaffoldedBlocks: BlockDefinition[] = [
             props: { className: "" },
             children: [
                 { id: "chart_pie_donut_text-text", type: "span", name: "span", props: {}, children: "chart-pie-donut-text" },
-            ],
-        },
-    },
-
-    {
-        name: "chart-pie-donut",
-        category: "chart",
-        description: "TODO: Add description for chart-pie-donut",
-        requiredComponents: [],
-        template: {
-            id: "chart_pie_donut-root",
-            type: "div",
-            name: "chart-pie-donut",
-            props: { className: "" },
-            children: [
-                { id: "chart_pie_donut-text", type: "span", name: "span", props: {}, children: "chart-pie-donut" },
             ],
         },
     },

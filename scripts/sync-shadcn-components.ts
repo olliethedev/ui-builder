@@ -122,16 +122,16 @@ function generateComponentScaffold(name: string): string {
     const pascalName = toPascalCase(name);
     
     return `
-    // TODO: Import ${pascalName} from '@/components/ui/${name}'
-    // ${pascalName}: {
-    //     component: ${pascalName},
-    //     schema: z.object({
-    //         className: z.string().optional(),
-    //         children: z.any().optional(),
-    //     }),
-    //     from: "@/components/ui/${name}",
-    //     fieldOverrides: commonFieldOverrides()
-    // },
+    // TODO: Import actual component and update schema with real props
+    ${pascalName}: {
+        component: null as unknown as React.ComponentType<any>, // Replace with: ${pascalName}
+        schema: z.object({
+            className: z.string().optional(),
+            children: z.any().optional(),
+        }),
+        from: "@/components/ui/${name}",
+        fieldOverrides: commonFieldOverrides()
+    },
 `;
 }
 
@@ -283,20 +283,34 @@ async function generateScaffolds(verbose: boolean = false): Promise<void> {
     
     // Generate component scaffolds
     if (missingComponents.length > 0) {
-        const componentScaffolds = missingComponents.map(c => generateComponentScaffold(c)).join('\n');
+        const componentScaffolds = missingComponents.map(c => generateComponentScaffold(c)).join('');
         
         const scaffoldContent = `/**
  * Auto-generated component scaffolds
  * Generated at: ${new Date().toISOString()}
  * 
  * Copy these definitions to shadcn-component-definitions.ts and customize as needed.
+ * 
+ * For each component:
+ * 1. Install the component: npx shadcn@latest add <component-name>
+ * 2. Import the actual component at the top of the file
+ * 3. Replace "null as unknown as React.ComponentType<any>" with the real component
+ * 4. Update the Zod schema with the component's actual props
  */
 
+import React from 'react';
 import { z } from 'zod';
+import { ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { commonFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
-// Missing component scaffolds:
+// TODO: Add actual component imports here, e.g.:
+// import { ${missingComponents.map(c => toPascalCase(c)).join(', ')} } from "@/components/ui/...";
+
+const scaffoldedComponents: ComponentRegistry = {
 ${componentScaffolds}
+};
+
+export { scaffoldedComponents };
 `;
         
         const outputPath = join(scaffoldPath, 'component-scaffolds.ts');
