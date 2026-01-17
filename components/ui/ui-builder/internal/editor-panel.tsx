@@ -407,7 +407,7 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
           </div>
         </TransformComponent>
       </TransformWrapper>
-      <AddComponentsPopover parentLayerId={selectedPageId}>
+      <AddComponentsPopover parentLayerId={selectedPageId} enableDragToCanvas>
         <Button
           variant="secondary"
           size="icon"

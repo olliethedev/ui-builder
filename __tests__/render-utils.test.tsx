@@ -2,8 +2,10 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import {
   RenderLayer,
+  hasClass,
+  hasPositionClass,
 } from "../components/ui/ui-builder/internal/utils/render-utils";
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import { ComponentLayer } from '../components/ui/ui-builder/types';
 import { BaseColor, baseColors } from "../components/ui/ui-builder/internal/utils/base-colors";
 import { z } from "zod";
 // Mock dependencies
@@ -12,6 +14,40 @@ jest.mock("../components/ui/ui-builder/internal/components/element-selector", ()
   ElementSelector: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
+}));
+
+// Mock DndContext
+const mockDndContext = {
+  isDragging: false,
+  activeLayerId: null,
+  newComponentType: null,
+  canDropOnLayer: jest.fn(() => true),
+};
+
+jest.mock("@/lib/ui-builder/context/dnd-context", () => ({
+  useDndContext: () => mockDndContext,
+}));
+
+// Mock layer store  
+jest.mock("@/lib/ui-builder/store/layer-store", () => ({
+  useLayerStore: jest.fn((selector) => {
+    const store = {
+      variables: [],
+      pages: [],
+      isLayerAPage: () => false,
+    };
+    return selector(store);
+  }),
+}));
+
+// Mock editor store
+jest.mock("@/lib/ui-builder/store/editor-store", () => ({
+  useEditorStore: jest.fn((selector) => {
+    const store = {
+      registry: {},
+    };
+    return selector(store);
+  }),
 }));
 const mockRegistry = {
   // Complex Components
@@ -380,5 +416,148 @@ describe("render-utils", () => {
     });
   });
 
-  
+  describe("hasClass", () => {
+    it("returns true when className contains the exact class", () => {
+      expect(hasClass("relative", "relative")).toBe(true);
+      expect(hasClass("flex relative", "relative")).toBe(true);
+      expect(hasClass("relative flex", "relative")).toBe(true);
+      expect(hasClass("flex relative items-center", "relative")).toBe(true);
+    });
+
+    it("returns false for substring matches (prevents false positives)", () => {
+      // These should NOT match because 'relative' is part of a larger class name
+      expect(hasClass("content-relative-wrapper", "relative")).toBe(false);
+      expect(hasClass("my-relative-element", "relative")).toBe(false);
+      expect(hasClass("relative-position", "relative")).toBe(false);
+      expect(hasClass("non-relative", "relative")).toBe(false);
+    });
+
+    it("returns false when class is not present", () => {
+      expect(hasClass("flex items-center", "relative")).toBe(false);
+      expect(hasClass("absolute fixed", "relative")).toBe(false);
+      expect(hasClass("", "relative")).toBe(false);
+    });
+
+    it("handles multiple spaces and edge cases", () => {
+      expect(hasClass("flex  relative", "relative")).toBe(true); // double space
+      expect(hasClass("  relative  ", "relative")).toBe(true); // leading/trailing spaces
+      expect(hasClass("flex\trelative", "relative")).toBe(true); // tab character
+    });
+  });
+
+  describe("RenderLayer with drag and drop context", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("renders drag feedback wrapper when layer is being dragged", () => {
+      // Set up mock to simulate this layer being dragged
+      mockDndContext.isDragging = true;
+      mockDndContext.activeLayerId = "layer-1";
+
+      const editorConfig = {
+        zIndex: 1,
+        totalLayers: 2,
+        selectedLayer: componentLayer,
+        onSelectElement: jest.fn(),
+        handleDuplicateLayer: jest.fn(),
+        handleDeleteLayer: jest.fn(),
+      };
+
+      render(<RenderLayer layer={componentLayer} editorConfig={editorConfig} componentRegistry={mockRegistry} />);
+      
+      const draggingWrapper = document.querySelector('[data-dragging="true"]');
+      expect(draggingWrapper).toBeInTheDocument();
+      expect(draggingWrapper).toHaveClass('opacity-50');
+      
+      // Reset
+      mockDndContext.isDragging = false;
+      mockDndContext.activeLayerId = null;
+    });
+
+    it("does not show drag feedback for non-dragged layers", () => {
+      mockDndContext.isDragging = true;
+      mockDndContext.activeLayerId = "other-layer";
+
+      const editorConfig = {
+        zIndex: 1,
+        totalLayers: 2,
+        selectedLayer: componentLayer,
+        onSelectElement: jest.fn(),
+        handleDuplicateLayer: jest.fn(),
+        handleDeleteLayer: jest.fn(),
+      };
+
+      render(<RenderLayer layer={componentLayer} editorConfig={editorConfig} componentRegistry={mockRegistry} />);
+      
+      const draggingWrapper = document.querySelector('[data-dragging="true"]');
+      expect(draggingWrapper).not.toBeInTheDocument();
+      
+      // Reset
+      mockDndContext.isDragging = false;
+      mockDndContext.activeLayerId = null;
+    });
+
+    it("does not render drag feedback wrapper when not dragging", () => {
+      mockDndContext.isDragging = false;
+      mockDndContext.activeLayerId = null;
+
+      render(<RenderLayer layer={componentLayer} componentRegistry={mockRegistry} />);
+      
+      const draggingWrapper = document.querySelector('[data-dragging="true"]');
+      expect(draggingWrapper).not.toBeInTheDocument();
+    });
+  });
+
+  describe("hasPositionClass", () => {
+    it("returns true when className contains 'relative'", () => {
+      expect(hasPositionClass("relative")).toBe(true);
+      expect(hasPositionClass("flex relative")).toBe(true);
+      expect(hasPositionClass("relative flex items-center")).toBe(true);
+    });
+
+    it("returns true when className contains 'absolute'", () => {
+      expect(hasPositionClass("absolute")).toBe(true);
+      expect(hasPositionClass("absolute top-0 left-0")).toBe(true);
+      expect(hasPositionClass("flex absolute inset-0")).toBe(true);
+    });
+
+    it("returns true when className contains 'fixed'", () => {
+      expect(hasPositionClass("fixed")).toBe(true);
+      expect(hasPositionClass("fixed top-0 w-full")).toBe(true);
+      expect(hasPositionClass("z-50 fixed inset-x-0")).toBe(true);
+    });
+
+    it("returns true when className contains 'sticky'", () => {
+      expect(hasPositionClass("sticky")).toBe(true);
+      expect(hasPositionClass("sticky top-0")).toBe(true);
+      expect(hasPositionClass("flex sticky top-4")).toBe(true);
+    });
+
+    it("returns true when className contains 'static'", () => {
+      expect(hasPositionClass("static")).toBe(true);
+      expect(hasPositionClass("static flex")).toBe(true);
+    });
+
+    it("returns false for substring matches (prevents false positives)", () => {
+      // These should NOT match because position classes are part of larger class names
+      expect(hasPositionClass("content-relative-wrapper")).toBe(false);
+      expect(hasPositionClass("my-absolute-element")).toBe(false);
+      expect(hasPositionClass("non-fixed")).toBe(false);
+      expect(hasPositionClass("sticky-note-class")).toBe(false);
+    });
+
+    it("returns false when no position class is present", () => {
+      expect(hasPositionClass("flex items-center")).toBe(false);
+      expect(hasPositionClass("bg-white p-4")).toBe(false);
+      expect(hasPositionClass("")).toBe(false);
+      expect(hasPositionClass("w-full h-full")).toBe(false);
+    });
+
+    it("handles multiple spaces and edge cases", () => {
+      expect(hasPositionClass("flex  absolute")).toBe(true); // double space
+      expect(hasPositionClass("  fixed  ")).toBe(true); // leading/trailing spaces
+      expect(hasPositionClass("flex\tsticky")).toBe(true); // tab character
+    });
+  });
 });

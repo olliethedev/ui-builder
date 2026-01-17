@@ -52,18 +52,24 @@ export const TransformAwareDragOverlay: React.FC<{
 };
 
 interface DragOverlayContentProps {
-  layerId: string;
+  layerId?: string;
+  componentType?: string;
 }
 
 /* istanbul ignore next */
-export const DragOverlayContent: React.FC<DragOverlayContentProps> = ({ layerId }) => {
-  const layer = useLayerStore((state) => state.findLayerById(layerId));
+export const DragOverlayContent: React.FC<DragOverlayContentProps> = ({ layerId, componentType }) => {
+  const layer = useLayerStore((state) => layerId ? state.findLayerById(layerId) : null);
   
-  if (!layer) return null;
+  // Determine display name from layer or component type
+  const displayName = layer?.name || layer?.type || componentType || 'Component';
+  
+  if (!layer && !componentType) {
+    return null;
+  }
 
   return (
-    <div className="mt-10 bg-white shadow-lg border border-gray-200 rounded px-2 py-1 text-sm font-medium opacity-60 text-nowrap min-w-fit">
-      {layer.name || layer.type}
+    <div className="mt-10 bg-white dark:bg-gray-800 shadow-lg border-2 border-primary/50 rounded-lg px-3 py-2 text-sm font-medium opacity-90 text-nowrap min-w-fit pointer-events-none">
+      {displayName}
     </div>
   );
 }; 

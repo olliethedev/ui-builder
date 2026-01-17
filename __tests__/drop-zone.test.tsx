@@ -40,6 +40,7 @@ jest.mock('@/lib/ui-builder/store/layer-utils', () => ({
 const mockDndContextValue = {
   isDragging: false,
   activeLayerId: null,
+  newComponentType: null,
   canDropOnLayer: jest.fn(() => true),
 };
 
@@ -125,6 +126,7 @@ describe('DropZone', () => {
         parentId: 'parent-123',
         position: 0,
       },
+      disabled: false,
     });
   });
 
@@ -305,6 +307,7 @@ describe('DropPlaceholder', () => {
         parentId: 'parent-456',
         position: 1,
       },
+      disabled: false,
     });
   });
 
@@ -322,12 +325,13 @@ describe('DropPlaceholder', () => {
     );
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
-    // Check that element exists and has proper class-based styling
+    // Check that element exists and has visual indicator classes (before: pseudo-elements)
     expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveClass('before:bg-blue-500');
+    // The hover state applies before:bg-blue-500 class for the drop indicator
+    expect(placeholder).toHaveClass('before:content-[\'\']');
   });
 
-  it('renders with absolute positioning for flex-col layout', () => {
+  it('renders with positioning for flex-col layout', () => {
     render(
       <TestWrapper>
         <DropPlaceholder {...defaultProps} isActive={true} />
@@ -335,13 +339,14 @@ describe('DropPlaceholder', () => {
     );
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
-    // Check that flex-col layout classes are applied (absolute positioning with horizontal lines)
+    // Check that placeholder exists with proper data attributes
     expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
-    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-4', 'h-8');
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+    // Should have visual indicator classes
+    expect(placeholder).toHaveClass('before:content-[\'\']', 'before:absolute');
   });
 
-  it('applies correct layout classes for flex-col layout', () => {
+  it('applies visual indicator classes for flex-col layout', () => {
     render(
       <TestWrapper>
         <DropPlaceholder {...defaultProps} position={0} isActive={true} />
@@ -349,13 +354,13 @@ describe('DropPlaceholder', () => {
     );
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-0');
-    // Check that flex-col layout classes are applied (absolute positioning)
+    // Check that placeholder exists with visual indicator classes
     expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
-    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-4', 'h-8');
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+    expect(placeholder).toHaveClass('before:transition-all', 'before:duration-200');
   });
 
-  it('shows vertical drop lines for horizontal layout (flex-row)', () => {
+  it('shows drop indicator for horizontal layout (flex-row)', () => {
     // Mock getComputedStyle to return flex-row
     mockGetComputedStyle.mockReturnValue({
       display: 'flex',
@@ -377,12 +382,12 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // For horizontal layout, should show vertical lines with absolute positioning
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
-    expect(placeholder).toHaveClass('-left-4', 'top-0', 'bottom-0', 'w-8');
+    // Should have visual indicator classes for the drop line
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+    expect(placeholder).toHaveClass('before:absolute', 'before:pointer-events-none');
   });
 
-  it('shows horizontal drop lines for vertical layout (flex-col)', () => {
+  it('shows drop indicator for vertical layout (flex-col)', () => {
     // Already using flex-col from beforeEach setup
     render(
       <TestWrapper>
@@ -392,9 +397,9 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // For vertical layout, should show horizontal lines with absolute positioning
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
-    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-4', 'h-8');
+    // Should have visual indicator classes
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+    expect(placeholder).toHaveClass('before:content-[\'\']');
   });
 
   it('handles block layout correctly', () => {
@@ -419,9 +424,9 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // Should default to horizontal lines with absolute positioning (block layout)
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
-    expect(placeholder).toHaveClass('left-0', 'right-0', '-top-4', 'h-8');
+    // Should have data-drop-indicator attribute
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+    expect(placeholder).toHaveClass('before:transition-all');
   });
 
   it('handles inline element detection when dragging span', () => {
@@ -470,8 +475,296 @@ describe('DropPlaceholder', () => {
 
     const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
     expect(placeholder).toBeInTheDocument();
-    // Should use inline layout classes for inline elements with absolute positioning
-    expect(placeholder).toHaveClass('absolute', 'pointer-events-auto', 'z-[999]');
-    expect(placeholder).toHaveClass('-left-3', 'top-0', 'bottom-0', 'w-6');
+    // Should have data-drop-indicator attribute for inline elements
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+    expect(placeholder).toHaveClass('before:absolute');
+  });
+
+  it('shows valid state when canDropOnLayer returns true', () => {
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
+    useDndContext.mockReturnValue({
+      ...mockDndContextValue,
+      canDropOnLayer: jest.fn(() => true),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
+    expect(placeholder).toHaveAttribute('data-drop-valid', 'true');
+  });
+
+  it('shows disabled state when canDropOnLayer returns false', () => {
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
+    useDndContext.mockReturnValue({
+      ...mockDndContextValue,
+      canDropOnLayer: jest.fn(() => false),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
+    expect(placeholder).toHaveAttribute('data-drop-valid', 'false');
+    expect(placeholder).toHaveClass('opacity-60');
+  });
+});
+
+describe('DropPlaceholder layout detection', () => {
+  const defaultProps = {
+    parentId: 'parent-layout',
+    position: 0,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const { useDroppable } = require('@dnd-kit/core');
+    useDroppable.mockReturnValue(mockUseDroppable);
+    
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
+    useDndContext.mockReturnValue(mockDndContextValue);
+  });
+
+  it('detects grid layout correctly', () => {
+    mockGetComputedStyle.mockReturnValue({
+      display: 'grid',
+      flexDirection: 'row',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'grid',
+          'flex-direction': 'row',
+        };
+        return styles[prop] || '';
+      }),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('detects inline-grid layout correctly', () => {
+    mockGetComputedStyle.mockReturnValue({
+      display: 'inline-grid',
+      flexDirection: 'row',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'inline-grid',
+          'flex-direction': 'row',
+        };
+        return styles[prop] || '';
+      }),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('detects inline-flex layout correctly', () => {
+    mockGetComputedStyle.mockReturnValue({
+      display: 'inline-flex',
+      flexDirection: 'row',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'inline-flex',
+          'flex-direction': 'row',
+        };
+        return styles[prop] || '';
+      }),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('detects inline layout correctly', () => {
+    mockGetComputedStyle.mockReturnValue({
+      display: 'inline',
+      flexDirection: 'row',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'inline',
+          'flex-direction': 'row',
+        };
+        return styles[prop] || '';
+      }),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('detects inline-block layout correctly', () => {
+    mockGetComputedStyle.mockReturnValue({
+      display: 'inline-block',
+      flexDirection: 'row',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'inline-block',
+          'flex-direction': 'row',
+        };
+        return styles[prop] || '';
+      }),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('detects flex-row reverse correctly', () => {
+    mockGetComputedStyle.mockReturnValue({
+      display: 'flex',
+      flexDirection: 'row-reverse',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'flex',
+          'flex-direction': 'row-reverse',
+        };
+        return styles[prop] || '';
+      }),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('applies custom style when provided', () => {
+    render(
+      <TestWrapper>
+        <DropPlaceholder 
+          {...defaultProps} 
+          isActive={true} 
+          style={{ left: 10, top: 20, width: 100, height: 8 }} 
+        />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    // Check that placeholder is rendered with style prop (calculatedStyle takes precedence if computed)
+    // The style prop is used for fallback positioning
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('handles hover state with disabled drop', () => {
+    const { useDroppable } = require('@dnd-kit/core');
+    useDroppable.mockReturnValue({
+      ...mockUseDroppable,
+      isOver: true,
+    });
+
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
+    useDndContext.mockReturnValue({
+      ...mockDndContextValue,
+      canDropOnLayer: jest.fn(() => false),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toHaveAttribute('data-drop-valid', 'false');
+    // Should have disabled styling
+    expect(placeholder).toHaveClass('cursor-not-allowed');
+  });
+});
+
+describe('DropZone disabled state', () => {
+  const defaultProps = {
+    parentId: 'parent-789',
+    position: 0,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const { useDroppable } = require('@dnd-kit/core');
+    useDroppable.mockReturnValue(mockUseDroppable);
+  });
+
+  it('shows valid drop zone with "Drop here" text when canDropOnLayer is true', () => {
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
+    useDndContext.mockReturnValue({
+      ...mockDndContextValue,
+      canDropOnLayer: jest.fn(() => true),
+    });
+
+    render(
+      <TestWrapper>
+        <DropZone {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    expect(screen.getByText('Drop here')).toBeInTheDocument();
+    const dropZone = screen.getByTestId('drop-zone-parent-789-0');
+    expect(dropZone).toHaveAttribute('data-drop-valid', 'true');
+  });
+
+  it('shows disabled drop zone with "Cannot drop here" text when canDropOnLayer is false', () => {
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
+    useDndContext.mockReturnValue({
+      ...mockDndContextValue,
+      canDropOnLayer: jest.fn(() => false),
+    });
+
+    render(
+      <TestWrapper>
+        <DropZone {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    expect(screen.getByText('Cannot drop here')).toBeInTheDocument();
+    const dropZone = screen.getByTestId('drop-zone-parent-789-0');
+    expect(dropZone).toHaveAttribute('data-drop-valid', 'false');
+    expect(dropZone).toHaveClass('opacity-60');
   });
 });

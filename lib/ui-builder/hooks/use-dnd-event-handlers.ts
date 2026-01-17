@@ -6,10 +6,20 @@ import { findAllParentLayersRecursive } from '@/lib/ui-builder/store/layer-utils
 interface UseDndEventHandlersProps {
   stopAutoScroll: () => void;
   setActiveLayerId: (layerId: string | null) => void;
+  setNewComponentType?: (componentType: string | null) => void;
+  clearDragState?: () => void;
+  canDropOnLayer?: (layerId: string) => boolean;
 }
 
-export const useDndEventHandlers = ({ stopAutoScroll, setActiveLayerId }: UseDndEventHandlersProps) => {
+export const useDndEventHandlers = ({ 
+  stopAutoScroll, 
+  setActiveLayerId,
+  setNewComponentType,
+  clearDragState,
+  canDropOnLayer,
+}: UseDndEventHandlersProps) => {
   const moveLayer = useLayerStore((state) => state.moveLayer);
+  const addComponentLayer = useLayerStore((state) => state.addComponentLayer);
   const pages = useLayerStore((state) => state.pages);
 
   // Helper function to check if a layer is a descendant of another layer
@@ -23,10 +33,14 @@ export const useDndEventHandlers = ({ stopAutoScroll, setActiveLayerId }: UseDnd
     const { active } = event;
     if (active.data.current?.type === 'layer') {
       setActiveLayerId(active.data.current.layerId);
-    } else {
-      console.log('Drag start: Non-layer drag detected', active.data.current?.type);
+    } else if (active.data.current?.type === 'new-component') {
+      // Handle new component drag from popover
+      const componentType = active.data.current.componentType;
+      if (componentType && setNewComponentType) {
+        setNewComponentType(componentType);
+      }
     }
-  }, [setActiveLayerId]);
+  }, [setActiveLayerId, setNewComponentType]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -34,34 +48,68 @@ export const useDndEventHandlers = ({ stopAutoScroll, setActiveLayerId }: UseDnd
     // Stop auto-scroll immediately
     stopAutoScroll();
     
-    if (!over || !active.data.current?.layerId) {
-      setActiveLayerId(null);
+    const activeData = active.data.current;
+    const overData = over?.data.current;
+    
+    // Handle case where there's no valid drop target
+    if (!over || !overData || overData.type !== 'drop-zone') {
+      if (clearDragState) {
+        clearDragState();
+      } else {
+        setActiveLayerId(null);
+      }
       return;
     }
 
-    const activeLayerId = active.data.current.layerId;
-    const overData = over.data.current;
+    const targetParentId = overData.parentId;
+    const targetPosition = overData.position;
 
-    if (overData?.type === 'drop-zone') {
-      const targetParentId = overData.parentId;
-      const targetPosition = overData.position;
+    // Validate drop is allowed (childOf constraints, etc.)
+    if (canDropOnLayer && !canDropOnLayer(targetParentId)) {
+      if (clearDragState) {
+        clearDragState();
+      } else {
+        setActiveLayerId(null);
+      }
+      return;
+    }
+
+    // Handle existing layer drag
+    if (activeData?.type === 'layer' && activeData.layerId) {
+      const activeLayerId = activeData.layerId;
       
       // Don't allow dropping a layer onto itself or its descendants
       if (isLayerDescendantOf(targetParentId, activeLayerId)) {
-        setActiveLayerId(null);
+        if (clearDragState) {
+          clearDragState();
+        } else {
+          setActiveLayerId(null);
+        }
         return;
       }
 
       moveLayer(activeLayerId, targetParentId, targetPosition);
+    } 
+    // Handle new component drag from popover
+    else if (activeData?.type === 'new-component' && activeData.componentType) {
+      addComponentLayer(activeData.componentType, targetParentId, targetPosition);
     }
 
-    setActiveLayerId(null);
-  }, [moveLayer, isLayerDescendantOf, stopAutoScroll, setActiveLayerId]);
+    if (clearDragState) {
+      clearDragState();
+    } else {
+      setActiveLayerId(null);
+    }
+  }, [moveLayer, addComponentLayer, isLayerDescendantOf, stopAutoScroll, setActiveLayerId, clearDragState, canDropOnLayer]);
 
   const handleDragCancel = useCallback(() => {
     stopAutoScroll();
-    setActiveLayerId(null);
-  }, [stopAutoScroll, setActiveLayerId]);
+    if (clearDragState) {
+      clearDragState();
+    } else {
+      setActiveLayerId(null);
+    }
+  }, [stopAutoScroll, setActiveLayerId, clearDragState]);
 
   return {
     handleDragStart,

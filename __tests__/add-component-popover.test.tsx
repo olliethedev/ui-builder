@@ -483,6 +483,333 @@ describe('AddComponentsPopover', () => {
     });
   });
 
+  describe('Blocks Tab', () => {
+    const mockAddLayerDirect = jest.fn();
+    
+    const mockBlocksRegistry = {
+      'login-01': {
+        name: 'login-01',
+        category: 'login',
+        description: 'A simple login form',
+        template: {
+          id: 'login-form',
+          type: 'Card',
+          name: 'Login Form',
+          props: {},
+          children: []
+        }
+      },
+      'sidebar-01': {
+        name: 'sidebar-01',
+        category: 'sidebar',
+        description: 'A basic sidebar layout',
+        template: {
+          id: 'sidebar',
+          type: 'div',
+          name: 'Sidebar',
+          props: {},
+          children: []
+        }
+      },
+      'login-02': {
+        name: 'login-02',
+        category: 'login',
+        description: 'An advanced login form with social login',
+        template: {
+          id: 'login-form-2',
+          type: 'Card',
+          name: 'Login Form 2',
+          props: {},
+          children: []
+        }
+      }
+    };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockFindLayerById.mockReturnValue({
+        id: 'parent-1',
+        type: 'div',
+        name: 'Parent Div',
+        props: {},
+        children: []
+      });
+
+      mockUseLayerStore.mockImplementation((selector) => {
+        const state = {
+          addComponentLayer: mockAddComponentLayer,
+          addLayerDirect: mockAddLayerDirect,
+          findLayerById: mockFindLayerById,
+        };
+        return selector(state as any);
+      });
+
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          registry: mockRegistry,
+          blocks: mockBlocksRegistry,
+        };
+        return selector(state as any);
+      });
+    });
+
+    it('should show Components and Blocks toggle when blocks are provided', async () => {
+      render(
+        <AddComponentsPopover parentLayerId="parent-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        // The toggle buttons should be in the flex border-b container
+        // Look for the Blocks button specifically since "Components" may also appear in tab names
+        expect(screen.getByText('Blocks')).toBeInTheDocument();
+        // There should be at least one element with text "Components" (the toggle)
+        expect(screen.getAllByText('Components').length).toBeGreaterThanOrEqual(1);
+      });
+    });
+
+    it('should not show toggle when no blocks are provided', async () => {
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          registry: mockRegistry,
+          blocks: undefined,
+        };
+        return selector(state as any);
+      });
+
+      render(
+        <AddComponentsPopover parentLayerId="parent-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Find components')).toBeInTheDocument();
+      });
+
+      // Should not show the toggle buttons
+      expect(screen.queryByRole('button', { name: 'Blocks' })).not.toBeInTheDocument();
+    });
+
+    it('should switch to blocks view when Blocks button is clicked', async () => {
+      render(
+        <AddComponentsPopover parentLayerId="parent-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        expect(screen.getByText('Blocks')).toBeInTheDocument();
+      });
+
+      // Click on Blocks toggle
+      const blocksButton = screen.getByText('Blocks');
+      fireEvent.click(blocksButton);
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Find blocks')).toBeInTheDocument();
+      });
+    });
+
+    it('should show block categories in blocks view', async () => {
+      render(
+        <AddComponentsPopover parentLayerId="parent-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        expect(screen.getByText('Blocks')).toBeInTheDocument();
+      });
+
+      const blocksButton = screen.getByText('Blocks');
+      fireEvent.click(blocksButton);
+
+      await waitFor(() => {
+        // Should show category tabs
+        expect(screen.getByText('Login')).toBeInTheDocument();
+        expect(screen.getByText('Sidebar')).toBeInTheDocument();
+      });
+    });
+
+    it('should show block items in blocks view', async () => {
+      render(
+        <AddComponentsPopover parentLayerId="parent-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        expect(screen.getByText('Blocks')).toBeInTheDocument();
+      });
+
+      const blocksButton = screen.getByText('Blocks');
+      fireEvent.click(blocksButton);
+
+      await waitFor(() => {
+        // Should show formatted block names
+        expect(screen.getByText('Login 01')).toBeInTheDocument();
+        expect(screen.getByText('Login 02')).toBeInTheDocument();
+      });
+    });
+
+    it('should show block descriptions', async () => {
+      render(
+        <AddComponentsPopover parentLayerId="parent-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        expect(screen.getByText('Blocks')).toBeInTheDocument();
+      });
+
+      const blocksButton = screen.getByText('Blocks');
+      fireEvent.click(blocksButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('A simple login form')).toBeInTheDocument();
+      });
+    });
+
+    it('should call addLayerDirect when block is selected', async () => {
+      render(
+        <AddComponentsPopover parentLayerId="parent-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        expect(screen.getByText('Blocks')).toBeInTheDocument();
+      });
+
+      const blocksButton = screen.getByText('Blocks');
+      fireEvent.click(blocksButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Login 01')).toBeInTheDocument();
+      });
+
+      const blockItem = screen.getByText('Login 01');
+      fireEvent.click(blockItem);
+
+      expect(mockAddLayerDirect).toHaveBeenCalled();
+      // The call should include a cloned template with a new ID
+      expect(mockAddLayerDirect.mock.calls[0][1]).toBe('parent-1');
+    });
+
+    it('should close popover after block selection', async () => {
+      render(
+        <AddComponentsPopover parentLayerId="parent-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        expect(screen.getByText('Blocks')).toBeInTheDocument();
+      });
+
+      const blocksButton = screen.getByText('Blocks');
+      fireEvent.click(blocksButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Login 01')).toBeInTheDocument();
+      });
+
+      const blockItem = screen.getByText('Login 01');
+      fireEvent.click(blockItem);
+
+      await waitFor(() => {
+        expect(screen.queryByPlaceholderText('Find blocks')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should display block category tabs in blocks view', async () => {
+      render(
+        <AddComponentsPopover parentLayerId="parent-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        expect(screen.getByText('Blocks')).toBeInTheDocument();
+      });
+
+      const blocksButton = screen.getByText('Blocks');
+      fireEvent.click(blocksButton);
+
+      await waitFor(() => {
+        // Both category tabs should be visible
+        expect(screen.getByText('Login')).toBeInTheDocument();
+        expect(screen.getByText('Sidebar')).toBeInTheDocument();
+      });
+
+      // The sidebar tab should be clickable
+      const sidebarTab = screen.getByRole('tab', { name: /Sidebar/i });
+      expect(sidebarTab).toBeInTheDocument();
+      expect(sidebarTab).toHaveAttribute('aria-controls');
+    });
+
+    it('should switch back to components view when Components button is clicked', async () => {
+      render(
+        <AddComponentsPopover parentLayerId="parent-1">
+          <button>Add Component</button>
+        </AddComponentsPopover>
+      );
+
+      const trigger = screen.getByText('Add Component');
+      fireEvent.click(trigger);
+
+      await waitFor(() => {
+        expect(screen.getByText('Blocks')).toBeInTheDocument();
+      });
+
+      // Switch to Blocks
+      const blocksButton = screen.getByText('Blocks');
+      fireEvent.click(blocksButton);
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Find blocks')).toBeInTheDocument();
+      });
+
+      // Switch back to Components
+      const componentsButton = screen.getByText('Components');
+      fireEvent.click(componentsButton);
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Find components')).toBeInTheDocument();
+      });
+    });
+  });
+
   describe('childOf Filtering', () => {
     const registryWithChildOf = {
       Accordion: {
