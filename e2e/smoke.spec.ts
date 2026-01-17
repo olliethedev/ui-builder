@@ -440,3 +440,39 @@ test.describe('Blocks Functionality', () => {
   });
   
 });
+
+test.describe('childOf Constraint Filtering', () => {
+  
+  test('hides child-only components when parent type does not match', async ({ page }) => {
+    await page.goto('/smoke/populated');
+    
+    await waitForBuilderReady(page);
+    
+    // Open the add component popover (adds to Page by default)
+    await openAddComponentPopover(page);
+    
+    // Navigate to the "Ui" tab which contains shadcn components
+    const uiTab = page.getByRole('tab', { name: 'Ui @/components/ui' });
+    await uiTab.click();
+    await page.waitForTimeout(300);
+    
+    // Search for Accordion-related components
+    const searchInput = page.getByPlaceholder(/find components/i);
+    await searchInput.fill('Accordion');
+    await page.waitForTimeout(300);
+    
+    // "Accordion" (parent component with no childOf constraint) should be visible
+    await expect(page.getByRole('option', { name: /^Accordion/ }).first()).toBeVisible();
+    
+    // "AccordionItem" has childOf: ["Accordion"], so when adding to Page (not Accordion),
+    // it should NOT be visible in the popover since parent is Page, not Accordion
+    // Note: The search results are filtered by the childOf constraint
+    const accordionItemOption = page.getByRole('option', { name: /AccordionItem/ });
+    await expect(accordionItemOption).not.toBeVisible();
+    
+    // Similarly, AccordionTrigger and AccordionContent should not be visible
+    await expect(page.getByRole('option', { name: /AccordionTrigger/ })).not.toBeVisible();
+    await expect(page.getByRole('option', { name: /AccordionContent/ })).not.toBeVisible();
+  });
+  
+});

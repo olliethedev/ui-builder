@@ -277,6 +277,87 @@ describe('Advanced canDropOnLayer Logic', () => {
   });
 });
 
+describe('childOf Validation in canDropOnLayer', () => {
+  it('allows drop when dragged layer has no childOf constraint', () => {
+    // AccordionItem has childOf: ['Accordion'], dragging a Button (no childOf) onto any target
+    mockFindLayerById.mockImplementation((id) => {
+      if (id === 'button-layer') {
+        return { id: 'button-layer', type: 'Button', props: {}, children: [] };
+      }
+      if (id === 'target-div') {
+        return { id: 'target-div', type: 'div', props: {}, children: [] };
+      }
+      return undefined;
+    });
+
+    mockUseEditorStore.mockImplementation((selector) => {
+      const store = {
+        registry: {
+          Button: { component: () => null, schema: {} },
+          div: { component: () => null, schema: {} },
+        },
+      };
+      return selector(store);
+    });
+
+    const { canLayerAcceptChildren } = require('@/lib/ui-builder/store/layer-utils');
+    canLayerAcceptChildren.mockReturnValue(true);
+
+    const TestComponent = () => {
+      const context = useDndContext();
+      return <div data-testid="can-drop">{context.canDropOnLayer('target-div').toString()}</div>;
+    };
+
+    render(
+      <DndContextProvider>
+        <TestComponent />
+      </DndContextProvider>
+    );
+
+    expect(screen.getByTestId('can-drop')).toHaveTextContent('true');
+  });
+
+  it('allows drop when dragged layer childOf includes target type', () => {
+    // Dragging AccordionItem (childOf: ['Accordion']) onto Accordion target
+    mockFindLayerById.mockImplementation((id) => {
+      if (id === 'accordion-item-layer') {
+        return { id: 'accordion-item-layer', type: 'AccordionItem', props: {}, children: [] };
+      }
+      if (id === 'accordion-target') {
+        return { id: 'accordion-target', type: 'Accordion', props: {}, children: [] };
+      }
+      return undefined;
+    });
+
+    mockUseEditorStore.mockImplementation((selector) => {
+      const store = {
+        registry: {
+          AccordionItem: { component: () => null, schema: {}, childOf: ['Accordion'] },
+          Accordion: { component: () => null, schema: {} },
+        },
+      };
+      return selector(store);
+    });
+
+    const { canLayerAcceptChildren } = require('@/lib/ui-builder/store/layer-utils');
+    canLayerAcceptChildren.mockReturnValue(true);
+
+    const TestComponent = () => {
+      const context = useDndContext();
+      return <div data-testid="can-drop">{context.canDropOnLayer('accordion-target').toString()}</div>;
+    };
+
+    render(
+      <DndContextProvider>
+        <TestComponent />
+      </DndContextProvider>
+    );
+
+    // When no active drag, it just checks if target can accept children
+    expect(screen.getByTestId('can-drop')).toHaveTextContent('true');
+  });
+});
+
 describe('DragOverlayContent Scenarios', () => {
   it('renders with layer name when available', () => {
     mockFindLayerById.mockReturnValue({

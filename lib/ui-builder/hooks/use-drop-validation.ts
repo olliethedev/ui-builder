@@ -24,6 +24,13 @@ export const useDropValidation = (activeLayerId: string | null, isLayerDescendan
     const draggedLayer = findLayerById(activeLayerId);
     if (!draggedLayer) return false;
 
+    // Check childOf constraint: if the dragged layer has a childOf constraint,
+    // only allow dropping onto valid parent types
+    const draggedDef = componentRegistry[draggedLayer.type];
+    if (draggedDef?.childOf && !draggedDef.childOf.includes(targetLayer.type)) {
+      return false;
+    }
+
     return canLayerAcceptChildren(targetLayer, componentRegistry);
   }, [activeLayerId, isLayerDescendantOf, findLayerById, componentRegistry]);
 

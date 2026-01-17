@@ -96,6 +96,80 @@ describe("shadcnComponentDefinitions", () => {
       expect((entry.defaultChildren as any[]).length).toBeGreaterThan(0);
     });
   });
+
+  describe("childOf constraints", () => {
+    it("should have valid childOf arrays when defined", () => {
+      for (const [name, entry] of Object.entries(shadcnComponentDefinitions) as [string, RegistryEntry<any>][]) {
+        if (entry.childOf) {
+          expect(Array.isArray(entry.childOf)).toBe(true);
+          expect(entry.childOf.length).toBeGreaterThan(0);
+          
+          for (const parentType of entry.childOf) {
+            expect(typeof parentType).toBe("string");
+            expect(parentType.length).toBeGreaterThan(0);
+          }
+        }
+      }
+    });
+
+    it("should have childOf referencing existing component types", () => {
+      for (const [name, entry] of Object.entries(shadcnComponentDefinitions) as [string, RegistryEntry<any>][]) {
+        if (entry.childOf) {
+          for (const parentType of entry.childOf) {
+            expect(shadcnComponentDefinitions[parentType]).toBeDefined();
+          }
+        }
+      }
+    });
+
+    const childOnlyComponents = [
+      { child: "AccordionItem", parents: ["Accordion"] },
+      { child: "AccordionTrigger", parents: ["AccordionItem"] },
+      { child: "AccordionContent", parents: ["AccordionItem"] },
+      { child: "CardHeader", parents: ["Card"] },
+      { child: "CardContent", parents: ["Card"] },
+      { child: "CardFooter", parents: ["Card"] },
+      { child: "DialogTrigger", parents: ["Dialog"] },
+      { child: "DialogContent", parents: ["Dialog"] },
+      { child: "TabsList", parents: ["Tabs"] },
+      { child: "TabsTrigger", parents: ["TabsList"] },
+      { child: "TabsContent", parents: ["Tabs"] },
+      { child: "SelectTrigger", parents: ["Select"] },
+      { child: "SelectContent", parents: ["Select"] },
+      { child: "SelectItem", parents: ["SelectContent", "SelectGroup"] },
+    ];
+
+    it.each(childOnlyComponents)(
+      "$child should have childOf: $parents",
+      ({ child, parents }) => {
+        const entry = shadcnComponentDefinitions[child] as RegistryEntry<any>;
+        expect(entry).toBeDefined();
+        expect(entry.childOf).toBeDefined();
+        expect(entry.childOf).toEqual(expect.arrayContaining(parents));
+        expect(parents).toEqual(expect.arrayContaining(entry.childOf as string[]));
+      }
+    );
+
+    it("parent components should NOT have childOf constraints", () => {
+      const parentComponents = [
+        "Accordion",
+        "Card",
+        "Dialog",
+        "Tabs",
+        "Select",
+        "DropdownMenu",
+        "Table",
+        "Command",
+        "Breadcrumb",
+      ];
+
+      for (const componentName of parentComponents) {
+        const entry = shadcnComponentDefinitions[componentName] as RegistryEntry<any>;
+        expect(entry).toBeDefined();
+        expect(entry.childOf).toBeUndefined();
+      }
+    });
+  });
 });
 
 describe("customComponentDefinitions", () => {
