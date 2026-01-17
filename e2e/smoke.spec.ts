@@ -486,7 +486,8 @@ test.describe('Drag and Drop from Editor Popover', () => {
     
     // Open the add component popover from the editor panel (bottom-left + button)
     // This popover should have drag handles
-    const editorAddButton = page.locator('button.absolute.bottom-4.left-4');
+    // Use .first() to handle case where multiple matching buttons exist
+    const editorAddButton = page.locator('button.absolute.bottom-4.left-4').first();
     await editorAddButton.click();
     await page.waitForTimeout(500);
     

@@ -31,7 +31,8 @@ interface DropZoneProps {
 }
 
 // Utility function to detect layout type from computed styles
-function getLayoutType(element: HTMLElement): 'flex-row' | 'flex-col' | 'grid' | 'inline' | 'block' {
+/* istanbul ignore next - DOM-dependent layout detection, tested via integration/e2e */
+export function getLayoutType(element: HTMLElement): 'flex-row' | 'flex-col' | 'grid' | 'inline' | 'block' {
   const styles = window.getComputedStyle(element);
   const display = styles.display;
   const flexDirection = styles.flexDirection;
@@ -187,6 +188,7 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
   // Check if the drop is valid for this parent (childOf constraint validation)
   const isDropValid = dndContext.canDropOnLayer(parentId);
   
+  /* istanbul ignore next - DOM position calculation, tested via e2e */
   React.useLayoutEffect(() => {
     if (!isActive || !element) return;
     

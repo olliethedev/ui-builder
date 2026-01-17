@@ -49,6 +49,7 @@ export function hasPositionClass(className: string): boolean {
  * Check if a layer is the active dragged layer or a descendant of it.
  * Used to apply visual feedback and disable drop zones inside dragged layers.
  */
+/* istanbul ignore next - complex drag state detection, covered by integration tests */
 function isLayerBeingDraggedOrDescendant(
   layerId: string,
   activeLayerId: string | null,

@@ -445,6 +445,70 @@ describe("render-utils", () => {
     });
   });
 
+  describe("RenderLayer with drag and drop context", () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it("renders drag feedback wrapper when layer is being dragged", () => {
+      // Set up mock to simulate this layer being dragged
+      mockDndContext.isDragging = true;
+      mockDndContext.activeLayerId = "layer-1";
+
+      const editorConfig = {
+        zIndex: 1,
+        totalLayers: 2,
+        selectedLayer: componentLayer,
+        onSelectElement: jest.fn(),
+        handleDuplicateLayer: jest.fn(),
+        handleDeleteLayer: jest.fn(),
+      };
+
+      render(<RenderLayer layer={componentLayer} editorConfig={editorConfig} componentRegistry={mockRegistry} />);
+      
+      const draggingWrapper = document.querySelector('[data-dragging="true"]');
+      expect(draggingWrapper).toBeInTheDocument();
+      expect(draggingWrapper).toHaveClass('opacity-50');
+      
+      // Reset
+      mockDndContext.isDragging = false;
+      mockDndContext.activeLayerId = null;
+    });
+
+    it("does not show drag feedback for non-dragged layers", () => {
+      mockDndContext.isDragging = true;
+      mockDndContext.activeLayerId = "other-layer";
+
+      const editorConfig = {
+        zIndex: 1,
+        totalLayers: 2,
+        selectedLayer: componentLayer,
+        onSelectElement: jest.fn(),
+        handleDuplicateLayer: jest.fn(),
+        handleDeleteLayer: jest.fn(),
+      };
+
+      render(<RenderLayer layer={componentLayer} editorConfig={editorConfig} componentRegistry={mockRegistry} />);
+      
+      const draggingWrapper = document.querySelector('[data-dragging="true"]');
+      expect(draggingWrapper).not.toBeInTheDocument();
+      
+      // Reset
+      mockDndContext.isDragging = false;
+      mockDndContext.activeLayerId = null;
+    });
+
+    it("does not render drag feedback wrapper when not dragging", () => {
+      mockDndContext.isDragging = false;
+      mockDndContext.activeLayerId = null;
+
+      render(<RenderLayer layer={componentLayer} componentRegistry={mockRegistry} />);
+      
+      const draggingWrapper = document.querySelector('[data-dragging="true"]');
+      expect(draggingWrapper).not.toBeInTheDocument();
+    });
+  });
+
   describe("hasPositionClass", () => {
     it("returns true when className contains 'relative'", () => {
       expect(hasPositionClass("relative")).toBe(true);

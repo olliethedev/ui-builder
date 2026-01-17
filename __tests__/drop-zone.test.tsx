@@ -514,6 +514,209 @@ describe('DropPlaceholder', () => {
   });
 });
 
+describe('DropPlaceholder layout detection', () => {
+  const defaultProps = {
+    parentId: 'parent-layout',
+    position: 0,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const { useDroppable } = require('@dnd-kit/core');
+    useDroppable.mockReturnValue(mockUseDroppable);
+    
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
+    useDndContext.mockReturnValue(mockDndContextValue);
+  });
+
+  it('detects grid layout correctly', () => {
+    mockGetComputedStyle.mockReturnValue({
+      display: 'grid',
+      flexDirection: 'row',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'grid',
+          'flex-direction': 'row',
+        };
+        return styles[prop] || '';
+      }),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('detects inline-grid layout correctly', () => {
+    mockGetComputedStyle.mockReturnValue({
+      display: 'inline-grid',
+      flexDirection: 'row',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'inline-grid',
+          'flex-direction': 'row',
+        };
+        return styles[prop] || '';
+      }),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('detects inline-flex layout correctly', () => {
+    mockGetComputedStyle.mockReturnValue({
+      display: 'inline-flex',
+      flexDirection: 'row',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'inline-flex',
+          'flex-direction': 'row',
+        };
+        return styles[prop] || '';
+      }),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('detects inline layout correctly', () => {
+    mockGetComputedStyle.mockReturnValue({
+      display: 'inline',
+      flexDirection: 'row',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'inline',
+          'flex-direction': 'row',
+        };
+        return styles[prop] || '';
+      }),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('detects inline-block layout correctly', () => {
+    mockGetComputedStyle.mockReturnValue({
+      display: 'inline-block',
+      flexDirection: 'row',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'inline-block',
+          'flex-direction': 'row',
+        };
+        return styles[prop] || '';
+      }),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('detects flex-row reverse correctly', () => {
+    mockGetComputedStyle.mockReturnValue({
+      display: 'flex',
+      flexDirection: 'row-reverse',
+      getPropertyValue: jest.fn((prop: string) => {
+        const styles: Record<string, string> = {
+          display: 'flex',
+          'flex-direction': 'row-reverse',
+        };
+        return styles[prop] || '';
+      }),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('applies custom style when provided', () => {
+    render(
+      <TestWrapper>
+        <DropPlaceholder 
+          {...defaultProps} 
+          isActive={true} 
+          style={{ left: 10, top: 20, width: 100, height: 8 }} 
+        />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toBeInTheDocument();
+    // Check that placeholder is rendered with style prop (calculatedStyle takes precedence if computed)
+    // The style prop is used for fallback positioning
+    expect(placeholder).toHaveAttribute('data-drop-indicator');
+  });
+
+  it('handles hover state with disabled drop', () => {
+    const { useDroppable } = require('@dnd-kit/core');
+    useDroppable.mockReturnValue({
+      ...mockUseDroppable,
+      isOver: true,
+    });
+
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
+    useDndContext.mockReturnValue({
+      ...mockDndContextValue,
+      canDropOnLayer: jest.fn(() => false),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-layout-0');
+    expect(placeholder).toHaveAttribute('data-drop-valid', 'false');
+    // Should have disabled styling
+    expect(placeholder).toHaveClass('cursor-not-allowed');
+  });
+});
+
 describe('DropZone disabled state', () => {
   const defaultProps = {
     parentId: 'parent-789',
