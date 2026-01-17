@@ -12,6 +12,9 @@ export const useDropValidation = (
   const componentRegistry = useEditorStore((state) => state.registry);
 
   const canDropOnLayer = useCallback((layerId: string): boolean => {
+    // Safety check for layerId
+    if (!layerId) return false;
+    
     const targetLayer = findLayerById(layerId);
     if (!targetLayer) return false;
 
@@ -40,7 +43,11 @@ export const useDropValidation = (
       }
 
       const draggedLayer = findLayerById(activeLayerId);
-      if (!draggedLayer) return false;
+      // If we can't find the dragged layer, still allow the drop to proceed
+      // This handles edge cases during state transitions
+      if (!draggedLayer) {
+        return canLayerAcceptChildren(targetLayer, componentRegistry);
+      }
 
       // Check childOf constraint: if the dragged layer has a childOf constraint,
       // only allow dropping onto valid parent types

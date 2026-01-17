@@ -27,10 +27,13 @@ import { resolveVariableReferences, resolveChildrenVariableReference } from "@/l
 function isLayerBeingDraggedOrDescendant(
   layerId: string,
   activeLayerId: string | null,
-  pages: ComponentLayer[]
+  pages: ComponentLayer[] | undefined
 ): boolean {
   if (!activeLayerId) return false;
   if (layerId === activeLayerId) return true;
+  
+  // Safety check for pages
+  if (!pages || !Array.isArray(pages) || pages.length === 0) return false;
   
   // Check if this layer is a descendant of the dragged layer
   const draggedLayer = findLayerRecursive(pages, activeLayerId);
