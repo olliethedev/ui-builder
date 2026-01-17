@@ -476,3 +476,61 @@ test.describe('childOf Constraint Filtering', () => {
   });
   
 });
+
+test.describe('Drag and Drop from Editor Popover', () => {
+  
+  test('shows drag handle on component items in editor popover only', async ({ page }) => {
+    await page.goto('/smoke/new');
+    
+    await waitForBuilderReady(page);
+    
+    // Open the add component popover from the editor panel (bottom-left + button)
+    // This popover should have drag handles
+    const editorAddButton = page.locator('button.absolute.bottom-4.left-4');
+    await editorAddButton.click();
+    await page.waitForTimeout(500);
+    
+    // Navigate to the "Ui" tab
+    const uiTab = page.getByRole('tab', { name: 'Ui @/components/ui' });
+    await uiTab.click();
+    await page.waitForTimeout(300);
+    
+    // Look for drag handles (GripVertical icon) in the component items
+    const dragHandles = page.locator('[aria-label*="Drag"][aria-label*="to canvas"]');
+    
+    // Should have at least one drag handle visible in editor popover
+    await expect(dragHandles.first()).toBeVisible();
+    
+    // Close the popover
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+  });
+  
+  test('tree panel popover does not show drag handles', async ({ page }) => {
+    await page.goto('/smoke/new');
+    
+    await waitForBuilderReady(page);
+    
+    // Open the add component popover from the layers tree panel
+    // This popover should NOT have drag handles
+    const layersTree = page.getByTestId('layers-tree');
+    const treePlusButton = layersTree.locator('button:has([class*="lucide-plus"])').first();
+    
+    if (await treePlusButton.isVisible()) {
+      await treePlusButton.click();
+      await page.waitForTimeout(500);
+      
+      // Navigate to the "Ui" tab
+      const uiTab = page.getByRole('tab', { name: 'Ui @/components/ui' });
+      if (await uiTab.isVisible()) {
+        await uiTab.click();
+        await page.waitForTimeout(300);
+      }
+      
+      // Look for drag handles - should NOT be present in tree popover
+      const dragHandles = page.locator('[aria-label*="Drag"][aria-label*="to canvas"]');
+      await expect(dragHandles).not.toBeVisible();
+    }
+  });
+  
+});

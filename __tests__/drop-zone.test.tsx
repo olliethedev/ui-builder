@@ -40,6 +40,7 @@ jest.mock('@/lib/ui-builder/store/layer-utils', () => ({
 const mockDndContextValue = {
   isDragging: false,
   activeLayerId: null,
+  newComponentType: null,
   canDropOnLayer: jest.fn(() => true),
 };
 
@@ -475,5 +476,90 @@ describe('DropPlaceholder', () => {
     // Should have data-drop-indicator attribute for inline elements
     expect(placeholder).toHaveAttribute('data-drop-indicator');
     expect(placeholder).toHaveClass('before:absolute');
+  });
+
+  it('shows valid state when canDropOnLayer returns true', () => {
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
+    useDndContext.mockReturnValue({
+      ...mockDndContextValue,
+      canDropOnLayer: jest.fn(() => true),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
+    expect(placeholder).toHaveAttribute('data-drop-valid', 'true');
+  });
+
+  it('shows disabled state when canDropOnLayer returns false', () => {
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
+    useDndContext.mockReturnValue({
+      ...mockDndContextValue,
+      canDropOnLayer: jest.fn(() => false),
+    });
+
+    render(
+      <TestWrapper>
+        <DropPlaceholder {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    const placeholder = screen.getByTestId('drop-placeholder-parent-456-1');
+    expect(placeholder).toHaveAttribute('data-drop-valid', 'false');
+    expect(placeholder).toHaveClass('opacity-60');
+  });
+});
+
+describe('DropZone disabled state', () => {
+  const defaultProps = {
+    parentId: 'parent-789',
+    position: 0,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const { useDroppable } = require('@dnd-kit/core');
+    useDroppable.mockReturnValue(mockUseDroppable);
+  });
+
+  it('shows valid drop zone with "Drop here" text when canDropOnLayer is true', () => {
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
+    useDndContext.mockReturnValue({
+      ...mockDndContextValue,
+      canDropOnLayer: jest.fn(() => true),
+    });
+
+    render(
+      <TestWrapper>
+        <DropZone {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    expect(screen.getByText('Drop here')).toBeInTheDocument();
+    const dropZone = screen.getByTestId('drop-zone-parent-789-0');
+    expect(dropZone).toHaveAttribute('data-drop-valid', 'true');
+  });
+
+  it('shows disabled drop zone with "Cannot drop here" text when canDropOnLayer is false', () => {
+    const { useDndContext } = require('@/lib/ui-builder/context/dnd-context');
+    useDndContext.mockReturnValue({
+      ...mockDndContextValue,
+      canDropOnLayer: jest.fn(() => false),
+    });
+
+    render(
+      <TestWrapper>
+        <DropZone {...defaultProps} isActive={true} />
+      </TestWrapper>
+    );
+
+    expect(screen.getByText('Cannot drop here')).toBeInTheDocument();
+    const dropZone = screen.getByTestId('drop-zone-parent-789-0');
+    expect(dropZone).toHaveAttribute('data-drop-valid', 'false');
+    expect(dropZone).toHaveClass('opacity-60');
   });
 });

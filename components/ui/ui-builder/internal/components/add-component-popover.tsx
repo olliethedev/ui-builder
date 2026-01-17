@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { ComponentLayer, ComponentRegistry, BlockDefinition } from "@/components/ui/ui-builder/types";
 import { createComponentLayer } from "@/lib/ui-builder/store/layer-utils";
+import { DraggableNewComponent } from "@/components/ui/ui-builder/internal/dnd/draggable-new-component";
 
 const fallback = <div className="w-full h-full bg-muted rounded border animate-pulse" />;
 
@@ -68,6 +69,12 @@ type AddComponentsPopoverProps = {
   addPosition?: number;
   parentLayerId: string;
   onOpenChange?: (open: boolean) => void;
+  /** 
+   * Enable drag handles on component items. 
+   * When true, items can be dragged to the canvas.
+   * Default: false (for tree panel usage)
+   */
+  enableDragToCanvas?: boolean;
   onChange?: ({
     layerType,
     parentLayerId,
@@ -85,6 +92,7 @@ export function AddComponentsPopover({
   addPosition,
   parentLayerId,
   onOpenChange,
+  enableDragToCanvas = false,
   onChange,
 }: AddComponentsPopoverProps) {
   const [open, setOpen] = React.useState(false);
@@ -200,6 +208,12 @@ export function AddComponentsPopover({
     [onOpenChange]
   );
 
+  // Close popover when drag starts
+  const handleDragStart = useCallback(() => {
+    setOpen(false);
+    onOpenChange?.(false);
+  }, [onOpenChange]);
+
   const defaultTab = categories[0] || "";
   const defaultBlockCategory = blockCategories[0] || "";
 
@@ -266,6 +280,8 @@ export function AddComponentsPopover({
                             key={component.value}
                             component={component}
                             onClick={handleSelect}
+                            onDragStart={handleDragStart}
+                            enableDrag={enableDragToCanvas}
                           />
                         ))}
                       </CommandGroup>
@@ -406,9 +422,13 @@ function formatBlockName(name: string): string {
 const GroupedComponentItem = memo(({
   component,
   onClick,
+  onDragStart,
+  enableDrag = false,
 }: {
   component: { value: string; label: string };
   onClick: (value: string) => void;
+  onDragStart?: () => void;
+  enableDrag?: boolean;
 }) => {
   const handleSelect = useCallback(() => {
     onClick(component.value);
@@ -416,12 +436,8 @@ const GroupedComponentItem = memo(({
 
   const componentRegistry = useEditorStore((state) => state.registry);
 
-  return (
-    <CommandItem 
-      key={component.value} 
-      onSelect={handleSelect}
-      className="cursor-pointer flex items-center gap-3 py-2"
-    >
+  const content = (
+    <div className="flex items-center gap-3">
       {/* Component preview */}
       <div className="shrink-0 w-10 h-6 overflow-hidden">
         <LazyComponentPreview 
@@ -432,6 +448,28 @@ const GroupedComponentItem = memo(({
       <div className="flex items-center flex-1 min-w-0">
         <span className="truncate">{component.label}</span>
       </div>
+    </div>
+  );
+
+  return (
+    <CommandItem 
+      key={component.value} 
+      onSelect={handleSelect}
+      className="cursor-pointer flex items-center gap-2 py-2"
+    >
+      {enableDrag ? (
+        <DraggableNewComponent
+          componentType={component.value}
+          onDragStart={onDragStart}
+          className="flex-1"
+        >
+          {content}
+        </DraggableNewComponent>
+      ) : (
+        <div className="flex-1">
+          {content}
+        </div>
+      )}
     </CommandItem>
   );
 });

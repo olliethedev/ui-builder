@@ -13,6 +13,40 @@ jest.mock("../components/ui/ui-builder/internal/components/element-selector", ()
     <div>{children}</div>
   ),
 }));
+
+// Mock DndContext
+const mockDndContext = {
+  isDragging: false,
+  activeLayerId: null,
+  newComponentType: null,
+  canDropOnLayer: jest.fn(() => true),
+};
+
+jest.mock("@/lib/ui-builder/context/dnd-context", () => ({
+  useDndContext: () => mockDndContext,
+}));
+
+// Mock layer store  
+jest.mock("@/lib/ui-builder/store/layer-store", () => ({
+  useLayerStore: jest.fn((selector) => {
+    const store = {
+      variables: [],
+      pages: [],
+      isLayerAPage: () => false,
+    };
+    return selector(store);
+  }),
+}));
+
+// Mock editor store
+jest.mock("@/lib/ui-builder/store/editor-store", () => ({
+  useEditorStore: jest.fn((selector) => {
+    const store = {
+      registry: {},
+    };
+    return selector(store);
+  }),
+}));
 const mockRegistry = {
   // Complex Components
   Button: {
@@ -379,6 +413,4 @@ describe("render-utils", () => {
       expect(screen.getByTestId("child")).toHaveTextContent("Child Content");
     });
   });
-
-  
 });

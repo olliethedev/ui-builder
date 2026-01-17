@@ -1,4 +1,4 @@
-import React, { useState, ReactNode, useMemo, useEffect } from 'react';
+import React, { useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
 import { DndContext } from '@dnd-kit/core';
 import { createTransformAwareCollisionDetection } from '@/lib/ui-builder/context/dnd-context-colission-utils';
 import { getIframeElements } from '@/lib/ui-builder/context/dnd-utils';
@@ -26,29 +26,45 @@ interface DndContextProviderProps {
 
 export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children }) => {
   const [activeLayerId, setActiveLayerId] = useState<string | null>(null);
+  const [newComponentType, setNewComponentType] = useState<string | null>(null);
   const [componentDragging, setComponentDragging] = useState(false);
   
   // Use extracted hooks
   const { handleParentMouseMove, handleIframeMouseMove, stopAutoScroll } = useAutoScroll();
   const sensors = useDndSensors();
+  
+  // Wrapper to clear both active layer and new component type
+  const clearDragState = useCallback(() => {
+    setActiveLayerId(null);
+    setNewComponentType(null);
+  }, []);
+  
   const { handleDragStart, handleDragEnd, handleDragCancel, isLayerDescendantOf } = useDndEventHandlers({
     stopAutoScroll,
     setActiveLayerId,
+    setNewComponentType,
+    clearDragState,
   });
-  const { canDropOnLayer } = useDropValidation(activeLayerId, isLayerDescendantOf);
+  const { canDropOnLayer } = useDropValidation(activeLayerId, isLayerDescendantOf, newComponentType);
   
-  // Use keyboard shortcuts hook
-  useKeyboardShortcutsDnd(activeLayerId, handleDragCancel);
+  // Use keyboard shortcuts hook - also cancel new component drags
+  const handleKeyboardCancel = useCallback(() => {
+    handleDragCancel();
+    clearDragState();
+  }, [handleDragCancel, clearDragState]);
+  
+  useKeyboardShortcutsDnd(activeLayerId || newComponentType, handleKeyboardCancel);
 
   // Create the custom collision detection instance fresh each time
   // Don't memoize this to ensure we always get fresh scroll positions during auto-scroll
   const collisionDetection = createTransformAwareCollisionDetection();
 
   const contextValue: DndContextState = useMemo(() => ({
-    isDragging: !!activeLayerId,
+    isDragging: !!activeLayerId || !!newComponentType,
     activeLayerId,
+    newComponentType,
     canDropOnLayer,
-  }), [activeLayerId, canDropOnLayer]);
+  }), [activeLayerId, newComponentType, canDropOnLayer]);
 
   const componentDragContextValue: ComponentDragContextState = useMemo(() => ({
     isDragging: componentDragging,
@@ -114,7 +130,12 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
         >
           {children}
           <TransformAwareDragOverlay>
-            {activeLayerId ? <DragOverlayContent layerId={activeLayerId} /> : null}
+            {(activeLayerId || newComponentType) ? (
+              <DragOverlayContent 
+                layerId={activeLayerId || undefined} 
+                componentType={newComponentType || undefined} 
+              />
+            ) : null}
           </TransformAwareDragOverlay>
         </DndContext>
       </ComponentDragContext.Provider>

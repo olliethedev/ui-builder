@@ -9,7 +9,7 @@ import { ErrorBoundary } from "react-error-boundary";
 
 import { ErrorFallback } from "@/components/ui/ui-builder/internal/components/error-fallback";
 import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
-import { hasLayerChildren, canLayerAcceptChildren } from "@/lib/ui-builder/store/layer-utils";
+import { hasLayerChildren, canLayerAcceptChildren, findLayerRecursive } from "@/lib/ui-builder/store/layer-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/components/dev-profiler";
 import { ComponentRegistry, ComponentLayer, Variable, PropValue, isVariableReference } from '@/components/ui/ui-builder/types';
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
@@ -17,8 +17,33 @@ import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { resolveVariableReferences, resolveChildrenVariableReference } from "@/lib/ui-builder/utils/variable-resolver";
 
 // Note: useDndContext has default values defined in dnd-contexts.tsx,
-// so it will return { isDragging: false, activeLayerId: null, canDropOnLayer: () => false }
+// so it will return { isDragging: false, activeLayerId: null, newComponentType: null, canDropOnLayer: () => false }
 // when used outside DndContextProvider. No try-catch needed.
+
+/**
+ * Check if a layer is the active dragged layer or a descendant of it.
+ * Used to apply visual feedback and disable drop zones inside dragged layers.
+ */
+function isLayerBeingDraggedOrDescendant(
+  layerId: string,
+  activeLayerId: string | null,
+  pages: ComponentLayer[]
+): boolean {
+  if (!activeLayerId) return false;
+  if (layerId === activeLayerId) return true;
+  
+  // Check if this layer is a descendant of the dragged layer
+  const draggedLayer = findLayerRecursive(pages, activeLayerId);
+  if (!draggedLayer) return false;
+  
+  // Check if this layerId exists within the dragged layer's descendants
+  if (hasLayerChildren(draggedLayer)) {
+    const foundInDragged = findLayerRecursive([draggedLayer], layerId);
+    return !!foundInDragged;
+  }
+  
+  return false;
+}
 
 export interface EditorConfig {
   zIndex: number;
@@ -41,6 +66,7 @@ export const RenderLayer: React.FC<{
 }> = memo(
   ({ layer, componentRegistry, editorConfig, variables, variableValues }) => {
     const storeVariables = useLayerStore((state) => state.variables);
+    const pages = useLayerStore((state) => state.pages);
     const isLayerAPage = useLayerStore((state) => state.isLayerAPage(layer.id));
     const registry = useEditorStore((state) => state.registry);
     const dndContext = useDndContext();
@@ -75,11 +101,22 @@ export const RenderLayer: React.FC<{
         : undefined;
     }, [editorConfig, layer]);
 
+    // Check if this layer is being dragged or is a descendant of a dragged layer
+    const isBeingDragged = useMemo(() => 
+      isLayerBeingDraggedOrDescendant(layer.id, dndContext.activeLayerId, pages),
+      [layer.id, dndContext.activeLayerId, pages]
+    );
+    
+    // Check if this is the root layer being dragged (not a descendant)
+    const isRootDraggedLayer = layer.id === dndContext.activeLayerId;
+
     // Check if this layer can accept children and if drag is active (must be before early returns)
     const canAcceptChildren = useMemo(() => canLayerAcceptChildren(layer, registry), [layer, registry]);
+    
+    // Don't show drop zones inside the layer being dragged or its descendants
     const showDropZones = useMemo(() => 
-      editorConfig && dndContext.isDragging && canAcceptChildren,
-      [editorConfig, dndContext.isDragging, canAcceptChildren]
+      editorConfig && dndContext.isDragging && canAcceptChildren && !isBeingDragged,
+      [editorConfig, dndContext.isDragging, canAcceptChildren, isBeingDragged]
     );
 
     if (!componentDefinition) {
@@ -191,10 +228,20 @@ export const RenderLayer: React.FC<{
       </ErrorSuspenseWrapper>
     );
 
-    // No wrapper needed - drop zones are now absolute positioned
+    // Apply visual feedback for dragged layer (only on root dragged layer, not descendants)
+    const DragFeedbackWrapper = isRootDraggedLayer ? (
+      <div 
+        className="relative opacity-50 pointer-events-none"
+        data-dragging="true"
+      >
+        {/* Blue overlay to indicate dragging */}
+        <div className="absolute inset-0 bg-primary/20 rounded pointer-events-none z-10" />
+        {WrappedComponent}
+      </div>
+    ) : WrappedComponent;
 
     if (!editorConfig) {
-      return WrappedComponent;
+      return DragFeedbackWrapper;
     } else {
       const {
         zIndex,
@@ -221,7 +268,7 @@ export const RenderLayer: React.FC<{
             onDuplicateLayer={handleDuplicateLayer}
             onDeleteLayer={handleDeleteLayer}
           >
-            {WrappedComponent}
+            {DragFeedbackWrapper}
           </ElementSelector>
         </DevProfiler>
       );

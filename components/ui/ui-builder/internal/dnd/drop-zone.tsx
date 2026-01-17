@@ -12,12 +12,15 @@ const BEFORE_TRANSITION = "before:transition-all before:duration-200";
 // Drop zone background patterns
 const DROP_ZONE_ACTIVE_BG = "bg-blue-500/20 border-2 border-blue-500 border-dashed rounded-md";
 const DROP_ZONE_INACTIVE_BG = "bg-blue-200/10 border border-blue-300 border-dashed rounded-md";
+const DROP_ZONE_DISABLED_BG = "bg-gray-200/20 border border-gray-300 border-dashed rounded-md";
 
 // Drop indicator patterns for different states
 const DROP_INDICATOR_HOVER = "before:bg-blue-500 before:shadow-xl";
 const DROP_INDICATOR_DEFAULT = "before:bg-blue-400/50";
 const DROP_INDICATOR_INLINE_HOVER = "before:bg-blue-500 before:shadow-lg";
 const DROP_INDICATOR_INLINE_DEFAULT = "before:bg-blue-400/40";
+const DROP_INDICATOR_DISABLED = "before:bg-gray-400/30";
+const DROP_INDICATOR_DISABLED_HOVER = "before:bg-gray-500/40";
 
 interface DropZoneProps {
   parentId: string;
@@ -93,21 +96,35 @@ export const DropZone: React.FC<DropZoneProps> = ({
     },
   });
 
+  // Check if drop is valid using the DND context
+  const dndContext = useDndContext();
+  const isDropValid = dndContext.canDropOnLayer(parentId);
+
+  // Determine background based on validity and hover state
+  const getDropZoneBg = () => {
+    if (!isDropValid) {
+      return DROP_ZONE_DISABLED_BG;
+    }
+    return isOver ? DROP_ZONE_ACTIVE_BG : DROP_ZONE_INACTIVE_BG;
+  };
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
         "relative",
+        !isDropValid && "opacity-60",
         className
       )}
       data-testid={`drop-zone-${parentId}-${position}`}
+      data-drop-valid={isDropValid}
     >
       {/* Drop indicator */}
       {isActive && (
         <div
           className={cn(
             "absolute inset-0 pointer-events-none transition-all duration-200",
-            isOver ? DROP_ZONE_ACTIVE_BG : DROP_ZONE_INACTIVE_BG
+            getDropZoneBg()
           )}
         />
       )}
@@ -117,11 +134,14 @@ export const DropZone: React.FC<DropZoneProps> = ({
         <div
           className={cn(
             "h-8 transition-all duration-200",
-            isOver ? DROP_ZONE_ACTIVE_BG : DROP_ZONE_INACTIVE_BG
+            getDropZoneBg()
           )}
         >
-          <div className="flex items-center justify-center h-full text-xs text-blue-600 font-medium">
-            Drop here
+          <div className={cn(
+            "flex items-center justify-center h-full text-xs font-medium",
+            isDropValid ? "text-blue-600" : "text-gray-400"
+          )}>
+            {isDropValid ? "Drop here" : "Cannot drop here"}
           </div>
         </div>
       )}
@@ -161,8 +181,11 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
   const [calculatedStyle, setCalculatedStyle] = React.useState<React.CSSProperties | null>(null);
   const [element, setElement] = React.useState<HTMLDivElement | null>(null);
   
-  // Get the DND context to check what's being dragged
+  // Get the DND context to check what's being dragged and if drop is valid
   const dndContext = useDndContext();
+  
+  // Check if the drop is valid for this parent (childOf constraint validation)
+  const isDropValid = dndContext.canDropOnLayer(parentId);
   
   React.useLayoutEffect(() => {
     if (!isActive || !element) return;
@@ -323,6 +346,14 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
   // Use calculated style if available, otherwise fall back to CSS classes
   const useCalculatedPositioning = calculatedStyle !== null;
 
+  // Determine indicator styles based on drop validity
+  const getIndicatorStyles = (baseHover: string, baseDefault: string) => {
+    if (!isDropValid) {
+      return isOver ? DROP_INDICATOR_DISABLED_HOVER : DROP_INDICATOR_DISABLED;
+    }
+    return isOver ? baseHover : baseDefault;
+  };
+
   return (
     <div
       ref={combinedRef}
@@ -332,6 +363,8 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
         "before:content-[''] before:absolute",
         BEFORE_TRANSITION,
         "before:pointer-events-none",
+        // Disabled state visual cue
+        !isDropValid && "opacity-60 cursor-not-allowed",
         // Fallback positioning classes when calculatedStyle is not available
         !useCalculatedPositioning && !style && [
           // Flex-row layout: vertical lines on left edge
@@ -339,36 +372,40 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
             "-left-1 top-0 bottom-0 w-2",
             BEFORE_CENTER_TRANSFORM,
             "before:w-1 before:h-8",
-            isOver
-              ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:w-2 before:h-16`
-              : `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT} before:w-1 before:h-6`
+            getIndicatorStyles(
+              `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:w-2 before:h-16`,
+              `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT} before:w-1 before:h-6`
+            )
           ],
           // Inline layout: subtle vertical indicators
           layoutType === 'inline' && [
             "-left-1 top-0 bottom-0 w-2",
             BEFORE_CENTER_TRANSFORM,
             "before:w-0.5 before:h-4",
-            isOver
-              ? `${DROP_INDICATOR_INLINE_HOVER} ${BEFORE_ROUNDED_HOVER} before:w-1 before:h-8`
-              : `${DROP_INDICATOR_INLINE_DEFAULT} ${BEFORE_ROUNDED_DEFAULT} before:w-0.5 before:h-3`
+            getIndicatorStyles(
+              `${DROP_INDICATOR_INLINE_HOVER} ${BEFORE_ROUNDED_HOVER} before:w-1 before:h-8`,
+              `${DROP_INDICATOR_INLINE_DEFAULT} ${BEFORE_ROUNDED_DEFAULT} before:w-0.5 before:h-3`
+            )
           ],
           // Vertical layout (flex-col, block): horizontal lines on top edge
           (layoutType === 'flex-col' || layoutType === 'block') && [
             "left-0 right-0 -top-1 h-2",
             BEFORE_CENTER_TRANSFORM,
             "before:h-1 before:w-8",
-            isOver
-              ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:h-2 before:w-16`
-              : `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT} before:h-1 before:w-6`
+            getIndicatorStyles(
+              `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:h-2 before:w-16`,
+              `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT} before:h-1 before:w-6`
+            )
           ],
           // Grid layout: corner indicator
           layoutType === 'grid' && [
             "-left-1 -top-1 w-2 h-2",
             BEFORE_CENTER_TRANSFORM,
             "before:h-2 before:w-2",
-            isOver
-              ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:h-4 before:w-4`
-              : `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT} before:h-2 before:w-2`
+            getIndicatorStyles(
+              `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:h-4 before:w-4`,
+              `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT} before:h-2 before:w-2`
+            )
           ]
         ],
         // When using calculated positioning, only apply visual indicator classes
@@ -376,30 +413,44 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
           BEFORE_CENTER_TRANSFORM,
           layoutType === 'flex-row' && [
             "before:w-1 before:h-8",
-            isOver ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:w-2 before:h-16` : `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT}`
+            getIndicatorStyles(
+              `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:w-2 before:h-16`,
+              `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT}`
+            )
           ],
           layoutType === 'inline' && [
             "before:w-0.5 before:h-4",
-            isOver ? `${DROP_INDICATOR_INLINE_HOVER} ${BEFORE_ROUNDED_HOVER}` : `${DROP_INDICATOR_INLINE_DEFAULT} ${BEFORE_ROUNDED_DEFAULT}`
+            getIndicatorStyles(
+              `${DROP_INDICATOR_INLINE_HOVER} ${BEFORE_ROUNDED_HOVER}`,
+              `${DROP_INDICATOR_INLINE_DEFAULT} ${BEFORE_ROUNDED_DEFAULT}`
+            )
           ],
           (layoutType === 'flex-col' || layoutType === 'block') && [
             "before:h-1 before:w-8",
-            isOver ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:h-2 before:w-16` : `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT}`
+            getIndicatorStyles(
+              `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER} before:h-2 before:w-16`,
+              `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT}`
+            )
           ],
           layoutType === 'grid' && [
             "before:h-2 before:w-2",
-            isOver ? `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER}` : `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT}`
+            getIndicatorStyles(
+              `${DROP_INDICATOR_HOVER} ${BEFORE_ROUNDED_HOVER}`,
+              `${DROP_INDICATOR_DEFAULT} ${BEFORE_ROUNDED_DEFAULT}`
+            )
           ]
         ],
         // Custom style overrides
         style && [
-          "before:bg-blue-500/60 before:rounded-sm",
-          isOver && "before:bg-blue-600 before:shadow-md"
+          isDropValid 
+            ? ["before:bg-blue-500/60 before:rounded-sm", isOver && "before:bg-blue-600 before:shadow-md"]
+            : ["before:bg-gray-400/30 before:rounded-sm", isOver && "before:bg-gray-500/40"]
         ]
       )}
       style={useCalculatedPositioning ? calculatedStyle! : style}
       data-testid={`drop-placeholder-${parentId}-${position}`}
       data-drop-indicator
+      data-drop-valid={isDropValid}
     />
   );
 };
