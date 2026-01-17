@@ -117,3 +117,7 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 ## License
 
 MIT
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=olliethedev/ui-builder&type=date&legend=top-left)](https://www.star-history.com/#olliethedev/ui-builder&type=date&legend=top-left)
