@@ -72,10 +72,13 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
   }), [componentDragging]);
 
   // Auto-scroll event listeners setup/cleanup
+  // Support both existing layer drags (activeLayerId) and new component drags (newComponentType)
+  const isDragging = !!activeLayerId || !!newComponentType;
+  
   useEffect(() => {
-    if (activeLayerId) {
+    if (isDragging) {
       // Add global mouse move listener for auto-scroll on parent document
-      const handleParentMove = (event: MouseEvent) => handleParentMouseMove(event, activeLayerId);
+      const handleParentMove = (event: MouseEvent) => handleParentMouseMove(event, true);
       document.addEventListener('mousemove', handleParentMove);
       
       // Also add mouse move listener to iframe content window
@@ -85,7 +88,7 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
       if (iframeElements) {
         const { window: iframeWindow } = iframeElements;
         if (iframeWindow) {
-          const handleIframeMove = (event: MouseEvent) => handleIframeMouseMove(event, activeLayerId);
+          const handleIframeMove = (event: MouseEvent) => handleIframeMouseMove(event, true);
           iframeWindow.addEventListener('mousemove', handleIframeMove);
           iframeCleanup = () => {
             try {
@@ -109,7 +112,7 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
       // Clean up when no active drag
       stopAutoScroll();
     }
-  }, [activeLayerId, handleParentMouseMove, handleIframeMouseMove, stopAutoScroll]);
+  }, [isDragging, handleParentMouseMove, handleIframeMouseMove, stopAutoScroll]);
 
   // Cleanup on unmount
   useEffect(() => {

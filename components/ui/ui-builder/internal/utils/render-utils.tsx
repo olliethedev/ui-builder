@@ -16,6 +16,31 @@ import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { resolveVariableReferences, resolveChildrenVariableReference } from "@/lib/ui-builder/utils/variable-resolver";
 
+/**
+ * Check if a className string contains a specific class as a whole word.
+ * Uses word boundary matching to avoid substring false positives.
+ * e.g., hasClass("my-relative-element", "relative") returns false
+ *       hasClass("relative flex", "relative") returns true
+ */
+export function hasClass(className: string, targetClass: string): boolean {
+  return className.split(/\s+/).includes(targetClass);
+}
+
+/**
+ * Tailwind CSS positioning classes that conflict with each other.
+ * Only one can be applied at a time - appending another would override the existing one.
+ */
+const POSITION_CLASSES = ['static', 'fixed', 'absolute', 'relative', 'sticky'] as const;
+
+/**
+ * Check if a className string contains any CSS position class.
+ * Used to prevent overriding existing positioning when adding 'relative' for drop zones.
+ */
+export function hasPositionClass(className: string): boolean {
+  const classes = className.split(/\s+/);
+  return POSITION_CLASSES.some(posClass => classes.includes(posClass));
+}
+
 // Note: useDndContext has default values defined in dnd-contexts.tsx,
 // so it will return { isDragging: false, activeLayerId: null, newComponentType: null, canDropOnLayer: () => false }
 // when used outside DndContextProvider. No try-catch needed.
@@ -95,8 +120,6 @@ export const RenderLayer: React.FC<{
       [layer.props, effectiveVariables, variableValues]
     );
     
-    const childProps: Record<string, PropValue> = useMemo(() => ({ ...resolvedProps }), [resolvedProps]);
-    
     // Memoize child editor config to avoid creating objects in JSX
     const childEditorConfig = useMemo(() => {
       return editorConfig
@@ -121,6 +144,27 @@ export const RenderLayer: React.FC<{
       editorConfig && dndContext.isDragging && canAcceptChildren && !isBeingDragged,
       [editorConfig, dndContext.isDragging, canAcceptChildren, isBeingDragged]
     );
+    
+    // Compute childProps with 'relative' class included when showDropZones is active
+    // This must be recomputed when showDropZones changes to avoid stale className mutations
+    const childProps: Record<string, PropValue> = useMemo(() => {
+      const props = { ...resolvedProps };
+      
+      // CRITICAL: Add position:relative to parent when showing drop zones
+      // This ensures absolutely positioned DropPlaceholders position correctly
+      // We check hasLayerChildren to only apply to containers that will have drop zones
+      if (showDropZones && hasLayerChildren(layer)) {
+        const existingClassName = props.className as string || '';
+        // Only add 'relative' if no position class is already present
+        // Adding 'relative' when 'absolute', 'fixed', or 'sticky' exists would override them
+        // due to Tailwind's class order precedence, breaking the intended layout
+        if (!hasPositionClass(existingClassName)) {
+          props.className = existingClassName ? `${existingClassName} relative` : 'relative';
+        }
+      }
+      
+      return props;
+    }, [resolvedProps, showDropZones, layer]);
 
     if (!componentDefinition) {
       console.error(
@@ -142,16 +186,6 @@ export const RenderLayer: React.FC<{
     
     // Handle children rendering with improved drop zones
     if (hasLayerChildren(layer) && layer.children.length > 0) {
-      // CRITICAL: Add position:relative to parent when showing drop zones
-      // This ensures absolutely positioned DropPlaceholders position correctly
-      if (showDropZones) {
-        const existingClassName = childProps.className as string || '';
-        // Only add 'relative' if not already present to avoid duplication
-        if (!existingClassName.includes('relative')) {
-          childProps.className = existingClassName ? `${existingClassName} relative` : 'relative';
-        }
-      }
-      
       const childElements = layer.children.map((child, index) => {
         const childElement = (
           <RenderLayer
@@ -206,12 +240,8 @@ export const RenderLayer: React.FC<{
       childProps.children = layer.children;
     } else if (showDropZones && hasLayerChildren(layer)) {
       // Show drop zone for empty containers
-      // Add position:relative to parent for proper placeholder positioning
-      const existingClassName = childProps.className as string || '';
-      if (!existingClassName.includes('relative')) {
-        childProps.className = existingClassName ? `${existingClassName} relative` : 'relative';
-      }
-      // Also add min-height so empty containers are droppable
+      // Note: position:relative is already added via useMemo when showDropZones is true
+      // Add min-height so empty containers are droppable
       childProps.children = (
         <div className="min-h-[2rem] w-full">
           <DropPlaceholder
