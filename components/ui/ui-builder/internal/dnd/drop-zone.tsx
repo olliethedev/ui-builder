@@ -85,6 +85,10 @@ export const DropZone: React.FC<DropZoneProps> = ({
   className,
   children,
 }) => {
+  // Check if drop is valid using the DND context
+  const dndContext = useDndContext();
+  const isDropValid = dndContext.canDropOnLayer(parentId);
+
   const {
     isOver,
     setNodeRef,
@@ -95,11 +99,9 @@ export const DropZone: React.FC<DropZoneProps> = ({
       parentId,
       position,
     },
+    // Disable the droppable when drop is not valid (e.g., childOf constraint violation)
+    disabled: !isDropValid,
   });
-
-  // Check if drop is valid using the DND context
-  const dndContext = useDndContext();
-  const isDropValid = dndContext.canDropOnLayer(parentId);
 
   // Determine background based on validity and hover state
   const getDropZoneBg = () => {
@@ -165,18 +167,6 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
   isActive = false,
   style,
 }) => {
-  const {
-    isOver,
-    setNodeRef,
-  } = useDroppable({
-    id: `${parentId}-${position}`,
-    data: {
-      type: 'drop-zone',
-      parentId,
-      position,
-    },
-  });
-
   // State for calculated position and layout
   const [layoutType, setLayoutType] = React.useState<'flex-row' | 'flex-col' | 'grid' | 'inline' | 'block'>('block');
   const [calculatedStyle, setCalculatedStyle] = React.useState<React.CSSProperties | null>(null);
@@ -187,6 +177,20 @@ export const DropPlaceholder: React.FC<DropPlaceholderProps> = ({
   
   // Check if the drop is valid for this parent (childOf constraint validation)
   const isDropValid = dndContext.canDropOnLayer(parentId);
+
+  const {
+    isOver,
+    setNodeRef,
+  } = useDroppable({
+    id: `${parentId}-${position}`,
+    data: {
+      type: 'drop-zone',
+      parentId,
+      position,
+    },
+    // Disable the droppable when drop is not valid (e.g., childOf constraint violation)
+    disabled: !isDropValid,
+  });
   
   /* istanbul ignore next - DOM position calculation, tested via e2e */
   React.useLayoutEffect(() => {

@@ -39,13 +39,24 @@ export const DndContextProvider: React.FC<DndContextProviderProps> = ({ children
     setNewComponentType(null);
   }, []);
   
+  // Create a ref to hold the latest canDropOnLayer function for use in event handlers
+  // This avoids circular dependency: we need canDropOnLayer in handleDragEnd,
+  // but canDropOnLayer depends on isLayerDescendantOf from handleDragEnd
+  const canDropOnLayerRef = React.useRef<(layerId: string) => boolean>(() => false);
+  
   const { handleDragStart, handleDragEnd, handleDragCancel, isLayerDescendantOf } = useDndEventHandlers({
     stopAutoScroll,
     setActiveLayerId,
     setNewComponentType,
     clearDragState,
+    canDropOnLayer: (layerId: string) => canDropOnLayerRef.current(layerId),
   });
   const { canDropOnLayer } = useDropValidation(activeLayerId, isLayerDescendantOf, newComponentType);
+  
+  // Keep the ref updated with the latest canDropOnLayer
+  React.useEffect(() => {
+    canDropOnLayerRef.current = canDropOnLayer;
+  }, [canDropOnLayer]);
   
   // Use keyboard shortcuts hook - also cancel new component drags
   const handleKeyboardCancel = useCallback(() => {

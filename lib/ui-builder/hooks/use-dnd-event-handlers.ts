@@ -8,6 +8,7 @@ interface UseDndEventHandlersProps {
   setActiveLayerId: (layerId: string | null) => void;
   setNewComponentType?: (componentType: string | null) => void;
   clearDragState?: () => void;
+  canDropOnLayer?: (layerId: string) => boolean;
 }
 
 export const useDndEventHandlers = ({ 
@@ -15,6 +16,7 @@ export const useDndEventHandlers = ({
   setActiveLayerId,
   setNewComponentType,
   clearDragState,
+  canDropOnLayer,
 }: UseDndEventHandlersProps) => {
   const moveLayer = useLayerStore((state) => state.moveLayer);
   const addComponentLayer = useLayerStore((state) => state.addComponentLayer);
@@ -62,6 +64,16 @@ export const useDndEventHandlers = ({
     const targetParentId = overData.parentId;
     const targetPosition = overData.position;
 
+    // Validate drop is allowed (childOf constraints, etc.)
+    if (canDropOnLayer && !canDropOnLayer(targetParentId)) {
+      if (clearDragState) {
+        clearDragState();
+      } else {
+        setActiveLayerId(null);
+      }
+      return;
+    }
+
     // Handle existing layer drag
     if (activeData?.type === 'layer' && activeData.layerId) {
       const activeLayerId = activeData.layerId;
@@ -88,7 +100,7 @@ export const useDndEventHandlers = ({
     } else {
       setActiveLayerId(null);
     }
-  }, [moveLayer, addComponentLayer, isLayerDescendantOf, stopAutoScroll, setActiveLayerId, clearDragState]);
+  }, [moveLayer, addComponentLayer, isLayerDescendantOf, stopAutoScroll, setActiveLayerId, clearDragState, canDropOnLayer]);
 
   const handleDragCancel = useCallback(() => {
     stopAutoScroll();

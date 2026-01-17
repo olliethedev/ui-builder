@@ -126,6 +126,7 @@ describe('DropZone', () => {
         parentId: 'parent-123',
         position: 0,
       },
+      disabled: false,
     });
   });
 
@@ -306,6 +307,7 @@ describe('DropPlaceholder', () => {
         parentId: 'parent-456',
         position: 1,
       },
+      disabled: false,
     });
   });
 
