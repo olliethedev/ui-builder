@@ -626,7 +626,7 @@ test.describe('Function Registry (/smoke/functions)', () => {
     await page.waitForTimeout(300);
     
     // Verify the variable was created and shows function type
-    await expect(page.getByText('function')).toBeVisible();
+    await expect(page.getByText('function', { exact: true })).toBeVisible();
   });
   
   test('can view generated code with function bindings', async ({ page }) => {
