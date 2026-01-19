@@ -9,7 +9,7 @@ import React, {
   useContext,
 } from "react";
 import { useTransformEffect } from "react-zoom-pan-pinch";
-import { ComponentLayer } from "@/components/ui/ui-builder/types";
+import type { ComponentLayer } from "@/components/ui/ui-builder/types";
 import { LayerMenu } from "@/components/ui/ui-builder/internal/components/layer-menu";
 import { DragHandle as ComponentDragHandle } from "@/components/ui/ui-builder/internal/dnd/drag-handle";
 import { DragHandleContext } from "@/components/ui/ui-builder/internal/canvas/resizable-wrapper";

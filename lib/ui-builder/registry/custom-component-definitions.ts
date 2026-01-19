@@ -1,4 +1,4 @@
-import { ComponentRegistry } from '@/components/ui/ui-builder/types';
+import type { ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 import { Flexbox } from '@/components/ui/ui-builder/components/flexbox';
 import { Grid } from '@/components/ui/ui-builder/components/grid';

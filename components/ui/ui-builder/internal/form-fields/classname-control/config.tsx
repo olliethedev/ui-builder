@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import {
   Heading,
   Palette,
@@ -52,7 +52,7 @@ import {
 } from "@/components/ui/ui-builder/internal/utils/tailwind-classes";
 import {
   ToggleGroup,
-  ToggleOption,
+  type ToggleOption,
 } from "@/components/ui/ui-builder/internal/form-fields/classname-control/toggle-group";
 import {
   FillIcon,

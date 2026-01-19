@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { Plus, Crosshair, ZoomIn, ZoomOut, MousePointer } from "lucide-react";
 import { countLayers, useLayerStore } from "@/lib/ui-builder/store/layer-store";
-import { ComponentLayer } from "@/components/ui/ui-builder/types";
+import type { ComponentLayer } from "@/components/ui/ui-builder/types";
 import {
   TransformWrapper,
   TransformComponent,

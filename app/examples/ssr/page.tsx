@@ -1,5 +1,5 @@
 import { ServerLayerRenderer } from "@/components/ui/ui-builder/server-layer-renderer";
-import { ComponentLayer, Variable, ComponentRegistry } from "@/components/ui/ui-builder/types";
+import type { ComponentLayer, Variable, ComponentRegistry } from "@/components/ui/ui-builder/types";
 import { z } from "zod";
 
 export const metadata = {

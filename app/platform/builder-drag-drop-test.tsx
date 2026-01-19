@@ -8,7 +8,7 @@ import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primiti
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 import { shadcnComponentDefinitions } from "@/lib/ui-builder/registry/shadcn-component-definitions";
 import { blockDefinitions } from "@/lib/ui-builder/registry/block-definitions";
-import { ComponentLayer, ComponentRegistry } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer, ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 import { commonFieldOverrides, childrenAsTextareaFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 

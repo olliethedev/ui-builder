@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
+import { type DragStartEvent, type DragEndEvent } from '@dnd-kit/core';
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
 import { findAllParentLayersRecursive } from '@/lib/ui-builder/store/layer-utils';
 

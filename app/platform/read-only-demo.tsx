@@ -6,7 +6,7 @@ import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-c
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
 import { shadcnComponentDefinitions } from "@/lib/ui-builder/registry/shadcn-component-definitions";
 import { blockDefinitions } from "@/lib/ui-builder/registry/block-definitions";
-import { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
 import { Button } from "@/components/ui/button";
 
 // Sample template for read-only demonstrations

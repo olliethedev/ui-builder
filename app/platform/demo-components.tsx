@@ -1,6 +1,6 @@
 import React from 'react';
 import { z } from 'zod';
-import { ComponentRegistry } from '@/components/ui/ui-builder/types';
+import type { ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { textInputFieldOverrides } from '@/lib/ui-builder/registry/form-field-overrides';
 
 // UserProfile Component - demonstrates immutable user data binding

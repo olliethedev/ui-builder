@@ -1,6 +1,6 @@
 import {
   createContext,
-  ReactNode,
+  type ReactNode,
   useCallback,
   useContext,
   useEffect,
@@ -134,7 +134,10 @@ const CopyHostStyles = ({
             `Tried to add an element that was already mirrored. Updating instead...`
           );
 
-        elements[index].mirror.innerText = el.innerText;
+        const element = elements[index];
+        if (element?.mirror) {
+          element.mirror.innerText = el.innerText;
+        }
 
         return;
       }
@@ -228,11 +231,11 @@ const CopyHostStyles = ({
     let stylesLoaded = 0;
 
     // Sync attributes for the HTML tag
-    const parentHtml = parentDocument.getElementsByTagName("html")[0];
+    const parentHtml = parentDocument.getElementsByTagName("html")[0]!;
     syncAttributes(parentHtml, doc.documentElement);
 
     // Sync attributes for the Body tag
-    const parentBody = parentDocument.getElementsByTagName("body")[0];
+    const parentBody = parentDocument.getElementsByTagName("body")[0]!;
     syncAttributes(parentBody, doc.body);
 
     // Set iframe body background to transparent
@@ -242,7 +245,7 @@ const CopyHostStyles = ({
     const parentComputedStyle = win.parent.getComputedStyle(parentHtml);
     for (let i = 0; i < parentComputedStyle.length; i++) {
       const property = parentComputedStyle[i];
-      if (property.startsWith("--")) {
+      if (property?.startsWith("--")) {
         const value = parentComputedStyle.getPropertyValue(property);
         doc.documentElement.style.setProperty(property, value);
         doc.body.style.setProperty(property, value);
@@ -250,7 +253,7 @@ const CopyHostStyles = ({
     }
 
     // Copy font-related classes from parent body
-    parentBody.classList.forEach((className) => {
+    parentBody?.classList.forEach((className) => {
       if (
         className.includes("font-") ||
         className === "antialiased" ||

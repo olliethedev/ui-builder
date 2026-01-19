@@ -13,7 +13,7 @@
 
 import React from 'react';
 import { z } from 'zod';
-import { ComponentRegistry } from '@/components/ui/ui-builder/types';
+import type { ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { commonFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 // TODO: Add actual component imports here, e.g.:

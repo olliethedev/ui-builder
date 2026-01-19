@@ -84,7 +84,7 @@ function getExistingComponents(): Set<string> {
     const content = readFileSync(shadcnDefsPath, 'utf-8');
     const componentMatches = content.matchAll(/^\s{4}(\w+):\s*\{/gm);
     
-    return new Set(Array.from(componentMatches).map(m => m[1]));
+    return new Set(Array.from(componentMatches).map(m => m[1]).filter((name): name is string => name !== undefined));
 }
 
 /**
@@ -102,7 +102,7 @@ function getExistingBlocks(): Set<string> {
     // Match block names in the definitions
     const blockMatches = content.matchAll(/name:\s*["']([^"']+)["']/g);
     
-    return new Set(Array.from(blockMatches).map(m => m[1]));
+    return new Set(Array.from(blockMatches).map(m => m[1]).filter((name): name is string => name !== undefined));
 }
 
 /**
@@ -324,10 +324,15 @@ export { scaffoldedComponents };
         
         for (const block of missingBlocks) {
             const category = block.split('-')[0];
-            if (!blocksByCategory[category]) {
-                blocksByCategory[category] = [];
+            if (category) {
+                if (!blocksByCategory[category]) {
+                    blocksByCategory[category] = [];
+                }
+                const categoryBlocks = blocksByCategory[category];
+                if (categoryBlocks) {
+                    categoryBlocks.push(block);
+                }
             }
-            blocksByCategory[category].push(block);
         }
         
         let blockScaffolds = '';

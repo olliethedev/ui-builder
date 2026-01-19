@@ -18,8 +18,8 @@
  * Debug visualizations automatically clear after a few seconds.
  */
 
-import { Collision, UniqueIdentifier } from "@dnd-kit/core";
-import { Coordinates } from "@dnd-kit/utilities";
+import type { Collision, UniqueIdentifier } from "@dnd-kit/core";
+import type { Coordinates } from "@dnd-kit/utilities";
 import { getIframeElements } from '@/lib/ui-builder/context/dnd-utils';
 
 // Enable/disable debug visualization

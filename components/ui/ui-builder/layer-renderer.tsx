@@ -1,9 +1,9 @@
 import React from "react";
 
-import { EditorConfig, RenderLayer } from "@/components/ui/ui-builder/internal/utils/render-utils";
+import { type EditorConfig, RenderLayer } from "@/components/ui/ui-builder/internal/utils/render-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/components/dev-profiler";
 
-import { Variable, ComponentLayer, ComponentRegistry, PropValue } from '@/components/ui/ui-builder/types';
+import type { Variable, ComponentLayer, ComponentRegistry, PropValue } from '@/components/ui/ui-builder/types';
 
 interface LayerRendererProps<TRegistry extends ComponentRegistry = ComponentRegistry> {
   className?: string;

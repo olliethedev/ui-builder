@@ -85,8 +85,13 @@ const handleError = (
 
 const handleDataUrl = (src: string): { blob: Blob; extension: string } => {
   const [header, base64Data] = src.split(",")
-  const mimeType = header.split(":")[1].split(";")[0]
-  const extension = mimeType.split("/")[1]
+  const mimeType = header?.split(":")[1]?.split(";")[0] ?? ""
+  const extension = mimeType.split("/")[1] ?? ""
+  
+  if (!base64Data || base64Data.trim() === "") {
+    throw new Error("Invalid data URL: missing base64 payload")
+  }
+  
   const byteCharacters = atob(base64Data)
   const byteArray = new Uint8Array(byteCharacters.length)
   for (let i = 0; i < byteCharacters.length; i++) {
@@ -102,7 +107,7 @@ const handleImageUrl = async (
   const response = await fetch(src)
   if (!response.ok) throw new Error("Failed to fetch image")
   const blob = await response.blob()
-  const extension = blob.type.split(/\/|\+/)[1]
+  const extension = blob.type.split(/\/|\+/)[1] ?? ""
   return { blob, extension }
 }
 

@@ -110,7 +110,10 @@ function transToGroupOption(options: Option[], groupBy?: string) {
     if (!groupOption[key]) {
       groupOption[key] = [];
     }
-    groupOption[key].push(option);
+    const group = groupOption[key];
+    if (group) {
+      group.push(option);
+    }
   });
   return groupOption;
 }
@@ -251,8 +254,8 @@ const MultipleSelector = React.forwardRef<
             if (input.value === "" && selected.length > 0) {
               const lastSelectOption = selected[selected.length - 1];
               // If last item is fixed, we should not remove it.
-              if (!lastSelectOption.fixed) {
-                handleUnselect(selected[selected.length - 1]);
+              if (lastSelectOption && !lastSelectOption.fixed) {
+                handleUnselect(lastSelectOption);
               }
             }
           }

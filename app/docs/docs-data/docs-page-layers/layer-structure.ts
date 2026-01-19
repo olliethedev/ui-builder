@@ -1,4 +1,4 @@
-import { ComponentLayer } from "@/components/ui/ui-builder/types";
+import type { ComponentLayer } from "@/components/ui/ui-builder/types";
 
 export const LAYER_STRUCTURE_LAYER = {
     "id": "layer-structure",

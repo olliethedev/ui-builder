@@ -1,4 +1,4 @@
-import { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 
 // Import all shadcn components

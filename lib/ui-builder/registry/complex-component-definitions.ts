@@ -11,7 +11,7 @@
  * - blockDefinitions from './block-definitions'
  */
 
-import { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 import { customComponentDefinitions } from './custom-component-definitions';
 
