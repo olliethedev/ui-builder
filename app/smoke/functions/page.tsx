@@ -72,7 +72,7 @@ const functionRegistry: FunctionRegistry = {
 
 /**
  * Initial layers for the smoke test page.
- * Pre-configured with a form and button for testing.
+ * Pre-configured with forms and buttons for testing.
  */
 const initialLayers = [
   {
@@ -80,9 +80,10 @@ const initialLayers = [
     type: "div",
     name: "Page",
     props: {
-      className: "bg-background flex flex-col gap-4 p-4 w-full min-h-screen",
+      className: "bg-background flex flex-col gap-8 p-6 w-full min-h-screen",
     },
     children: [
+      // Header section
       {
         id: "heading",
         type: "h1",
@@ -97,9 +98,317 @@ const initialLayers = [
         type: "p",
         name: "Description",
         props: {
-          className: "text-muted-foreground",
+          className: "text-muted-foreground mb-4",
         },
-        children: "This page demonstrates the function registry feature. Use the Data panel to create function-type variables and bind them to component event handlers.",
+        children: "This page demonstrates the function registry feature. Test form submissions and button clicks below.",
+      },
+
+      // HTML Form Section
+      {
+        id: "html-form-section",
+        type: "div",
+        name: "HTML Form Section",
+        props: {
+          className: "flex flex-col gap-4 p-4 border rounded-lg",
+        },
+        children: [
+          {
+            id: "html-form-title",
+            type: "h2",
+            name: "HTML Form Title",
+            props: {
+              className: "text-lg font-semibold",
+            },
+            children: "HTML Form (Server Action)",
+          },
+          {
+            id: "html-form",
+            type: "form",
+            name: "HTML Contact Form",
+            props: {
+              className: "flex flex-col gap-4",
+              // onSubmit will be bound to handleFormSubmit function
+            },
+            children: [
+              {
+                id: "html-name-field",
+                type: "div",
+                name: "Name Field Container",
+                props: {
+                  className: "flex flex-col gap-2",
+                },
+                children: [
+                  {
+                    id: "html-name-label",
+                    type: "label",
+                    name: "Name Label",
+                    props: {
+                      className: "text-sm font-medium",
+                    },
+                    children: "Name",
+                  },
+                  {
+                    id: "html-name-input",
+                    type: "input",
+                    name: "Name Input",
+                    props: {
+                      type: "text",
+                      name: "name",
+                      placeholder: "Enter your name",
+                      className: "px-3 py-2 border rounded-md",
+                      required: true,
+                    },
+                    children: [],
+                  },
+                ],
+              },
+              {
+                id: "html-email-field",
+                type: "div",
+                name: "Email Field Container",
+                props: {
+                  className: "flex flex-col gap-2",
+                },
+                children: [
+                  {
+                    id: "html-email-label",
+                    type: "label",
+                    name: "Email Label",
+                    props: {
+                      className: "text-sm font-medium",
+                    },
+                    children: "Email",
+                  },
+                  {
+                    id: "html-email-input",
+                    type: "input",
+                    name: "Email Input",
+                    props: {
+                      type: "email",
+                      name: "email",
+                      placeholder: "Enter your email",
+                      className: "px-3 py-2 border rounded-md",
+                      required: true,
+                    },
+                    children: [],
+                  },
+                ],
+              },
+              {
+                id: "html-submit-btn",
+                type: "button",
+                name: "Submit Button",
+                props: {
+                  type: "submit",
+                  className: "px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90",
+                },
+                children: "Submit HTML Form",
+              },
+            ],
+          },
+        ],
+      },
+
+      // Shadcn Form Section
+      {
+        id: "shadcn-form-section",
+        type: "Card",
+        name: "Shadcn Form Card",
+        props: {
+          className: "",
+        },
+        children: [
+          {
+            id: "shadcn-card-header",
+            type: "CardHeader",
+            name: "Card Header",
+            props: {},
+            children: [
+              {
+                id: "shadcn-form-title",
+                type: "CardTitle",
+                name: "Card Title",
+                props: {},
+                children: [
+                  {
+                    id: "shadcn-form-title-text",
+                    type: "span",
+                    name: "Title Text",
+                    props: {},
+                    children: "Shadcn Form (Server Action)",
+                  },
+                ],
+              },
+              {
+                id: "shadcn-form-desc",
+                type: "CardDescription",
+                name: "Card Description",
+                props: {},
+                children: [
+                  {
+                    id: "shadcn-form-desc-text",
+                    type: "span",
+                    name: "Description Text",
+                    props: {},
+                    children: "A form built with shadcn components",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            id: "shadcn-card-content",
+            type: "CardContent",
+            name: "Card Content",
+            props: {},
+            children: [
+              {
+                id: "shadcn-form",
+                type: "form",
+                name: "Shadcn Form",
+                props: {
+                  className: "flex flex-col gap-4",
+                  // onSubmit will be bound to handleFormSubmit function
+                },
+                children: [
+                  {
+                    id: "shadcn-name-input",
+                    type: "Input",
+                    name: "Name Input",
+                    props: {
+                      type: "text",
+                      name: "name",
+                      placeholder: "Your name",
+                    },
+                    children: [],
+                  },
+                  {
+                    id: "shadcn-email-input",
+                    type: "Input",
+                    name: "Email Input",
+                    props: {
+                      type: "email",
+                      name: "email",
+                      placeholder: "your@email.com",
+                    },
+                    children: [],
+                  },
+                  {
+                    id: "shadcn-submit-btn",
+                    type: "Button",
+                    name: "Submit Button",
+                    props: {
+                      type: "submit",
+                    },
+                    children: [
+                      {
+                        id: "shadcn-submit-text",
+                        type: "span",
+                        name: "Button Text",
+                        props: {},
+                        children: "Submit Shadcn Form",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+
+      // Toast Buttons Section
+      {
+        id: "toast-section",
+        type: "div",
+        name: "Toast Buttons Section",
+        props: {
+          className: "flex flex-col gap-4 p-4 border rounded-lg",
+        },
+        children: [
+          {
+            id: "toast-title",
+            type: "h2",
+            name: "Toast Title",
+            props: {
+              className: "text-lg font-semibold",
+            },
+            children: "Toast Notifications",
+          },
+          {
+            id: "toast-description",
+            type: "p",
+            name: "Toast Description",
+            props: {
+              className: "text-sm text-muted-foreground mb-2",
+            },
+            children: "Click the buttons below to trigger toast notifications. Use the Props panel to bind onClick to functions.",
+          },
+          {
+            id: "toast-buttons-row",
+            type: "div",
+            name: "Toast Buttons Row",
+            props: {
+              className: "flex gap-2 flex-wrap",
+            },
+            children: [
+              {
+                id: "success-toast-btn",
+                type: "Button",
+                name: "Success Toast Button",
+                props: {
+                  variant: "default",
+                  // onClick will be bound to showSuccessToast function
+                },
+                children: [
+                  {
+                    id: "success-toast-text",
+                    type: "span",
+                    name: "Button Text",
+                    props: {},
+                    children: "Show Success Toast",
+                  },
+                ],
+              },
+              {
+                id: "error-toast-btn",
+                type: "Button",
+                name: "Error Toast Button",
+                props: {
+                  variant: "destructive",
+                  // onClick will be bound to showErrorToast function
+                },
+                children: [
+                  {
+                    id: "error-toast-text",
+                    type: "span",
+                    name: "Button Text",
+                    props: {},
+                    children: "Show Error Toast",
+                  },
+                ],
+              },
+              {
+                id: "console-log-btn",
+                type: "Button",
+                name: "Console Log Button",
+                props: {
+                  variant: "outline",
+                  // onClick will be bound to logToConsole function
+                },
+                children: [
+                  {
+                    id: "console-log-text",
+                    type: "span",
+                    name: "Button Text",
+                    props: {},
+                    children: "Log to Console",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
     ],
   },
