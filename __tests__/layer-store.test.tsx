@@ -230,9 +230,11 @@ describe('LayerStore', () => {
         result.current.duplicateLayer(originalId);
       });
 
-      expect(Array.isArray(page.children)).toBe(true);
-      expect(page.children).toHaveLength(2);
-      const duplicatedLayer = (page.children as ComponentLayer[])[1];
+      // Re-fetch page after store update
+      const updatedPage = result.current.pages[0]!;
+      expect(Array.isArray(updatedPage.children)).toBe(true);
+      expect(updatedPage.children).toHaveLength(2);
+      const duplicatedLayer = (updatedPage.children as ComponentLayer[])[1];
       expect(duplicatedLayer).toBeDefined();
       expect(duplicatedLayer!.type).toBe('Button');
       expect(duplicatedLayer!.name).toBe(`${originalLayer!.name} (Copy)`);
@@ -290,8 +292,10 @@ describe('LayerStore', () => {
         result.current.removeLayer(layerId);
       });
 
-      expect(Array.isArray(page.children)).toBe(true);
-      expect(page.children).toHaveLength(0);
+      // Re-fetch page after store update
+      const updatedPage = result.current.pages[0]!;
+      expect(Array.isArray(updatedPage.children)).toBe(true);
+      expect(updatedPage.children).toHaveLength(0);
     });
 
     it('should remove a page layer', () => {
@@ -381,10 +385,12 @@ describe('LayerStore', () => {
         result.current.removeLayer(buttonLayerId);
       });
   
-      expect(Array.isArray(page.children)).toBe(true);
-      expect(page.children).toHaveLength(1);
-      expect((page.children as ComponentLayer[])[0]).toBeDefined();
-      expect((page.children as ComponentLayer[])[0]!.id).toBe(inputLayerId);
+      // Re-fetch page after store update
+      const updatedPage = result.current.pages[0]!;
+      expect(Array.isArray(updatedPage.children)).toBe(true);
+      expect(updatedPage.children).toHaveLength(1);
+      expect((updatedPage.children as ComponentLayer[])[0]).toBeDefined();
+      expect((updatedPage.children as ComponentLayer[])[0]!.id).toBe(inputLayerId);
     });
   });
 
@@ -408,7 +414,9 @@ describe('LayerStore', () => {
         result.current.updateLayer(layerId, { className: 'new-class' }, { name: 'Updated Button' });
       });
 
-      const updatedLayer = (page.children as ComponentLayer[])[0];
+      // Re-fetch page after store update
+      const updatedPage = result.current.pages[0]!;
+      const updatedLayer = (updatedPage.children as ComponentLayer[])[0];
       expect(updatedLayer).toBeDefined();
       expect(updatedLayer!.props.className).toBe('new-class');
       expect(updatedLayer!.name).toBe('Updated Button');
@@ -468,7 +476,9 @@ describe('LayerStore', () => {
         result.current.updateLayer(layerId, { className: 'updated-class' }, { name: 'Updated Button' });
       });
   
-      const updatedLayer = (page.children as ComponentLayer[])[0];
+      // Re-fetch page after store update
+      const updatedPage = result.current.pages[0]!;
+      const updatedLayer = (updatedPage.children as ComponentLayer[])[0];
       expect(updatedLayer).toBeDefined();
       expect(updatedLayer!.props.className).toBe('updated-class');
       expect(updatedLayer!.name).toBe('Updated Button');
@@ -575,8 +585,10 @@ describe('LayerStore', () => {
         result.current.updateLayer(buttonLayerId, { label: 'Submit' }, { name: 'SubmitButton' });
       });
   
-      const updatedButtonLayer = (page.children as ComponentLayer[])[0];
-      const updatedInputLayer = (page.children as ComponentLayer[])[1];
+      // Re-fetch page after store update
+      const updatedPage = result.current.pages[0]!;
+      const updatedButtonLayer = (updatedPage.children as ComponentLayer[])[0];
+      const updatedInputLayer = (updatedPage.children as ComponentLayer[])[1];
       expect(updatedButtonLayer).toBeDefined();
       expect(updatedInputLayer).toBeDefined();
       expect(updatedButtonLayer!.props.label).toBe('Submit');
@@ -637,8 +649,11 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Input', parentLayerId);
       });
     
-      expect(Array.isArray(parentLayer!.children)).toBe(true);
-      const childLayer = (parentLayer!.children as ComponentLayer[])[0];
+      // Re-fetch page and parent layer after store update
+      const pageAfterAdd = result.current.pages[0]!;
+      const parentLayerAfterAdd = (pageAfterAdd.children as ComponentLayer[])[0];
+      expect(Array.isArray(parentLayerAfterAdd!.children)).toBe(true);
+      const childLayer = (parentLayerAfterAdd!.children as ComponentLayer[])[0];
       expect(childLayer).toBeDefined();
       const childLayerId = childLayer!.id;
     
@@ -647,9 +662,12 @@ describe('LayerStore', () => {
         result.current.updateLayer(childLayerId, { placeholder: 'Nested Input' }, { name: 'NestedInput' });
       });
     
-      expect(parentLayer).toBeDefined();
-      expect(Array.isArray(parentLayer!.children)).toBe(true);
-      const updatedChildLayer = (parentLayer!.children as ComponentLayer[])[0];
+      // Re-fetch page and parent layer after store update
+      const pageAfterUpdate = result.current.pages[0]!;
+      const parentLayerAfterUpdate = (pageAfterUpdate.children as ComponentLayer[])[0];
+      expect(parentLayerAfterUpdate).toBeDefined();
+      expect(Array.isArray(parentLayerAfterUpdate!.children)).toBe(true);
+      const updatedChildLayer = (parentLayerAfterUpdate!.children as ComponentLayer[])[0];
       expect(updatedChildLayer).toBeDefined();
       expect(updatedChildLayer!.props.placeholder).toBe('Nested Input');
       expect(updatedChildLayer!.name).toBe('NestedInput');
