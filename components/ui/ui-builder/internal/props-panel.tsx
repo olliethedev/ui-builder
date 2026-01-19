@@ -4,8 +4,8 @@ import { z } from "zod";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import {
-  ComponentRegistry,
-  ComponentLayer,
+  type ComponentRegistry,
+  type ComponentLayer,
 } from "@/components/ui/ui-builder/types";
 import { Button } from "@/components/ui/button";
 import AutoForm from "@/components/ui/auto-form";
@@ -149,9 +149,12 @@ const ComponentPropsAutoForm: React.FC<ComponentPropsAutoFormProps> = ({
       selectedLayer &&
       componentRegistry[selectedLayer.type as keyof typeof componentRegistry]
     ) {
-      return componentRegistry[
+      const registryEntry = componentRegistry[
         selectedLayer.type as keyof typeof componentRegistry
       ];
+      if (registryEntry) {
+        return registryEntry;
+      }
     }
     return { schema: EMPTY_ZOD_SCHEMA }; // Fallback schema
   }, [selectedLayer, componentRegistry]);

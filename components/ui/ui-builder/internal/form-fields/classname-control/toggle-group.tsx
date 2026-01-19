@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useMemo } from "react";
+import { type ReactNode, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,

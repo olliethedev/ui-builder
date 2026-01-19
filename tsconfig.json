@@ -18,7 +18,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
-    "incremental": true,
+    "verbatimModuleSyntax": true,
+    "noUncheckedIndexedAccess": true,
     "baseUrl": ".",
     "types": [
       "@testing-library/jest-dom"

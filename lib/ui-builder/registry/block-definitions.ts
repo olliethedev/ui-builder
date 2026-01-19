@@ -1,4 +1,4 @@
-import { ComponentLayer, BlockDefinition, BlockRegistry } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer, BlockDefinition, BlockRegistry } from '@/components/ui/ui-builder/types';
 
 // Re-export types for backward compatibility
 export type { BlockDefinition, BlockRegistry } from '@/components/ui/ui-builder/types';

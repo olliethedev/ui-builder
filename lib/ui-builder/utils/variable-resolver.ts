@@ -1,5 +1,6 @@
 import React from 'react';
-import { Variable, PropValue, isVariableReference, ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { Variable, PropValue, ComponentLayer } from '@/components/ui/ui-builder/types';
+import { isVariableReference } from '@/components/ui/ui-builder/types';
 
 /**
  * Resolves a variable reference in layer children to its actual value

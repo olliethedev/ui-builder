@@ -1,5 +1,5 @@
 import React, { useCallback, useState, memo, useMemo } from "react";
-import { NodeAttrs } from "he-tree-react";
+import type { NodeAttrs } from "he-tree-react";
 import isDeepEqual from "fast-deep-equal";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
-import { ComponentLayer } from "@/components/ui/ui-builder/types";
+import type { ComponentLayer } from "@/components/ui/ui-builder/types";
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useState } from "react";
-import UIBuilder, { defaultConfigTabsContent, TabsContentConfig } from "@/components/ui/ui-builder";
+import { useState } from "react";
+import UIBuilder, { defaultConfigTabsContent, type TabsContentConfig } from "@/components/ui/ui-builder";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
 import { shadcnComponentDefinitions } from "@/lib/ui-builder/registry/shadcn-component-definitions";
 import { blockDefinitions } from "@/lib/ui-builder/registry/block-definitions";
-import { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Settings, Database, Layout, Home, Code, Eye } from "lucide-react";

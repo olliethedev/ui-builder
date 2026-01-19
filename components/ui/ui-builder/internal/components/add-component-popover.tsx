@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useMemo, memo, Suspense, useState, useEffect, useRef } from "react";
+import React, { type ReactNode, useCallback, useMemo, memo, Suspense, useState, useEffect, useRef } from "react";
 
 import {
   Command,
@@ -19,7 +19,7 @@ import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { cn } from "@/lib/utils";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
-import { ComponentLayer, ComponentRegistry, BlockDefinition } from "@/components/ui/ui-builder/types";
+import type { ComponentLayer, ComponentRegistry, BlockDefinition } from "@/components/ui/ui-builder/types";
 import { createComponentLayer } from "@/lib/ui-builder/store/layer-utils";
 import { DraggableNewComponent } from "@/components/ui/ui-builder/internal/dnd/draggable-new-component";
 
@@ -116,7 +116,7 @@ export function AddComponentsPopover({
         value: name,
         label: name,
         type: "component",
-        from: componentRegistry[name as keyof typeof componentRegistry].from,
+        from: componentRegistry[name as keyof typeof componentRegistry]?.from,
       }));
     return componentOptions.reduce(
       (acc, option) => {
@@ -126,7 +126,7 @@ export function AddComponentsPopover({
         if (!acc[group]) {
           acc[group] = [];
         }
-        acc[group].push(option);
+        acc[group]?.push(option);
         return acc;
       },
       {} as Record<string, typeof componentOptions>
@@ -146,7 +146,7 @@ export function AddComponentsPopover({
         if (!acc[block.category]) {
           acc[block.category] = [];
         }
-        acc[block.category].push(block);
+        acc[block.category]?.push(block);
         return acc;
       },
       {}
@@ -275,7 +275,7 @@ export function AddComponentsPopover({
                     <CommandList className="max-h-[250px]">
                       <CommandEmpty>No components found</CommandEmpty>
                       <CommandGroup>
-                        {groupedOptions[category].map((component) => (
+                        {groupedOptions[category]?.map((component) => (
                           <GroupedComponentItem
                             key={component.value}
                             component={component}
@@ -307,7 +307,7 @@ export function AddComponentsPopover({
                   <TabsTrigger key={category} value={category} className="flex flex-col justify-start items-start overflow-hidden px-2 py-1 min-w-24 min-h-11 shrink-0">
                     <div className="text-sm">{formatCategoryName(category)}</div>
                     <div className="w-full min-h-[12px] text-[8px] leading-[9px] text-left text-muted-foreground">
-                      {groupedBlocks[category].length} blocks
+                      {groupedBlocks[category]?.length} blocks
                     </div>
                   </TabsTrigger>
                 ))}
@@ -325,7 +325,7 @@ export function AddComponentsPopover({
                     <CommandList className="max-h-[250px]">
                       <CommandEmpty>No blocks found</CommandEmpty>
                       <CommandGroup>
-                        {groupedBlocks[category].map((block) => (
+                        {groupedBlocks[category]?.map((block) => (
                           <BlockItem
                             key={block.name}
                             block={block}
@@ -494,7 +494,7 @@ const LazyComponentPreview = memo(({
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry?.isIntersecting) {
           // Delay loading slightly to improve tab switching performance
           timeoutId = setTimeout(() => setShouldLoad(true), 50);
         }
@@ -624,5 +624,5 @@ ComponentPreview.displayName = "ComponentPreview";
 function formatCategoryName(name: string) {
   const words = name.split("/");
   const lastWord = words[words.length - 1];
-  return lastWord.replace(/-/g, " ").replace(/\b\w/g, char => char.toUpperCase());
+  return lastWord?.replace(/-/g, " ").replace(/\b\w/g, char => char.toUpperCase()) ?? "";
 }

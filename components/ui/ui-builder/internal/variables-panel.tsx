@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Plus, Edit2, Check, X } from "lucide-react";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
-import { Variable } from "@/components/ui/ui-builder/types";
+import type { Variable } from "@/components/ui/ui-builder/types";
 import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 

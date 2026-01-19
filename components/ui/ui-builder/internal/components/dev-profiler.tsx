@@ -1,4 +1,4 @@
-import React, { Profiler, ProfilerOnRenderCallback, useCallback } from "react";
+import React, { Profiler, type ProfilerOnRenderCallback, useCallback } from "react";
 
 interface DevProfilerProps {
   id: string;

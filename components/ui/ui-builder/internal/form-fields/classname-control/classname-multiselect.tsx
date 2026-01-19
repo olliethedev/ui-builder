@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo } from "react";
 
 import MultipleSelector, {
-  Option,
+  type Option,
 } from "@/components/ui/ui-builder/internal/components/multi-select";
 import { TAILWIND_CLASSES_WITH_BREAKPOINTS } from "@/components/ui/ui-builder/internal/utils/tailwind-classes";
 

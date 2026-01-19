@@ -85,9 +85,9 @@ const handleError = (
 
 const handleDataUrl = (src: string): { blob: Blob; extension: string } => {
   const [header, base64Data] = src.split(",")
-  const mimeType = header.split(":")[1].split(";")[0]
-  const extension = mimeType.split("/")[1]
-  const byteCharacters = atob(base64Data)
+  const mimeType = header?.split(":")[1]?.split(";")[0] ?? ""
+  const extension = mimeType.split("/")[1] ?? ""
+  const byteCharacters = atob(base64Data ?? "base64")
   const byteArray = new Uint8Array(byteCharacters.length)
   for (let i = 0; i < byteCharacters.length; i++) {
     byteArray[i] = byteCharacters.charCodeAt(i)
@@ -102,7 +102,7 @@ const handleImageUrl = async (
   const response = await fetch(src)
   if (!response.ok) throw new Error("Failed to fetch image")
   const blob = await response.blob()
-  const extension = blob.type.split(/\/|\+/)[1]
+  const extension = blob.type.split(/\/|\+/)[1] ?? ""
   return { blob, extension }
 }
 

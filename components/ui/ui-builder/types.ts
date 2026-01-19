@@ -1,8 +1,8 @@
  
-import { ZodObject, ZodSchema } from "zod";
-import { ComponentType as ReactComponentType, ReactNode } from 'react';
+import { type ZodObject, type ZodSchema } from "zod";
+import { type ComponentType as ReactComponentType, type ReactNode } from 'react';
 import {
-    FieldConfigItem,
+    type FieldConfigItem,
   } from "@/components/ui/auto-form/types";
 
 export type {

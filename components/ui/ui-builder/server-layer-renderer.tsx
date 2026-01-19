@@ -2,7 +2,8 @@ import React from "react";
 
 import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
-import { ComponentRegistry, ComponentLayer, Variable, PropValue, isVariableReference } from '@/components/ui/ui-builder/types';
+import type { ComponentRegistry, ComponentLayer, Variable, PropValue } from '@/components/ui/ui-builder/types';
+import { isVariableReference } from '@/components/ui/ui-builder/types';
 import { resolveVariableReferences, resolveChildrenVariableReference } from "@/lib/ui-builder/utils/variable-resolver";
 
 export interface ServerLayerRendererProps<TRegistry extends ComponentRegistry = ComponentRegistry> {

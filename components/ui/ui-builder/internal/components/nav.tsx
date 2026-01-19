@@ -59,10 +59,10 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { CodePanel } from "@/components/ui/ui-builder/components/code-panel";
 import {
-  EditorStore,
+  type EditorStore,
   useEditorStore,
 } from "@/lib/ui-builder/store/editor-store";
-import {
+import type {
   ComponentRegistry,
   ComponentLayer,
 } from "@/components/ui/ui-builder/types";
@@ -72,7 +72,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  KeyCombination,
+  type KeyCombination,
   useKeyboardShortcuts,
 } from "@/hooks/use-keyboard-shortcuts";
 import { useStore } from "zustand";

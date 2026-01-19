@@ -21,12 +21,13 @@ import { Button } from "@/components/ui/button";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useStore } from "@/hooks/use-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
-import {
+import type {
   ComponentRegistry,
   ComponentLayer,
   Variable,
   LayerChangeHandler,
-  VariableChangeHandler
+  VariableChangeHandler,
+  BlockRegistry
 } from "@/components/ui/ui-builder/types";
 import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
@@ -63,8 +64,6 @@ interface PanelConfigWithoutNavBar {
 }
 
 type PanelConfig = PanelConfigWithNavBar | PanelConfigWithoutNavBar;
-
-import { BlockRegistry } from "@/lib/ui-builder/registry/block-definitions";
 
 /**
  * Base props shared by all UIBuilder configurations.
@@ -272,12 +271,12 @@ function MainLayout({ panelConfig }: { panelConfig: PanelConfig }) {
   // Update selected panel when panels change
   useEffect(() => {
     const editorPanel = mainPanels.find(panel => panel.title === "UI Editor");
-    const currentPanel = mainPanels.find(panel => panel.title === selectedPanel.title);
+    const currentPanel = mainPanels.find(panel => panel.title === selectedPanel?.title);
     
     if (!currentPanel) {
       setSelectedPanel(editorPanel || mainPanels[0]);
     }
-  }, [mainPanels, selectedPanel.title]);
+  }, [mainPanels, selectedPanel?.title]);
 
   const handlePanelClickById = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     const panelIndex = parseInt(e.currentTarget.dataset.panelIndex || "0");
@@ -312,14 +311,14 @@ function MainLayout({ panelConfig }: { panelConfig: PanelConfig }) {
       </div>
       {/* Mobile Layout */}
       <div className="flex size-full flex-col md:hidden overflow-hidden ">
-        {selectedPanel.content}
+        {selectedPanel?.content}
         <div className="absolute bottom-4 left-4 right-4 z-50">
           <div className="flex justify-center rounded-full bg-primary p-2 shadow-lg">
             {mainPanels.map((panel, index) => (
               <Button
                 key={panel.title}
                 variant={
-                  selectedPanel.title !== panel.title ? "default" : "secondary"
+                  selectedPanel?.title !== panel.title ? "default" : "secondary"
                 }
                 size="sm"
                 className="flex-1"

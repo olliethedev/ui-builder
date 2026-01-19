@@ -8,7 +8,7 @@ const renderTemplate = (template: string, data: Record<string, any>): string => 
   });
 };
 import { hasLayerChildren } from "@/lib/ui-builder/store/layer-utils";
-import { ComponentRegistry, ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
+import type { ComponentRegistry, ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
 import { isVariableReference } from '@/lib/ui-builder/utils/variable-resolver';
 
 // Helper function to convert display name to valid JavaScript identifier

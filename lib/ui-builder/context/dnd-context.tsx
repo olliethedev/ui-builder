@@ -1,12 +1,12 @@
-import React, { useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, type ReactNode, useMemo, useEffect, useCallback } from 'react';
 import { DndContext } from '@dnd-kit/core';
 import { createTransformAwareCollisionDetection } from '@/lib/ui-builder/context/dnd-context-colission-utils';
 import { getIframeElements } from '@/lib/ui-builder/context/dnd-utils';
 import { 
   DndContextStateContext, 
   ComponentDragContext,
-  DndContextState,
-  ComponentDragContextState,
+  type DndContextState,
+  type ComponentDragContextState,
   useDndContext,
   useComponentDragContext
 } from '@/lib/ui-builder/context/dnd-contexts';

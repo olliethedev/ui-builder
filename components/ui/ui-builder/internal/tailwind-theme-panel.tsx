@@ -1,8 +1,8 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   baseColors,
-  BaseColor,
+  type BaseColor,
   TAILWIND_V4_COLOR_KEYS,
 } from "@/components/ui/ui-builder/internal/utils/base-colors";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import {
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { Toggle } from "@/components/ui/toggle";
 
 const RESET_THEME_PROPS = {

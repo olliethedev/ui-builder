@@ -5,7 +5,7 @@ import {
 } from "@/app/docs/docs-data/data";
 import { notFound } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export async function generateMetadata(
   { params }: {

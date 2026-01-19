@@ -6,7 +6,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import MultipleSelector, {
-  Option,
+  type Option,
 } from "@/components/ui/ui-builder/internal/components/multi-select";
 import { iconNames } from "@/components/ui/ui-builder/components/icon";
 
@@ -43,8 +43,9 @@ const IconNameField: React.FC<IconNameFieldProps> = ({
 
   const handleChange = useCallback(
     (values: Option[]) => {
-      if (values.length > 0) {
-        onChange(values[0].value);
+      const firstValue = values[0];
+      if (firstValue) {
+        onChange(firstValue.value);
       }
     },
     [onChange]

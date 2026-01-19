@@ -5,7 +5,7 @@
  * Copy these definitions to block-definitions.ts and customize as needed.
  */
 
-import { BlockDefinition } from '@/lib/ui-builder/registry/block-definitions';
+import type { BlockDefinition } from '@/lib/ui-builder/registry/block-definitions';
 
 // Missing block scaffolds:
 const scaffoldedBlocks: BlockDefinition[] = [

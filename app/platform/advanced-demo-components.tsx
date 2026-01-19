@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react';
-import { ComponentRegistry } from '@/components/ui/ui-builder/types';
+import type { ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 import { commonFieldOverrides, classNameFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 

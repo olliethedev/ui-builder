@@ -1,9 +1,9 @@
 "use client";
 
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
-import { ComponentLayer } from "@/components/ui/ui-builder/types";
-import { ComponentRegistry } from "@/components/ui/ui-builder/types";
-import { Variable } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer } from "@/components/ui/ui-builder/types";
+import type { ComponentRegistry } from "@/components/ui/ui-builder/types";
+import type { Variable } from '@/components/ui/ui-builder/types';
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 

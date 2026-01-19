@@ -7,7 +7,7 @@ import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primiti
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 import { shadcnComponentDefinitions } from "@/lib/ui-builder/registry/shadcn-component-definitions";
 import { blockDefinitions } from "@/lib/ui-builder/registry/block-definitions";
-import { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
 
 // Initial page structure showcasing immutable bindings
 const initialLayers: ComponentLayer[] = [{

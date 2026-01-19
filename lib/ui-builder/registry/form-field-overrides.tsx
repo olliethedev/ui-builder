@@ -6,7 +6,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { ChildrenSearchableSelect } from "@/components/ui/ui-builder/internal/form-fields/children-searchable-select";
-import {
+import type {
   AutoFormInputComponentProps,
   ComponentLayer,
   FieldConfigFunction,

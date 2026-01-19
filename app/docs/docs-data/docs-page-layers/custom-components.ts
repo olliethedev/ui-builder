@@ -1,4 +1,4 @@
-import { ComponentLayer } from "@/components/ui/ui-builder/types";
+import type { ComponentLayer } from "@/components/ui/ui-builder/types";
 
 export const CUSTOM_COMPONENTS_LAYER = {
     "id": "custom-components",
