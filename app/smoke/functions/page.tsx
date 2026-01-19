@@ -127,7 +127,8 @@ const initialLayers = [
             name: "HTML Contact Form",
             props: {
               className: "flex flex-col gap-4",
-              // onSubmit will be bound to handleFormSubmit function
+              // Bind onSubmit to handleFormSubmit function
+              __function_onSubmit: "handleFormSubmit",
             },
             children: [
               {
@@ -268,7 +269,8 @@ const initialLayers = [
                 name: "Shadcn Form",
                 props: {
                   className: "flex flex-col gap-4",
-                  // onSubmit will be bound to handleFormSubmit function
+                  // Bind onSubmit to handleFormSubmit function
+                  __function_onSubmit: "handleFormSubmit",
                 },
                 children: [
                   {
@@ -358,7 +360,8 @@ const initialLayers = [
                 name: "Success Toast Button",
                 props: {
                   variant: "default",
-                  // onClick will be bound to showSuccessToast function
+                  // Bind onClick to showSuccessToast function
+                  __function_onClick: "showSuccessToast",
                 },
                 children: [
                   {
@@ -376,7 +379,8 @@ const initialLayers = [
                 name: "Error Toast Button",
                 props: {
                   variant: "destructive",
-                  // onClick will be bound to showErrorToast function
+                  // Bind onClick to showErrorToast function
+                  __function_onClick: "showErrorToast",
                 },
                 children: [
                   {
@@ -394,7 +398,8 @@ const initialLayers = [
                 name: "Console Log Button",
                 props: {
                   variant: "outline",
-                  // onClick will be bound to logToConsole function
+                  // Bind onClick to logToConsole function
+                  __function_onClick: "logToConsole",
                 },
                 children: [
                   {

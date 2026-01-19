@@ -296,64 +296,103 @@ test.describe('Function Registry (/smoke/functions)', () => {
   
   test.describe('Runtime Functionality', () => {
     
-    test('clicking bound button triggers toast notification', async ({ page }) => {
+    test('success toast button shows toast notification (pre-bound)', async ({ page }) => {
       await page.goto('/smoke/functions');
       
       await waitForBuilderReady(page);
       
-      // First we need to bind the button to a function
-      // Expand tree and select Success Toast Button
-      const layersTree = page.getByTestId('layers-tree');
+      // The button should already have onClick bound via __function_onClick in initialLayers
+      // Click the button in the preview canvas
+      const canvas = page.getByTestId('auto-frame').first();
+      const frame = canvas.frameLocator('iframe').first();
       
-      // Expand multiple levels
-      let expandButtons = layersTree.locator('button:has(svg[class*="lucide-chevron-right"])');
-      let attempts = 0;
-      while (await expandButtons.first().isVisible() && attempts < 10) {
-        await expandButtons.first().click();
-        await page.waitForTimeout(200);
-        expandButtons = layersTree.locator('button:has(svg[class*="lucide-chevron-right"])');
-        attempts++;
-      }
+      const successButton = frame.getByRole('button', { name: /show success toast/i });
+      await expect(successButton).toBeVisible({ timeout: 10000 });
+      await successButton.click();
       
-      // Find and select the Success Toast Button
-      const successButtonLayer = layersTree.getByText('Success Toast Button');
-      if (await successButtonLayer.isVisible()) {
-        await successButtonLayer.click();
-        await page.waitForTimeout(500);
-        
-        // Switch to Appearance tab
-        const appearanceTab = page.getByRole('tab', { name: /appearance/i });
-        await appearanceTab.click();
-        await page.waitForTimeout(300);
-        
-        // Find the onClick function selector and bind it
-        const onClickSelect = page.locator('button[role="combobox"]').filter({ hasText: /select a function|none/i }).first();
-        if (await onClickSelect.isVisible()) {
-          await onClickSelect.click();
-          await page.waitForTimeout(300);
-          
-          // Select "Show Success Toast" function
-          const successOption = page.getByRole('option', { name: /show success toast/i });
-          if (await successOption.isVisible()) {
-            await successOption.click();
-            await page.waitForTimeout(300);
-          }
-        }
-        
-        // Now click the button in the preview
-        const canvas = page.getByTestId('auto-frame').first();
-        const frame = canvas.frameLocator('iframe').first();
-        
-        const previewButton = frame.getByText('Show Success Toast');
-        if (await previewButton.isVisible()) {
-          await previewButton.click();
-          await page.waitForTimeout(500);
-          
-          // Look for toast notification (Sonner creates a toast outside the iframe)
-          // The toast should appear in the main document
-          await expect(page.locator('[data-sonner-toast]').first()).toBeVisible({ timeout: 5000 });
-        }
-      }
+      // Look for toast notification (Sonner creates a toast outside the iframe)
+      await expect(page.locator('[data-sonner-toast]').first()).toBeVisible({ timeout: 5000 });
+    });
+    
+    test('error toast button shows toast notification (pre-bound)', async ({ page }) => {
+      await page.goto('/smoke/functions');
+      
+      await waitForBuilderReady(page);
+      
+      const canvas = page.getByTestId('auto-frame').first();
+      const frame = canvas.frameLocator('iframe').first();
+      
+      const errorButton = frame.getByRole('button', { name: /show error toast/i });
+      await expect(errorButton).toBeVisible({ timeout: 10000 });
+      await errorButton.click();
+      
+      // Look for toast notification
+      await expect(page.locator('[data-sonner-toast]').first()).toBeVisible({ timeout: 5000 });
+    });
+    
+    test('form submission does not refresh page (pre-bound onSubmit)', async ({ page }) => {
+      await page.goto('/smoke/functions');
+      
+      await waitForBuilderReady(page);
+      
+      const canvas = page.getByTestId('auto-frame').first();
+      const frame = canvas.frameLocator('iframe').first();
+      
+      // Fill out the HTML form
+      const nameInput = frame.locator('input[name="name"]').first();
+      const emailInput = frame.locator('input[name="email"]').first();
+      
+      await expect(nameInput).toBeVisible({ timeout: 10000 });
+      await nameInput.fill('Test User');
+      await emailInput.fill('test@example.com');
+      
+      // Get the URL before submission
+      const urlBefore = page.url();
+      
+      // Submit the form
+      const submitButton = frame.getByRole('button', { name: /submit html form/i });
+      await submitButton.click();
+      
+      // Wait a bit for potential navigation
+      await page.waitForTimeout(1000);
+      
+      // URL should not have changed (no page refresh)
+      expect(page.url()).toBe(urlBefore);
+      
+      // Toast should appear showing success message
+      await expect(page.locator('[data-sonner-toast]').first()).toBeVisible({ timeout: 5000 });
+    });
+    
+    test('shadcn form submission works without page refresh', async ({ page }) => {
+      await page.goto('/smoke/functions');
+      
+      await waitForBuilderReady(page);
+      
+      const canvas = page.getByTestId('auto-frame').first();
+      const frame = canvas.frameLocator('iframe').first();
+      
+      // Wait for the shadcn form inputs to be visible
+      // They use the shadcn Input component which renders as <input>
+      const formInputs = frame.locator('form').nth(1).locator('input');
+      await expect(formInputs.first()).toBeVisible({ timeout: 10000 });
+      
+      // Fill the inputs
+      await formInputs.nth(0).fill('Jane Doe');
+      await formInputs.nth(1).fill('jane@example.com');
+      
+      const urlBefore = page.url();
+      
+      // Submit the shadcn form
+      const submitButton = frame.getByRole('button', { name: /submit shadcn form/i });
+      await submitButton.click();
+      
+      await page.waitForTimeout(1000);
+      
+      // URL should not have changed
+      expect(page.url()).toBe(urlBefore);
+      
+      // Toast should appear
+      await expect(page.locator('[data-sonner-toast]').first()).toBeVisible({ timeout: 5000 });
     });
     
   });

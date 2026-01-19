@@ -281,6 +281,83 @@ describe('Variable Resolver', () => {
         expect(resolved.count).toBe(25);
       });
     });
+
+    describe('__function_* metadata resolution', () => {
+      it('should resolve __function_* metadata to actual functions', () => {
+        const props = {
+          className: 'my-class',
+          __function_onClick: 'mockClickHandler',
+        };
+
+        const resolved = resolveVariableReferences(
+          props,
+          [],
+          undefined,
+          mockFunctionRegistry
+        );
+
+        expect(resolved.onClick).toBe(mockFunctionRegistry.mockClickHandler!.fn);
+        expect(resolved.className).toBe('my-class');
+        // __function_onClick should not be in resolved props
+        expect(resolved.__function_onClick).toBeUndefined();
+      });
+
+      it('should resolve multiple __function_* metadata props', () => {
+        const props = {
+          __function_onClick: 'mockClickHandler',
+          __function_onSubmit: 'mockSubmitHandler',
+        };
+
+        const resolved = resolveVariableReferences(
+          props,
+          [],
+          undefined,
+          mockFunctionRegistry
+        );
+
+        expect(resolved.onClick).toBe(mockFunctionRegistry.mockClickHandler!.fn);
+        expect(resolved.onSubmit).toBe(mockFunctionRegistry.mockSubmitHandler!.fn);
+      });
+
+      it('should warn and set undefined for missing function in __function_* metadata', () => {
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        
+        const props = {
+          __function_onClick: 'nonexistentFunction',
+        };
+
+        const resolved = resolveVariableReferences(
+          props,
+          [],
+          undefined,
+          mockFunctionRegistry
+        );
+
+        expect(resolved.onClick).toBeUndefined();
+        expect(warnSpy).toHaveBeenCalledWith(
+          'Function "nonexistentFunction" not found in function registry for prop "onClick"'
+        );
+        
+        warnSpy.mockRestore();
+      });
+
+      it('should prioritize __function_* metadata over existing prop value', () => {
+        const props = {
+          onClick: () => 'original function',
+          __function_onClick: 'mockClickHandler',
+        };
+
+        const resolved = resolveVariableReferences(
+          props,
+          [],
+          undefined,
+          mockFunctionRegistry
+        );
+
+        // Function from registry should override the original
+        expect(resolved.onClick).toBe(mockFunctionRegistry.mockClickHandler!.fn);
+      });
+    });
   });
 
   describe('resolveChildrenVariableReference', () => {

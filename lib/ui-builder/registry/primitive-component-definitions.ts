@@ -101,6 +101,14 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
         onChange: () => functionPropRenderParentOverrides('onChange'),
     }
   },
+  'label': {
+    schema: z.object({
+        className: z.string().optional(),
+        children: z.any().optional(),
+        htmlFor: z.string().optional(),
+    }),
+    fieldOverrides: commonFieldOverrides()
+  },
   'img': {
     schema: z.object({
         className: z.string().optional(),

@@ -30,12 +30,14 @@ export function resolveChildrenVariableReference(
 }
 
 /**
- * Resolves variable references in props using provided variable values
- * @param props - The props object that may contain variable references
+ * Resolves variable references in props using provided variable values.
+ * Also resolves __function_* metadata props by looking up functions from the registry.
+ * 
+ * @param props - The props object that may contain variable references or function metadata
  * @param variables - Array of available variables
  * @param variableValues - Object mapping variable IDs to their resolved values
  * @param functionRegistry - Optional function registry for resolving function-type variables
- * @returns Props with variable references resolved
+ * @returns Props with variable references resolved and functions looked up
  */
 export function resolveVariableReferences(
   props: Record<string, PropValue>,
@@ -45,21 +47,54 @@ export function resolveVariableReferences(
 ): Record<string, PropValue> {
   const resolved: Record<string, PropValue> = {};
 
+  // First pass: collect all __function_* metadata to resolve function props
+  const functionMetadata: Record<string, string> = {};
   for (const [key, value] of Object.entries(props)) {
+    if (key.startsWith('__function_') && typeof value === 'string') {
+      // Extract the prop name from __function_propName
+      const propName = key.replace('__function_', '');
+      functionMetadata[propName] = value;
+    }
+  }
+
+  // Resolve function metadata props first (these may not have a corresponding base prop)
+  for (const [propName, functionId] of Object.entries(functionMetadata)) {
+    if (functionRegistry) {
+      const funcDef = functionRegistry[functionId];
+      if (funcDef) {
+        resolved[propName] = funcDef.fn;
+      } else {
+        console.warn(`Function "${functionId}" not found in function registry for prop "${propName}"`);
+        resolved[propName] = undefined;
+      }
+    }
+  }
+
+  for (const [key, value] of Object.entries(props)) {
+    // Skip __function_* metadata props (they're handled separately)
+    if (key.startsWith('__function_')) {
+      continue;
+    }
+    
+    // Skip props that were already resolved via __function_* metadata
+    if (functionMetadata[key]) {
+      continue;
+    }
+    
     if (isVariableReference(value)) {
       const variable = variables.find(v => v.id === value.__variableRef);
       if (variable) {
         // Handle function-type variables specially
         if (variable.type === 'function') {
           // For function variables, look up the actual function from the registry
-          const functionId = String(variable.defaultValue);
+          const varFunctionId = String(variable.defaultValue);
           if (functionRegistry) {
-            const funcDef = functionRegistry[functionId];
+            const funcDef = functionRegistry[varFunctionId];
             if (funcDef) {
               resolved[key] = funcDef.fn;
             } else {
               // Function not found in registry
-              console.warn(`Function "${functionId}" not found in function registry`);
+              console.warn(`Function "${varFunctionId}" not found in function registry`);
               resolved[key] = undefined;
             }
           } else {
