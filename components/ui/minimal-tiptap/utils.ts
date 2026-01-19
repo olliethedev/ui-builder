@@ -165,8 +165,27 @@ const checkTypeAndSize = (
   { allowedMimeTypes, maxFileSize }: FileValidationOptions
 ): { isValidType: boolean; isValidSize: boolean } => {
   const mimeType = input instanceof File ? input.type : base64MimeType(input)
-  const size =
-    input instanceof File ? input.size : atob(input.split(",")[1] ?? "").length
+  
+  let size: number
+  if (input instanceof File) {
+    size = input.size
+  } else {
+    // Extract base64 data part
+    const base64Data = input.split(",")[1]
+    
+    // Validate that base64 data exists and is not empty
+    if (!base64Data || base64Data.trim() === "") {
+      // Malformed base64 string - fail size validation
+      return { isValidType: true, isValidSize: false }
+    }
+    
+    try {
+      size = atob(base64Data).length
+    } catch {
+      // Invalid base64 encoding - fail size validation
+      return { isValidType: true, isValidSize: false }
+    }
+  }
 
   const isValidType =
     allowedMimeTypes.length === 0 ||
