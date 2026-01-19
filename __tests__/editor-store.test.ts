@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
-import { ComponentRegistry } from '@/components/ui/ui-builder/types';
+import type { ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 
 describe('EditorStore', () => {

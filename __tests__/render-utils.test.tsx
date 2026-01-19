@@ -5,8 +5,9 @@ import {
   hasClass,
   hasPositionClass,
 } from "../components/ui/ui-builder/internal/utils/render-utils";
-import { ComponentLayer } from '../components/ui/ui-builder/types';
-import { BaseColor, baseColors } from "../components/ui/ui-builder/internal/utils/base-colors";
+import type { ComponentLayer } from '../components/ui/ui-builder/types';
+import type { BaseColor } from "../components/ui/ui-builder/internal/utils/base-colors";
+import { baseColors } from "../components/ui/ui-builder/internal/utils/base-colors";
 import { z } from "zod";
 // Mock dependencies
 
@@ -17,7 +18,12 @@ jest.mock("../components/ui/ui-builder/internal/components/element-selector", ()
 }));
 
 // Mock DndContext
-const mockDndContext = {
+const mockDndContext: {
+  isDragging: boolean;
+  activeLayerId: string | null;
+  newComponentType: string | null;
+  canDropOnLayer: jest.Mock;
+} = {
   isDragging: false,
   activeLayerId: null,
   newComponentType: null,

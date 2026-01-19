@@ -3,9 +3,9 @@ import {
   isPrimitiveComponent,
   isCustomComponent
 } from '@/lib/ui-builder/store/editor-utils';
-import { ComponentRegistry, ComponentLayer, RegistryEntry } from '@/components/ui/ui-builder/types';
-import { FieldConfigItem } from "@/components/ui/auto-form/types";
-import { ComponentType as ReactComponentType } from "react";
+import type { ComponentRegistry, ComponentLayer, RegistryEntry } from '@/components/ui/ui-builder/types';
+import type { FieldConfigItem } from "@/components/ui/auto-form/types";
+import type { ComponentType as ReactComponentType } from "react";
 import { z } from 'zod';
 
 describe('Editor Utils', () => {
@@ -269,8 +269,10 @@ describe('Editor Utils', () => {
 
       const overrides = generateFieldOverrides(mockRegistry, complexLayer);
 
-      expect(overrides.label.label).toBe('Label for Complex Button');
-      expect(overrides.disabled.description).toBe('Disable state for complex-1');
+      expect(overrides.label).toBeDefined();
+      expect(overrides.disabled).toBeDefined();
+      expect(overrides.label!.label).toBe('Label for Complex Button');
+      expect(overrides.disabled!.description).toBe('Disable state for complex-1');
     });
   });
 

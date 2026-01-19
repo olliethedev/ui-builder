@@ -27,7 +27,8 @@ import type {
   Variable,
   LayerChangeHandler,
   VariableChangeHandler,
-  BlockRegistry
+  BlockRegistry,
+  FunctionRegistry
 } from "@/components/ui/ui-builder/types";
 import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
@@ -80,6 +81,8 @@ interface UIBuilderBaseProps<TRegistry extends ComponentRegistry = ComponentRegi
   allowPagesDeletion?: boolean;
   /** Optional block registry for the Blocks tab in the add component popover */
   blocks?: BlockRegistry;
+  /** Optional function registry for bindable event handlers (onClick, onSubmit, etc.) */
+  functionRegistry?: FunctionRegistry;
 }
 
 /**
@@ -136,6 +139,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
   navRightChildren,
   showExport = true,
   blocks,
+  functionRegistry,
 }: UIBuilderProps<TRegistry>) => {
   const layerStore = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
@@ -160,7 +164,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
   // Effect 1: Initialize Editor Store with registry and page form props
   useEffect(() => {
     if (editorStore && componentRegistry && !editorStoreInitialized) {
-      editorStore.initialize(componentRegistry, persistLayerStore, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks);
+      editorStore.initialize(componentRegistry, persistLayerStore, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks, functionRegistry);
       setEditorStoreInitialized(true);
     }
   }, [
@@ -172,6 +176,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
     allowPagesDeletion,
     allowVariableEditing,
     blocks,
+    functionRegistry,
   ]);
 
   // Effect 2: Conditionally initialize Layer Store *after* Editor Store is initialized

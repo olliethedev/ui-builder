@@ -1,11 +1,44 @@
 "use client";
 
 import React from "react";
+import { z } from "zod";
 import UIBuilder from "@/components/ui/ui-builder";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
 import { blockDefinitions } from "@/lib/ui-builder/registry/block-definitions";
 import { shadcnComponentDefinitions } from "@/lib/ui-builder/registry/shadcn-component-definitions";
+import type { FunctionRegistry } from "@/components/ui/ui-builder/types";
+
+/**
+ * Example function registry for the simple builder demo.
+ * These functions can be bound to component event handlers via the Data panel.
+ */
+const functionRegistry: FunctionRegistry = {
+  showAlert: {
+    name: "Show Alert",
+    schema: z.tuple([]),
+    fn: () => {
+      alert("Button clicked!");
+    },
+    description: "Shows a browser alert dialog",
+  },
+  logToConsole: {
+    name: "Log to Console",
+    schema: z.tuple([]),
+    fn: () => {
+      console.log("[Demo] Button clicked at", new Date().toISOString());
+    },
+    description: "Logs a message to the browser console",
+  },
+  handleClick: {
+    name: "Handle Click Event",
+    schema: z.tuple([z.custom<React.MouseEvent>()]),
+    fn: (e: React.MouseEvent) => {
+      console.log("[Demo] Click event:", { x: e.clientX, y: e.clientY });
+    },
+    description: "Handles click events with coordinates",
+  },
+};
 
 const initialLayers = [
   {
@@ -99,6 +132,7 @@ export const SimpleBuilder = () => {
         ...shadcnComponentDefinitions,
       }}
       blocks={blockDefinitions}
+      functionRegistry={functionRegistry}
     />
   );
 }

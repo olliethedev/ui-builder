@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Variable, PropValue, ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { Variable, PropValue, ComponentLayer, FunctionRegistry } from '@/components/ui/ui-builder/types';
 import { isVariableReference } from '@/components/ui/ui-builder/types';
 
 /**
@@ -34,12 +34,14 @@ export function resolveChildrenVariableReference(
  * @param props - The props object that may contain variable references
  * @param variables - Array of available variables
  * @param variableValues - Object mapping variable IDs to their resolved values
+ * @param functionRegistry - Optional function registry for resolving function-type variables
  * @returns Props with variable references resolved
  */
 export function resolveVariableReferences(
   props: Record<string, PropValue>,
   variables: Variable[],
-  variableValues?: Record<string, PropValue>
+  variableValues?: Record<string, PropValue>,
+  functionRegistry?: FunctionRegistry
 ): Record<string, PropValue> {
   const resolved: Record<string, PropValue> = {};
 
@@ -47,15 +49,35 @@ export function resolveVariableReferences(
     if (isVariableReference(value)) {
       const variable = variables.find(v => v.id === value.__variableRef);
       if (variable) {
-        // Use provided value or fall back to default value
-        resolved[key] = variableValues?.[variable.id] ?? variable.defaultValue;
+        // Handle function-type variables specially
+        if (variable.type === 'function') {
+          // For function variables, look up the actual function from the registry
+          const functionId = String(variable.defaultValue);
+          if (functionRegistry) {
+            const funcDef = functionRegistry[functionId];
+            if (funcDef) {
+              resolved[key] = funcDef.fn;
+            } else {
+              // Function not found in registry
+              console.warn(`Function "${functionId}" not found in function registry`);
+              resolved[key] = undefined;
+            }
+          } else {
+            // No function registry provided
+            console.warn('Function-type variable found but no functionRegistry provided');
+            resolved[key] = undefined;
+          }
+        } else {
+          // Use provided value or fall back to default value
+          resolved[key] = variableValues?.[variable.id] ?? variable.defaultValue;
+        }
       } else {
         // Variable not found, use default value or undefined
         resolved[key] = undefined;
       }
     } else if (typeof value === 'object' && value !== null && !Array.isArray(value) && !React.isValidElement(value)) {
       // Recursively resolve nested objects (but not React elements or arrays)
-      resolved[key] = resolveVariableReferences(value as Record<string, PropValue>, variables, variableValues);
+      resolved[key] = resolveVariableReferences(value as Record<string, PropValue>, variables, variableValues, functionRegistry);
     } else {
       // Regular value, keep as is
       resolved[key] = value;

@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { commonFieldOverrides, classNameFieldOverrides, childrenFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { commonFieldOverrides, classNameFieldOverrides, childrenFieldOverrides, functionPropRenderParentOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 /**
  * Essential shadcn component definitions.
@@ -38,12 +38,16 @@ const essentialShadcnComponents: ComponentRegistry = {
                 .enum(["default", "destructive", "outline", "secondary", "ghost", "link"])
                 .default("default"),
             size: z.enum(["default", "sm", "lg", "icon"]).default("default"),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/button",
         defaultChildren: [
             { id: "button-text", type: "span", name: "span", props: {}, children: "Button" } satisfies ComponentLayer,
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropRenderParentOverrides('onClick'),
+        }
     },
     Badge: {
         component: Badge,

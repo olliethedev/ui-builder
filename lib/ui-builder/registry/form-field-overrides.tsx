@@ -10,6 +10,7 @@ import type {
   AutoFormInputComponentProps,
   ComponentLayer,
   FieldConfigFunction,
+  Variable,
 } from "@/components/ui/ui-builder/types";
 import IconNameField from "@/components/ui/ui-builder/internal/form-fields/iconname-field";
 import { Textarea } from "@/components/ui/textarea";
@@ -211,6 +212,20 @@ export const commonVariableRenderParentOverrides = (propName: string) => {
   };
 };
 
+/**
+ * Render parent override for function props (onClick, onSubmit, etc.)
+ * Shows only function-type variables in the binding dropdown.
+ */
+export const functionPropRenderParentOverrides = (propName: string) => {
+  return {
+    renderParent: ({ children }: { children: React.ReactNode }) => (
+      <VariableBindingWrapper propName={propName} isFunctionProp>
+        {children}
+      </VariableBindingWrapper>
+    ),
+  };
+};
+
 export const textInputFieldOverrides = (
   layer: ComponentLayer,
   allowVariableBinding = false,
@@ -249,15 +264,19 @@ export const textInputFieldOverrides = (
 export function VariableBindingWrapper({
   propName,
   children,
+  isFunctionProp = false,
 }: {
   propName: string;
   children: React.ReactNode;
+  /** Set to true when binding to function props (onClick, onSubmit, etc.) */
+  isFunctionProp?: boolean;
 }) {
   const variables = useLayerStore((state) => state.variables);
   const selectedLayerId = useLayerStore((state) => state.selectedLayerId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const isBindingImmutable = useLayerStore((state) => state.isBindingImmutable);
   const incrementRevision = useEditorStore((state) => state.incrementRevision);
+  const functionRegistry = useEditorStore((state) => state.functionRegistry);
   const unbindPropFromVariable = useLayerStore(
     (state) => state.unbindPropFromVariable
   );
@@ -270,12 +289,29 @@ export function VariableBindingWrapper({
     return <>{children}</>;
   }
 
+  // Filter variables based on prop type
+  // Function props should only show function-type variables
+  // Non-function props should show non-function variables
+  const filteredVariables = variables.filter((v) => 
+    isFunctionProp ? v.type === 'function' : v.type !== 'function'
+  );
+
   const currentValue = selectedLayer.props[propName];
   const isCurrentlyBound = isVariableReference(currentValue);
   const boundVariable = isCurrentlyBound
     ? variables.find((v) => v.id === currentValue.__variableRef)
     : null;
   const isImmutable = isBindingImmutable(selectedLayer.id, propName);
+
+  // Get function display name for function-type variables
+  const getFunctionDisplayValue = (variable: Variable) => {
+    if (variable.type === 'function' && functionRegistry) {
+      const funcId = String(variable.defaultValue);
+      const funcDef = functionRegistry[funcId];
+      return funcDef ? funcDef.name : funcId;
+    }
+    return String(variable.defaultValue);
+  };
 
   const handleBindToVariable = (variableId: string) => {
     bindPropToVariable(selectedLayer.id, propName, variableId);
@@ -287,6 +323,18 @@ export function VariableBindingWrapper({
     unbindPropFromVariable(selectedLayer.id, propName);
     incrementRevision();
   };
+
+  const emptyMessage = isFunctionProp 
+    ? "No function variables defined" 
+    : "No variables defined";
+
+  const bindLabel = isFunctionProp 
+    ? "Bind to Function Variable" 
+    : "Bind to Variable";
+
+  const tooltipLabel = isFunctionProp 
+    ? "Bind Function" 
+    : "Bind Variable";
 
   return (
     <div className="flex w-full gap-2 items-end">
@@ -312,7 +360,7 @@ export function VariableBindingWrapper({
                       )}
                     </div>
                     <span className="text-xs text-muted-foreground truncate">
-                      {String(boundVariable.defaultValue)}
+                      {getFunctionDisplayValue(boundVariable)}
                     </span>
                   </div>
                 </div>
@@ -348,14 +396,14 @@ export function VariableBindingWrapper({
                     </Button>
                   </TooltipTrigger>
                 </DropdownMenuTrigger>
-                <TooltipContent>Bind Variable</TooltipContent>
+                <TooltipContent>{tooltipLabel}</TooltipContent>
               </Tooltip>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b">
-                  Bind to Variable
+                  {bindLabel}
                 </div>
-                {variables.length > 0 ? (
-                  variables.map((variable) => (
+                {filteredVariables.length > 0 ? (
+                  filteredVariables.map((variable) => (
                     <DropdownMenuItem
                       key={variable.id}
                       onClick={() => handleBindToVariable(variable.id)}
@@ -371,7 +419,7 @@ export function VariableBindingWrapper({
                             </span>
                           </div>
                           <span className="text-xs text-muted-foreground truncate">
-                            {String(variable.defaultValue)}
+                            {getFunctionDisplayValue(variable)}
                           </span>
                         </div>
                       </div>
@@ -379,7 +427,7 @@ export function VariableBindingWrapper({
                   ))
                 ) : (
                   <div className="px-3 py-2 text-xs text-muted-foreground">
-                    No variables defined
+                    {emptyMessage}
                   </div>
                 )}
               </DropdownMenuContent>

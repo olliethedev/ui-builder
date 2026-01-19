@@ -3,8 +3,8 @@
  */
 import { render, screen } from "@testing-library/react";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
-import { ComponentLayer } from "@/components/ui/ui-builder/types";
-import { Variable } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer } from "@/components/ui/ui-builder/types";
+import type { Variable } from '@/components/ui/ui-builder/types';
 import { z } from "zod";
 
 const mockComponentRegistry = {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TailwindThemePanel } from '@/components/ui/ui-builder/internal/tailwind-theme-panel';
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 // Mock the stores
 jest.mock('@/lib/ui-builder/store/layer-store', () => ({

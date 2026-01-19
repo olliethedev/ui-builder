@@ -1,6 +1,6 @@
 import type { ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
-import { childrenAsTextareaFieldOverrides, classNameFieldOverrides, commonFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { childrenAsTextareaFieldOverrides, classNameFieldOverrides, commonFieldOverrides, functionPropRenderParentOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 export const primitiveComponentDefinitions: ComponentRegistry = {
   'a': {
@@ -12,8 +12,94 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
         rel: z.enum(['noopener', 'noreferrer', 'nofollow']).optional(),
         title: z.string().optional(),
         download: z.boolean().optional().default(false),
+        onClick: z.any().optional(),
     }),
-        fieldOverrides: commonFieldOverrides()
+    fieldOverrides: {
+        ...commonFieldOverrides(),
+        onClick: () => functionPropRenderParentOverrides('onClick'),
+    }
+  },
+  'button': {
+    schema: z.object({
+        className: z.string().optional(),
+        children: z.any().optional(),
+        type: z.enum(['button', 'submit', 'reset']).optional().default('button'),
+        disabled: z.boolean().optional().default(false),
+        onClick: z.any().optional(),
+    }),
+    fieldOverrides: {
+        ...commonFieldOverrides(),
+        onClick: () => functionPropRenderParentOverrides('onClick'),
+    },
+    defaultChildren: "Button"
+  },
+  'form': {
+    schema: z.object({
+        className: z.string().optional(),
+        children: z.any().optional(),
+        action: z.string().optional(),
+        method: z.enum(['get', 'post']).optional(),
+        onSubmit: z.any().optional(),
+    }),
+    fieldOverrides: {
+        ...commonFieldOverrides(),
+        onSubmit: () => functionPropRenderParentOverrides('onSubmit'),
+    }
+  },
+  'input': {
+    schema: z.object({
+        className: z.string().optional(),
+        type: z.enum(['text', 'password', 'email', 'number', 'tel', 'url', 'search', 'date', 'time', 'hidden']).optional().default('text'),
+        name: z.string().optional(),
+        placeholder: z.string().optional(),
+        defaultValue: z.string().optional(),
+        disabled: z.boolean().optional().default(false),
+        required: z.boolean().optional().default(false),
+        onChange: z.any().optional(),
+        onBlur: z.any().optional(),
+        onFocus: z.any().optional(),
+    }),
+    fieldOverrides: {
+        className: (layer) => classNameFieldOverrides(layer),
+        onChange: () => functionPropRenderParentOverrides('onChange'),
+        onBlur: () => functionPropRenderParentOverrides('onBlur'),
+        onFocus: () => functionPropRenderParentOverrides('onFocus'),
+    }
+  },
+  'textarea': {
+    schema: z.object({
+        className: z.string().optional(),
+        name: z.string().optional(),
+        placeholder: z.string().optional(),
+        defaultValue: z.string().optional(),
+        rows: z.coerce.number().optional(),
+        disabled: z.boolean().optional().default(false),
+        required: z.boolean().optional().default(false),
+        onChange: z.any().optional(),
+        onBlur: z.any().optional(),
+        onFocus: z.any().optional(),
+    }),
+    fieldOverrides: {
+        className: (layer) => classNameFieldOverrides(layer),
+        onChange: () => functionPropRenderParentOverrides('onChange'),
+        onBlur: () => functionPropRenderParentOverrides('onBlur'),
+        onFocus: () => functionPropRenderParentOverrides('onFocus'),
+    }
+  },
+  'select': {
+    schema: z.object({
+        className: z.string().optional(),
+        children: z.any().optional(),
+        name: z.string().optional(),
+        defaultValue: z.string().optional(),
+        disabled: z.boolean().optional().default(false),
+        required: z.boolean().optional().default(false),
+        onChange: z.any().optional(),
+    }),
+    fieldOverrides: {
+        ...commonFieldOverrides(),
+        onChange: () => functionPropRenderParentOverrides('onChange'),
+    }
   },
   'img': {
     schema: z.object({
@@ -31,8 +117,12 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     schema: z.object({
         className: z.string().optional(),
         children: z.any().optional(),
+        onClick: z.any().optional(),
     }),
-    fieldOverrides: commonFieldOverrides()
+    fieldOverrides: {
+        ...commonFieldOverrides(),
+        onClick: () => functionPropRenderParentOverrides('onClick'),
+    }
   },
   'iframe': {
     schema: z.object({

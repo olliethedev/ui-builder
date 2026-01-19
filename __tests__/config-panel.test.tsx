@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConfigPanel } from '@/components/ui/ui-builder/internal/config-panel';
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 // Mock the layer store
 jest.mock('@/lib/ui-builder/store/layer-store');

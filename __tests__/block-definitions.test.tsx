@@ -4,7 +4,7 @@ import {
   getBlocksByCategory,
   getBlockCategories,
   getAllBlocks,
-  BlockDefinition,
+  type BlockDefinition,
 } from "../lib/ui-builder/registry/block-definitions";
 
 describe("blockDefinitions", () => {
@@ -116,7 +116,7 @@ describe("getBlockCategories", () => {
 
   it("should have no duplicate categories", () => {
     const categories = getBlockCategories();
-    const uniqueCategories = [...new Set(categories)];
+    const uniqueCategories = Array.from(new Set(categories));
     expect(categories.length).toBe(uniqueCategories.length);
   });
 });
@@ -143,12 +143,13 @@ describe("specific block templates", () => {
     it("should have a Card as the root template", () => {
       const block = blockDefinitions["login-01"];
       expect(block).toBeDefined();
-      expect(block.template.type).toBe("Card");
+      expect(block?.template.type).toBe("Card");
     });
 
     it("should have required login form elements", () => {
       const block = blockDefinitions["login-01"];
-      const templateStr = JSON.stringify(block.template);
+      expect(block).toBeDefined();
+      const templateStr = JSON.stringify(block!.template);
       
       // Check for key form elements
       expect(templateStr).toContain("CardHeader");
@@ -162,9 +163,9 @@ describe("specific block templates", () => {
     it("should have dashboard stats cards", () => {
       const block = blockDefinitions["dashboard-01"];
       expect(block).toBeDefined();
-      expect(block.category).toBe("dashboard");
+      expect(block?.category).toBe("dashboard");
       
-      const templateStr = JSON.stringify(block.template);
+      const templateStr = JSON.stringify(block!.template);
       expect(templateStr).toContain("Card");
       expect(templateStr).toContain("CardTitle");
     });
@@ -174,7 +175,7 @@ describe("specific block templates", () => {
     it("should use SidebarProvider as root", () => {
       const block = blockDefinitions["sidebar-01"];
       expect(block).toBeDefined();
-      expect(block.template.type).toBe("SidebarProvider");
+      expect(block?.template.type).toBe("SidebarProvider");
     });
   });
 });

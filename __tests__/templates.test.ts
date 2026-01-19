@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { pageLayerToCode, generateLayerCode, generatePropsString } from "../components/ui/ui-builder/internal/utils/templates";
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
-import { Variable } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { Variable } from '@/components/ui/ui-builder/types';
 import { normalizeSchema } from "./test-utils";
 import { z } from "zod";
 
@@ -65,6 +65,22 @@ const mockVariables: Variable[] = [
     name: 'isActive',
     type: 'boolean',
     defaultValue: true
+  }
+];
+
+const mockVariablesWithFunctions: Variable[] = [
+  ...mockVariables,
+  {
+    id: 'fn1',
+    name: 'handleClick',
+    type: 'function',
+    defaultValue: 'mockClickHandler'
+  },
+  {
+    id: 'fn2',
+    name: 'handleSubmit',
+    type: 'function',
+    defaultValue: 'mockSubmitHandler'
   }
 ];
 
@@ -472,6 +488,96 @@ ${expectedChildren}
 export default Page;
       `;
       expect(normalizeSchema(pageLayerToCode(page, componentRegistry, []))).toBe(normalizeSchema(expected));
+    });
+  });
+
+  describe("function variable code generation", () => {
+    it("should generate functions.xxx for function-type variable references", () => {
+      const props = { 
+        className: "button-class", 
+        onClick: { __variableRef: 'fn1' }
+      };
+      const expected = ` className="button-class" onClick={functions.handleClick}`;
+      expect(generatePropsString(props, mockVariablesWithFunctions)).toBe(expected);
+    });
+
+    it("should generate correct interface with both variables and functions", () => {
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              className: "button-class",
+              onClick: { __variableRef: 'fn1' },
+              label: { __variableRef: 'var1' }
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, mockVariablesWithFunctions);
+      
+      // Check that the interface includes both variables and functions
+      expect(result).toContain('variables: {');
+      expect(result).toContain('functions: {');
+      expect(result).toContain('userName: string;');
+      expect(result).toContain('handleClick: (...args: any[]) => any;');
+      
+      // Check that the props are generated correctly
+      expect(result).toContain('onClick={functions.handleClick}');
+      expect(result).toContain('label={variables.userName}');
+    });
+
+    it("should generate code with only functions when no regular variables are used", () => {
+      const functionsOnlyVariables: Variable[] = [
+        { id: 'fn1', name: 'handleClick', type: 'function', defaultValue: 'handler' }
+      ];
+      
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              onClick: { __variableRef: 'fn1' }
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, functionsOnlyVariables);
+      
+      // Should have functions interface but not variables
+      expect(result).toContain('functions: {');
+      expect(result).toContain('{ functions }: PageProps');
+      expect(result).toContain('onClick={functions.handleClick}');
+    });
+
+    it("should mix function and regular variables correctly in layer code", () => {
+      const layer: ComponentLayer = {
+        id: "button1",
+        type: "Button",
+        props: { 
+          className: "button-class",
+          onClick: { __variableRef: 'fn1' },
+          label: { __variableRef: 'var1' }
+        },
+        children: [],
+      };
+      
+      const result = generateLayerCode(layer, 0, mockVariablesWithFunctions);
+      
+      expect(result).toContain('onClick={functions.handleClick}');
+      expect(result).toContain('label={variables.userName}');
     });
   });
 });

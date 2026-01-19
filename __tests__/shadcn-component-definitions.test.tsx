@@ -2,7 +2,7 @@
 import { shadcnComponentDefinitions } from "../lib/ui-builder/registry/shadcn-component-definitions";
 import { customComponentDefinitions } from "../lib/ui-builder/registry/custom-component-definitions";
 import { complexComponentDefinitions } from "../lib/ui-builder/registry/complex-component-definitions";
-import { ComponentRegistry, RegistryEntry } from "../components/ui/ui-builder/types";
+import type { ComponentRegistry, RegistryEntry } from "../components/ui/ui-builder/types";
 
 describe("shadcnComponentDefinitions", () => {
   it("should export a non-empty registry object", () => {
@@ -91,9 +91,9 @@ describe("shadcnComponentDefinitions", () => {
     it.each(compoundComponents)("%s should have defaultChildren", (componentName) => {
       const entry = shadcnComponentDefinitions[componentName];
       expect(entry).toBeDefined();
-      expect(entry.defaultChildren).toBeDefined();
-      expect(Array.isArray(entry.defaultChildren)).toBe(true);
-      expect((entry.defaultChildren as any[]).length).toBeGreaterThan(0);
+      expect(entry!.defaultChildren).toBeDefined();
+      expect(Array.isArray(entry!.defaultChildren)).toBe(true);
+      expect((entry!.defaultChildren as any[]).length).toBeGreaterThan(0);
     });
   });
 
@@ -183,8 +183,8 @@ describe("customComponentDefinitions", () => {
 
   it.each(customComponents)("should include %s component", (componentName) => {
     expect(customComponentDefinitions[componentName]).toBeDefined();
-    expect(customComponentDefinitions[componentName].component).toBeDefined();
-    expect(customComponentDefinitions[componentName].schema).toBeDefined();
+    expect(customComponentDefinitions[componentName]!.component).toBeDefined();
+    expect(customComponentDefinitions[componentName]!.schema).toBeDefined();
   });
 });
 
@@ -205,7 +205,7 @@ describe("complexComponentDefinitions", () => {
   it("should have the same structure as customComponentDefinitions for custom components", () => {
     for (const [name, entry] of Object.entries(customComponentDefinitions)) {
       expect(complexComponentDefinitions[name]).toBeDefined();
-      expect(complexComponentDefinitions[name].component).toBe(entry.component);
+      expect(complexComponentDefinitions[name]!.component).toBe(entry.component);
     }
   });
 });

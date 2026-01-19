@@ -1,5 +1,5 @@
  
-import { type ZodObject, type ZodSchema } from "zod";
+import { type ZodObject, type ZodSchema, type ZodTuple } from "zod";
 import { type ComponentType as ReactComponentType, type ReactNode } from 'react';
 import {
     type FieldConfigItem,
@@ -39,13 +39,16 @@ export interface ComponentLayer<TProps extends Record<string, PropValue> = Recor
 }
 
 // Variable value types - more specific than before
-export type VariableValueType = 'string' | 'number' | 'boolean';
+// 'function' type variables reference a key in the FunctionRegistry
+export type VariableValueType = 'string' | 'number' | 'boolean' | 'function';
 
 // Type-safe variable values based on their type
+// For function type, the value is the FunctionRegistry key
 export type VariableValue<T extends VariableValueType> = 
   T extends 'string' ? string :
   T extends 'number' ? number :
   T extends 'boolean' ? boolean :
+  T extends 'function' ? string :  // References functionRegistry key
   never;
 
 // Enhanced Variable interface with generic typing
@@ -164,8 +167,25 @@ export interface BlockDefinition {
  */
 export type BlockRegistry = Record<string, BlockDefinition>;
 
+/**
+ * Function definition for the function registry.
+ * Describes a function that can be bound to component event handlers.
+ */
+export interface FunctionDefinition {
+  /** Human-readable name for the function */
+  name: string;
+  /** Zod schema describing the function parameters (use z.tuple for ordered args, z.object for named params) */
+  schema: ZodTuple<any, any> | ZodObject<any> | ZodSchema<any>;
+  /** The actual function to call at runtime */
+  fn: (...args: any[]) => any;
+  /** Optional description shown in the UI */
+  description?: string;
+}
 
-
-
+/**
+ * Function registry type - a record of function ID to function definition.
+ * Used to provide callable functions that can be bound to component event handlers.
+ */
+export type FunctionRegistry = Record<string, FunctionDefinition>;
 
 

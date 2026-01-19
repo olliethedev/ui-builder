@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash2, Plus, Edit2, Check, X } from "lucide-react";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
-import type { Variable } from "@/components/ui/ui-builder/types";
+import type { Variable, FunctionRegistry } from "@/components/ui/ui-builder/types";
 import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 
@@ -33,6 +33,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const incrementRevision = useEditorStore((state) => state.incrementRevision);
   const allowVariableEditing = useEditorStore((state) => state.allowVariableEditing);
+  const functionRegistry = useEditorStore((state) => state.functionRegistry);
 
   const handleAddVariable = useCallback(
     (name: string, type: Variable["type"], defaultValue: any) => {
@@ -86,6 +87,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({
         <AddVariableForm
           onSave={handleAddVariable}
           onCancel={handleSetIsNotAdding}
+          functionRegistry={functionRegistry}
         />
       )}
 
@@ -100,6 +102,7 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({
             onCancel={handleOnCancel}
             onDelete={handleOnDelete}
             editVariables={allowVariableEditing}
+            functionRegistry={functionRegistry}
           />
         ))}
       </div>
@@ -118,11 +121,13 @@ export const VariablesPanel: React.FC<VariablesPanelProps> = ({
 interface AddVariableFormProps {
   onSave: (name: string, type: Variable["type"], defaultValue: any) => void;
   onCancel: () => void;
+  functionRegistry: FunctionRegistry | undefined;
 }
 
 const AddVariableForm: React.FC<AddVariableFormProps> = ({
   onSave,
   onCancel,
+  functionRegistry,
 }) => {
   const [name, setName] = useState("");
   const [type, setType] = useState<Variable["type"]>("string");
@@ -132,6 +137,19 @@ const AddVariableForm: React.FC<AddVariableFormProps> = ({
     defaultValue?: string;
   }>(EMPTY_OBJECT);
 
+  // Get function options from the registry
+  const functionOptions = useMemo(() => {
+    if (!functionRegistry) return [];
+    return Object.entries(functionRegistry).map(([id, def]) => ({
+      id,
+      name: def.name,
+      description: def.description,
+    }));
+  }, [functionRegistry]);
+
+  // Check if function type is available (only when functionRegistry has items)
+  const hasFunctions = functionOptions.length > 0;
+
   const validateForm = useCallback(() => {
     const newErrors: { name?: string; defaultValue?: string } = {};
 
@@ -139,13 +157,18 @@ const AddVariableForm: React.FC<AddVariableFormProps> = ({
       newErrors.name = "Name is required";
     }
 
-    if (!defaultValue.trim()) {
+    if (type === 'function') {
+      // For function type, defaultValue is the function ID
+      if (!defaultValue) {
+        newErrors.defaultValue = "Please select a function";
+      }
+    } else if (!defaultValue.trim()) {
       newErrors.defaultValue = "Preview value is required";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [name, defaultValue]);
+  }, [name, defaultValue, type]);
 
   const handleSave = useCallback(() => {
     if (!validateForm()) return;
@@ -157,6 +180,7 @@ const AddVariableForm: React.FC<AddVariableFormProps> = ({
       } else if (type === "boolean") {
         parsedValue = defaultValue.toLowerCase() === "true";
       }
+      // For 'function' type, defaultValue is already the function ID (string)
     } catch (e) {
       console.warn("Error parsing variable value, keeping as string", e);
     }
@@ -173,13 +197,26 @@ const AddVariableForm: React.FC<AddVariableFormProps> = ({
   );
 
   const handleTypeChange = useCallback(
-    (value: string) => setType(value as Variable["type"]),
+    (value: string) => {
+      setType(value as Variable["type"]);
+      // Reset default value when switching types
+      setDefaultValue("");
+    },
     []
   );
 
   const handleDefaultValueChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setDefaultValue(e.target.value);
+      if (errors.defaultValue)
+        setErrors((prev) => ({ ...prev, defaultValue: undefined }));
+    },
+    [errors.defaultValue]
+  );
+
+  const handleFunctionSelect = useCallback(
+    (value: string) => {
+      setDefaultValue(value);
       if (errors.defaultValue)
         setErrors((prev) => ({ ...prev, defaultValue: undefined }));
     },
@@ -218,23 +255,54 @@ const AddVariableForm: React.FC<AddVariableFormProps> = ({
               <SelectItem value="string">String</SelectItem>
               <SelectItem value="number">Number</SelectItem>
               <SelectItem value="boolean">Boolean</SelectItem>
+              {hasFunctions && <SelectItem value="function">Function</SelectItem>}
             </SelectContent>
           </Select>
         </div>
 
         <div>
-          <Label htmlFor="var-default">
-            Preview Value <span className="text-red-500">*</span>
-          </Label>
-          <Input
-            id="var-default"
-            value={defaultValue}
-            onChange={handleDefaultValueChange}
-            placeholder={getPlaceholderForType(type)}
-            className={errors.defaultValue ? "border-red-500" : ""}
-          />
-          {errors.defaultValue && (
-            <p className="text-sm text-red-500 mt-1">{errors.defaultValue}</p>
+          {type === 'function' ? (
+            <>
+              <Label htmlFor="var-function">
+                Function <span className="text-red-500">*</span>
+              </Label>
+              <Select value={defaultValue} onValueChange={handleFunctionSelect}>
+                <SelectTrigger className={errors.defaultValue ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Select a function..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {functionOptions.map((fn) => (
+                    <SelectItem key={fn.id} value={fn.id}>
+                      <div className="flex flex-col">
+                        <span>{fn.name}</span>
+                        {fn.description && (
+                          <span className="text-xs text-muted-foreground">{fn.description}</span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.defaultValue && (
+                <p className="text-sm text-red-500 mt-1">{errors.defaultValue}</p>
+              )}
+            </>
+          ) : (
+            <>
+              <Label htmlFor="var-default">
+                Preview Value <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="var-default"
+                value={defaultValue}
+                onChange={handleDefaultValueChange}
+                placeholder={getPlaceholderForType(type)}
+                className={errors.defaultValue ? "border-red-500" : ""}
+              />
+              {errors.defaultValue && (
+                <p className="text-sm text-red-500 mt-1">{errors.defaultValue}</p>
+              )}
+            </>
           )}
         </div>
 
@@ -261,6 +329,7 @@ interface VariableCardProps {
   onCancel: () => void;
   onDelete: (id: string) => void;
   editVariables: boolean;
+  functionRegistry: FunctionRegistry | undefined;
 }
 
 const VariableCard: React.FC<VariableCardProps> = ({
@@ -271,6 +340,7 @@ const VariableCard: React.FC<VariableCardProps> = ({
   onCancel,
   onDelete,
   editVariables,
+  functionRegistry,
 }) => {
   const [name, setName] = useState(variable.name);
   const [type, setType] = useState(variable.type);
@@ -282,6 +352,26 @@ const VariableCard: React.FC<VariableCardProps> = ({
     defaultValue?: string;
   }>(EMPTY_OBJECT);
 
+  // Get function options from the registry
+  const functionOptions = useMemo(() => {
+    if (!functionRegistry) return [];
+    return Object.entries(functionRegistry).map(([id, def]) => ({
+      id,
+      name: def.name,
+      description: def.description,
+    }));
+  }, [functionRegistry]);
+
+  // Check if function type is available
+  const hasFunctions = functionOptions.length > 0;
+
+  // Get the display name for a function variable
+  const getFunctionDisplayName = useCallback((funcId: string) => {
+    if (!functionRegistry) return funcId;
+    const fn = functionRegistry[funcId];
+    return fn ? fn.name : funcId;
+  }, [functionRegistry]);
+
   const validateForm = useCallback(() => {
     const newErrors: { name?: string; defaultValue?: string } = {};
 
@@ -289,13 +379,17 @@ const VariableCard: React.FC<VariableCardProps> = ({
       newErrors.name = "Name is required";
     }
 
-    if (!defaultValue.trim()) {
+    if (type === 'function') {
+      if (!defaultValue) {
+        newErrors.defaultValue = "Please select a function";
+      }
+    } else if (!defaultValue.trim()) {
       newErrors.defaultValue = "Preview value is required";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [name, defaultValue]);
+  }, [name, defaultValue, type]);
 
   const handleSave = useCallback(() => {
     if (!validateForm()) return;
@@ -307,6 +401,7 @@ const VariableCard: React.FC<VariableCardProps> = ({
       } else if (type === "boolean") {
         parsedValue = defaultValue.toLowerCase() === "true";
       }
+      // For 'function' type, defaultValue is already the function ID (string)
     } catch (e) {
       console.warn("Error parsing variable value, keeping as string", e);
     }
@@ -323,13 +418,26 @@ const VariableCard: React.FC<VariableCardProps> = ({
   );
 
   const handleTypeChange = useCallback(
-    (value: string) => setType(value as Variable["type"]),
+    (value: string) => {
+      setType(value as Variable["type"]);
+      // Reset default value when switching types
+      setDefaultValue("");
+    },
     []
   );
 
   const handleDefaultValueChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setDefaultValue(e.target.value);
+      if (errors.defaultValue)
+        setErrors((prev) => ({ ...prev, defaultValue: undefined }));
+    },
+    [errors.defaultValue]
+  );
+
+  const handleFunctionSelect = useCallback(
+    (value: string) => {
+      setDefaultValue(value);
       if (errors.defaultValue)
         setErrors((prev) => ({ ...prev, defaultValue: undefined }));
     },
@@ -373,23 +481,54 @@ const VariableCard: React.FC<VariableCardProps> = ({
                 <SelectItem value="string">String</SelectItem>
                 <SelectItem value="number">Number</SelectItem>
                 <SelectItem value="boolean">Boolean</SelectItem>
+                {hasFunctions && <SelectItem value="function">Function</SelectItem>}
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label htmlFor={`edit-default-${variable.id}`}>
-              Preview Value <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id={`edit-default-${variable.id}`}
-              value={defaultValue}
-              onChange={handleDefaultValueChange}
-              placeholder={getPlaceholderForType(type)}
-              className={errors.defaultValue ? "border-red-500" : ""}
-            />
-            {errors.defaultValue && (
-              <p className="text-sm text-red-500 mt-1">{errors.defaultValue}</p>
+            {type === 'function' ? (
+              <>
+                <Label htmlFor={`edit-function-${variable.id}`}>
+                  Function <span className="text-red-500">*</span>
+                </Label>
+                <Select value={defaultValue} onValueChange={handleFunctionSelect}>
+                  <SelectTrigger className={errors.defaultValue ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Select a function..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {functionOptions.map((fn) => (
+                      <SelectItem key={fn.id} value={fn.id}>
+                        <div className="flex flex-col">
+                          <span>{fn.name}</span>
+                          {fn.description && (
+                            <span className="text-xs text-muted-foreground">{fn.description}</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.defaultValue && (
+                  <p className="text-sm text-red-500 mt-1">{errors.defaultValue}</p>
+                )}
+              </>
+            ) : (
+              <>
+                <Label htmlFor={`edit-default-${variable.id}`}>
+                  Preview Value <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id={`edit-default-${variable.id}`}
+                  value={defaultValue}
+                  onChange={handleDefaultValueChange}
+                  placeholder={getPlaceholderForType(type)}
+                  className={errors.defaultValue ? "border-red-500" : ""}
+                />
+                {errors.defaultValue && (
+                  <p className="text-sm text-red-500 mt-1">{errors.defaultValue}</p>
+                )}
+              </>
             )}
           </div>
 
@@ -420,7 +559,9 @@ const VariableCard: React.FC<VariableCardProps> = ({
               </span>
             </div>
             <div className="text-sm text-muted-foreground mt-1">
-              {String(variable.defaultValue)}
+              {variable.type === 'function' 
+                ? getFunctionDisplayName(String(variable.defaultValue))
+                : String(variable.defaultValue)}
             </div>
           </div>
           {editVariables && (
@@ -447,6 +588,8 @@ function getPlaceholderForType(type: Variable["type"]): string {
       return "0";
     case "boolean":
       return "true";
+    case "function":
+      return "Select a function...";
     default:
       return "";
   }

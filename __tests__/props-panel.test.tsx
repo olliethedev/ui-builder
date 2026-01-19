@@ -6,7 +6,7 @@ import PropsPanel from "@/components/ui/ui-builder/internal/props-panel";
 import {
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
-import { RegistryEntry, ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { RegistryEntry, ComponentLayer } from '@/components/ui/ui-builder/types';
 import { textInputFieldOverrides } from '@/lib/ui-builder/registry/form-field-overrides';
 import { z } from "zod";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";

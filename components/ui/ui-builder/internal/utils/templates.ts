@@ -106,7 +106,19 @@ export const pageLayerToCode = (page: ComponentLayer, componentRegistry: Compone
 
   // Generate variable props interface
   const variablePropsInterface = generateVariablePropsInterface(variables, variableIdentifiers);
-  const variablePropsParam = variables.length > 0 ? "{ variables }: PageProps" : "";
+  
+  // Determine which props to destructure based on variable types
+  const hasRegularVariables = variables.some(v => v.type !== 'function');
+  const hasFunctionVariables = variables.some(v => v.type === 'function');
+  
+  let variablePropsParam = "";
+  if (hasRegularVariables && hasFunctionVariables) {
+    variablePropsParam = "{ variables, functions }: PageProps";
+  } else if (hasRegularVariables) {
+    variablePropsParam = "{ variables }: PageProps";
+  } else if (hasFunctionVariables) {
+    variablePropsParam = "{ functions }: PageProps";
+  }
 
   const finalCode = renderTemplate(reactComponentTemplate, {
     imports: importsString,
@@ -167,7 +179,12 @@ export const generatePropsString = (props: Record<string, any>, variables: Varia
         // Find the variable by ID
         const variable = variables.find(v => v.id === value.__variableRef);
         if (variable && variableIdentifiers) {
-          propValue = `{variables.${variableIdentifiers.get(variable.id)}}`;
+          // Function-type variables go in `functions`, other types in `variables`
+          if (variable.type === 'function') {
+            propValue = `{functions.${variableIdentifiers.get(variable.id)}}`;
+          } else {
+            propValue = `{variables.${variableIdentifiers.get(variable.id)}}`;
+          }
         } else {
           // Fallback if variable not found
           propValue = `{undefined}`;
@@ -193,7 +210,12 @@ const generateVariablePropsInterface = (variables: Variable[], variableIdentifie
     variableIdentifiers = generateVariableIdentifiers(variables);
   }
   
-  const variableTypes = variables.map(variable => {
+  // Separate regular variables from function variables
+  const regularVariables = variables.filter(v => v.type !== 'function');
+  const functionVariables = variables.filter(v => v.type === 'function');
+  
+  // Generate regular variable types
+  const variableTypes = regularVariables.map(variable => {
     let tsType = 'any';
     switch (variable.type) {
       case 'string':
@@ -208,14 +230,34 @@ const generateVariablePropsInterface = (variables: Variable[], variableIdentifie
     }
     return `    ${variableIdentifiers!.get(variable.id)}: ${tsType};`;
   }).join('\n');
+  
+  // Generate function types
+  const functionTypes = functionVariables.map(variable => {
+    // Function variables get a generic function type
+    // The actual signature would come from the FunctionRegistry, but for code gen
+    // we use a permissive type that allows any function
+    return `    ${variableIdentifiers!.get(variable.id)}: (...args: any[]) => any;`;
+  }).join('\n');
 
-  return `interface PageProps {
-  variables: {
-${variableTypes}
-  };
-}
-
-`;
+  // Build the interface
+  const hasVariables = regularVariables.length > 0;
+  const hasFunctions = functionVariables.length > 0;
+  
+  if (!hasVariables && !hasFunctions) return "";
+  
+  let interfaceContent = 'interface PageProps {\n';
+  
+  if (hasVariables) {
+    interfaceContent += `  variables: {\n${variableTypes}\n  };\n`;
+  }
+  
+  if (hasFunctions) {
+    interfaceContent += `  functions: {\n${functionTypes}\n  };\n`;
+  }
+  
+  interfaceContent += '}\n\n';
+  
+  return interfaceContent;
 };
 
 const reactComponentTemplate =

@@ -57,7 +57,7 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGro
 import { Item, ItemMedia, ItemContent, ItemActions, ItemGroup, ItemSeparator, ItemTitle, ItemDescription, ItemHeader, ItemFooter } from "@/components/ui/item";
 import { AreaChartDemo, BarChartDemo, LineChartDemo, PieChartDemo } from "@/components/ui/chart-demos";
 
-import { classNameFieldOverrides, childrenFieldOverrides, commonFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { classNameFieldOverrides, childrenFieldOverrides, commonFieldOverrides, functionPropRenderParentOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 /**
  * Shadcn/UI component definitions for the UI Builder.
@@ -80,6 +80,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             size: z.enum(["default", "sm", "lg", "icon"]).default("default"),
             disabled: z.boolean().optional(),
             type: z.enum(["button", "submit", "reset"]).optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/button",
         defaultChildren: [
@@ -91,7 +92,10 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
                 children: "Button",
             } satisfies ComponentLayer,
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropRenderParentOverrides('onClick'),
+        }
     },
     Badge: {
         component: Badge,
@@ -1484,10 +1488,16 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             name: z.string().optional(),
             id: z.string().optional(),
             defaultValue: z.string().optional(),
+            onChange: z.any().optional(),
+            onBlur: z.any().optional(),
+            onFocus: z.any().optional(),
         }),
         from: "@/components/ui/input",
         fieldOverrides: {
-            className: (layer) => classNameFieldOverrides(layer)
+            className: (layer) => classNameFieldOverrides(layer),
+            onChange: () => functionPropRenderParentOverrides('onChange'),
+            onBlur: () => functionPropRenderParentOverrides('onBlur'),
+            onFocus: () => functionPropRenderParentOverrides('onFocus'),
         }
     },
     Textarea: {
@@ -1501,10 +1511,16 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             id: z.string().optional(),
             rows: z.number().optional(),
             defaultValue: z.string().optional(),
+            onChange: z.any().optional(),
+            onBlur: z.any().optional(),
+            onFocus: z.any().optional(),
         }),
         from: "@/components/ui/textarea",
         fieldOverrides: {
-            className: (layer) => classNameFieldOverrides(layer)
+            className: (layer) => classNameFieldOverrides(layer),
+            onChange: () => functionPropRenderParentOverrides('onChange'),
+            onBlur: () => functionPropRenderParentOverrides('onBlur'),
+            onFocus: () => functionPropRenderParentOverrides('onFocus'),
         }
     },
     Label: {
@@ -1528,10 +1544,12 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             required: z.boolean().optional(),
             name: z.string().optional(),
             id: z.string().optional(),
+            onCheckedChange: z.any().optional(),
         }),
         from: "@/components/ui/checkbox",
         fieldOverrides: {
-            className: (layer) => classNameFieldOverrides(layer)
+            className: (layer) => classNameFieldOverrides(layer),
+            onCheckedChange: () => functionPropRenderParentOverrides('onCheckedChange'),
         }
     },
     RadioGroup: {
@@ -1577,10 +1595,12 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             required: z.boolean().optional(),
             name: z.string().optional(),
             id: z.string().optional(),
+            onCheckedChange: z.any().optional(),
         }),
         from: "@/components/ui/switch",
         fieldOverrides: {
-            className: (layer) => classNameFieldOverrides(layer)
+            className: (layer) => classNameFieldOverrides(layer),
+            onCheckedChange: () => functionPropRenderParentOverrides('onCheckedChange'),
         }
     },
 

@@ -3,7 +3,7 @@ import React from "react";
 import { type EditorConfig, RenderLayer } from "@/components/ui/ui-builder/internal/utils/render-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/components/dev-profiler";
 
-import type { Variable, ComponentLayer, ComponentRegistry, PropValue } from '@/components/ui/ui-builder/types';
+import type { Variable, ComponentLayer, ComponentRegistry, PropValue, FunctionRegistry } from '@/components/ui/ui-builder/types';
 
 interface LayerRendererProps<TRegistry extends ComponentRegistry = ComponentRegistry> {
   className?: string;
@@ -14,6 +14,8 @@ interface LayerRendererProps<TRegistry extends ComponentRegistry = ComponentRegi
   variables?: Variable[];
   /** Optional variable values to override defaults */
   variableValues?: Record<string, PropValue>;
+  /** Optional function registry for resolving function-type variables */
+  functionRegistry?: FunctionRegistry;
 }
 
 const LayerRenderer = React.memo<LayerRendererProps>(function LayerRenderer({
@@ -23,6 +25,7 @@ const LayerRenderer = React.memo<LayerRendererProps>(function LayerRenderer({
   componentRegistry,
   variables,
   variableValues,
+  functionRegistry,
 }) {
 
   return (
@@ -33,7 +36,8 @@ const LayerRenderer = React.memo<LayerRendererProps>(function LayerRenderer({
           editorConfig={editorConfig} 
           componentRegistry={componentRegistry} 
           variables={variables}
-          variableValues={variableValues} 
+          variableValues={variableValues}
+          functionRegistry={functionRegistry}
         />
       </div>
     </DevProfiler>

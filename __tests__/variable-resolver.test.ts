@@ -1,5 +1,5 @@
-import { isVariableReference, resolveVariableReferences, resolveChildrenVariableReference } from '@/lib/ui-builder/utils/variable-resolver';
-import { Variable, ComponentLayer } from '@/components/ui/ui-builder/types';
+import { isVariableReference, resolveVariableReferences, resolveChildrenVariableReference } from '../lib/ui-builder/utils/variable-resolver';
+import type { Variable, ComponentLayer, FunctionRegistry } from '../components/ui/ui-builder/types';
 
 describe('Variable Resolver', () => {
   const mockVariables: Variable[] = [
@@ -7,6 +7,25 @@ describe('Variable Resolver', () => {
     { id: 'var2', name: 'userAge', type: 'number', defaultValue: 25 },
     { id: 'var3', name: 'isActive', type: 'boolean', defaultValue: true },
   ];
+
+  const mockFunctionVariables: Variable[] = [
+    ...mockVariables,
+    { id: 'fn1', name: 'handleClick', type: 'function', defaultValue: 'mockClickHandler' },
+    { id: 'fn2', name: 'handleSubmit', type: 'function', defaultValue: 'mockSubmitHandler' },
+  ];
+
+  const mockFunctionRegistry: FunctionRegistry = {
+    mockClickHandler: {
+      name: 'Mock Click Handler',
+      schema: {} as any,
+      fn: jest.fn(() => 'clicked'),
+    },
+    mockSubmitHandler: {
+      name: 'Mock Submit Handler',
+      schema: {} as any,
+      fn: jest.fn(() => 'submitted'),
+    },
+  };
 
   describe('isVariableReference', () => {
     it('should return true for valid variable reference objects', () => {
@@ -180,6 +199,86 @@ describe('Variable Resolver', () => {
           },
         },
         simpleRef: 25,
+      });
+    });
+
+    describe('function-type variable resolution', () => {
+      it('should resolve function-type variables to actual functions from registry', () => {
+        const props = {
+          onClick: { __variableRef: 'fn1' },
+          onSubmit: { __variableRef: 'fn2' },
+        };
+
+        const resolved = resolveVariableReferences(
+          props,
+          mockFunctionVariables,
+          undefined,
+          mockFunctionRegistry
+        );
+
+        expect(resolved.onClick).toBe(mockFunctionRegistry.mockClickHandler!.fn);
+        expect(resolved.onSubmit).toBe(mockFunctionRegistry.mockSubmitHandler!.fn);
+      });
+
+      it('should return undefined when function is not found in registry', () => {
+        const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+        const props = {
+          onClick: { __variableRef: 'fn1' },
+        };
+
+        const incompleteRegistry: FunctionRegistry = {
+          // mockClickHandler is missing
+        };
+
+        const resolved = resolveVariableReferences(
+          props,
+          mockFunctionVariables,
+          undefined,
+          incompleteRegistry
+        );
+
+        expect(resolved.onClick).toBeUndefined();
+        expect(consoleSpy).toHaveBeenCalled();
+        consoleSpy.mockRestore();
+      });
+
+      it('should warn when function registry is not provided for function-type variable', () => {
+        const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
+        const props = {
+          onClick: { __variableRef: 'fn1' },
+        };
+
+        const resolved = resolveVariableReferences(
+          props,
+          mockFunctionVariables,
+          undefined,
+          undefined // No function registry
+        );
+
+        expect(resolved.onClick).toBeUndefined();
+        expect(consoleSpy).toHaveBeenCalledWith(
+          'Function-type variable found but no functionRegistry provided'
+        );
+        consoleSpy.mockRestore();
+      });
+
+      it('should mix function and non-function variables correctly', () => {
+        const props = {
+          title: { __variableRef: 'var1' },
+          onClick: { __variableRef: 'fn1' },
+          count: { __variableRef: 'var2' },
+        };
+
+        const resolved = resolveVariableReferences(
+          props,
+          mockFunctionVariables,
+          undefined,
+          mockFunctionRegistry
+        );
+
+        expect(resolved.title).toBe('John Doe');
+        expect(resolved.onClick).toBe(mockFunctionRegistry.mockClickHandler!.fn);
+        expect(resolved.count).toBe(25);
       });
     });
   });
