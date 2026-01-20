@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { pageLayerToCode, generateLayerCode, generatePropsString } from "../components/ui/ui-builder/internal/utils/templates";
-import type { ComponentLayer } from '@/components/ui/ui-builder/types';
-import type { Variable } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer, Variable, FunctionRegistry } from '@/components/ui/ui-builder/types';
 import { normalizeSchema } from "./test-utils";
 import { z } from "zod";
 
@@ -967,7 +966,7 @@ export default Page;
     });
 
     it("should fallback to unknown for unrecognized schema types", () => {
-      // Create a mock schema with an unrecognized type
+      // Create a mock schema with an unrecognized type (intentionally invalid for edge case testing)
       const weirdSchema = { _zod: { def: { type: 'someUnknownType' } } };
       const mockFunctionRegistry = {
         weirdHandler: {
@@ -975,7 +974,7 @@ export default Page;
           schema: weirdSchema,
           fn: () => {},
         },
-      };
+      } as unknown as FunctionRegistry;
 
       const page: ComponentLayer = {
         id: "page1",
@@ -993,7 +992,7 @@ export default Page;
     });
 
     it("should handle schema without _zod or _def", () => {
-      // Schema that has neither _zod nor _def
+      // Schema that has neither _zod nor _def (intentionally invalid for edge case testing)
       const invalidSchema = {};
       const mockFunctionRegistry = {
         invalidHandler: {
@@ -1001,7 +1000,7 @@ export default Page;
           schema: invalidSchema,
           fn: () => {},
         },
-      };
+      } as unknown as FunctionRegistry;
 
       const page: ComponentLayer = {
         id: "page1",
