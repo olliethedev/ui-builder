@@ -445,15 +445,6 @@ export const functionPropFieldOverrides = (propName: string): ReturnType<FieldCo
   };
 };
 
-/**
- * @deprecated Use functionPropFieldOverrides instead for a better UX
- * Render parent override for function props (onClick, onSubmit, etc.)
- * Shows only function-type variables in the binding dropdown.
- */
-export const functionPropRenderParentOverrides = (propName: string) => {
-  return functionPropFieldOverrides(propName);
-};
-
 export const textInputFieldOverrides = (
   layer: ComponentLayer,
   allowVariableBinding = false,

@@ -1,6 +1,6 @@
 import type { ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
-import { childrenAsTextareaFieldOverrides, classNameFieldOverrides, commonFieldOverrides, functionPropRenderParentOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { childrenAsTextareaFieldOverrides, classNameFieldOverrides, commonFieldOverrides, functionPropFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 export const primitiveComponentDefinitions: ComponentRegistry = {
   'a': {
@@ -16,7 +16,7 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     }),
     fieldOverrides: {
         ...commonFieldOverrides(),
-        onClick: () => functionPropRenderParentOverrides('onClick'),
+        onClick: () => functionPropFieldOverrides('onClick'),
     }
   },
   'button': {
@@ -29,7 +29,7 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     }),
     fieldOverrides: {
         ...commonFieldOverrides(),
-        onClick: () => functionPropRenderParentOverrides('onClick'),
+        onClick: () => functionPropFieldOverrides('onClick'),
     },
     defaultChildren: "Button"
   },
@@ -43,7 +43,7 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     }),
     fieldOverrides: {
         ...commonFieldOverrides(),
-        onSubmit: () => functionPropRenderParentOverrides('onSubmit'),
+        onSubmit: () => functionPropFieldOverrides('onSubmit'),
     }
   },
   'input': {
@@ -61,9 +61,9 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     }),
     fieldOverrides: {
         className: (layer) => classNameFieldOverrides(layer),
-        onChange: () => functionPropRenderParentOverrides('onChange'),
-        onBlur: () => functionPropRenderParentOverrides('onBlur'),
-        onFocus: () => functionPropRenderParentOverrides('onFocus'),
+        onChange: () => functionPropFieldOverrides('onChange'),
+        onBlur: () => functionPropFieldOverrides('onBlur'),
+        onFocus: () => functionPropFieldOverrides('onFocus'),
     }
   },
   'textarea': {
@@ -81,9 +81,9 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     }),
     fieldOverrides: {
         className: (layer) => classNameFieldOverrides(layer),
-        onChange: () => functionPropRenderParentOverrides('onChange'),
-        onBlur: () => functionPropRenderParentOverrides('onBlur'),
-        onFocus: () => functionPropRenderParentOverrides('onFocus'),
+        onChange: () => functionPropFieldOverrides('onChange'),
+        onBlur: () => functionPropFieldOverrides('onBlur'),
+        onFocus: () => functionPropFieldOverrides('onFocus'),
     }
   },
   'select': {
@@ -98,7 +98,7 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     }),
     fieldOverrides: {
         ...commonFieldOverrides(),
-        onChange: () => functionPropRenderParentOverrides('onChange'),
+        onChange: () => functionPropFieldOverrides('onChange'),
     }
   },
   'label': {
@@ -106,8 +106,12 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
         className: z.string().optional(),
         children: z.any().optional(),
         htmlFor: z.string().optional(),
+        onClick: z.any().optional(),
     }),
-    fieldOverrides: commonFieldOverrides()
+    fieldOverrides: {
+        ...commonFieldOverrides(),
+        onClick: () => functionPropFieldOverrides('onClick'),
+    }
   },
   'img': {
     schema: z.object({
@@ -116,9 +120,11 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
         alt: z.string().optional(),
         width: z.coerce.number().optional(),
         height: z.coerce.number().optional(),
+        onClick: z.any().optional(),
     }),
     fieldOverrides: {
-        className:(layer)=> classNameFieldOverrides(layer)
+        className:(layer)=> classNameFieldOverrides(layer),
+        onClick: () => functionPropFieldOverrides('onClick'),
     }
   },
   'div': {
@@ -129,7 +135,7 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     }),
     fieldOverrides: {
         ...commonFieldOverrides(),
-        onClick: () => functionPropRenderParentOverrides('onClick'),
+        onClick: () => functionPropFieldOverrides('onClick'),
     }
   },
   'iframe': {
@@ -152,10 +158,12 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     schema: z.object({
         className: z.string().optional(),
         children: z.string().optional(),
+        onClick: z.any().optional(),
     }),
     fieldOverrides: {
         className:(layer)=> classNameFieldOverrides(layer),
-        children: (layer)=> childrenAsTextareaFieldOverrides(layer)
+        children: (layer)=> childrenAsTextareaFieldOverrides(layer),
+        onClick: () => functionPropFieldOverrides('onClick'),
     },
     defaultChildren: "Text"
   },
@@ -163,10 +171,12 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     schema: z.object({
       className: z.string().optional(),
       children: z.string().optional(),
+      onClick: z.any().optional(),
     }),
     fieldOverrides: {
       ...commonFieldOverrides(),
-      children: (layer) => childrenAsTextareaFieldOverrides(layer)
+      children: (layer) => childrenAsTextareaFieldOverrides(layer),
+      onClick: () => functionPropFieldOverrides('onClick'),
     },
     defaultChildren: "Heading 1"
   },
@@ -174,10 +184,12 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     schema: z.object({
       className: z.string().optional(),
       children: z.string().optional(),
+      onClick: z.any().optional(),
     }),
     fieldOverrides: {
       ...commonFieldOverrides(),
-      children: (layer) => childrenAsTextareaFieldOverrides(layer)
+      children: (layer) => childrenAsTextareaFieldOverrides(layer),
+      onClick: () => functionPropFieldOverrides('onClick'),
     },
     defaultChildren: "Heading 2"
   },
@@ -185,10 +197,12 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     schema: z.object({
       className: z.string().optional(),
       children: z.string().optional(),
+      onClick: z.any().optional(),
     }),
     fieldOverrides: {
       ...commonFieldOverrides(),
-      children: (layer) => childrenAsTextareaFieldOverrides(layer)
+      children: (layer) => childrenAsTextareaFieldOverrides(layer),
+      onClick: () => functionPropFieldOverrides('onClick'),
     },
     defaultChildren: "Heading 3"
   },
@@ -196,10 +210,12 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     schema: z.object({
       className: z.string().optional(),
       children: z.string().optional(),
+      onClick: z.any().optional(),
     }),
     fieldOverrides: {
       ...commonFieldOverrides(),
-      children: (layer) => childrenAsTextareaFieldOverrides(layer)
+      children: (layer) => childrenAsTextareaFieldOverrides(layer),
+      onClick: () => functionPropFieldOverrides('onClick'),
     },
     defaultChildren: "Paragraph text"
   },
@@ -207,10 +223,12 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     schema: z.object({
       className: z.string().optional(),
       children: z.string().optional(),
+      onClick: z.any().optional(),
     }),
     fieldOverrides: {
       ...commonFieldOverrides(),
-      children: (layer) => childrenAsTextareaFieldOverrides(layer)
+      children: (layer) => childrenAsTextareaFieldOverrides(layer),
+      onClick: () => functionPropFieldOverrides('onClick'),
     },
     defaultChildren: "List item"
   },
@@ -218,14 +236,22 @@ export const primitiveComponentDefinitions: ComponentRegistry = {
     schema: z.object({
       className: z.string().optional(),
       children: z.string().optional(),
+      onClick: z.any().optional(),
     }),
-    fieldOverrides: commonFieldOverrides()
+    fieldOverrides: {
+      ...commonFieldOverrides(),
+      onClick: () => functionPropFieldOverrides('onClick'),
+    }
   },
   'ol': {
     schema: z.object({
       className: z.string().optional(),
       children: z.string().optional(),
+      onClick: z.any().optional(),
     }),
-    fieldOverrides: commonFieldOverrides()
+    fieldOverrides: {
+      ...commonFieldOverrides(),
+      onClick: () => functionPropFieldOverrides('onClick'),
+    }
   }
 };
