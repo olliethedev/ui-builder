@@ -77,8 +77,17 @@ export function resolveVariableReferences(
     }
     
     // Skip props that were already resolved via __function_* metadata
+    // Only skip if functionRegistry was provided, otherwise preserve the original value
     if (functionMetadata[key]) {
-      continue;
+      if (!functionRegistry) {
+        // Warn when function metadata exists but no registry is provided
+        console.warn(
+          `Function metadata "__function_${key}" found but no functionRegistry provided. ` +
+          `Falling back to original prop value for "${key}".`
+        );
+      } else {
+        continue;
+      }
     }
     
     if (isVariableReference(value)) {

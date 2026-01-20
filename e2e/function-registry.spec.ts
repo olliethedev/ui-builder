@@ -38,8 +38,8 @@ test.describe('Function Registry (/smoke/functions)', () => {
       await waitForBuilderReady(page);
       
       // Verify the HTML form is present in the iframe canvas
-      const canvas = page.getByTestId('auto-frame').first();
-      const frame = canvas.frameLocator('iframe').first();
+      // auto-frame IS the iframe element itself, so we use frameLocator directly on it
+      const frame = page.frameLocator('[data-testid="auto-frame"]').first();
       
       await expect(frame.getByText('HTML Form (Server Action)')).toBeVisible({ timeout: 10000 });
       await expect(frame.locator('form').first()).toBeVisible();
@@ -51,8 +51,8 @@ test.describe('Function Registry (/smoke/functions)', () => {
       await waitForBuilderReady(page);
       
       // Verify the shadcn form is present in the iframe canvas
-      const canvas = page.getByTestId('auto-frame').first();
-      const frame = canvas.frameLocator('iframe').first();
+      // auto-frame IS the iframe element itself
+      const frame = page.frameLocator('[data-testid="auto-frame"]').first();
       
       await expect(frame.getByText('Shadcn Form (Server Action)')).toBeVisible({ timeout: 10000 });
     });
@@ -63,12 +63,13 @@ test.describe('Function Registry (/smoke/functions)', () => {
       await waitForBuilderReady(page);
       
       // Verify the toast buttons section is present
-      const canvas = page.getByTestId('auto-frame').first();
-      const frame = canvas.frameLocator('iframe').first();
+      // auto-frame IS the iframe element itself
+      const frame = page.frameLocator('[data-testid="auto-frame"]').first();
       
-      await expect(frame.getByText('Toast Notifications')).toBeVisible({ timeout: 10000 });
-      await expect(frame.getByText('Show Success Toast')).toBeVisible();
-      await expect(frame.getByText('Show Error Toast')).toBeVisible();
+      // Use heading role to be more specific (avoid matching paragraph text)
+      await expect(frame.getByRole('heading', { name: 'Toast Notifications' })).toBeVisible({ timeout: 10000 });
+      await expect(frame.getByRole('button', { name: 'Show Success Toast' })).toBeVisible();
+      await expect(frame.getByRole('button', { name: 'Show Error Toast' })).toBeVisible();
     });
     
   });
@@ -301,16 +302,20 @@ test.describe('Function Registry (/smoke/functions)', () => {
       
       await waitForBuilderReady(page);
       
-      // The button should already have onClick bound via __function_onClick in initialLayers
-      // Click the button in the preview canvas
-      const canvas = page.getByTestId('auto-frame').first();
-      const frame = canvas.frameLocator('iframe').first();
+      // Click the Preview button to open the preview dialog (no editor overlays)
+      const previewButton = page.getByRole('button', { name: /preview/i }).first();
+      await previewButton.click();
       
-      const successButton = frame.getByRole('button', { name: /show success toast/i });
+      // Wait for the Preview dialog to open
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible({ timeout: 5000 });
+      
+      // Find the success toast button inside the dialog
+      const successButton = dialog.getByRole('button', { name: /show success toast/i });
       await expect(successButton).toBeVisible({ timeout: 10000 });
       await successButton.click();
       
-      // Look for toast notification (Sonner creates a toast outside the iframe)
+      // Look for toast notification (Sonner creates a toast outside the dialog)
       await expect(page.locator('[data-sonner-toast]').first()).toBeVisible({ timeout: 5000 });
     });
     
@@ -319,10 +324,16 @@ test.describe('Function Registry (/smoke/functions)', () => {
       
       await waitForBuilderReady(page);
       
-      const canvas = page.getByTestId('auto-frame').first();
-      const frame = canvas.frameLocator('iframe').first();
+      // Click the Preview button to open the preview dialog
+      const previewButton = page.getByRole('button', { name: /preview/i }).first();
+      await previewButton.click();
       
-      const errorButton = frame.getByRole('button', { name: /show error toast/i });
+      // Wait for the Preview dialog to open
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible({ timeout: 5000 });
+      
+      // Find the error toast button inside the dialog
+      const errorButton = dialog.getByRole('button', { name: /show error toast/i });
       await expect(errorButton).toBeVisible({ timeout: 10000 });
       await errorButton.click();
       
@@ -335,12 +346,17 @@ test.describe('Function Registry (/smoke/functions)', () => {
       
       await waitForBuilderReady(page);
       
-      const canvas = page.getByTestId('auto-frame').first();
-      const frame = canvas.frameLocator('iframe').first();
+      // Click the Preview button to open the preview dialog
+      const previewButton = page.getByRole('button', { name: /preview/i }).first();
+      await previewButton.click();
       
-      // Fill out the HTML form
-      const nameInput = frame.locator('input[name="name"]').first();
-      const emailInput = frame.locator('input[name="email"]').first();
+      // Wait for the Preview dialog to open
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible({ timeout: 5000 });
+      
+      // Fill out the HTML form inside the dialog
+      const nameInput = dialog.locator('input[name="name"]').first();
+      const emailInput = dialog.locator('input[name="email"]').first();
       
       await expect(nameInput).toBeVisible({ timeout: 10000 });
       await nameInput.fill('Test User');
@@ -350,7 +366,7 @@ test.describe('Function Registry (/smoke/functions)', () => {
       const urlBefore = page.url();
       
       // Submit the form
-      const submitButton = frame.getByRole('button', { name: /submit html form/i });
+      const submitButton = dialog.getByRole('button', { name: /submit html form/i });
       await submitButton.click();
       
       // Wait a bit for potential navigation
@@ -368,12 +384,17 @@ test.describe('Function Registry (/smoke/functions)', () => {
       
       await waitForBuilderReady(page);
       
-      const canvas = page.getByTestId('auto-frame').first();
-      const frame = canvas.frameLocator('iframe').first();
+      // Click the Preview button to open the preview dialog
+      const previewButton = page.getByRole('button', { name: /preview/i }).first();
+      await previewButton.click();
       
-      // Wait for the shadcn form inputs to be visible
+      // Wait for the Preview dialog to open
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible({ timeout: 5000 });
+      
+      // Wait for the shadcn form inputs to be visible inside the dialog
       // They use the shadcn Input component which renders as <input>
-      const formInputs = frame.locator('form').nth(1).locator('input');
+      const formInputs = dialog.locator('form').nth(1).locator('input');
       await expect(formInputs.first()).toBeVisible({ timeout: 10000 });
       
       // Fill the inputs
@@ -383,7 +404,7 @@ test.describe('Function Registry (/smoke/functions)', () => {
       const urlBefore = page.url();
       
       // Submit the shadcn form
-      const submitButton = frame.getByRole('button', { name: /submit shadcn form/i });
+      const submitButton = dialog.getByRole('button', { name: /submit shadcn form/i });
       await submitButton.click();
       
       await page.waitForTimeout(1000);

@@ -357,6 +357,38 @@ describe('Variable Resolver', () => {
         // Function from registry should override the original
         expect(resolved.onClick).toBe(mockFunctionRegistry.mockClickHandler!.fn);
       });
+
+      it('should preserve original prop value and warn when __function_* metadata exists but no functionRegistry is provided', () => {
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+        
+        const originalFn = () => 'original function';
+        const props = {
+          onClick: originalFn,
+          __function_onClick: 'mockClickHandler',
+          className: 'my-class',
+        };
+
+        const resolved = resolveVariableReferences(
+          props,
+          [],
+          undefined,
+          undefined // No function registry provided
+        );
+
+        // Original function should be preserved when no registry is provided
+        expect(resolved.onClick).toBe(originalFn);
+        expect(resolved.className).toBe('my-class');
+        // __function_onClick should not be in resolved props
+        expect(resolved.__function_onClick).toBeUndefined();
+        
+        // Should warn about missing function registry
+        expect(warnSpy).toHaveBeenCalledWith(
+          'Function metadata "__function_onClick" found but no functionRegistry provided. ' +
+          'Falling back to original prop value for "onClick".'
+        );
+        
+        warnSpy.mockRestore();
+      });
     });
   });
 
