@@ -180,6 +180,14 @@ export interface FunctionDefinition {
   fn: (...args: any[]) => any;
   /** Optional description shown in the UI */
   description?: string;
+  /** 
+   * Optional TypeScript type signature for code generation.
+   * Use this when the Zod schema uses z.custom<T>() or other types 
+   * that can't be automatically inferred at runtime.
+   * @example "(e: React.FormEvent<HTMLFormElement>) => void"
+   * @example "(data: { name: string; email: string }) => Promise<void>"
+   */
+  typeSignature?: string;
 }
 
 /**

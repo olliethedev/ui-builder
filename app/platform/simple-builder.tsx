@@ -37,6 +37,7 @@ const functionRegistry: FunctionRegistry = {
       console.log("[Demo] Click event:", { x: e.clientX, y: e.clientY });
     },
     description: "Handles click events with coordinates",
+    typeSignature: "(e: React.MouseEvent) => void",
   },
 };
 

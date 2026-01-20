@@ -526,7 +526,7 @@ export default Page;
       expect(result).toContain('variables: {');
       expect(result).toContain('functions: {');
       expect(result).toContain('userName: string;');
-      expect(result).toContain('handleClick: (...args: any[]) => any;');
+      expect(result).toContain('handleClick: (...args: unknown[]) => unknown;');
       
       // Check that the props are generated correctly
       expect(result).toContain('onClick={functions.handleClick}');
@@ -578,6 +578,310 @@ export default Page;
       
       expect(result).toContain('onClick={functions.handleClick}');
       expect(result).toContain('label={variables.userName}');
+    });
+  });
+
+  describe("__function_* metadata code generation", () => {
+    it("should filter out __function_* metadata props and generate proper function references", () => {
+      const props = { 
+        className: "button-class", 
+        __function_onClick: 'showSuccessToast'
+      };
+      const result = generatePropsString(props, []);
+      
+      // Should not contain __function_onClick as a prop
+      expect(result).not.toContain('__function_onClick');
+      // Should contain proper function reference
+      expect(result).toContain('onClick={functions.showSuccessToast}');
+      expect(result).toContain('className="button-class"');
+    });
+
+    it("should handle multiple __function_* metadata props", () => {
+      const props = { 
+        __function_onClick: 'handleClick',
+        __function_onSubmit: 'handleSubmit',
+        className: "form-class"
+      };
+      const result = generatePropsString(props, []);
+      
+      expect(result).not.toContain('__function_onClick');
+      expect(result).not.toContain('__function_onSubmit');
+      expect(result).toContain('onClick={functions.handleClick}');
+      expect(result).toContain('onSubmit={functions.handleSubmit}');
+      expect(result).toContain('className="form-class"');
+    });
+
+    it("should generate proper interface with __function_* metadata", () => {
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              className: "button-class",
+              __function_onClick: 'showSuccessToast'
+            },
+            children: [],
+          },
+          {
+            id: "button2",
+            type: "Button",
+            props: { 
+              className: "button-class",
+              __function_onClick: 'showErrorToast'
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, []);
+      
+      // Should have functions interface
+      expect(result).toContain('functions: {');
+      expect(result).toContain('showSuccessToast: (...args: unknown[]) => unknown;');
+      expect(result).toContain('showErrorToast: (...args: unknown[]) => unknown;');
+      // Should have proper destructuring
+      expect(result).toContain('{ functions }: PageProps');
+      // Should have proper onClick props
+      expect(result).toContain('onClick={functions.showSuccessToast}');
+      expect(result).toContain('onClick={functions.showErrorToast}');
+      // Should NOT have __function_* props
+      expect(result).not.toContain('__function_onClick');
+    });
+
+    it("should combine __function_* metadata with variable functions", () => {
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              onClick: { __variableRef: 'fn1' }, // function variable
+              label: { __variableRef: 'var1' } // regular variable
+            },
+            children: [],
+          },
+          {
+            id: "button2",
+            type: "Button",
+            props: { 
+              __function_onClick: 'showToast' // __function_* metadata
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, mockVariablesWithFunctions);
+      
+      // Should have both variables and functions interfaces
+      expect(result).toContain('variables: {');
+      expect(result).toContain('functions: {');
+      // Should have function variable in interface
+      expect(result).toContain('handleClick: (...args: unknown[]) => unknown;');
+      // Should have __function_* metadata function in interface
+      expect(result).toContain('showToast: (...args: unknown[]) => unknown;');
+      // Should have proper destructuring
+      expect(result).toContain('{ variables, functions }: PageProps');
+    });
+
+    it("should handle __function_* in nested layers", () => {
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "container1",
+            type: "Container",
+            props: {},
+            children: [
+              {
+                id: "button1",
+                type: "Button",
+                props: { 
+                  __function_onClick: 'nestedHandler'
+                },
+                children: [],
+              },
+            ],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, []);
+      
+      expect(result).toContain('functions: {');
+      expect(result).toContain('nestedHandler: (...args: unknown[]) => unknown;');
+      expect(result).toContain('onClick={functions.nestedHandler}');
+    });
+
+    it("should generate proper types from function registry Zod schemas", () => {
+      const mockFunctionRegistry = {
+        showToast: {
+          name: "Show Toast",
+          schema: z.tuple([]), // No args
+          fn: () => {},
+          description: "Shows a toast"
+        },
+        handleFormSubmit: {
+          name: "Submit Form",
+          schema: z.tuple([z.string()]), // One string arg
+          fn: (_arg: string) => {},
+          description: "Submits form"
+        },
+        processData: {
+          name: "Process Data",
+          schema: z.tuple([z.string(), z.number()]), // Two args
+          fn: (_s: string, _n: number) => {},
+          description: "Processes data"
+        }
+      };
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              __function_onClick: 'showToast'
+            },
+            children: [],
+          },
+          {
+            id: "form1",
+            type: "Button",
+            props: { 
+              __function_onSubmit: 'handleFormSubmit'
+            },
+            children: [],
+          },
+          {
+            id: "processor1",
+            type: "Button",
+            props: { 
+              __function_onClick: 'processData'
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      // No-arg function should generate () => void
+      expect(result).toContain('showToast: () => void;');
+      // One-arg function should generate (arg0: string) => void
+      expect(result).toContain('handleFormSubmit: (arg0: string) => void;');
+      // Two-arg function should generate (arg0: string, arg1: number) => void
+      expect(result).toContain('processData: (arg0: string, arg1: number) => void;');
+    });
+
+    it("should use explicit typeSignature when provided", () => {
+      const mockFunctionRegistry = {
+        handleFormSubmit: {
+          name: "Submit Form",
+          schema: z.tuple([z.custom()]), // Custom type can't be inferred
+          fn: () => {},
+          description: "Submits form",
+          typeSignature: "(e: React.FormEvent<HTMLFormElement>) => Promise<void>"
+        },
+        showToast: {
+          name: "Show Toast",
+          schema: z.tuple([]),
+          fn: () => {},
+          // No typeSignature - should infer from schema
+        }
+      };
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              __function_onClick: 'showToast'
+            },
+            children: [],
+          },
+          {
+            id: "form1",
+            type: "Button",
+            props: { 
+              __function_onSubmit: 'handleFormSubmit'
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      // showToast should infer from schema: () => void
+      expect(result).toContain('showToast: () => void;');
+      // handleFormSubmit should use explicit typeSignature
+      expect(result).toContain('handleFormSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;');
+    });
+
+    it("should generate optional parameter types from z.optional() schemas", () => {
+      const mockFunctionRegistry = {
+        logMessage: {
+          name: "Log Message",
+          schema: z.tuple([z.string().optional()]),
+          fn: () => {},
+          description: "Logs a message to console",
+        },
+        processWithOptionals: {
+          name: "Process Data",
+          schema: z.tuple([z.string(), z.number().optional()]),
+          fn: () => {},
+          description: "Processes data with optional count",
+        }
+      };
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              __function_onClick: 'logMessage'
+            },
+            children: [],
+          },
+          {
+            id: "button2",
+            type: "Button",
+            props: { 
+              __function_onClick: 'processWithOptionals'
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      // Single optional arg should generate (arg0?: string) => void
+      expect(result).toContain('logMessage: (arg0?: string) => void;');
+      // Mixed required and optional should generate (arg0: string, arg1?: number) => void
+      expect(result).toContain('processWithOptionals: (arg0: string, arg1?: number) => void;');
     });
   });
 });

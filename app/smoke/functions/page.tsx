@@ -9,7 +9,6 @@ import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primiti
 import { shadcnComponentDefinitions } from "@/lib/ui-builder/registry/shadcn-component-definitions";
 import { blockDefinitions } from "@/lib/ui-builder/registry/block-definitions";
 import type { FunctionRegistry } from "@/components/ui/ui-builder/types";
-import { Toaster } from "@/components/ui/sonner";
 import { submitFormAction } from "./actions";
 
 /**
@@ -41,32 +40,38 @@ const functionRegistry: FunctionRegistry = {
       const form = e.currentTarget;
       const formData = new FormData(form);
       
-      toast.loading("Submitting form...");
-      
-      try {
-        const result = await submitFormAction(formData);
-        
+      const submitPromise = submitFormAction(formData).then((result) => {
         if (result.success) {
-          toast.success(result.message);
           form.reset();
+          return result.message;
         } else {
-          toast.error(result.message);
+          throw new Error(result.message);
         }
-      } catch (error) {
-        toast.error("Failed to submit form");
-        console.error("Form submission error:", error);
-      }
+      });
+      
+      toast.promise(submitPromise, {
+        loading: "Submitting form...",
+        success: (message) => message,
+        error: (err) => err.message ?? "Failed to submit form",
+      });
+      
+      await submitPromise.catch(() => {
+        // Already handled by toast.promise
+      });
     },
     description: "Submits form data to server action",
+    // Explicit type signature for code generation (z.custom can't be inferred at runtime)
+    typeSignature: "(e: React.FormEvent<HTMLFormElement>) => Promise<void>",
   },
   logToConsole: {
     name: "Log to Console",
-    schema: z.tuple([]),
-    fn: () => {
-      console.log("[Function Registry] Button clicked at", new Date().toISOString());
-      toast.info("Check the console for log output");
+    schema: z.tuple([z.string().optional()]),
+    fn: (message?: string) => {
+      const logMessage = message ?? "Button clicked";
+      console.log("[Function Registry]", logMessage, "at", new Date().toISOString());
     },
     description: "Logs a message to the browser console",
+    // typeSignature inferred from schema: (arg0?: string) => void
   },
 };
 
@@ -440,7 +445,6 @@ export default function SmokeFunctionsPage() {
         blocks={blockDefinitions}
         functionRegistry={functionRegistry}
       />
-      <Toaster position="bottom-right" />
     </main>
   );
 }

@@ -92,6 +92,7 @@ describe('CodePanel', () => {
     mockUseEditorStore.mockImplementation((selector) => {
       const state = {
         registry: mockComponentRegistry,
+        functionRegistry: undefined,
       } as any;
       return selector(state);
     });
@@ -137,7 +138,8 @@ export default Page;
     expect(mockPageLayerToCode).toHaveBeenCalledWith(
       mockPage,
       mockComponentRegistry,
-      mockVariables
+      mockVariables,
+      undefined
     );
   });
 
@@ -164,7 +166,8 @@ export default Page;
     expect(mockPageLayerToCode).toHaveBeenCalledWith(
       mockPage,
       mockComponentRegistry,
-      []
+      [],
+      undefined
     );
   });
 
@@ -202,7 +205,8 @@ export default Page;
     expect(mockPageLayerToCode).toHaveBeenCalledWith(
       pageWithoutVars,
       mockComponentRegistry,
-      mockVariables
+      mockVariables,
+      undefined
     );
   });
 
@@ -219,7 +223,8 @@ export default Page;
     expect(mockPageLayerToCode).toHaveBeenCalledWith(
       mockPage,
       mockComponentRegistry,
-      mockVariables
+      mockVariables,
+      undefined
     );
     
     // The serialized data should show separate sections for variables and layers
@@ -241,7 +246,8 @@ export default Page;
     expect(mockPageLayerToCode).toHaveBeenCalledWith(
       mockPage,
       mockComponentRegistry,
-      mockVariables
+      mockVariables,
+      undefined
     );
   });
 
@@ -263,7 +269,8 @@ export default Page;
     expect(mockPageLayerToCode).toHaveBeenCalledWith(
       mockPage,
       mockComponentRegistry,
-      []
+      [],
+      undefined
     );
   });
 }); 

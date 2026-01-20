@@ -34,6 +34,7 @@ import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
 import { VariablesPanel } from "@/components/ui/ui-builder/internal/variables-panel";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 
 /**
  * TabsContentConfig defines the structure for the content of the page config panel tabs.
@@ -230,7 +231,8 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
       disableTransitionOnChange
     >
       <TooltipProvider>
-      {layout}
+        {layout}
+        <Toaster position="bottom-right" />
       </TooltipProvider>
     </ThemeProvider>
   );
