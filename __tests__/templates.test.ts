@@ -883,5 +883,139 @@ export default Page;
       // Mixed required and optional should generate (arg0: string, arg1?: number) => void
       expect(result).toContain('processWithOptionals: (arg0: string, arg1?: number) => void;');
     });
+
+    it("should generate types for various Zod schema types", () => {
+      const mockFunctionRegistry = {
+        handleBoolean: {
+          name: "Boolean Handler",
+          schema: z.tuple([z.boolean()]),
+          fn: () => {},
+        },
+        handleArray: {
+          name: "Array Handler",
+          schema: z.tuple([z.array(z.string())]),
+          fn: () => {},
+        },
+        handleObject: {
+          name: "Object Handler",
+          schema: z.tuple([z.object({ name: z.string() })]),
+          fn: () => {},
+        },
+        handleNullable: {
+          name: "Nullable Handler",
+          schema: z.tuple([z.string().nullable()]),
+          fn: () => {},
+        },
+        handleAny: {
+          name: "Any Handler",
+          schema: z.tuple([z.any()]),
+          fn: () => {},
+        },
+        handleUnknown: {
+          name: "Unknown Handler",
+          schema: z.tuple([z.unknown()]),
+          fn: () => {},
+        },
+      };
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          { id: "b1", type: "Button", props: { __function_onClick: 'handleBoolean' }, children: [] },
+          { id: "b2", type: "Button", props: { __function_onClick: 'handleArray' }, children: [] },
+          { id: "b3", type: "Button", props: { __function_onClick: 'handleObject' }, children: [] },
+          { id: "b4", type: "Button", props: { __function_onClick: 'handleNullable' }, children: [] },
+          { id: "b5", type: "Button", props: { __function_onClick: 'handleAny' }, children: [] },
+          { id: "b6", type: "Button", props: { __function_onClick: 'handleUnknown' }, children: [] },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      expect(result).toContain('handleBoolean: (arg0: boolean) => void;');
+      expect(result).toContain('handleArray: (arg0: unknown[]) => void;');
+      expect(result).toContain('handleObject: (arg0: Record<string, unknown>) => void;');
+      expect(result).toContain('handleNullable: (arg0: string | null) => void;');
+      expect(result).toContain('handleAny: (arg0: unknown) => void;');
+      expect(result).toContain('handleUnknown: (arg0: unknown) => void;');
+    });
+
+    it("should handle object schema at top level for function type inference", () => {
+      const mockFunctionRegistry = {
+        handleParams: {
+          name: "Params Handler",
+          schema: z.object({ name: z.string(), age: z.number() }),
+          fn: () => {},
+        },
+      };
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          { id: "b1", type: "Button", props: { __function_onClick: 'handleParams' }, children: [] },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      // Object schema at top level should generate (params: Record<string, unknown>) => void
+      expect(result).toContain('handleParams: (params: Record<string, unknown>) => void;');
+    });
+
+    it("should fallback to unknown for unrecognized schema types", () => {
+      // Create a mock schema with an unrecognized type
+      const weirdSchema = { _zod: { def: { type: 'someUnknownType' } } };
+      const mockFunctionRegistry = {
+        weirdHandler: {
+          name: "Weird Handler",
+          schema: weirdSchema,
+          fn: () => {},
+        },
+      };
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          { id: "b1", type: "Button", props: { __function_onClick: 'weirdHandler' }, children: [] },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      // Should fallback to (...args: unknown[]) => unknown
+      expect(result).toContain('weirdHandler: (...args: unknown[]) => unknown;');
+    });
+
+    it("should handle schema without _zod or _def", () => {
+      // Schema that has neither _zod nor _def
+      const invalidSchema = {};
+      const mockFunctionRegistry = {
+        invalidHandler: {
+          name: "Invalid Handler",
+          schema: invalidSchema,
+          fn: () => {},
+        },
+      };
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          { id: "b1", type: "Button", props: { __function_onClick: 'invalidHandler' }, children: [] },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      // Should fallback to (...args: unknown[]) => unknown
+      expect(result).toContain('invalidHandler: (...args: unknown[]) => unknown;');
+    });
   });
 });
