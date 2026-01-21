@@ -273,8 +273,9 @@ describe("BreakpointClassNameControl", () => {
       
       const itemControls = screen.getAllByTestId("item-control-input");
       const baseInput = itemControls[0];
+      expect(baseInput).toBeDefined();
       
-      fireEvent.change(baseInput, { target: { value: "w-full p-4" } });
+      fireEvent.change(baseInput!, { target: { value: "w-full p-4" } });
       
       await waitFor(() => {
         expect(mockOnChange).toHaveBeenLastCalledWith("w-full p-4");
@@ -287,8 +288,9 @@ describe("BreakpointClassNameControl", () => {
       
       const itemControls = screen.getAllByTestId("item-control-input");
       const baseInput = itemControls[0];
+      expect(baseInput).toBeDefined();
       
-      fireEvent.change(baseInput, { target: { value: "w-full" } });
+      fireEvent.change(baseInput!, { target: { value: "w-full" } });
       
       await waitFor(() => {
         expect(mockOnChange).toHaveBeenCalledWith("w-full md:w-8");
@@ -301,8 +303,9 @@ describe("BreakpointClassNameControl", () => {
       
       const itemControls = screen.getAllByTestId("item-control-input");
       const baseInput = itemControls[0];
+      expect(baseInput).toBeDefined();
       
-      fireEvent.change(baseInput, { target: { value: "w-full" } });
+      fireEvent.change(baseInput!, { target: { value: "w-full" } });
       
       await waitFor(() => {
         expect(mockOnChange).toHaveBeenCalledWith("w-full lg:w-12 sm:w-2");
@@ -317,8 +320,9 @@ describe("BreakpointClassNameControl", () => {
       
       const itemControls = screen.getAllByTestId("item-control-input");
       const mdInput = itemControls[1];
+      expect(mdInput).toBeDefined();
       
-      fireEvent.change(mdInput, { target: { value: "w-8 h-8" } });
+      fireEvent.change(mdInput!, { target: { value: "w-8 h-8" } });
       
       await waitFor(() => {
         expect(mockOnChange).toHaveBeenLastCalledWith("md:w-8 md:h-8");
@@ -331,8 +335,9 @@ describe("BreakpointClassNameControl", () => {
       
       const itemControls = screen.getAllByTestId("item-control-input");
       const mdInput = itemControls[1];
+      expect(mdInput).toBeDefined();
       
-      fireEvent.change(mdInput, { target: { value: "w-8" } });
+      fireEvent.change(mdInput!, { target: { value: "w-8" } });
       
       await waitFor(() => {
         expect(mockOnChange).toHaveBeenCalledWith("w-full p-4 md:w-8");
@@ -345,8 +350,9 @@ describe("BreakpointClassNameControl", () => {
       
       const itemControls = screen.getAllByTestId("item-control-input");
       const mdInput = itemControls[1];
+      expect(mdInput).toBeDefined();
       
-      fireEvent.change(mdInput, { target: { value: "w-8" } });
+      fireEvent.change(mdInput!, { target: { value: "w-8" } });
       
       await waitFor(() => {
         expect(mockOnChange).toHaveBeenCalledWith("w-full md:w-8 lg:w-12 sm:w-2");
@@ -359,8 +365,9 @@ describe("BreakpointClassNameControl", () => {
       
       const itemControls = screen.getAllByTestId("item-control-input");
       const mdInput = itemControls[1];
+      expect(mdInput).toBeDefined();
       
-      fireEvent.change(mdInput, { target: { value: "" } });
+      fireEvent.change(mdInput!, { target: { value: "" } });
       
       await waitFor(() => {
         expect(mockOnChange).toHaveBeenCalledWith("w-full");
@@ -425,8 +432,10 @@ describe("BreakpointClassNameControl", () => {
       render(<BreakpointClassNameControl value="" onChange={mockOnChange} />);
       
       const itemControls = screen.getAllByTestId("item-control-input");
-      fireEvent.change(itemControls[0], { target: { value: "w-full  p-4" } });
-      fireEvent.change(itemControls[1], { target: { value: "w-8   h-8" } });
+      expect(itemControls[0]).toBeDefined();
+      expect(itemControls[1]).toBeDefined();
+      fireEvent.change(itemControls[0]!, { target: { value: "w-full  p-4" } });
+      fireEvent.change(itemControls[1]!, { target: { value: "w-8   h-8" } });
       
       await waitFor(() => {
         // Should normalize spaces
@@ -439,7 +448,8 @@ describe("BreakpointClassNameControl", () => {
       render(<BreakpointClassNameControl value="lg:w-12" onChange={mockOnChange} />);
       
       const itemControls = screen.getAllByTestId("item-control-input");
-      fireEvent.change(itemControls[0], { target: { value: "w-full" } });
+      expect(itemControls[0]).toBeDefined();
+      fireEvent.change(itemControls[0]!, { target: { value: "w-full" } });
       
       await waitFor(() => {
         expect(mockOnChange).toHaveBeenLastCalledWith("w-full lg:w-12");
@@ -505,12 +515,14 @@ describe("BreakpointClassNameControl", () => {
       
       // Start with base tab
       const itemControls = screen.getAllByTestId("item-control-input");
-      fireEvent.change(itemControls[0], { target: { value: "p-4" } });
+      expect(itemControls[0]).toBeDefined();
+      expect(itemControls[1]).toBeDefined();
+      fireEvent.change(itemControls[0]!, { target: { value: "p-4" } });
       
       // Switch to md tab
       const mdTrigger = screen.getByTestId("md-tab-trigger");
       await user.click(mdTrigger);
-      fireEvent.change(itemControls[1], { target: { value: "p-8" } });
+      fireEvent.change(itemControls[1]!, { target: { value: "p-8" } });
       
       // Use multiselect to add more classes
       const multiselectInput = screen.getByTestId("multiselect-input");

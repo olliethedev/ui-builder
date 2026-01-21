@@ -535,3 +535,5 @@ test.describe('Drag and Drop from Editor Popover', () => {
   });
   
 });
+
+// Function Registry tests have been moved to function-registry.spec.ts

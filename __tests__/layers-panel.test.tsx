@@ -3,7 +3,7 @@ import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import LayersPanel, { LayersTree } from "@/components/ui/ui-builder/internal/layers-panel";
 import { useLayerStore} from "@/lib/ui-builder/store/layer-store";
-import { ComponentLayer, RegistryEntry } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer, RegistryEntry } from '@/components/ui/ui-builder/types';
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { z } from "zod";
 
@@ -331,7 +331,7 @@ describe("LayersPanel", () => {
         mockTreeConfig.onChange(validNewLayers);
       });
       
-      expect(mockUpdateLayer).toHaveBeenCalledWith("page-1", {}, { children: validNewLayers[0].children });
+      expect(mockUpdateLayer).toHaveBeenCalledWith("page-1", {}, { children: validNewLayers[0]?.children ?? [] });
       expect(consoleSpy).not.toHaveBeenCalled();
       
       consoleSpy.mockRestore();
@@ -511,7 +511,7 @@ describe("LayersPanel", () => {
       render(<LayersTree {...defaultTreeProps} />);
       
       const mockStat = {
-        node: mockPageLayer.children[1], // Footer component with children
+        node: (mockPageLayer.children as ComponentLayer[])[1], // Footer component with children
         id: "layer-2"
       };
       
@@ -527,7 +527,7 @@ describe("LayersPanel", () => {
       render(<LayersTree {...defaultTreeProps} />);
       
       const mockStat = {
-        node: mockPageLayer.children[0], // Header component without children
+        node: (mockPageLayer.children as ComponentLayer[])[0], // Header component without children
         id: "layer-1"
       };
       
@@ -542,12 +542,12 @@ describe("LayersPanel", () => {
       render(<LayersTree {...defaultTreeProps} />);
       
       // Test with layer that has children (Footer component has children)
-      const droppableLayer = { node: mockPageLayer.children[1] };
+      const droppableLayer = { node: (mockPageLayer.children as ComponentLayer[])[1] };
       const canDrop1 = mockTreeConfig.canDrop(droppableLayer);
       expect(canDrop1).toBe(true);
       
       // Test with layer that doesn't have children (Header component has empty children array)
-      const nonDroppableLayer = { node: mockPageLayer.children[0] };
+      const nonDroppableLayer = { node: (mockPageLayer.children as ComponentLayer[])[0] };
       const canDrop2 = mockTreeConfig.canDrop(nonDroppableLayer);
       expect(canDrop2).toBe(true); // Empty array is still considered as having children capability
     });

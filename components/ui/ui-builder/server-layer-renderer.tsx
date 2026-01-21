@@ -100,7 +100,15 @@ function renderLayer(
 
   // Resolve variable references in props
   const resolvedProps = resolveVariableReferences(layer.props, variables, variableValues);
-  const childProps: Record<string, PropValue> = { ...resolvedProps };
+  
+  // Filter out internal metadata props (e.g., __function_onClick, __function_onSubmit)
+  // These are used internally for tracking function bindings but should not be passed to components
+  const childProps: Record<string, PropValue> = {};
+  for (const [key, value] of Object.entries(resolvedProps)) {
+    if (!key.startsWith('__function_')) {
+      childProps[key] = value;
+    }
+  }
 
   // Handle children rendering
   if (hasLayerChildren(layer) && layer.children.length > 0) {

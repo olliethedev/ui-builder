@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
-import { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer, Variable } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
@@ -91,7 +91,8 @@ describe('LayerStore', () => {
   it('should initialize with default state', () => {
     const { result } = renderHook(() => useLayerStore());
     expect(result.current.pages).toHaveLength(1);
-    expect(result.current.pages[0].id).toBe('1');
+    expect(result.current.pages[0]).toBeDefined();
+    expect(result.current.pages[0]!.id).toBe('1');
     expect(result.current.selectedPageId).toBe('1');
     expect(result.current.selectedLayerId).toBeNull();
   });
@@ -104,11 +105,15 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      expect(result.current.pages[0].children).toHaveLength(1);
-      const newLayer = result.current.pages[0].children[0] as ComponentLayer;
-      expect(newLayer.type).toBe('Button');
-      expect(newLayer.name).toBe('Button');
-      expect(newLayer.props).toEqual({ label: 'ollie' });
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect(page.children).toHaveLength(1);
+      const newLayer = (page.children as ComponentLayer[])[0];
+      expect(newLayer).toBeDefined();
+      expect(newLayer!.type).toBe('Button');
+      expect(newLayer!.name).toBe('Button');
+      expect(newLayer!.props).toEqual({ label: 'ollie' });
     });
 
     it('should add a component layer at a specific position', () => {
@@ -124,9 +129,14 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Input', '1', 0);
       });
 
-      expect(result.current.pages[0].children).toHaveLength(2);
-      expect((result.current.pages[0].children[0] as ComponentLayer).type).toBe('Input');
-      expect((result.current.pages[0].children[1] as ComponentLayer).type).toBe('Button');
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect(page.children).toHaveLength(2);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      expect((page.children as ComponentLayer[])[1]).toBeDefined();
+      expect((page.children as ComponentLayer[])[0]!.type).toBe('Input');
+      expect((page.children as ComponentLayer[])[1]!.type).toBe('Button');
     });
 
     it('should add a component with string defaultChildren', () => {
@@ -136,9 +146,13 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Card', '1');
       });
 
-      const newLayer = result.current.pages[0].children[0] as ComponentLayer;
-      expect(newLayer.type).toBe('Card');
-      expect(newLayer.children).toBe('Default card content');
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      const newLayer = (page.children as ComponentLayer[])[0];
+      expect(newLayer).toBeDefined();
+      expect(newLayer!.type).toBe('Card');
+      expect(newLayer!.children).toBe('Default card content');
     });
 
     it('should add a component with array defaultChildren', () => {
@@ -148,13 +162,18 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Container', '1');
       });
 
-      const newLayer = result.current.pages[0].children[0] as ComponentLayer;
-      expect(newLayer.type).toBe('Container');
-      expect(Array.isArray(newLayer.children)).toBe(true);
-      expect(newLayer.children).toHaveLength(1);
-      expect((newLayer.children[0] as ComponentLayer).type).toBe('Button');
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      const newLayer = (page.children as ComponentLayer[])[0];
+      expect(newLayer).toBeDefined();
+      expect(newLayer!.type).toBe('Container');
+      expect(Array.isArray(newLayer!.children)).toBe(true);
+      expect(newLayer!.children).toHaveLength(1);
+      expect((newLayer!.children as ComponentLayer[])[0]).toBeDefined();
+      expect((newLayer!.children as ComponentLayer[])[0]!.type).toBe('Button');
       // Should have a different ID than the default one
-      expect((newLayer.children[0] as ComponentLayer).id).not.toBe('default-child-1');
+      expect((newLayer!.children as ComponentLayer[])[0]!.id).not.toBe('default-child-1');
     });
 
     it('should handle components without defaultChildren', () => {
@@ -164,8 +183,12 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const newLayer = result.current.pages[0].children[0] as ComponentLayer;
-      expect(newLayer.children).toEqual([]);
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      const newLayer = (page.children as ComponentLayer[])[0];
+      expect(newLayer).toBeDefined();
+      expect(newLayer!.children).toEqual([]);
     });
   });
 
@@ -179,9 +202,10 @@ describe('LayerStore', () => {
 
       expect(result.current.pages).toHaveLength(2);
       const newPage = result.current.pages[1];
-      expect(newPage.type).toBe('div');
-      expect(newPage.name).toBe('Page 2');
-      expect(result.current.selectedPageId).toBe(newPage.id);
+      expect(newPage).toBeDefined();
+      expect(newPage!.type).toBe('div');
+      expect(newPage!.name).toBe('Page 2');
+      expect(result.current.selectedPageId).toBe(newPage!.id);
     });
   });
 
@@ -194,20 +218,28 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const originalLayer = result.current.pages[0].children[0] as ComponentLayer;
-      const originalId = originalLayer.id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      const originalLayer = (page.children as ComponentLayer[])[0];
+      expect(originalLayer).toBeDefined();
+      const originalId = originalLayer!.id;
 
       // Duplicate the button layer
       act(() => {
         result.current.duplicateLayer(originalId);
       });
 
-      expect(result.current.pages[0].children).toHaveLength(2);
-      const duplicatedLayer = result.current.pages[0].children[1] as ComponentLayer;
-      expect(duplicatedLayer.type).toBe('Button');
-      expect(duplicatedLayer.name).toBe(`${originalLayer.name} (Copy)`);
-      expect(duplicatedLayer.props).toEqual(originalLayer.props);
-      expect(duplicatedLayer.id).not.toBe(originalId);
+      // Re-fetch page after store update
+      const updatedPage = result.current.pages[0]!;
+      expect(Array.isArray(updatedPage.children)).toBe(true);
+      expect(updatedPage.children).toHaveLength(2);
+      const duplicatedLayer = (updatedPage.children as ComponentLayer[])[1];
+      expect(duplicatedLayer).toBeDefined();
+      expect(duplicatedLayer!.type).toBe('Button');
+      expect(duplicatedLayer!.name).toBe(`${originalLayer!.name} (Copy)`);
+      expect(duplicatedLayer!.props).toEqual(originalLayer!.props);
+      expect(duplicatedLayer!.id).not.toBe(originalId);
     });
 
     it('should duplicate a page layer', () => {
@@ -220,9 +252,10 @@ describe('LayerStore', () => {
 
       expect(result.current.pages).toHaveLength(2);
       const duplicatedPage = result.current.pages[1];
-      expect(duplicatedPage.type).toBe('_page_');
-      expect(duplicatedPage.name).toBe('Page 1 (Copy)');
-      expect(result.current.selectedPageId).toBe(duplicatedPage.id);
+      expect(duplicatedPage).toBeDefined();
+      expect(duplicatedPage!.type).toBe('_page_');
+      expect(duplicatedPage!.name).toBe('Page 1 (Copy)');
+      expect(result.current.selectedPageId).toBe(duplicatedPage!.id);
     });
 
     it('should handle duplicating a non-existent layer gracefully', () => {
@@ -248,14 +281,21 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
 
       // Remove the layer
       act(() => {
         result.current.removeLayer(layerId);
       });
 
-      expect(result.current.pages[0].children).toHaveLength(0);
+      // Re-fetch page after store update
+      const updatedPage = result.current.pages[0]!;
+      expect(Array.isArray(updatedPage.children)).toBe(true);
+      expect(updatedPage.children).toHaveLength(0);
     });
 
     it('should remove a page layer', () => {
@@ -267,7 +307,8 @@ describe('LayerStore', () => {
       });
 
       expect(result.current.pages).toHaveLength(2);
-      const pageId = result.current.pages[1].id;
+      expect(result.current.pages[1]).toBeDefined();
+      const pageId = result.current.pages[1]!.id;
 
       // Remove the second page
       act(() => {
@@ -286,7 +327,11 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
 
       // Select the layer
       act(() => {
@@ -325,18 +370,27 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Input', '1');
       });
   
-      expect(result.current.pages[0].children).toHaveLength(2);
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect(page.children).toHaveLength(2);
   
-      const buttonLayerId = (result.current.pages[0].children[0] as ComponentLayer).id;
-      const inputLayerId = (result.current.pages[0].children[1] as ComponentLayer).id;
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      expect((page.children as ComponentLayer[])[1]).toBeDefined();
+      const buttonLayerId = (page.children as ComponentLayer[])[0]!.id;
+      const inputLayerId = (page.children as ComponentLayer[])[1]!.id;
   
       // Remove the first layer (Button)
       act(() => {
         result.current.removeLayer(buttonLayerId);
       });
   
-      expect(result.current.pages[0].children).toHaveLength(1);
-      expect((result.current.pages[0].children[0] as ComponentLayer).id).toBe(inputLayerId);
+      // Re-fetch page after store update
+      const updatedPage = result.current.pages[0]!;
+      expect(Array.isArray(updatedPage.children)).toBe(true);
+      expect(updatedPage.children).toHaveLength(1);
+      expect((updatedPage.children as ComponentLayer[])[0]).toBeDefined();
+      expect((updatedPage.children as ComponentLayer[])[0]!.id).toBe(inputLayerId);
     });
   });
 
@@ -349,16 +403,23 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
 
       // Update the layer
       act(() => {
         result.current.updateLayer(layerId, { className: 'new-class' }, { name: 'Updated Button' });
       });
 
-      const updatedLayer = result.current.pages[0].children[0] as ComponentLayer;
-      expect(updatedLayer.props.className).toBe('new-class');
-      expect(updatedLayer.name).toBe('Updated Button');
+      // Re-fetch page after store update
+      const updatedPage = result.current.pages[0]!;
+      const updatedLayer = (updatedPage.children as ComponentLayer[])[0];
+      expect(updatedLayer).toBeDefined();
+      expect(updatedLayer!.props.className).toBe('new-class');
+      expect(updatedLayer!.name).toBe('Updated Button');
     });
 
     it('should update a page layer\'s props and name', () => {
@@ -369,7 +430,8 @@ describe('LayerStore', () => {
         result.current.addPageLayer('Page 2');
       });
 
-      const pageId = result.current.pages[1].id;
+      expect(result.current.pages[1]).toBeDefined();
+      const pageId = result.current.pages[1]!.id;
 
       // Update the page layer
       act(() => {
@@ -377,8 +439,9 @@ describe('LayerStore', () => {
       });
 
       const updatedPage = result.current.pages[1];
-      expect(updatedPage.props.className).toBe('new-page-class');
-      expect(updatedPage.name).toBe('Updated Page');
+      expect(updatedPage).toBeDefined();
+      expect(updatedPage!.props.className).toBe('new-page-class');
+      expect(updatedPage!.name).toBe('Updated Page');
     });
 
     it('should handle updating a non-existent layer gracefully', () => {
@@ -402,16 +465,23 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
   
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
   
       // Update the layer with new props and additional fields
       act(() => {
         result.current.updateLayer(layerId, { className: 'updated-class' }, { name: 'Updated Button' });
       });
   
-      const updatedLayer = result.current.pages[0].children[0] as ComponentLayer;
-      expect(updatedLayer.props.className).toBe('updated-class');
-      expect(updatedLayer.name).toBe('Updated Button');
+      // Re-fetch page after store update
+      const updatedPage = result.current.pages[0]!;
+      const updatedLayer = (updatedPage.children as ComponentLayer[])[0];
+      expect(updatedLayer).toBeDefined();
+      expect(updatedLayer!.props.className).toBe('updated-class');
+      expect(updatedLayer!.name).toBe('Updated Button');
     });
   
     it('should handle updating a layer when selectedPageId is null gracefully', () => {
@@ -448,16 +518,24 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
     
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
     
       // Update the layer's type to 'Input' and add a child
       act(() => {
         result.current.updateLayer(layerId, {}, { type: 'Input', children: [] });
       });
     
-      const updatedLayer = result.current.pages[0].children[0] as ComponentLayer;
-      expect(updatedLayer.type).toBe('Input');
-      expect(updatedLayer.children).toEqual([]);
+      expect(result.current.pages[0]).toBeDefined();
+      const updatedPage = result.current.pages[0]!;
+      expect(Array.isArray(updatedPage.children)).toBe(true);
+      const updatedLayer = (updatedPage.children as ComponentLayer[])[0];
+      expect(updatedLayer).toBeDefined();
+      expect(updatedLayer!.type).toBe('Input');
+      expect(updatedLayer!.children).toEqual([]);
     });
     
     it('should update a layer with both newProps and layerRest', () => {
@@ -468,16 +546,24 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Input', '1');
       });
     
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
     
       // Update the layer's props and name
       act(() => {
         result.current.updateLayer(layerId, { placeholder: 'Enter text' }, { name: 'TextInput' });
       });
     
-      const updatedLayer = result.current.pages[0].children[0] as ComponentLayer;
-      expect(updatedLayer.props.placeholder).toBe('Enter text');
-      expect(updatedLayer.name).toBe('TextInput');
+      expect(result.current.pages[0]).toBeDefined();
+      const updatedPage = result.current.pages[0]!;
+      expect(Array.isArray(updatedPage.children)).toBe(true);
+      const updatedLayer = (updatedPage.children as ComponentLayer[])[0];
+      expect(updatedLayer).toBeDefined();
+      expect(updatedLayer!.props.placeholder).toBe('Enter text');
+      expect(updatedLayer!.name).toBe('TextInput');
     });
     
     it('should not modify other layers when one layer is updated', () => {
@@ -489,19 +575,25 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Input', '1');
       });
     
-      const buttonLayerId = (result.current.pages[0].children[0] as ComponentLayer).id;
-    
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      const buttonLayerId = (page.children as ComponentLayer[])[0]!.id;
+  
       // Update the button layer
       act(() => {
         result.current.updateLayer(buttonLayerId, { label: 'Submit' }, { name: 'SubmitButton' });
       });
-    
-      const updatedButtonLayer = result.current.pages[0].children[0] as ComponentLayer;
-      const updatedInputLayer = result.current.pages[0].children[1] as ComponentLayer;
-    
-      expect(updatedButtonLayer.props.label).toBe('Submit');
-      expect(updatedButtonLayer.name).toBe('SubmitButton');
-      expect(updatedInputLayer.props.placeholder).toBe('input'); // unchanged
+  
+      // Re-fetch page after store update
+      const updatedPage = result.current.pages[0]!;
+      const updatedButtonLayer = (updatedPage.children as ComponentLayer[])[0];
+      const updatedInputLayer = (updatedPage.children as ComponentLayer[])[1];
+      expect(updatedButtonLayer).toBeDefined();
+      expect(updatedInputLayer).toBeDefined();
+      expect(updatedButtonLayer!.props.label).toBe('Submit');
+      expect(updatedButtonLayer!.name).toBe('SubmitButton');
+      expect(updatedInputLayer!.props.placeholder).toBe('input'); // unchanged
     });
     
     it('should handle updating a layer with no changes gracefully', () => {
@@ -512,15 +604,23 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Textarea', '1');
       });
     
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
     
       // Attempt to update the layer with no changes
       act(() => {
         result.current.updateLayer(layerId, {}, {});
       });
     
-      const updatedLayer = result.current.pages[0].children[0] as ComponentLayer;
-      expect(updatedLayer).toEqual({
+      expect(result.current.pages[0]).toBeDefined();
+      const updatedPage = result.current.pages[0]!;
+      expect(Array.isArray(updatedPage.children)).toBe(true);
+      const updatedLayer = (updatedPage.children as ComponentLayer[])[0];
+      expect(updatedLayer).toBeDefined();
+      expect(updatedLayer!).toEqual({
         id: layerId,
         type: 'Textarea',
         name: 'Textarea',
@@ -537,23 +637,40 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
     
-      const parentLayerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      const parentLayer = (page.children as ComponentLayer[])[0];
+      expect(parentLayer).toBeDefined();
+      const parentLayerId = parentLayer!.id;
     
       // Assuming Button can have children, add a nested Input layer
       act(() => {
         result.current.addComponentLayer('Input', parentLayerId);
       });
     
-      const childLayerId = ((result.current.pages[0].children[0] as ComponentLayer).children[0] as ComponentLayer).id;
+      // Re-fetch page and parent layer after store update
+      const pageAfterAdd = result.current.pages[0]!;
+      const parentLayerAfterAdd = (pageAfterAdd.children as ComponentLayer[])[0];
+      expect(Array.isArray(parentLayerAfterAdd!.children)).toBe(true);
+      const childLayer = (parentLayerAfterAdd!.children as ComponentLayer[])[0];
+      expect(childLayer).toBeDefined();
+      const childLayerId = childLayer!.id;
     
       // Update the nested Input layer
       act(() => {
         result.current.updateLayer(childLayerId, { placeholder: 'Nested Input' }, { name: 'NestedInput' });
       });
     
-      const updatedChildLayer = (result.current.pages[0].children[0] as ComponentLayer).children[0] as ComponentLayer;
-      expect(updatedChildLayer.props.placeholder).toBe('Nested Input');
-      expect(updatedChildLayer.name).toBe('NestedInput');
+      // Re-fetch page and parent layer after store update
+      const pageAfterUpdate = result.current.pages[0]!;
+      const parentLayerAfterUpdate = (pageAfterUpdate.children as ComponentLayer[])[0];
+      expect(parentLayerAfterUpdate).toBeDefined();
+      expect(Array.isArray(parentLayerAfterUpdate!.children)).toBe(true);
+      const updatedChildLayer = (parentLayerAfterUpdate!.children as ComponentLayer[])[0];
+      expect(updatedChildLayer).toBeDefined();
+      expect(updatedChildLayer!.props.placeholder).toBe('Nested Input');
+      expect(updatedChildLayer!.name).toBe('NestedInput');
     });
     
     it('should log a warning when attempting to update a layer with invalid layerRest properties', () => {
@@ -565,7 +682,11 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
     
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
     
       // Attempt to update the layer with an invalid property
       act(() => {
@@ -573,7 +694,7 @@ describe('LayerStore', () => {
         result.current.updateLayer(layerId, { label: 'Click Me' }, { invalidProp: 'Invalid' });
       });
     
-      const updatedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      const updatedLayer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       expect(updatedLayer.props.label).toBe('Click Me');
       expect(updatedLayer).toHaveProperty('invalidProp', 'Invalid');
     });
@@ -588,7 +709,11 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
     
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
     
       act(() => {
         result.current.initialize([
@@ -644,7 +769,11 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
 
       act(() => {
         result.current.selectLayer(layerId);
@@ -683,7 +812,7 @@ describe('LayerStore', () => {
         result.current.addPageLayer('Page 2');
       });
 
-      const newPageId = result.current.pages[1].id;
+      const newPageId = result.current.pages[1]!.id;
 
       // Select the new page
       act(() => {
@@ -713,7 +842,11 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('Button', '1');
       });
 
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
 
       const layer = result.current.findLayerById(layerId);
       expect(layer).toBeDefined();
@@ -756,8 +889,8 @@ describe('LayerStore', () => {
 
       const layers = result.current.findLayersForPageId('1');
       expect(layers).toHaveLength(2);
-      expect(layers[0].type).toBe('Button');
-      expect(layers[1].type).toBe('Input');
+      expect(layers[0]!.type).toBe('Button');
+      expect(layers[1]!.type).toBe('Input');
     });
 
     it('should return an empty array if the page has no layers', () => {
@@ -794,7 +927,7 @@ describe('LayerStore', () => {
       });
 
       expect(result.current.pages).toEqual(newPages);
-      expect(result.current.selectedPageId).toEqual(newPages[0].id);
+      expect(result.current.selectedPageId).toEqual(newPages[0]!.id);
     });
 
     it('should handle initialization with empty pages', () => {
@@ -813,7 +946,7 @@ describe('LayerStore', () => {
       });
 
       expect(result.current.pages).toEqual(initialPages);
-      expect(result.current.selectedPageId).toBe(initialPages[0].id);
+      expect(result.current.selectedPageId).toBe(initialPages[0]!.id);
     });
 
     it('should initialize with custom selectedPageId and selectedLayerId', () => {
@@ -976,10 +1109,10 @@ describe('LayerStore', () => {
             registry: {
               ...registry,
               ComponentWithDefaultBindings: {
-                ...registry.ComponentWithDefaultBindings,
+                ...registry.ComponentWithDefaultBindings!,
                 defaultVariableBindings: [
-                  { propName: 'title', variableId: variables[0].id, immutable: true },
-                  { propName: 'description', variableId: variables[1].id, immutable: false },
+                  { propName: 'title', variableId: variables[0]!.id, immutable: true },
+                  { propName: 'description', variableId: variables[1]!.id, immutable: false },
                 ],
               },
             }
@@ -989,13 +1122,13 @@ describe('LayerStore', () => {
         }
       });
 
-      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      const addedLayer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       expect(addedLayer.type).toBe('ComponentWithDefaultBindings');
       
       // Check that variable bindings were applied
       const variables = result.current.variables;
-      expect(addedLayer.props.title).toEqual({ __variableRef: variables[0].id });
-      expect(addedLayer.props.description).toEqual({ __variableRef: variables[1].id });
+      expect(addedLayer.props.title).toEqual({ __variableRef: variables[0]!.id });
+      expect(addedLayer.props.description).toEqual({ __variableRef: variables[1]!.id });
       
       // Check that immutable bindings were tracked
       expect(result.current.isBindingImmutable(addedLayer.id, 'title')).toBe(true);
@@ -1026,7 +1159,7 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('ComponentWithInvalidBindings', '1');
       });
 
-      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      const addedLayer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       
       // Should use default value from schema, not variable binding
       expect(addedLayer.props.title).toBe('Default Title');
@@ -1040,7 +1173,7 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('ComponentWithoutBindings', '1');
       });
 
-      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      const addedLayer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       expect(addedLayer.type).toBe('ComponentWithoutBindings');
       expect(addedLayer.props.text).toBe('Default Text');
       expect(result.current.isBindingImmutable(addedLayer.id, 'text')).toBe(false);
@@ -1057,9 +1190,9 @@ describe('LayerStore', () => {
             registry: {
               ...useEditorStore.getState().registry,
               ComponentWithDefaultBindings: {
-                ...useEditorStore.getState().registry.ComponentWithDefaultBindings,
+                ...useEditorStore.getState().registry.ComponentWithDefaultBindings!,
                 defaultVariableBindings: [
-                  { propName: 'title', variableId: variables[0].id, immutable: true },
+                  { propName: 'title', variableId: variables[0]!.id, immutable: true },
                 ],
               },
             }
@@ -1069,10 +1202,10 @@ describe('LayerStore', () => {
         }
       });
 
-      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      const addedLayer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       
       // Verify binding exists
-      expect(addedLayer.props.title).toEqual({ __variableRef: result.current.variables[0].id });
+      expect(addedLayer.props.title).toEqual({ __variableRef: result.current.variables[0]!.id });
       expect(result.current.isBindingImmutable(addedLayer.id, 'title')).toBe(true);
 
       // Try to unbind immutable binding (should fail)
@@ -1082,7 +1215,7 @@ describe('LayerStore', () => {
 
       // Binding should still exist
       const layerAfterUnbind = result.current.findLayerById(addedLayer.id) as ComponentLayer;
-      expect(layerAfterUnbind.props.title).toEqual({ __variableRef: result.current.variables[0].id });
+      expect(layerAfterUnbind.props.title).toEqual({ __variableRef: result.current.variables[0]!.id });
     });
 
     it('should allow unbinding mutable variable bindings', () => {
@@ -1096,9 +1229,9 @@ describe('LayerStore', () => {
             registry: {
               ...useEditorStore.getState().registry,
               ComponentWithDefaultBindings: {
-                ...useEditorStore.getState().registry.ComponentWithDefaultBindings,
+                ...useEditorStore.getState().registry.ComponentWithDefaultBindings!,
                 defaultVariableBindings: [
-                  { propName: 'description', variableId: variables[0].id, immutable: false },
+                  { propName: 'description', variableId: variables[0]!.id, immutable: false },
                 ],
               },
             }
@@ -1108,10 +1241,10 @@ describe('LayerStore', () => {
         }
       });
 
-      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      const addedLayer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       
       // Verify binding exists
-      expect(addedLayer.props.description).toEqual({ __variableRef: result.current.variables[0].id });
+      expect(addedLayer.props.description).toEqual({ __variableRef: result.current.variables[0]!.id });
       expect(result.current.isBindingImmutable(addedLayer.id, 'description')).toBe(false);
 
       // Unbind mutable binding (should succeed)
@@ -1142,7 +1275,7 @@ describe('LayerStore', () => {
       });
 
       // Get the new page ID
-      const newPageId = result.current.pages[1].id;
+      const newPageId = result.current.pages[1]!.id;
 
       // Select the new page
       act(() => {
@@ -1173,7 +1306,7 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('UnknownComponent', '1');
       });
 
-      const newLayer = result.current.pages[0].children[0] as ComponentLayer;
+      const newLayer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       expect(newLayer.type).toBe('UnknownComponent');
       expect(newLayer.props).toEqual({});
     });
@@ -1211,7 +1344,11 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('CustomComponent', '1');
       });
 
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
 
       act(() => {
         result.current.unbindPropFromVariable(layerId, 'nonExistentProp');
@@ -1243,8 +1380,12 @@ describe('LayerStore', () => {
         result.current.addVariable('testVar', 'string', 'test');
       });
 
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
-      const variableId = result.current.variables[0].id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
+      const variableId = result.current.variables[0]!.id;
 
       // Manually set a prop that's not in the schema
       act(() => {
@@ -1355,8 +1496,12 @@ describe('LayerStore', () => {
         result.current.addVariable('testVar', 'string', 'test value');
       });
 
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
-      const variableId = result.current.variables[0].id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
+      const variableId = result.current.variables[0]!.id;
 
       // Bind a new prop
       act(() => {
@@ -1390,7 +1535,11 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('ComplexComponent', '1');
       });
 
-      const layerId = (result.current.pages[0].children[0] as ComponentLayer).id;
+      expect(result.current.pages[0]).toBeDefined();
+      const page = result.current.pages[0]!;
+      expect(Array.isArray(page.children)).toBe(true);
+      expect((page.children as ComponentLayer[])[0]).toBeDefined();
+      const layerId = (page.children as ComponentLayer[])[0]!.id;
 
       // Try to unbind a prop that uses nested schema
       act(() => {
@@ -1433,7 +1582,7 @@ describe('LayerStore', () => {
         result.current.removeVariable('var-1');
       });
 
-      const layer = result.current.pages[0].children[0] as ComponentLayer;
+      const layer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       expect(layer.props.someProp).toBeUndefined();
 
       // Restore registry
@@ -1491,10 +1640,10 @@ describe('LayerStore', () => {
             registry: {
               ...registry,
               ComponentWithDefaultBindings: {
-                ...registry.ComponentWithDefaultBindings,
+                ...registry.ComponentWithDefaultBindings!,
                 defaultVariableBindings: [
-                  { propName: 'title', variableId: variables[0].id, immutable: true },
-                  { propName: 'description', variableId: variables[1].id, immutable: false },
+                  { propName: 'title', variableId: variables[0]!.id, immutable: true },
+                  { propName: 'description', variableId: variables[1]!.id, immutable: false },
                 ],
               },
             }
@@ -1504,13 +1653,13 @@ describe('LayerStore', () => {
         }
       });
 
-      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      const addedLayer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       expect(addedLayer.type).toBe('ComponentWithDefaultBindings');
       
       // Check that variable bindings were applied
       const variables = result.current.variables;
-      expect(addedLayer.props.title).toEqual({ __variableRef: variables[0].id });
-      expect(addedLayer.props.description).toEqual({ __variableRef: variables[1].id });
+      expect(addedLayer.props.title).toEqual({ __variableRef: variables[0]!.id });
+      expect(addedLayer.props.description).toEqual({ __variableRef: variables[1]!.id });
       
       // Check that immutable bindings were tracked
       expect(result.current.isBindingImmutable(addedLayer.id, 'title')).toBe(true);
@@ -1541,7 +1690,7 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('ComponentWithInvalidBindings', '1');
       });
 
-      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      const addedLayer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       
       // Should use default value from schema, not variable binding
       expect(addedLayer.props.title).toBe('Default Title');
@@ -1555,7 +1704,7 @@ describe('LayerStore', () => {
         result.current.addComponentLayer('ComponentWithoutBindings', '1');
       });
 
-      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      const addedLayer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       expect(addedLayer.type).toBe('ComponentWithoutBindings');
       expect(addedLayer.props.text).toBe('Default Text');
       expect(result.current.isBindingImmutable(addedLayer.id, 'text')).toBe(false);
@@ -1572,9 +1721,9 @@ describe('LayerStore', () => {
             registry: {
               ...useEditorStore.getState().registry,
               ComponentWithDefaultBindings: {
-                ...useEditorStore.getState().registry.ComponentWithDefaultBindings,
+                ...useEditorStore.getState().registry.ComponentWithDefaultBindings!,
                 defaultVariableBindings: [
-                  { propName: 'title', variableId: variables[0].id, immutable: true },
+                  { propName: 'title', variableId: variables[0]!.id, immutable: true },
                 ],
               },
             }
@@ -1584,10 +1733,10 @@ describe('LayerStore', () => {
         }
       });
 
-      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      const addedLayer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       
       // Verify binding exists
-      expect(addedLayer.props.title).toEqual({ __variableRef: result.current.variables[0].id });
+      expect(addedLayer.props.title).toEqual({ __variableRef: result.current.variables[0]!.id });
       expect(result.current.isBindingImmutable(addedLayer.id, 'title')).toBe(true);
 
       // Try to unbind immutable binding (should fail)
@@ -1597,7 +1746,7 @@ describe('LayerStore', () => {
 
       // Binding should still exist
       const layerAfterUnbind = result.current.findLayerById(addedLayer.id) as ComponentLayer;
-      expect(layerAfterUnbind.props.title).toEqual({ __variableRef: result.current.variables[0].id });
+      expect(layerAfterUnbind.props.title).toEqual({ __variableRef: result.current.variables[0]!.id });
     });
 
     it('should allow unbinding mutable variable bindings', () => {
@@ -1611,9 +1760,9 @@ describe('LayerStore', () => {
             registry: {
               ...useEditorStore.getState().registry,
               ComponentWithDefaultBindings: {
-                ...useEditorStore.getState().registry.ComponentWithDefaultBindings,
+                ...useEditorStore.getState().registry.ComponentWithDefaultBindings!,
                 defaultVariableBindings: [
-                  { propName: 'description', variableId: variables[0].id, immutable: false },
+                  { propName: 'description', variableId: variables[0]!.id, immutable: false },
                 ],
               },
             }
@@ -1623,10 +1772,10 @@ describe('LayerStore', () => {
         }
       });
 
-      const addedLayer = (result.current.pages[0].children[0] as ComponentLayer);
+      const addedLayer = (result.current.pages[0]!.children as ComponentLayer[])[0]!;
       
       // Verify binding exists
-      expect(addedLayer.props.description).toEqual({ __variableRef: result.current.variables[0].id });
+      expect(addedLayer.props.description).toEqual({ __variableRef: result.current.variables[0]!.id });
       expect(result.current.isBindingImmutable(addedLayer.id, 'description')).toBe(false);
 
       // Unbind mutable binding (should succeed)

@@ -13,6 +13,7 @@ import { Label } from "../../label";
 
 export function CodePanel({className}: {className?: string}) {
   const componentRegistry = useEditorStore((state) => state.registry);
+  const functionRegistry = useEditorStore((state) => state.functionRegistry);
   const selectedPageId = useLayerStore( state => state.selectedPageId);
   const findLayerById = useLayerStore( state => state.findLayerById);
   const variables = useLayerStore( state => state.variables);
@@ -28,7 +29,7 @@ export function CodePanel({className}: {className?: string}) {
     }));
 
     return {
-      react: pageLayerToCode(page, componentRegistry, variables),
+      react: pageLayerToCode(page, componentRegistry, variables, functionRegistry),
       variables: JSON.stringify(
         serializedVariables,
         (key, value) => (typeof value === "function" ? undefined : value),
@@ -40,7 +41,7 @@ export function CodePanel({className}: {className?: string}) {
         2
       ),
     };
-  }, [page, componentRegistry, variables]);
+  }, [page, componentRegistry, variables, functionRegistry]);
 
   return <CodeContent codeBlocks={codeBlocks} className={className} />;
 }

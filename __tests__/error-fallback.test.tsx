@@ -3,10 +3,12 @@ import { render, screen } from "@testing-library/react";
 import { ErrorFallback } from "@/components/ui/ui-builder/internal/components/error-fallback";
 
 describe("ErrorFallback", () => {
+  const mockResetErrorBoundary = jest.fn();
+
   it("renders error message", () => {
     const error = new Error("Test error message");
     
-    render(<ErrorFallback error={error} />);
+    render(<ErrorFallback error={error} resetErrorBoundary={mockResetErrorBoundary} />);
     
     expect(screen.getByText("Component Error")).toBeInTheDocument();
     expect(screen.getByText("Error: Test error message")).toBeInTheDocument();
@@ -16,21 +18,21 @@ describe("ErrorFallback", () => {
     const error = new Error();
     error.message = "";
     
-    render(<ErrorFallback error={error} />);
+    render(<ErrorFallback error={error} resetErrorBoundary={mockResetErrorBoundary} />);
     
     expect(screen.getByText("Component Error")).toBeInTheDocument();
     expect(screen.getByText("Error: Unknown error")).toBeInTheDocument();
   });
 
   it("renders with unknown error when error is null", () => {
-    render(<ErrorFallback error={null as any} />);
+    render(<ErrorFallback error={null as any} resetErrorBoundary={mockResetErrorBoundary} />);
     
     expect(screen.getByText("Component Error")).toBeInTheDocument();
     expect(screen.getByText("Error: Unknown error")).toBeInTheDocument();
   });
 
   it("renders with unknown error when error is undefined", () => {
-    render(<ErrorFallback error={undefined as any} />);
+    render(<ErrorFallback error={undefined as any} resetErrorBoundary={mockResetErrorBoundary} />);
     
     expect(screen.getByText("Component Error")).toBeInTheDocument();
     expect(screen.getByText("Error: Unknown error")).toBeInTheDocument();
@@ -40,7 +42,7 @@ describe("ErrorFallback", () => {
     const error = new Error("Test error");
     error.stack = "Error: Test error\n    at test.js:1:1";
     
-    render(<ErrorFallback error={error} />);
+    render(<ErrorFallback error={error} resetErrorBoundary={mockResetErrorBoundary} />);
     
     expect(screen.getByText("Stack trace")).toBeInTheDocument();
     // Use getByText with a function to match partial text
@@ -55,7 +57,7 @@ describe("ErrorFallback", () => {
     const error = new Error("Test error");
     error.stack = undefined;
     
-    render(<ErrorFallback error={error} />);
+    render(<ErrorFallback error={error} resetErrorBoundary={mockResetErrorBoundary} />);
     
     expect(screen.getByText("Stack trace")).toBeInTheDocument();
     // The pre element should still be there but empty
@@ -66,7 +68,7 @@ describe("ErrorFallback", () => {
   it("has correct CSS classes for styling", () => {
     const error = new Error("Test error");
     
-    const { container } = render(<ErrorFallback error={error} />);
+    const { container } = render(<ErrorFallback error={error} resetErrorBoundary={mockResetErrorBoundary} />);
     
     const errorDiv = container.firstChild as HTMLElement;
     expect(errorDiv).toHaveClass("p-4", "border", "border-red-500", "bg-red-100", "text-red-700", "rounded", "flex-grow", "w-full");
@@ -76,7 +78,7 @@ describe("ErrorFallback", () => {
     const error = new Error("Test error message");
     error.stack = "Error: Test error\n    at test.js:1:1";
     
-    render(<ErrorFallback error={error} />);
+    render(<ErrorFallback error={error} resetErrorBoundary={mockResetErrorBoundary} />);
     
     // Check heading
     const heading = screen.getByRole("heading", { level: 3 });

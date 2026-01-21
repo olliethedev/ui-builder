@@ -1,7 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 
 // Mock the editor store
@@ -51,12 +51,13 @@ describe('Layer Store - Variables', () => {
 
       const variables = result.current.variables;
       expect(variables).toHaveLength(1);
-      expect(variables[0]).toMatchObject({
+      expect(variables[0]).toBeDefined();
+      expect(variables[0]!).toMatchObject({
         name: 'userName',
         type: 'string',
         defaultValue: 'John Doe',
       });
-      expect(variables[0].id).toBeDefined();
+      expect(variables[0]!.id).toBeDefined();
     });
 
     it('should add multiple variables of different types', () => {
@@ -71,19 +72,22 @@ describe('Layer Store - Variables', () => {
       const variables = result.current.variables;
       expect(variables).toHaveLength(3);
       
-      expect(variables[0]).toMatchObject({
+      expect(variables[0]).toBeDefined();
+      expect(variables[0]!).toMatchObject({
         name: 'userName',
         type: 'string',
         defaultValue: 'John Doe',
       });
       
-      expect(variables[1]).toMatchObject({
+      expect(variables[1]).toBeDefined();
+      expect(variables[1]!).toMatchObject({
         name: 'userAge',
         type: 'number',
         defaultValue: 25,
       });
       
-      expect(variables[2]).toMatchObject({
+      expect(variables[2]).toBeDefined();
+      expect(variables[2]!).toMatchObject({
         name: 'isActive',
         type: 'boolean',
         defaultValue: true,
@@ -98,7 +102,8 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('userName', 'string', 'John Doe');
       });
 
-      const variableId = result.current.variables[0].id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Update the variable
       act(() => {
@@ -111,7 +116,8 @@ describe('Layer Store - Variables', () => {
 
       const variables = result.current.variables;
       expect(variables).toHaveLength(1);
-      expect(variables[0]).toMatchObject({
+      expect(variables[0]).toBeDefined();
+      expect(variables[0]!).toMatchObject({
         id: variableId,
         name: 'fullName',
         type: 'string',
@@ -127,7 +133,8 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('userName', 'string', 'John Doe');
       });
 
-      const variableId = result.current.variables[0].id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Partially update the variable (only name)
       act(() => {
@@ -168,7 +175,8 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('userAge', 'number', 25);
       });
 
-      const variableId = result.current.variables[0].id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Remove the first variable
       act(() => {
@@ -177,7 +185,8 @@ describe('Layer Store - Variables', () => {
 
       const variables = result.current.variables;
       expect(variables).toHaveLength(1);
-      expect(variables[0].name).toBe('userAge');
+      expect(variables[0]).toBeDefined();
+      expect(variables[0]!.name).toBe('userAge');
     });
 
     it('should ignore removal of non-existent variables', () => {
@@ -195,7 +204,8 @@ describe('Layer Store - Variables', () => {
 
       // Should not crash and original variable should remain
       expect(result.current.variables).toHaveLength(1);
-      expect(result.current.variables[0].name).toBe('userName');
+      expect(result.current.variables[0]).toBeDefined();
+      expect(result.current.variables[0]!.name).toBe('userName');
     });
   });
 
@@ -209,8 +219,12 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('userName', 'string', 'John Doe');
       });
 
-      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
-      const variableId = result.current.variables[0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      const layerId = layers![0]!.id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Bind the label prop to the variable
       act(() => {
@@ -230,8 +244,12 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('userName', 'string', 'John Doe');
       });
 
-      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
-      const variableId = result.current.variables[0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      const layerId = layers![0]!.id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // First bind the prop
       act(() => {
@@ -259,8 +277,12 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('userName', 'string', 'John Doe');
       });
 
-      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
-      const variableId = result.current.variables[0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      const layerId = layers![0]!.id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Bind the label prop to the variable
       act(() => {
@@ -269,7 +291,8 @@ describe('Layer Store - Variables', () => {
 
       // Verify the binding exists
       let layer = result.current.findLayerById(layerId) as ComponentLayer;
-      expect(layer.props.label).toEqual({ __variableRef: variableId });
+      expect(layer).toBeDefined();
+      expect(layer!.props.label).toEqual({ __variableRef: variableId });
 
       // Remove the variable
       act(() => {
@@ -278,7 +301,8 @@ describe('Layer Store - Variables', () => {
 
       // The prop should be reset to default value
       layer = result.current.findLayerById(layerId) as ComponentLayer;
-      expect(layer.props.label).toBe('Click me'); // Default from schema
+      expect(layer).toBeDefined();
+      expect(layer!.props.label).toBe('Click me'); // Default from schema
     });
 
     it('should clean up multiple variable references across different layers', () => {
@@ -291,13 +315,17 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('userName', 'string', 'John Doe');
       });
 
-      const layers = result.current.findLayersForPageId(result.current.selectedPageId!)!;
-      const variableId = result.current.variables[0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      expect(layers![1]).toBeDefined();
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Bind the same variable to both layers
       act(() => {
-        result.current.bindPropToVariable(layers[0].id, 'label', variableId);
-        result.current.bindPropToVariable(layers[1].id, 'label', variableId);
+        result.current.bindPropToVariable(layers![0]!.id, 'label', variableId);
+        result.current.bindPropToVariable(layers![1]!.id, 'label', variableId);
       });
 
       // Remove the variable
@@ -306,9 +334,12 @@ describe('Layer Store - Variables', () => {
       });
 
       // Both layers should have their props reset
-      const updatedLayers = result.current.findLayersForPageId(result.current.selectedPageId!)!;
-      expect((updatedLayers[0] as ComponentLayer).props.label).toBe('Click me');
-      expect((updatedLayers[1] as ComponentLayer).props.label).toBe('Click me');
+      const updatedLayers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(updatedLayers).toBeDefined();
+      expect(updatedLayers![0]).toBeDefined();
+      expect(updatedLayers![1]).toBeDefined();
+      expect((updatedLayers![0] as ComponentLayer).props.label).toBe('Click me');
+      expect((updatedLayers![1] as ComponentLayer).props.label).toBe('Click me');
     });
 
     it('should handle removal of variables with no references', () => {
@@ -319,7 +350,8 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('unusedVar', 'string', 'Unused');
       });
 
-      const variableId = result.current.variables[0].id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Remove the variable (should not crash)
       act(() => {
@@ -338,8 +370,12 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('userName', 'string', 'John Doe');
       });
 
-      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
-      const variableId = result.current.variables[0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      const layerId = layers![0]!.id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Set both variable and non-variable props
       act(() => {
@@ -398,7 +434,8 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('userName', 'string', 'John Doe');
       });
 
-      const variableId = result.current.variables[0].id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Try to bind to non-existent layer (should not crash)
       act(() => {
@@ -420,8 +457,12 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('userName', 'string', 'John Doe');
       });
 
-      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
-      const variableId = result.current.variables[0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      const layerId = layers![0]!.id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Bind the label prop to the variable and mark as immutable
       act(() => {
@@ -453,8 +494,12 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('userName', 'string', 'John Doe');
       });
 
-      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
-      const variableId = result.current.variables[0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      const layerId = layers![0]!.id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Bind the label prop to the variable (mutable by default)
       act(() => {
@@ -484,8 +529,12 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('userName', 'string', 'John Doe');
       });
 
-      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
-      const variableId = result.current.variables[0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      const layerId = layers![0]!.id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Bind and mark as immutable
       act(() => {
@@ -510,8 +559,12 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('buttonText', 'string', 'Click Here');
       });
 
-      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
-      const variableId = result.current.variables[0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      const layerId = layers![0]!.id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Bind children to the variable
       act(() => {
@@ -531,8 +584,12 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('buttonText', 'string', 'Click Here');
       });
 
-      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
-      const variableId = result.current.variables[0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      const layerId = layers![0]!.id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // First bind children
       act(() => {
@@ -557,8 +614,12 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('buttonText', 'string', 'Click Here');
       });
 
-      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
-      const variableId = result.current.variables[0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      const layerId = layers![0]!.id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Bind children and mark as immutable
       act(() => {
@@ -589,8 +650,12 @@ describe('Layer Store - Variables', () => {
         result.current.addVariable('buttonText', 'string', 'Click Here');
       });
 
-      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
-      const variableId = result.current.variables[0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      const layerId = layers![0]!.id;
+      expect(result.current.variables[0]).toBeDefined();
+      const variableId = result.current.variables[0]!.id;
 
       // Bind children to the variable
       act(() => {
@@ -619,7 +684,10 @@ describe('Layer Store - Variables', () => {
         result.current.addComponentLayer('Button', result.current.selectedPageId!);
       });
 
-      const layerId = result.current.findLayersForPageId(result.current.selectedPageId!)![0].id;
+      const layers = result.current.findLayersForPageId(result.current.selectedPageId!);
+      expect(layers).toBeDefined();
+      expect(layers![0]).toBeDefined();
+      const layerId = layers![0]!.id;
 
       // By default, children binding should not be immutable
       expect(result.current.isChildrenBindingImmutable(layerId)).toBe(false);

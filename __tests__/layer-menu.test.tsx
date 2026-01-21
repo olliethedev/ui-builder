@@ -4,7 +4,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { LayerMenu } from "@/components/ui/ui-builder/internal/components/layer-menu";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
-import { ComponentLayer } from "@/components/ui/ui-builder/types";
+import type { ComponentLayer } from "@/components/ui/ui-builder/types";
 import { z } from "zod";
 
 // Mock dependencies

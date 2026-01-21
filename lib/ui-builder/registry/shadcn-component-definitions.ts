@@ -57,7 +57,7 @@ import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupText, InputGro
 import { Item, ItemMedia, ItemContent, ItemActions, ItemGroup, ItemSeparator, ItemTitle, ItemDescription, ItemHeader, ItemFooter } from "@/components/ui/item";
 import { AreaChartDemo, BarChartDemo, LineChartDemo, PieChartDemo } from "@/components/ui/chart-demos";
 
-import { classNameFieldOverrides, childrenFieldOverrides, commonFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { classNameFieldOverrides, childrenFieldOverrides, commonFieldOverrides, functionPropFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 /**
  * Shadcn/UI component definitions for the UI Builder.
@@ -80,6 +80,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             size: z.enum(["default", "sm", "lg", "icon"]).default("default"),
             disabled: z.boolean().optional(),
             type: z.enum(["button", "submit", "reset"]).optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/button",
         defaultChildren: [
@@ -91,7 +92,10 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
                 children: "Button",
             } satisfies ComponentLayer,
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     Badge: {
         component: Badge,
@@ -101,6 +105,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             variant: z
                 .enum(["default", "secondary", "destructive", "outline"])
                 .default("default"),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/badge",
         defaultChildren: [
@@ -112,7 +117,10 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
                 children: "Badge",
             } satisfies ComponentLayer,
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
 
     // ============================================
@@ -127,6 +135,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             collapsible: z.boolean().optional(),
             defaultValue: z.string().optional(),
             disabled: z.boolean().optional(),
+            onValueChange: z.any().optional(),
         }),
         from: "@/components/ui/accordion",
         defaultChildren: [
@@ -183,7 +192,10 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
                 ],
             },
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onValueChange: () => functionPropFieldOverrides('onValueChange'),
+        }
     },
     AccordionItem: {
         component: AccordionItem,
@@ -222,12 +234,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/accordion",
         childOf: ["AccordionItem"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer),
-            children: (layer) => childrenFieldOverrides(layer)
+            children: (layer) => childrenFieldOverrides(layer),
+            onClick: () => functionPropFieldOverrides('onClick'),
         }
     },
     AccordionContent: {
@@ -249,6 +263,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: '@/components/ui/card',
         defaultChildren: [
@@ -297,7 +312,10 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
                 ],
             },
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     CardHeader: {
         component: CardHeader,
@@ -360,6 +378,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             defaultOpen: z.boolean().optional(),
             open: z.boolean().optional(),
             modal: z.boolean().optional(),
+            onOpenChange: z.any().optional(),
         }),
         from: "@/components/ui/dialog",
         defaultChildren: [
@@ -433,7 +452,8 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             },
         ],
         fieldOverrides: {
-            children: (layer) => childrenFieldOverrides(layer)
+            children: (layer) => childrenFieldOverrides(layer),
+            onOpenChange: () => functionPropFieldOverrides('onOpenChange'),
         }
     },
     DialogTrigger: {
@@ -442,10 +462,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/dialog",
         childOf: ["Dialog"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     DialogContent: {
         component: DialogContent,
@@ -503,10 +527,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/dialog",
         childOf: ["DialogContent"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
 
     // ============================================
@@ -519,6 +547,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             defaultOpen: z.boolean().optional(),
             open: z.boolean().optional(),
             modal: z.boolean().optional(),
+            onOpenChange: z.any().optional(),
         }),
         from: "@/components/ui/sheet",
         defaultChildren: [
@@ -575,7 +604,8 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             },
         ],
         fieldOverrides: {
-            children: (layer) => childrenFieldOverrides(layer)
+            children: (layer) => childrenFieldOverrides(layer),
+            onOpenChange: () => functionPropFieldOverrides('onOpenChange'),
         }
     },
     SheetTrigger: {
@@ -584,10 +614,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/sheet",
         childOf: ["Sheet"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     SheetContent: {
         component: SheetContent,
@@ -646,10 +680,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/sheet",
         childOf: ["SheetContent"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
 
     // ============================================
@@ -664,6 +702,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             value: z.string().optional(),
             orientation: z.enum(["horizontal", "vertical"]).optional(),
             activationMode: z.enum(["automatic", "manual"]).optional(),
+            onValueChange: z.any().optional(),
         }),
         from: "@/components/ui/tabs",
         defaultChildren: [
@@ -712,7 +751,10 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
                 ],
             },
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onValueChange: () => functionPropFieldOverrides('onValueChange'),
+        }
     },
     TabsList: {
         component: TabsList,
@@ -731,10 +773,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
             value: z.string(),
             disabled: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/tabs",
         childOf: ["TabsList"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     TabsContent: {
         component: TabsContent,
@@ -880,6 +926,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             defaultOpen: z.boolean().optional(),
             open: z.boolean().optional(),
             modal: z.boolean().optional(),
+            onOpenChange: z.any().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
         defaultChildren: [
@@ -938,7 +985,8 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             },
         ],
         fieldOverrides: {
-            children: (layer) => childrenFieldOverrides(layer)
+            children: (layer) => childrenFieldOverrides(layer),
+            onOpenChange: () => functionPropFieldOverrides('onOpenChange'),
         }
     },
     DropdownMenuTrigger: {
@@ -947,10 +995,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
         childOf: ["DropdownMenu"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     DropdownMenuContent: {
         component: DropdownMenuContent,
@@ -972,10 +1024,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
             inset: z.boolean().optional(),
             disabled: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
         childOf: ["DropdownMenuContent", "DropdownMenuGroup", "DropdownMenuSubContent"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     DropdownMenuCheckboxItem: {
         component: DropdownMenuCheckboxItem,
@@ -1073,10 +1129,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             inset: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/dropdown-menu",
         childOf: ["DropdownMenuSub"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     DropdownMenuRadioGroup: {
         component: DropdownMenuRadioGroup,
@@ -1105,6 +1165,8 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             disabled: z.boolean().optional(),
             name: z.string().optional(),
             required: z.boolean().optional(),
+            onValueChange: z.any().optional(),
+            onOpenChange: z.any().optional(),
         }),
         from: "@/components/ui/select",
         defaultChildren: [
@@ -1130,7 +1192,9 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             },
         ],
         fieldOverrides: {
-            children: (layer) => childrenFieldOverrides(layer)
+            children: (layer) => childrenFieldOverrides(layer),
+            onValueChange: () => functionPropFieldOverrides('onValueChange'),
+            onOpenChange: () => functionPropFieldOverrides('onOpenChange'),
         }
     },
     SelectGroup: {
@@ -1161,10 +1225,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/select",
         childOf: ["Select"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     SelectContent: {
         component: SelectContent,
@@ -1194,10 +1262,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
             value: z.string(),
             disabled: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/select",
         childOf: ["SelectContent", "SelectGroup"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     SelectSeparator: {
         component: SelectSeparator,
@@ -1221,6 +1293,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             defaultOpen: z.boolean().optional(),
             open: z.boolean().optional(),
             modal: z.boolean().optional(),
+            onOpenChange: z.any().optional(),
         }),
         from: "@/components/ui/popover",
         defaultChildren: [
@@ -1252,7 +1325,8 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             },
         ],
         fieldOverrides: {
-            children: (layer) => childrenFieldOverrides(layer)
+            children: (layer) => childrenFieldOverrides(layer),
+            onOpenChange: () => functionPropFieldOverrides('onOpenChange'),
         }
     },
     PopoverTrigger: {
@@ -1261,10 +1335,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/popover",
         childOf: ["Popover"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     PopoverContent: {
         component: PopoverContent,
@@ -1302,6 +1380,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             defaultOpen: z.boolean().optional(),
             open: z.boolean().optional(),
             delayDuration: z.number().optional(),
+            onOpenChange: z.any().optional(),
         }),
         from: "@/components/ui/tooltip",
         defaultChildren: [
@@ -1333,7 +1412,8 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             },
         ],
         fieldOverrides: {
-            children: (layer) => childrenFieldOverrides(layer)
+            children: (layer) => childrenFieldOverrides(layer),
+            onOpenChange: () => functionPropFieldOverrides('onOpenChange'),
         }
     },
     TooltipTrigger: {
@@ -1342,10 +1422,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/tooltip",
         childOf: ["Tooltip"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     TooltipContent: {
         component: TooltipContent,
@@ -1443,10 +1527,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             disabled: z.boolean().optional(),
+            onSelect: z.any().optional(),
         }),
         from: "@/components/ui/command",
         childOf: ["CommandGroup", "CommandList"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onSelect: () => functionPropFieldOverrides('onSelect'),
+        }
     },
     CommandShortcut: {
         component: CommandShortcut,
@@ -1484,10 +1572,16 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             name: z.string().optional(),
             id: z.string().optional(),
             defaultValue: z.string().optional(),
+            onChange: z.any().optional(),
+            onBlur: z.any().optional(),
+            onFocus: z.any().optional(),
         }),
         from: "@/components/ui/input",
         fieldOverrides: {
-            className: (layer) => classNameFieldOverrides(layer)
+            className: (layer) => classNameFieldOverrides(layer),
+            onChange: () => functionPropFieldOverrides('onChange'),
+            onBlur: () => functionPropFieldOverrides('onBlur'),
+            onFocus: () => functionPropFieldOverrides('onFocus'),
         }
     },
     Textarea: {
@@ -1501,10 +1595,16 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             id: z.string().optional(),
             rows: z.number().optional(),
             defaultValue: z.string().optional(),
+            onChange: z.any().optional(),
+            onBlur: z.any().optional(),
+            onFocus: z.any().optional(),
         }),
         from: "@/components/ui/textarea",
         fieldOverrides: {
-            className: (layer) => classNameFieldOverrides(layer)
+            className: (layer) => classNameFieldOverrides(layer),
+            onChange: () => functionPropFieldOverrides('onChange'),
+            onBlur: () => functionPropFieldOverrides('onBlur'),
+            onFocus: () => functionPropFieldOverrides('onFocus'),
         }
     },
     Label: {
@@ -1528,10 +1628,12 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             required: z.boolean().optional(),
             name: z.string().optional(),
             id: z.string().optional(),
+            onCheckedChange: z.any().optional(),
         }),
         from: "@/components/ui/checkbox",
         fieldOverrides: {
-            className: (layer) => classNameFieldOverrides(layer)
+            className: (layer) => classNameFieldOverrides(layer),
+            onCheckedChange: () => functionPropFieldOverrides('onCheckedChange'),
         }
     },
     RadioGroup: {
@@ -1545,13 +1647,17 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             required: z.boolean().optional(),
             name: z.string().optional(),
             orientation: z.enum(["horizontal", "vertical"]).optional(),
+            onValueChange: z.any().optional(),
         }),
         from: "@/components/ui/radio-group",
         defaultChildren: [
             { id: "radio-item-1", type: "RadioGroupItem", name: "RadioGroupItem", props: { value: "option1", id: "option1" }, children: [] },
             { id: "radio-item-2", type: "RadioGroupItem", name: "RadioGroupItem", props: { value: "option2", id: "option2" }, children: [] },
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onValueChange: () => functionPropFieldOverrides('onValueChange'),
+        }
     },
     RadioGroupItem: {
         component: RadioGroupItem,
@@ -1560,11 +1666,13 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             value: z.string(),
             id: z.string().optional(),
             disabled: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/radio-group",
         childOf: ["RadioGroup"],
         fieldOverrides: {
-            className: (layer) => classNameFieldOverrides(layer)
+            className: (layer) => classNameFieldOverrides(layer),
+            onClick: () => functionPropFieldOverrides('onClick'),
         }
     },
     Switch: {
@@ -1577,10 +1685,12 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             required: z.boolean().optional(),
             name: z.string().optional(),
             id: z.string().optional(),
+            onCheckedChange: z.any().optional(),
         }),
         from: "@/components/ui/switch",
         fieldOverrides: {
-            className: (layer) => classNameFieldOverrides(layer)
+            className: (layer) => classNameFieldOverrides(layer),
+            onCheckedChange: () => functionPropFieldOverrides('onCheckedChange'),
         }
     },
 
@@ -1619,12 +1729,16 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             pressed: z.boolean().optional(),
             defaultPressed: z.boolean().optional(),
             disabled: z.boolean().optional(),
+            onPressedChange: z.any().optional(),
         }),
         from: "@/components/ui/toggle",
         defaultChildren: [
             { id: "toggle-text", type: "span", name: "span", props: {}, children: "Toggle" } satisfies ComponentLayer,
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onPressedChange: () => functionPropFieldOverrides('onPressedChange'),
+        }
     },
     ToggleGroup: {
         component: ToggleGroup,
@@ -1636,6 +1750,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             size: z.enum(["default", "sm", "lg"]).optional(),
             disabled: z.boolean().optional(),
             defaultValue: z.union([z.string(), z.array(z.string())]).optional(),
+            onValueChange: z.any().optional(),
         }),
         from: "@/components/ui/toggle-group",
         defaultChildren: [
@@ -1643,7 +1758,10 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             { id: "toggle-group-item-2", type: "ToggleGroupItem", name: "ToggleGroupItem", props: { value: "b" }, children: [{ id: "tgi2-text", type: "span", name: "span", props: {}, children: "B" } satisfies ComponentLayer] },
             { id: "toggle-group-item-3", type: "ToggleGroupItem", name: "ToggleGroupItem", props: { value: "c" }, children: [{ id: "tgi3-text", type: "span", name: "span", props: {}, children: "C" } satisfies ComponentLayer] },
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onValueChange: () => functionPropFieldOverrides('onValueChange'),
+        }
     },
     ToggleGroupItem: {
         component: ToggleGroupItem,
@@ -1652,10 +1770,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
             value: z.string(),
             disabled: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/toggle-group",
         childOf: ["ToggleGroup"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     Calendar: {
         component: Calendar,
@@ -1740,10 +1862,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
             href: z.string().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/breadcrumb",
         childOf: ["BreadcrumbItem"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     BreadcrumbPage: {
         component: BreadcrumbPage,
@@ -1927,10 +2053,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
         childOf: ["SidebarGroup"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     SidebarGroupContent: {
         component: SidebarGroupContent,
@@ -1971,10 +2101,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             isActive: z.boolean().optional(),
             variant: z.enum(["default", "outline"]).optional(),
             size: z.enum(["default", "sm", "lg"]).optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
         childOf: ["SidebarMenuItem"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     SidebarMenuAction: {
         component: SidebarMenuAction,
@@ -1983,10 +2117,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
             asChild: z.boolean().optional(),
             showOnHover: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
         childOf: ["SidebarMenuItem"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     SidebarMenuBadge: {
         component: SidebarMenuBadge,
@@ -2038,10 +2176,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             asChild: z.boolean().optional(),
             size: z.enum(["sm", "md"]).optional(),
             isActive: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
         childOf: ["SidebarMenuSubItem"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     SidebarInput: {
         component: SidebarInput,
@@ -2090,11 +2232,13 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
         component: SidebarTrigger,
         schema: z.object({
             className: z.string().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/sidebar",
         childOf: ["SidebarHeader", "SidebarInset"],
         fieldOverrides: {
-            className: (layer) => classNameFieldOverrides(layer)
+            className: (layer) => classNameFieldOverrides(layer),
+            onClick: () => functionPropFieldOverrides('onClick'),
         }
     },
 
@@ -2145,6 +2289,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
             defaultOpen: z.boolean().optional(),
             open: z.boolean().optional(),
+            onOpenChange: z.any().optional(),
         }),
         from: "@/components/ui/alert-dialog",
         defaultChildren: [
@@ -2160,7 +2305,10 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
                 ] },
             ] },
         ],
-        fieldOverrides: { children: (layer) => childrenFieldOverrides(layer) }
+        fieldOverrides: { 
+            children: (layer) => childrenFieldOverrides(layer),
+            onOpenChange: () => functionPropFieldOverrides('onOpenChange'),
+        }
     },
     AlertDialogTrigger: {
         component: AlertDialogTrigger,
@@ -2168,10 +2316,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/alert-dialog",
         childOf: ["AlertDialog"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     AlertDialogContent: {
         component: AlertDialogContent,
@@ -2228,20 +2380,28 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/alert-dialog",
         childOf: ["AlertDialogFooter"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     AlertDialogCancel: {
         component: AlertDialogCancel,
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/alert-dialog",
         childOf: ["AlertDialogFooter"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
 
     // ============================================
@@ -2266,13 +2426,17 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/avatar",
         defaultChildren: [
             { id: "avatar-image", type: "AvatarImage", name: "AvatarImage", props: { src: "https://github.com/shadcn.png", alt: "Avatar" }, children: [] },
             { id: "avatar-fallback", type: "AvatarFallback", name: "AvatarFallback", props: {}, children: [{ id: "af-text", type: "span", name: "span", props: {}, children: "CN" } satisfies ComponentLayer] },
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     AvatarImage: {
         component: AvatarImage,
@@ -2333,28 +2497,40 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/carousel",
         childOf: ["CarouselContent"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     CarouselPrevious: {
         component: CarouselPrevious,
         schema: z.object({
             className: z.string().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/carousel",
         childOf: ["Carousel"],
-        fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
+        fieldOverrides: { 
+            className: (layer) => classNameFieldOverrides(layer),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     CarouselNext: {
         component: CarouselNext,
         schema: z.object({
             className: z.string().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/carousel",
         childOf: ["Carousel"],
-        fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
+        fieldOverrides: { 
+            className: (layer) => classNameFieldOverrides(layer),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
 
     // ============================================
@@ -2425,13 +2601,17 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             defaultOpen: z.boolean().optional(),
             open: z.boolean().optional(),
             disabled: z.boolean().optional(),
+            onOpenChange: z.any().optional(),
         }),
         from: "@/components/ui/collapsible",
         defaultChildren: [
             { id: "collapsible-trigger", type: "CollapsibleTrigger", name: "CollapsibleTrigger", props: { asChild: true }, children: [{ id: "ct-btn", type: "Button", name: "Button", props: { variant: "ghost" }, children: [{ id: "ct-text", type: "span", name: "span", props: {}, children: "Toggle" } satisfies ComponentLayer] } satisfies ComponentLayer] },
             { id: "collapsible-content", type: "CollapsibleContent", name: "CollapsibleContent", props: {}, children: [{ id: "cc-text", type: "span", name: "span", props: {}, children: "Collapsible content here" } satisfies ComponentLayer] },
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onOpenChange: () => functionPropFieldOverrides('onOpenChange'),
+        }
     },
     CollapsibleTrigger: {
         component: CollapsibleTrigger,
@@ -2439,10 +2619,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/collapsible",
         childOf: ["Collapsible"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     CollapsibleContent: {
         component: CollapsibleContent,
@@ -2462,6 +2646,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
         component: ContextMenu,
         schema: z.object({
             children: z.any().optional(),
+            onOpenChange: z.any().optional(),
         }),
         from: "@/components/ui/context-menu",
         defaultChildren: [
@@ -2471,17 +2656,24 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
                 { id: "cmc-item2", type: "ContextMenuItem", name: "ContextMenuItem", props: {}, children: [{ id: "cmi2-text", type: "span", name: "span", props: {}, children: "Menu Item 2" } satisfies ComponentLayer] },
             ] },
         ],
-        fieldOverrides: { children: (layer) => childrenFieldOverrides(layer) }
+        fieldOverrides: { 
+            children: (layer) => childrenFieldOverrides(layer),
+            onOpenChange: () => functionPropFieldOverrides('onOpenChange'),
+        }
     },
     ContextMenuTrigger: {
         component: ContextMenuTrigger,
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/context-menu",
         childOf: ["ContextMenu"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     ContextMenuContent: {
         component: ContextMenuContent,
@@ -2499,10 +2691,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             inset: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/context-menu",
         childOf: ["ContextMenuContent", "ContextMenuGroup", "ContextMenuSubContent"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     ContextMenuCheckboxItem: {
         component: ContextMenuCheckboxItem,
@@ -2591,10 +2787,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             inset: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/context-menu",
         childOf: ["ContextMenuSub"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     ContextMenuRadioGroup: {
         component: ContextMenuRadioGroup,
@@ -2616,6 +2816,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
         schema: z.object({
             children: z.any().optional(),
             shouldScaleBackground: z.boolean().optional(),
+            onOpenChange: z.any().optional(),
         }),
         from: "@/components/ui/drawer",
         defaultChildren: [
@@ -2630,7 +2831,10 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
                 ] },
             ] },
         ],
-        fieldOverrides: { children: (layer) => childrenFieldOverrides(layer) }
+        fieldOverrides: { 
+            children: (layer) => childrenFieldOverrides(layer),
+            onOpenChange: () => functionPropFieldOverrides('onOpenChange'),
+        }
     },
     DrawerTrigger: {
         component: DrawerTrigger,
@@ -2638,10 +2842,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/drawer",
         childOf: ["Drawer"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     DrawerContent: {
         component: DrawerContent,
@@ -2699,10 +2907,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/drawer",
         childOf: ["DrawerContent", "DrawerFooter"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
 
     // ============================================
@@ -2714,13 +2926,17 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             children: z.any().optional(),
             openDelay: z.coerce.number().optional(),
             closeDelay: z.coerce.number().optional(),
+            onOpenChange: z.any().optional(),
         }),
         from: "@/components/ui/hover-card",
         defaultChildren: [
             { id: "hovercard-trigger", type: "HoverCardTrigger", name: "HoverCardTrigger", props: { asChild: true }, children: [{ id: "hct-btn", type: "Button", name: "Button", props: { variant: "link" }, children: [{ id: "hct-text", type: "span", name: "span", props: {}, children: "Hover me" } satisfies ComponentLayer] } satisfies ComponentLayer] },
             { id: "hovercard-content", type: "HoverCardContent", name: "HoverCardContent", props: { className: "w-80" }, children: [{ id: "hcc-text", type: "span", name: "span", props: {}, children: "Hover card content" } satisfies ComponentLayer] },
         ],
-        fieldOverrides: { children: (layer) => childrenFieldOverrides(layer) }
+        fieldOverrides: { 
+            children: (layer) => childrenFieldOverrides(layer),
+            onOpenChange: () => functionPropFieldOverrides('onOpenChange'),
+        }
     },
     HoverCardTrigger: {
         component: HoverCardTrigger,
@@ -2728,10 +2944,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/hover-card",
         childOf: ["HoverCard"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     HoverCardContent: {
         component: HoverCardContent,
@@ -2850,30 +3070,42 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             href: z.string().optional(),
             isActive: z.boolean().optional(),
             size: z.enum(["default", "sm", "lg", "icon"]).optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/pagination",
         childOf: ["PaginationItem"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     PaginationPrevious: {
         component: PaginationPrevious,
         schema: z.object({
             className: z.string().optional(),
             href: z.string().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/pagination",
         childOf: ["PaginationItem"],
-        fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
+        fieldOverrides: { 
+            className: (layer) => classNameFieldOverrides(layer),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     PaginationNext: {
         component: PaginationNext,
         schema: z.object({
             className: z.string().optional(),
             href: z.string().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/pagination",
         childOf: ["PaginationItem"],
-        fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
+        fieldOverrides: { 
+            className: (layer) => classNameFieldOverrides(layer),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     PaginationEllipsis: {
         component: PaginationEllipsis,
@@ -2933,9 +3165,15 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             min: z.coerce.number().optional(),
             step: z.coerce.number().optional(),
             disabled: z.boolean().optional(),
+            onValueChange: z.any().optional(),
+            onValueCommit: z.any().optional(),
         }),
         from: "@/components/ui/slider",
-        fieldOverrides: { className: (layer) => classNameFieldOverrides(layer) }
+        fieldOverrides: { 
+            className: (layer) => classNameFieldOverrides(layer),
+            onValueChange: () => functionPropFieldOverrides('onValueChange'),
+            onValueCommit: () => functionPropFieldOverrides('onValueCommit'),
+        }
     },
 
     // ============================================
@@ -2980,10 +3218,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/menubar",
         childOf: ["MenubarMenu"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     MenubarContent: {
         component: MenubarContent,
@@ -3004,10 +3246,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             inset: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/menubar",
         childOf: ["MenubarContent", "MenubarGroup", "MenubarSubContent"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     MenubarSeparator: {
         component: MenubarSeparator,
@@ -3097,10 +3343,14 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             className: z.string().optional(),
             children: z.any().optional(),
             inset: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/menubar",
         childOf: ["MenubarSub"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     MenubarGroup: {
         component: MenubarGroup,
@@ -3171,20 +3421,28 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/navigation-menu",
         childOf: ["NavigationMenuItem"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     NavigationMenuLink: {
         component: NavigationMenuLink,
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/navigation-menu",
         childOf: ["NavigationMenuItem", "NavigationMenuContent"],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     NavigationMenuIndicator: {
         component: NavigationMenuIndicator,
@@ -3547,6 +3805,7 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
             variant: z.enum(["default", "outline", "muted"]).optional(),
             size: z.enum(["default", "sm"]).optional(),
             asChild: z.boolean().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/item",
         defaultChildren: [
@@ -3556,7 +3815,10 @@ export const shadcnComponentDefinitions: ComponentRegistry = {
                 { id: "ic-desc", type: "ItemDescription", name: "ItemDescription", props: {}, children: [{ id: "icd-text", type: "span", name: "span", props: {}, children: "Item description text" } satisfies ComponentLayer] },
             ] },
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     ItemGroup: {
         component: ItemGroup,

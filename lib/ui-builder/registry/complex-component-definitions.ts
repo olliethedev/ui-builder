@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { commonFieldOverrides, classNameFieldOverrides, childrenFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
+import { commonFieldOverrides, classNameFieldOverrides, childrenFieldOverrides, functionPropFieldOverrides } from "@/lib/ui-builder/registry/form-field-overrides";
 
 /**
  * Essential shadcn component definitions.
@@ -38,12 +38,16 @@ const essentialShadcnComponents: ComponentRegistry = {
                 .enum(["default", "destructive", "outline", "secondary", "ghost", "link"])
                 .default("default"),
             size: z.enum(["default", "sm", "lg", "icon"]).default("default"),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/button",
         defaultChildren: [
             { id: "button-text", type: "span", name: "span", props: {}, children: "Button" } satisfies ComponentLayer,
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     Badge: {
         component: Badge,
@@ -53,12 +57,16 @@ const essentialShadcnComponents: ComponentRegistry = {
             variant: z
                 .enum(["default", "secondary", "destructive", "outline"])
                 .default("default"),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/badge",
         defaultChildren: [
             { id: "badge-text", type: "span", name: "span", props: {}, children: "Badge" } satisfies ComponentLayer,
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     Accordion: {
         component: Accordion,
@@ -67,6 +75,7 @@ const essentialShadcnComponents: ComponentRegistry = {
             children: z.any().optional(),
             type: z.enum(["single", "multiple"]).default("single"),
             collapsible: z.boolean().optional(),
+            onValueChange: z.any().optional(),
         }),
         from: "@/components/ui/accordion",
         defaultChildren: [
@@ -123,7 +132,10 @@ const essentialShadcnComponents: ComponentRegistry = {
                 ],
             },
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onValueChange: () => functionPropFieldOverrides('onValueChange'),
+        }
     },
     AccordionItem: {
         component: AccordionItem,
@@ -161,12 +173,14 @@ const essentialShadcnComponents: ComponentRegistry = {
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: "@/components/ui/accordion",
         childOf: ["AccordionItem"],
         fieldOverrides: {
             className: (layer) => classNameFieldOverrides(layer),
-            children: (layer) => childrenFieldOverrides(layer)
+            children: (layer) => childrenFieldOverrides(layer),
+            onClick: () => functionPropFieldOverrides('onClick'),
         }
     },
     AccordionContent: {
@@ -184,6 +198,7 @@ const essentialShadcnComponents: ComponentRegistry = {
         schema: z.object({
             className: z.string().optional(),
             children: z.any().optional(),
+            onClick: z.any().optional(),
         }),
         from: '@/components/ui/card',
         defaultChildren: [
@@ -232,7 +247,10 @@ const essentialShadcnComponents: ComponentRegistry = {
                 ],
             },
         ],
-        fieldOverrides: commonFieldOverrides()
+        fieldOverrides: {
+            ...commonFieldOverrides(),
+            onClick: () => functionPropFieldOverrides('onClick'),
+        }
     },
     CardHeader: {
         component: CardHeader,

@@ -3,8 +3,8 @@
 import {
   generateFieldOverrides
 } from "@/lib/ui-builder/store/editor-utils";
-import { ComponentLayer, RegistryEntry } from '@/components/ui/ui-builder/types';
-import { FieldConfigItem } from "@/components/ui/auto-form/types";
+import type { ComponentLayer, RegistryEntry } from '@/components/ui/ui-builder/types';
+import type { FieldConfigItem } from "@/components/ui/auto-form/types";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
 

@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TreeRowNode, TreeRowPlaceholder } from '@/components/ui/ui-builder/internal/components/tree-row-node';
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
-import { NodeAttrs } from 'he-tree-react';
+import type { NodeAttrs } from 'he-tree-react';
 
 // Mock the stores
 jest.mock('@/lib/ui-builder/store/editor-store');

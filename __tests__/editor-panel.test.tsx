@@ -4,7 +4,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import EditorPanel from "@/components/ui/ui-builder/internal/editor-panel";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
-import { ComponentLayer, RegistryEntry } from "@/components/ui/ui-builder/types";
+import type { ComponentLayer, RegistryEntry } from "@/components/ui/ui-builder/types";
 import { z } from "zod";
 
 // Mock dependencies
@@ -1345,7 +1345,9 @@ describe("EditorPanel", () => {
         const { unmount } = renderEditorPanel();
         
         const transformDiv = screen.getByTestId("transform-component");
-        expect(transformDiv).toHaveClass(expectedClasses[index]);
+        const expectedClass = expectedClasses[index];
+        expect(expectedClass).toBeDefined();
+        expect(transformDiv).toHaveClass(expectedClass!);
         expect(transformDiv).toHaveClass("relative");
         
         unmount();

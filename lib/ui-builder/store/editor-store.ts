@@ -1,7 +1,7 @@
  
 import { create, type StateCreator } from 'zustand';
 import { type ComponentType as ReactComponentType } from "react";
-import type { RegistryEntry, ComponentRegistry, BlockRegistry } from '@/components/ui/ui-builder/types';
+import type { RegistryEntry, ComponentRegistry, BlockRegistry, FunctionRegistry, FunctionDefinition } from '@/components/ui/ui-builder/types';
 
 
 
@@ -11,9 +11,11 @@ export interface EditorStore {
 
     registry: ComponentRegistry;
     blocks: BlockRegistry | undefined;
+    functionRegistry: FunctionRegistry | undefined;
 
-    initialize: (registry: ComponentRegistry, persistLayerStoreConfig: boolean, allowPagesCreation: boolean, allowPagesDeletion: boolean, allowVariableEditing: boolean, blocks?: BlockRegistry) => void;
+    initialize: (registry: ComponentRegistry, persistLayerStoreConfig: boolean, allowPagesCreation: boolean, allowPagesDeletion: boolean, allowVariableEditing: boolean, blocks?: BlockRegistry, functionRegistry?: FunctionRegistry) => void;
     getComponentDefinition: (type: string) => RegistryEntry<ReactComponentType<any>> | undefined;
+    getFunctionDefinition: (id: string) => FunctionDefinition | undefined;
 
     persistLayerStoreConfig: boolean;
     setPersistLayerStoreConfig: (shouldPersist: boolean) => void;
@@ -42,9 +44,10 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
 
     registry: {},
     blocks: undefined,
+    functionRegistry: undefined,
 
-    initialize: (registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks) => {
-        set(state => ({ ...state, registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks }));
+    initialize: (registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks, functionRegistry) => {
+        set(state => ({ ...state, registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks, functionRegistry }));
     },
     getComponentDefinition: (type: string) => {
         const { registry } = get();
@@ -53,6 +56,13 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
             return undefined;
         }
         return registry[type];
+    },
+    getFunctionDefinition: (id: string) => {
+        const { functionRegistry } = get();
+        if (!functionRegistry) {
+            return undefined;
+        }
+        return functionRegistry[id];
     },
 
     persistLayerStoreConfig: true,

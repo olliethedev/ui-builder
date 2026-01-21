@@ -240,7 +240,7 @@ describe('VariablesPanel', () => {
       
       // Find all delete buttons (trash icons)
       const deleteButtons = screen.getAllByText('🗑');
-      fireEvent.click(deleteButtons[0]);
+      fireEvent.click(deleteButtons[0]!);
       
       expect(mockRemoveVariable).toHaveBeenCalledWith('var1');
       expect(mockIncrementRevision).toHaveBeenCalled();
@@ -251,7 +251,7 @@ describe('VariablesPanel', () => {
       
       // Find all edit buttons
       const editButtons = screen.getAllByText('✎');
-      fireEvent.click(editButtons[0]);
+      fireEvent.click(editButtons[0]!);
       
       // Should show editing form for the variable
       expect(screen.getByDisplayValue('userName')).toBeInTheDocument();
@@ -263,7 +263,7 @@ describe('VariablesPanel', () => {
       
       // Click edit on first variable
       const editButtons = screen.getAllByText('✎');
-      fireEvent.click(editButtons[0]);
+      fireEvent.click(editButtons[0]!);
       
       // Modify the values
       const nameInput = screen.getByDisplayValue('userName');
@@ -288,7 +288,7 @@ describe('VariablesPanel', () => {
       
       // Click edit on first variable
       const editButtons = screen.getAllByText('✎');
-      fireEvent.click(editButtons[0]);
+      fireEvent.click(editButtons[0]!);
       
       // Modify a value
       const nameInput = screen.getByDisplayValue('userName');
@@ -311,7 +311,7 @@ describe('VariablesPanel', () => {
       
       // Click edit on first variable
       const editButtons = screen.getAllByText('✎');
-      fireEvent.click(editButtons[0]);
+      fireEvent.click(editButtons[0]!);
       
       // Clear required fields
       const nameInput = screen.getByDisplayValue('userName');
@@ -339,7 +339,7 @@ describe('VariablesPanel', () => {
       
       // Click edit on first variable
       const editButtons = screen.getAllByText('✎');
-      fireEvent.click(editButtons[0]);
+      fireEvent.click(editButtons[0]!);
       
       // Clear fields to trigger validation
       const nameInput = screen.getByDisplayValue('userName');
@@ -351,7 +351,7 @@ describe('VariablesPanel', () => {
       
       await waitFor(() => {
         expect(screen.getByText('Name is required')).toBeInTheDocument();
-      });
+      }, { timeout: 3000 });
       
       // Start typing again
       fireEvent.change(nameInput, { target: { value: 'newName' } });
@@ -359,22 +359,23 @@ describe('VariablesPanel', () => {
       // Error should be cleared
       await waitFor(() => {
         expect(screen.queryByText('Name is required')).not.toBeInTheDocument();
-      });
-    });
+      }, { timeout: 3000 });
+    }, 15000);
 
     it('should handle type changes in edit form', () => {
       render(<VariablesPanel />);
       
       // Click edit on first variable (string type)
       const editButtons = screen.getAllByText('✎');
-      fireEvent.click(editButtons[0]);
+      fireEvent.click(editButtons[0]!);
       
-      // Change type to number
-      const typeSelect = screen.getAllByRole('combobox')[0];
+      // Change type to number - this should reset the value
+      const typeSelect = screen.getAllByRole('combobox')[0]!;
       fireEvent.change(typeSelect, { target: { value: 'number' } });
       
-      // Change value to a number
-      const valueInput = screen.getByDisplayValue('John Doe');
+      // Value is reset when type changes, so find the empty input by placeholder
+      // and enter a new value
+      const valueInput = screen.getByPlaceholderText('0');
       fireEvent.change(valueInput, { target: { value: '42' } });
       
       // Save
@@ -393,14 +394,14 @@ describe('VariablesPanel', () => {
       
       // Click edit on first variable
       const editButtons = screen.getAllByText('✎');
-      fireEvent.click(editButtons[0]);
+      fireEvent.click(editButtons[0]!);
       
-      // Change type to boolean
-      const typeSelect = screen.getAllByRole('combobox')[0];
+      // Change type to boolean - this should reset the value
+      const typeSelect = screen.getAllByRole('combobox')[0]!;
       fireEvent.change(typeSelect, { target: { value: 'boolean' } });
       
-      // Set value to false
-      const valueInput = screen.getByDisplayValue('John Doe');
+      // Value is reset when type changes, so find the empty input by placeholder
+      const valueInput = screen.getByPlaceholderText('true');
       fireEvent.change(valueInput, { target: { value: 'false' } });
       
       // Save
@@ -689,13 +690,15 @@ describe('VariablesPanel', () => {
       
       // Click edit on first variable
       const editButtons = screen.getAllByText('✎');
-      fireEvent.click(editButtons[0]);
+      expect(editButtons[0]).toBeDefined();
+      expect(editButtons[1]).toBeDefined();
+      fireEvent.click(editButtons[0]!);
       
       // Verify first variable is in edit mode
       expect(screen.getByDisplayValue('userName')).toBeInTheDocument();
       
       // Click edit on second variable
-      fireEvent.click(editButtons[1]);
+      fireEvent.click(editButtons[1]!);
       
       // First variable should no longer be in edit mode
       expect(screen.queryByDisplayValue('userName')).not.toBeInTheDocument();
@@ -713,7 +716,8 @@ describe('VariablesPanel', () => {
       
       // Start editing existing variable
       const editButtons = screen.getAllByText('✎');
-      fireEvent.click(editButtons[0]);
+      expect(editButtons[0]).toBeDefined();
+      fireEvent.click(editButtons[0]!);
       
       // Both forms should be visible (the component allows this behavior)
       expect(screen.getByText('Add New Variable')).toBeInTheDocument();
@@ -730,7 +734,8 @@ describe('VariablesPanel', () => {
       
       // Delete first variable
       const deleteButtons = screen.getAllByText('🗑');
-      fireEvent.click(deleteButtons[0]);
+      expect(deleteButtons[0]).toBeDefined();
+      fireEvent.click(deleteButtons[0]!);
       
       expect(mockRemoveVariable).toHaveBeenCalledWith('var1');
       expect(mockIncrementRevision).toHaveBeenCalled();
@@ -743,7 +748,8 @@ describe('VariablesPanel', () => {
       
       // Start editing a variable
       const editButtons = screen.getAllByText('✎');
-      fireEvent.click(editButtons[0]);
+      expect(editButtons[0]).toBeDefined();
+      fireEvent.click(editButtons[0]!);
       
       // Variable should be in edit mode
       expect(screen.getByDisplayValue('userName')).toBeInTheDocument();

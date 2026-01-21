@@ -1,5 +1,5 @@
 import { moveLayer, canLayerAcceptChildren } from '@/lib/ui-builder/store/layer-utils';
-import { ComponentLayer, ComponentRegistry } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer, ComponentRegistry } from '@/components/ui/ui-builder/types';
 
 describe('Layer Utils - Drag and Drop', () => {
   const mockRegistry: ComponentRegistry = {
@@ -44,10 +44,15 @@ describe('Layer Utils - Drag and Drop', () => {
 
       const result = moveLayer(pages, 'child-1', 'parent', 2);
 
-      expect(result[0].children).toHaveLength(3);
-      expect((result[0].children as ComponentLayer[])[0].id).toBe('child-2');
-      expect((result[0].children as ComponentLayer[])[1].id).toBe('child-3');
-      expect((result[0].children as ComponentLayer[])[2].id).toBe('child-1');
+      expect(result[0]).toBeDefined();
+      expect(Array.isArray(result[0]!.children)).toBe(true);
+      expect(result[0]!.children).toHaveLength(3);
+      expect((result[0]!.children as ComponentLayer[])[0]).toBeDefined();
+      expect((result[0]!.children as ComponentLayer[])[1]).toBeDefined();
+      expect((result[0]!.children as ComponentLayer[])[2]).toBeDefined();
+      expect((result[0]!.children as ComponentLayer[])[0]!.id).toBe('child-2');
+      expect((result[0]!.children as ComponentLayer[])[1]!.id).toBe('child-3');
+      expect((result[0]!.children as ComponentLayer[])[2]!.id).toBe('child-1');
     });
 
     it('should move layer to different parent', () => {
@@ -60,12 +65,18 @@ describe('Layer Utils - Drag and Drop', () => {
       const result = moveLayer(pages, 'child-1', 'parent-2', 1);
 
       // Source parent should have no children
-      expect((result[0].children as ComponentLayer[])).toHaveLength(0);
+      expect(result[0]).toBeDefined();
+      expect(Array.isArray(result[0]!.children)).toBe(true);
+      expect((result[0]!.children as ComponentLayer[])).toHaveLength(0);
       
       // Target parent should have both children
-      expect((result[1].children as ComponentLayer[])).toHaveLength(2);
-      expect((result[1].children as ComponentLayer[])[0].id).toBe('child-2');
-      expect((result[1].children as ComponentLayer[])[1].id).toBe('child-1');
+      expect(result[1]).toBeDefined();
+      expect(Array.isArray(result[1]!.children)).toBe(true);
+      expect((result[1]!.children as ComponentLayer[])).toHaveLength(2);
+      expect((result[1]!.children as ComponentLayer[])[0]).toBeDefined();
+      expect((result[1]!.children as ComponentLayer[])[1]).toBeDefined();
+      expect((result[1]!.children as ComponentLayer[])[0]!.id).toBe('child-2');
+      expect((result[1]!.children as ComponentLayer[])[1]!.id).toBe('child-1');
     });
 
     it('should move layer to beginning of target parent', () => {
@@ -77,9 +88,14 @@ describe('Layer Utils - Drag and Drop', () => {
 
       const result = moveLayer(pages, 'child-3', 'parent', 0);
 
-      expect((result[0].children as ComponentLayer[])[0].id).toBe('child-3');
-      expect((result[0].children as ComponentLayer[])[1].id).toBe('child-1');
-      expect((result[0].children as ComponentLayer[])[2].id).toBe('child-2');
+      expect(result[0]).toBeDefined();
+      expect(Array.isArray(result[0]!.children)).toBe(true);
+      expect((result[0]!.children as ComponentLayer[])[0]).toBeDefined();
+      expect((result[0]!.children as ComponentLayer[])[1]).toBeDefined();
+      expect((result[0]!.children as ComponentLayer[])[2]).toBeDefined();
+      expect((result[0]!.children as ComponentLayer[])[0]!.id).toBe('child-3');
+      expect((result[0]!.children as ComponentLayer[])[1]!.id).toBe('child-1');
+      expect((result[0]!.children as ComponentLayer[])[2]!.id).toBe('child-2');
     });
 
     it('should handle moving to end of target parent', () => {
@@ -92,9 +108,14 @@ describe('Layer Utils - Drag and Drop', () => {
 
       const result = moveLayer(pages, 'new-child', 'parent', 2);
 
-      expect((result[0].children as ComponentLayer[])).toHaveLength(3);
-      expect((result[0].children as ComponentLayer[])[2].id).toBe('new-child');
-      expect((result[1].children as ComponentLayer[])).toHaveLength(0);
+      expect(result[0]).toBeDefined();
+      expect(Array.isArray(result[0]!.children)).toBe(true);
+      expect((result[0]!.children as ComponentLayer[])).toHaveLength(3);
+      expect((result[0]!.children as ComponentLayer[])[2]).toBeDefined();
+      expect((result[0]!.children as ComponentLayer[])[2]!.id).toBe('new-child');
+      expect(result[1]).toBeDefined();
+      expect(Array.isArray(result[1]!.children)).toBe(true);
+      expect((result[1]!.children as ComponentLayer[])).toHaveLength(0);
     });
 
     it('should handle nested layer movement', () => {
@@ -107,13 +128,19 @@ describe('Layer Utils - Drag and Drop', () => {
       const result = moveLayer(pages, 'grandchild', 'parent', 1);
 
       // Should move grandchild from nested position to direct child of parent
-      expect((result[0].children as ComponentLayer[])).toHaveLength(3);
-      expect((result[0].children as ComponentLayer[])[0].id).toBe('child-1');
-      expect((result[0].children as ComponentLayer[])[1].id).toBe('grandchild');
-      expect((result[0].children as ComponentLayer[])[2].id).toBe('child-2');
+      expect(result[0]).toBeDefined();
+      expect(Array.isArray(result[0]!.children)).toBe(true);
+      expect((result[0]!.children as ComponentLayer[])).toHaveLength(3);
+      expect((result[0]!.children as ComponentLayer[])[0]).toBeDefined();
+      expect((result[0]!.children as ComponentLayer[])[1]).toBeDefined();
+      expect((result[0]!.children as ComponentLayer[])[2]).toBeDefined();
+      expect((result[0]!.children as ComponentLayer[])[0]!.id).toBe('child-1');
+      expect((result[0]!.children as ComponentLayer[])[1]!.id).toBe('grandchild');
+      expect((result[0]!.children as ComponentLayer[])[2]!.id).toBe('child-2');
       
       // Original parent of grandchild should be empty
-      expect(((result[0].children as ComponentLayer[])[0].children as ComponentLayer[])).toHaveLength(0);
+      expect(Array.isArray((result[0]!.children as ComponentLayer[])[0]!.children)).toBe(true);
+      expect(((result[0]!.children as ComponentLayer[])[0]!.children as ComponentLayer[])).toHaveLength(0);
     });
 
     it('should return original layers when source layer not found', () => {
@@ -134,9 +161,14 @@ describe('Layer Utils - Drag and Drop', () => {
 
       const result = moveLayer(pages, 'child', 'target-parent', 0);
 
-      expect((result[0].children as ComponentLayer[])).toHaveLength(0);
-      expect((result[1].children as ComponentLayer[])).toHaveLength(1);
-      expect((result[1].children as ComponentLayer[])[0].id).toBe('child');
+      expect(result[0]).toBeDefined();
+      expect(Array.isArray(result[0]!.children)).toBe(true);
+      expect((result[0]!.children as ComponentLayer[])).toHaveLength(0);
+      expect(result[1]).toBeDefined();
+      expect(Array.isArray(result[1]!.children)).toBe(true);
+      expect((result[1]!.children as ComponentLayer[])).toHaveLength(1);
+      expect((result[1]!.children as ComponentLayer[])[0]).toBeDefined();
+      expect((result[1]!.children as ComponentLayer[])[0]!.id).toBe('child');
     });
   });
 

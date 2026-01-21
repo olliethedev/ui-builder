@@ -1,8 +1,9 @@
 "use client";
 
+import { z } from "zod";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import type { ComponentLayer } from "@/components/ui/ui-builder/types";
-import type { ComponentRegistry } from "@/components/ui/ui-builder/types";
+import type { ComponentRegistry, FunctionRegistry } from "@/components/ui/ui-builder/types";
 import type { Variable } from '@/components/ui/ui-builder/types';
 import { primitiveComponentDefinitions } from "@/lib/ui-builder/registry/primitive-component-definitions";
 import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-component-definitions";
@@ -10,6 +11,18 @@ import { complexComponentDefinitions } from "@/lib/ui-builder/registry/complex-c
 const myComponentRegistry: ComponentRegistry = {
   ...primitiveComponentDefinitions,
   ...complexComponentDefinitions
+};
+
+// Function registry for the variable binding example
+const functionRegistry: FunctionRegistry = {
+  logToConsole: {
+    name: "Log to Console",
+    schema: z.tuple([]),
+    fn: () => {
+      console.log("[Variable Binding Example] Button clicked at", new Date().toISOString());
+    },
+    description: "Logs a message to the browser console",
+  },
 }; 
 
 // Page structure with actual variable bindings
@@ -172,6 +185,17 @@ const page: ComponentLayer = {
                                 variant: "outline",
                                 className: "flex-1 min-w-fit",
                                 children: { __variableRef: "secondaryButtonText" } // Bound to variable
+                            },
+                            children: []
+                        },
+                        {
+                            id: "console-log-button",
+                            type: "Button",
+                            props: {
+                                variant: "secondary",
+                                className: "flex-1 min-w-fit",
+                                children: "Log to Console",
+                                __function_onClick: "logToConsole" // Bound to function
                             },
                             children: []
                         }
@@ -357,6 +381,7 @@ export function RendererWithVars() {
         componentRegistry={myComponentRegistry}
         variables={variables}
         variableValues={variableValues}
+        functionRegistry={functionRegistry}
       />
     </div>
   );

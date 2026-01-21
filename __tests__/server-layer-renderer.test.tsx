@@ -4,7 +4,7 @@
 import { render, screen } from "@testing-library/react";
 import ServerLayerRenderer from "../components/ui/ui-builder/server-layer-renderer";
 import LayerRenderer from "../components/ui/ui-builder/layer-renderer";
-import { ComponentLayer, Variable, ComponentRegistry } from "../components/ui/ui-builder/types";
+import type { ComponentLayer, Variable, ComponentRegistry } from "../components/ui/ui-builder/types";
 import { z } from "zod";
 
 // Simple mock component registry for testing

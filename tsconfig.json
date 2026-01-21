@@ -22,7 +22,9 @@
     "noUncheckedIndexedAccess": true,
     "baseUrl": ".",
     "types": [
-      "@testing-library/jest-dom"
+      "@testing-library/jest-dom",
+      "jest",
+      "node"
     ],
     "paths": {
       "@/*": [
@@ -45,7 +47,6 @@
   ],
   "exclude": [
     "node_modules",
-    "__tests__/**/*",
     "components/ui/auto-form/**/*",
     "components/ui/minimal-tiptap/**/*"
   ]

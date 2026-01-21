@@ -6,6 +6,7 @@ import { CUSTOM_COMPONENTS_LAYER } from "@/app/docs/docs-data/docs-page-layers/c
 import { PANEL_CONFIGURATION_LAYER } from "@/app/docs/docs-data/docs-page-layers/panel-configuration";
 import { VARIABLES_LAYER } from "@/app/docs/docs-data/docs-page-layers/variables";
 import { VARIABLE_BINDING_LAYER } from "@/app/docs/docs-data/docs-page-layers/variable-binding";
+import { FUNCTION_REGISTRY_LAYER } from "@/app/docs/docs-data/docs-page-layers/function-registry";
 import { READ_ONLY_MODE_LAYER } from "@/app/docs/docs-data/docs-page-layers/read-only-mode";
 import { LAYER_STRUCTURE_LAYER } from "@/app/docs/docs-data/docs-page-layers/layer-structure";
 import { PERSISTENCE_LAYER } from "@/app/docs/docs-data/docs-page-layers/persistence";
@@ -27,6 +28,7 @@ export const DOCS_PAGES = [
     // Data & Variables
     VARIABLES_LAYER,
     VARIABLE_BINDING_LAYER,
+    FUNCTION_REGISTRY_LAYER,
     READ_ONLY_MODE_LAYER,
     
     // Layout & Persistence
@@ -100,6 +102,10 @@ export const MENU_DATA: DocPageNavItem[] = [
             {
                 title: "Variable Binding",
                 url: "/docs/variable-binding",
+            },
+            {
+                title: "Function Registry",
+                url: "/docs/function-registry",
             },
             {
                 title: "Editing Restrictions",

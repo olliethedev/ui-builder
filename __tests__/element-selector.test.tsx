@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ElementSelector } from "@/components/ui/ui-builder/internal/components/element-selector";
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 // Mock ResizeObserver
 const mockResizeObserver = {

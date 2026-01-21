@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { NavBar } from '@/components/ui/ui-builder/internal/components/nav';
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 // Mock the stores

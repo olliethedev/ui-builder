@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { pageLayerToCode, generateLayerCode, generatePropsString } from "../components/ui/ui-builder/internal/utils/templates";
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
-import { Variable } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer, Variable, FunctionRegistry } from '@/components/ui/ui-builder/types';
 import { normalizeSchema } from "./test-utils";
 import { z } from "zod";
 
@@ -65,6 +64,22 @@ const mockVariables: Variable[] = [
     name: 'isActive',
     type: 'boolean',
     defaultValue: true
+  }
+];
+
+const mockVariablesWithFunctions: Variable[] = [
+  ...mockVariables,
+  {
+    id: 'fn1',
+    name: 'handleClick',
+    type: 'function',
+    defaultValue: 'mockClickHandler'
+  },
+  {
+    id: 'fn2',
+    name: 'handleSubmit',
+    type: 'function',
+    defaultValue: 'mockSubmitHandler'
   }
 ];
 
@@ -472,6 +487,534 @@ ${expectedChildren}
 export default Page;
       `;
       expect(normalizeSchema(pageLayerToCode(page, componentRegistry, []))).toBe(normalizeSchema(expected));
+    });
+  });
+
+  describe("function variable code generation", () => {
+    it("should generate functions.xxx for function-type variable references", () => {
+      const props = { 
+        className: "button-class", 
+        onClick: { __variableRef: 'fn1' }
+      };
+      const expected = ` className="button-class" onClick={functions.handleClick}`;
+      expect(generatePropsString(props, mockVariablesWithFunctions)).toBe(expected);
+    });
+
+    it("should generate correct interface with both variables and functions", () => {
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              className: "button-class",
+              onClick: { __variableRef: 'fn1' },
+              label: { __variableRef: 'var1' }
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, mockVariablesWithFunctions);
+      
+      // Check that the interface includes both variables and functions
+      expect(result).toContain('variables: {');
+      expect(result).toContain('functions: {');
+      expect(result).toContain('userName: string;');
+      expect(result).toContain('handleClick: (...args: unknown[]) => unknown;');
+      
+      // Check that the props are generated correctly
+      expect(result).toContain('onClick={functions.handleClick}');
+      expect(result).toContain('label={variables.userName}');
+    });
+
+    it("should generate code with only functions when no regular variables are used", () => {
+      const functionsOnlyVariables: Variable[] = [
+        { id: 'fn1', name: 'handleClick', type: 'function', defaultValue: 'handler' }
+      ];
+      
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              onClick: { __variableRef: 'fn1' }
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, functionsOnlyVariables);
+      
+      // Should have functions interface but not variables
+      expect(result).toContain('functions: {');
+      expect(result).toContain('{ functions }: PageProps');
+      expect(result).toContain('onClick={functions.handleClick}');
+    });
+
+    it("should mix function and regular variables correctly in layer code", () => {
+      const layer: ComponentLayer = {
+        id: "button1",
+        type: "Button",
+        props: { 
+          className: "button-class",
+          onClick: { __variableRef: 'fn1' },
+          label: { __variableRef: 'var1' }
+        },
+        children: [],
+      };
+      
+      const result = generateLayerCode(layer, 0, mockVariablesWithFunctions);
+      
+      expect(result).toContain('onClick={functions.handleClick}');
+      expect(result).toContain('label={variables.userName}');
+    });
+  });
+
+  describe("__function_* metadata code generation", () => {
+    it("should filter out __function_* metadata props and generate proper function references", () => {
+      const props = { 
+        className: "button-class", 
+        __function_onClick: 'showSuccessToast'
+      };
+      const result = generatePropsString(props, []);
+      
+      // Should not contain __function_onClick as a prop
+      expect(result).not.toContain('__function_onClick');
+      // Should contain proper function reference
+      expect(result).toContain('onClick={functions.showSuccessToast}');
+      expect(result).toContain('className="button-class"');
+    });
+
+    it("should handle multiple __function_* metadata props", () => {
+      const props = { 
+        __function_onClick: 'handleClick',
+        __function_onSubmit: 'handleSubmit',
+        className: "form-class"
+      };
+      const result = generatePropsString(props, []);
+      
+      expect(result).not.toContain('__function_onClick');
+      expect(result).not.toContain('__function_onSubmit');
+      expect(result).toContain('onClick={functions.handleClick}');
+      expect(result).toContain('onSubmit={functions.handleSubmit}');
+      expect(result).toContain('className="form-class"');
+    });
+
+    it("should generate proper interface with __function_* metadata", () => {
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              className: "button-class",
+              __function_onClick: 'showSuccessToast'
+            },
+            children: [],
+          },
+          {
+            id: "button2",
+            type: "Button",
+            props: { 
+              className: "button-class",
+              __function_onClick: 'showErrorToast'
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, []);
+      
+      // Should have functions interface
+      expect(result).toContain('functions: {');
+      expect(result).toContain('showSuccessToast: (...args: unknown[]) => unknown;');
+      expect(result).toContain('showErrorToast: (...args: unknown[]) => unknown;');
+      // Should have proper destructuring
+      expect(result).toContain('{ functions }: PageProps');
+      // Should have proper onClick props
+      expect(result).toContain('onClick={functions.showSuccessToast}');
+      expect(result).toContain('onClick={functions.showErrorToast}');
+      // Should NOT have __function_* props
+      expect(result).not.toContain('__function_onClick');
+    });
+
+    it("should combine __function_* metadata with variable functions", () => {
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              onClick: { __variableRef: 'fn1' }, // function variable
+              label: { __variableRef: 'var1' } // regular variable
+            },
+            children: [],
+          },
+          {
+            id: "button2",
+            type: "Button",
+            props: { 
+              __function_onClick: 'showToast' // __function_* metadata
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, mockVariablesWithFunctions);
+      
+      // Should have both variables and functions interfaces
+      expect(result).toContain('variables: {');
+      expect(result).toContain('functions: {');
+      // Should have function variable in interface
+      expect(result).toContain('handleClick: (...args: unknown[]) => unknown;');
+      // Should have __function_* metadata function in interface
+      expect(result).toContain('showToast: (...args: unknown[]) => unknown;');
+      // Should have proper destructuring
+      expect(result).toContain('{ variables, functions }: PageProps');
+    });
+
+    it("should handle __function_* in nested layers", () => {
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "container1",
+            type: "Container",
+            props: {},
+            children: [
+              {
+                id: "button1",
+                type: "Button",
+                props: { 
+                  __function_onClick: 'nestedHandler'
+                },
+                children: [],
+              },
+            ],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, []);
+      
+      expect(result).toContain('functions: {');
+      expect(result).toContain('nestedHandler: (...args: unknown[]) => unknown;');
+      expect(result).toContain('onClick={functions.nestedHandler}');
+    });
+
+    it("should generate proper types from function registry Zod schemas", () => {
+      const mockFunctionRegistry = {
+        showToast: {
+          name: "Show Toast",
+          schema: z.tuple([]), // No args
+          fn: () => {},
+          description: "Shows a toast"
+        },
+        handleFormSubmit: {
+          name: "Submit Form",
+          schema: z.tuple([z.string()]), // One string arg
+          fn: (_arg: string) => {},
+          description: "Submits form"
+        },
+        processData: {
+          name: "Process Data",
+          schema: z.tuple([z.string(), z.number()]), // Two args
+          fn: (_s: string, _n: number) => {},
+          description: "Processes data"
+        }
+      };
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              __function_onClick: 'showToast'
+            },
+            children: [],
+          },
+          {
+            id: "form1",
+            type: "Button",
+            props: { 
+              __function_onSubmit: 'handleFormSubmit'
+            },
+            children: [],
+          },
+          {
+            id: "processor1",
+            type: "Button",
+            props: { 
+              __function_onClick: 'processData'
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      // No-arg function should generate () => void
+      expect(result).toContain('showToast: () => void;');
+      // One-arg function should generate (arg0: string) => void
+      expect(result).toContain('handleFormSubmit: (arg0: string) => void;');
+      // Two-arg function should generate (arg0: string, arg1: number) => void
+      expect(result).toContain('processData: (arg0: string, arg1: number) => void;');
+    });
+
+    it("should use explicit typeSignature when provided", () => {
+      const mockFunctionRegistry = {
+        handleFormSubmit: {
+          name: "Submit Form",
+          schema: z.tuple([z.custom()]), // Custom type can't be inferred
+          fn: () => {},
+          description: "Submits form",
+          typeSignature: "(e: React.FormEvent<HTMLFormElement>) => Promise<void>"
+        },
+        showToast: {
+          name: "Show Toast",
+          schema: z.tuple([]),
+          fn: () => {},
+          // No typeSignature - should infer from schema
+        }
+      };
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              __function_onClick: 'showToast'
+            },
+            children: [],
+          },
+          {
+            id: "form1",
+            type: "Button",
+            props: { 
+              __function_onSubmit: 'handleFormSubmit'
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      // showToast should infer from schema: () => void
+      expect(result).toContain('showToast: () => void;');
+      // handleFormSubmit should use explicit typeSignature
+      expect(result).toContain('handleFormSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;');
+    });
+
+    it("should generate optional parameter types from z.optional() schemas", () => {
+      const mockFunctionRegistry = {
+        logMessage: {
+          name: "Log Message",
+          schema: z.tuple([z.string().optional()]),
+          fn: () => {},
+          description: "Logs a message to console",
+        },
+        processWithOptionals: {
+          name: "Process Data",
+          schema: z.tuple([z.string(), z.number().optional()]),
+          fn: () => {},
+          description: "Processes data with optional count",
+        }
+      };
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "button1",
+            type: "Button",
+            props: { 
+              __function_onClick: 'logMessage'
+            },
+            children: [],
+          },
+          {
+            id: "button2",
+            type: "Button",
+            props: { 
+              __function_onClick: 'processWithOptionals'
+            },
+            children: [],
+          },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      // Single optional arg should generate (arg0?: string) => void
+      expect(result).toContain('logMessage: (arg0?: string) => void;');
+      // Mixed required and optional should generate (arg0: string, arg1?: number) => void
+      expect(result).toContain('processWithOptionals: (arg0: string, arg1?: number) => void;');
+    });
+
+    it("should generate types for various Zod schema types", () => {
+      const mockFunctionRegistry = {
+        handleBoolean: {
+          name: "Boolean Handler",
+          schema: z.tuple([z.boolean()]),
+          fn: () => {},
+        },
+        handleArray: {
+          name: "Array Handler",
+          schema: z.tuple([z.array(z.string())]),
+          fn: () => {},
+        },
+        handleObject: {
+          name: "Object Handler",
+          schema: z.tuple([z.object({ name: z.string() })]),
+          fn: () => {},
+        },
+        handleNullable: {
+          name: "Nullable Handler",
+          schema: z.tuple([z.string().nullable()]),
+          fn: () => {},
+        },
+        handleAny: {
+          name: "Any Handler",
+          schema: z.tuple([z.any()]),
+          fn: () => {},
+        },
+        handleUnknown: {
+          name: "Unknown Handler",
+          schema: z.tuple([z.unknown()]),
+          fn: () => {},
+        },
+      };
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          { id: "b1", type: "Button", props: { __function_onClick: 'handleBoolean' }, children: [] },
+          { id: "b2", type: "Button", props: { __function_onClick: 'handleArray' }, children: [] },
+          { id: "b3", type: "Button", props: { __function_onClick: 'handleObject' }, children: [] },
+          { id: "b4", type: "Button", props: { __function_onClick: 'handleNullable' }, children: [] },
+          { id: "b5", type: "Button", props: { __function_onClick: 'handleAny' }, children: [] },
+          { id: "b6", type: "Button", props: { __function_onClick: 'handleUnknown' }, children: [] },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      expect(result).toContain('handleBoolean: (arg0: boolean) => void;');
+      expect(result).toContain('handleArray: (arg0: unknown[]) => void;');
+      expect(result).toContain('handleObject: (arg0: Record<string, unknown>) => void;');
+      expect(result).toContain('handleNullable: (arg0: string | null) => void;');
+      expect(result).toContain('handleAny: (arg0: unknown) => void;');
+      expect(result).toContain('handleUnknown: (arg0: unknown) => void;');
+    });
+
+    it("should handle object schema at top level for function type inference", () => {
+      const mockFunctionRegistry = {
+        handleParams: {
+          name: "Params Handler",
+          schema: z.object({ name: z.string(), age: z.number() }),
+          fn: () => {},
+        },
+      };
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          { id: "b1", type: "Button", props: { __function_onClick: 'handleParams' }, children: [] },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      // Object schema at top level should generate (params: Record<string, unknown>) => void
+      expect(result).toContain('handleParams: (params: Record<string, unknown>) => void;');
+    });
+
+    it("should fallback to unknown for unrecognized schema types", () => {
+      // Create a mock schema with an unrecognized type (intentionally invalid for edge case testing)
+      const weirdSchema = { _zod: { def: { type: 'someUnknownType' } } };
+      const mockFunctionRegistry = {
+        weirdHandler: {
+          name: "Weird Handler",
+          schema: weirdSchema,
+          fn: () => {},
+        },
+      } as unknown as FunctionRegistry;
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          { id: "b1", type: "Button", props: { __function_onClick: 'weirdHandler' }, children: [] },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      // Should fallback to (...args: unknown[]) => unknown
+      expect(result).toContain('weirdHandler: (...args: unknown[]) => unknown;');
+    });
+
+    it("should handle schema without _zod or _def", () => {
+      // Schema that has neither _zod nor _def (intentionally invalid for edge case testing)
+      const invalidSchema = {};
+      const mockFunctionRegistry = {
+        invalidHandler: {
+          name: "Invalid Handler",
+          schema: invalidSchema,
+          fn: () => {},
+        },
+      } as unknown as FunctionRegistry;
+
+      const page: ComponentLayer = {
+        id: "page1",
+        type: "_page_",
+        props: {},
+        children: [
+          { id: "b1", type: "Button", props: { __function_onClick: 'invalidHandler' }, children: [] },
+        ],
+      };
+      
+      const result = pageLayerToCode(page, componentRegistry, [], mockFunctionRegistry);
+      
+      // Should fallback to (...args: unknown[]) => unknown
+      expect(result).toContain('invalidHandler: (...args: unknown[]) => unknown;');
     });
   });
 });

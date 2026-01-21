@@ -15,7 +15,7 @@ import {
   moveLayer,
   canLayerAcceptChildren
 } from "../lib/ui-builder/store/layer-utils";
-import { ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 
 describe("Layer Utils", () => {
@@ -58,18 +58,18 @@ describe("Layer Utils", () => {
   describe("visitLayer", () => {
     it("should apply visitor function to all layers", () => {
       const visitor = jest.fn((layer: ComponentLayer, parent: ComponentLayer | null) => layer);
-      visitLayer(mockPages[0], null, visitor);
+      visitLayer(mockPages[0]!, null, visitor);
 
       // Expect visitor to be called for each layer including the page
       expect(visitor).toHaveBeenCalledTimes(3);
-      expect(visitor).toHaveBeenCalledWith(mockPages[0], null);
+      expect(visitor).toHaveBeenCalledWith(mockPages[0]!, null);
       expect(visitor).toHaveBeenCalledWith(
-        mockPages[0].children![0],
-        mockPages[0]
+        (mockPages[0]!.children as ComponentLayer[])[0]!,
+        mockPages[0]!
       );
       expect(visitor).toHaveBeenCalledWith(
-        mockPages[0].children![1],
-        mockPages[0]
+        (mockPages[0]!.children as ComponentLayer[])[1]!,
+        mockPages[0]!
       );
     });
 
@@ -86,7 +86,7 @@ describe("Layer Utils", () => {
         }
         return layer;
       };
-      const updatedPages = visitLayer(mockPages[0], null, visitor) as ComponentLayer;
+      const updatedPages = visitLayer(mockPages[0]!, null, visitor) as ComponentLayer;
 
       const updatedButton = (updatedPages.children as ComponentLayer[]).find(
         (layer) => layer.id === "layer1"
@@ -189,7 +189,7 @@ describe("Layer Utils", () => {
         (page) => page.id === "page1"
       ) as ComponentLayer;
       expect(page1.children).toHaveLength(3);
-      expect((page1.children as ComponentLayer[])[1].id).toBe("layer3");
+      expect((page1.children as ComponentLayer[])[1]!.id).toBe("layer3");
     });
 
     it("should append the new layer if position is undefined", () => {
@@ -206,7 +206,7 @@ describe("Layer Utils", () => {
         (page) => page.id === "page1"
       ) as ComponentLayer;
       expect(page1.children).toHaveLength(3);
-      expect((page1.children as ComponentLayer[])[2].id).toBe("layer3");
+      expect((page1.children as ComponentLayer[])[2]!.id).toBe("layer3");
     });
 
     it("should handle negative positions by inserting at the beginning", () => {
@@ -223,7 +223,7 @@ describe("Layer Utils", () => {
         (page) => page.id === "page1"
       ) as ComponentLayer;
       expect(page1.children).toHaveLength(3);
-      expect((page1.children as ComponentLayer[])[0].id).toBe("layer0");
+      expect((page1.children as ComponentLayer[])[0]!.id).toBe("layer0");
     });
 
     it("should append if position exceeds the number of children", () => {
@@ -240,7 +240,7 @@ describe("Layer Utils", () => {
         (page) => page.id === "page1"
       ) as ComponentLayer;
       expect(page1.children).toHaveLength(3);
-      expect((page1.children as ComponentLayer[])[2].id).toBe("layer4");
+      expect((page1.children as ComponentLayer[])[2]!.id).toBe("layer4");
     });
 
     it("should handle adding to a parent with no existing children", () => {
@@ -266,7 +266,7 @@ describe("Layer Utils", () => {
       const page1 = updatedLayers.find(page => page.id === "page1") as ComponentLayer;
       
       expect(page1.children).toHaveLength(1);
-      expect((page1.children as ComponentLayer[])[0].id).toBe("layer1");
+      expect((page1.children as ComponentLayer[])[0]!.id).toBe("layer1");
     });
 
     it("should handle adding to a parent with undefined children", () => {
@@ -292,7 +292,7 @@ describe("Layer Utils", () => {
       const page1 = updatedLayers.find(page => page.id === "page1") as ComponentLayer;
       
       expect(page1.children).toHaveLength(1);
-      expect((page1.children as ComponentLayer[])[0].id).toBe("layer1");
+      expect((page1.children as ComponentLayer[])[0]!.id).toBe("layer1");
     });
 
     it("should not modify layers when parent is not found", () => {
@@ -347,9 +347,9 @@ describe("Layer Utils", () => {
 
       const updatedLayers = addLayer(deeplyNestedPages, newLayer, "container2");
       
-      const container2 = ((updatedLayers[0].children as ComponentLayer[])[0].children as ComponentLayer[])[0];
+      const container2 = ((updatedLayers[0]!.children as ComponentLayer[])[0]!.children as ComponentLayer[])[0]!;
       expect(container2.children).toHaveLength(1);
-      expect((container2.children as ComponentLayer[])[0].id).toBe("deep-layer");
+      expect((container2.children as ComponentLayer[])[0]!.id).toBe("deep-layer");
     });
   });
 
@@ -503,8 +503,8 @@ describe("Layer Utils", () => {
 
       const parents = findAllParentLayersRecursive(layers, "layer1-1");
       expect(parents).toHaveLength(2);
-      expect(parents[0].id).toBe("layer1");
-      expect(parents[1].id).toBe("page1");
+      expect(parents[0]!.id).toBe("layer1");
+      expect(parents[1]!.id).toBe("page1");
     });
 
     it("should return an empty array if the layer has no parents", () => {
@@ -595,9 +595,9 @@ describe("Layer Utils", () => {
 
       const parents = findAllParentLayersRecursive(layers, "layer1-1-1");
       expect(parents).toHaveLength(3);
-      expect(parents[0].id).toBe("layer1-1");
-      expect(parents[1].id).toBe("layer1");
-      expect(parents[2].id).toBe("page1");
+      expect(parents[0]!.id).toBe("layer1-1");
+      expect(parents[1]!.id).toBe("layer1");
+      expect(parents[2]!.id).toBe("page1");
     });
   });
 
@@ -665,18 +665,18 @@ describe("Layer Utils", () => {
       expect(duplicatedLayer.id).not.toBe(originalLayer.id);
       expect(duplicatedLayer.name).toBe(`${originalLayer.name} (Copy)`);
       expect(duplicatedLayer.children).toHaveLength(
-        originalLayer.children.length
+        (originalLayer.children as ComponentLayer[]).length
       );
 
       if (Array.isArray(duplicatedLayer.children)) {
         duplicatedLayer.children.forEach((child, index) => {
-          expect(child.id).not.toBe((originalLayer.children![index] as ComponentLayer).id);
+          expect(child.id).not.toBe((originalLayer.children as ComponentLayer[])[index]!.id);
           expect(child.name).toBe(
-          `${(originalLayer.children![index] as ComponentLayer).name}`
+          `${(originalLayer.children as ComponentLayer[])[index]!.name}`
         );
-        expect(child.type).toBe((originalLayer.children![index] as ComponentLayer).type);
-        expect(child.props).toEqual((originalLayer.children![index] as ComponentLayer).props);
-        expect(child.children).toEqual((originalLayer.children![index] as ComponentLayer).children);
+        expect(child.type).toBe((originalLayer.children as ComponentLayer[])[index]!.type);
+        expect(child.props).toEqual((originalLayer.children as ComponentLayer[])[index]!.props);
+        expect(child.children).toEqual((originalLayer.children as ComponentLayer[])[index]!.children);
         });
       }
     });
@@ -746,18 +746,18 @@ describe("Layer Utils", () => {
       expect(duplicatedLayer.id).not.toBe(originalLayer.id);
       expect(duplicatedLayer.name).toBe(`${originalLayer.name} (Copy)`);
 
-      const duplicatedChild = duplicatedLayer.children![0] as ComponentLayer;
-      expect(duplicatedChild.id).not.toBe((originalLayer.children![0] as ComponentLayer).id);
+      const duplicatedChild = (duplicatedLayer.children as ComponentLayer[])[0]!;
+      expect(duplicatedChild.id).not.toBe((originalLayer.children as ComponentLayer[])[0]!.id);
       expect(duplicatedChild.name).toBe(
-        `${(originalLayer.children![0] as ComponentLayer).name}`
+        `${(originalLayer.children as ComponentLayer[])[0]!.name}`
       );
 
-      const duplicatedDeepChild = duplicatedChild.children![0] as ComponentLayer;
+      const duplicatedDeepChild = (duplicatedChild.children as ComponentLayer[])[0]!;
       expect(duplicatedDeepChild.id).not.toBe(
-        ((originalLayer.children![0] as ComponentLayer).children![0] as ComponentLayer).id
+        ((originalLayer.children as ComponentLayer[])[0]!.children as ComponentLayer[])[0]!.id
       );
       expect(duplicatedDeepChild.name).toBe(
-        `${((originalLayer.children![0] as ComponentLayer).children![0] as ComponentLayer).name}`
+        `${((originalLayer.children as ComponentLayer[])[0]!.children as ComponentLayer[])[0]!.name}`
       );
     });
 
@@ -791,8 +791,8 @@ describe("Layer Utils", () => {
       expect(duplicatedLayer.props).toEqual(originalLayer.props);
       if (Array.isArray(duplicatedLayer.children)) {
         duplicatedLayer.children!.forEach((child, index) => {
-          expect(child.type).toBe((originalLayer.children![index] as ComponentLayer).type);
-          expect(child.props).toEqual((originalLayer.children![index] as ComponentLayer).props);
+          expect(child.type).toBe((originalLayer.children as ComponentLayer[])[index]!.type);
+          expect(child.props).toEqual((originalLayer.children as ComponentLayer[])[index]!.props);
         });
       }
     });
@@ -831,7 +831,7 @@ describe("Layer Utils", () => {
       const migratedState = migrateV1ToV2(persistedState);
 
       expect(migratedState.pages).toHaveLength(1);
-      const migratedPage = migratedState.pages[0];
+      const migratedPage = migratedState.pages[0]!;
 
       expect(migratedPage.children).toHaveLength(2);
       const migratedTextLayer = (migratedPage.children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1");
@@ -865,7 +865,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV1ToV2(persistedState);
 
-      const migratedTextLayer = (migratedState.pages[0].children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1");
+      const migratedTextLayer = (migratedState.pages[0]!.children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1");
       expect(migratedTextLayer).toBeDefined();
       expect(migratedTextLayer?.type).toBe("Markdown");
       expect(migratedTextLayer?.children).toBe("# Heading");
@@ -894,7 +894,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV1ToV2(persistedState);
 
-      const migratedTextLayer = (migratedState.pages[0].children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1");
+      const migratedTextLayer = (migratedState.pages[0]!.children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1");
       expect(migratedTextLayer).toBeDefined();
       expect(migratedTextLayer?.type).toBe("span");
       expect(migratedTextLayer?.children).toBe("No name layer");
@@ -924,7 +924,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV1ToV2(persistedState);
 
-      const migratedButtonLayer = (migratedState.pages[0].children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1");
+      const migratedButtonLayer = (migratedState.pages[0]!.children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1");
       expect(migratedButtonLayer).toBeDefined();
       expect(migratedButtonLayer?.type).toBe("button");
       expect(migratedButtonLayer?.name).toBe("Button Layer");
@@ -963,7 +963,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV1ToV2(persistedState);
 
-      const migratedNestedTextLayer = ((migratedState.pages[0].children as ComponentLayer[])[0].children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1-1");
+      const migratedNestedTextLayer = ((migratedState.pages[0]!.children as ComponentLayer[])[0]!.children as ComponentLayer[]).find((layer: ComponentLayer) => layer.id === "layer1-1");
       expect(migratedNestedTextLayer).toBeDefined();
       expect(migratedNestedTextLayer?.type).toBe("span");
       expect(migratedNestedTextLayer?.children).toBe("Nested text");
@@ -1044,7 +1044,7 @@ describe("Layer Utils", () => {
       expect(migratedPage1?.name).toBe("Page 1");
       expect(migratedPage1?.props).toEqual({ className: "page-class" });
       expect(migratedPage1?.children).toHaveLength(1);
-      expect((migratedPage1?.children as ComponentLayer[])[0].type).toBe(
+      expect((migratedPage1?.children as ComponentLayer[])[0]!.type).toBe(
         "button"
       ); // Child should be untouched
 
@@ -1131,7 +1131,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV2ToV3(persistedState);
 
-      expect(migratedState.pages[0].type).toBe("div"); // Check migration happened
+      expect(migratedState.pages[0]!.type).toBe("div"); // Check migration happened
       expect(migratedState.selectedPageId).toBe("p1");
       expect(migratedState.selectedLayerId).toBe("someLayer");
       expect(
@@ -1229,7 +1229,7 @@ describe("Layer Utils", () => {
       expect(layer.children).toHaveLength(1);
       expect(Array.isArray(layer.children)).toBe(true);
       
-      const child = (layer.children as ComponentLayer[])[0];
+      const child = (layer.children as ComponentLayer[])[0]!;
       expect(child.type).toBe('div');
       expect(child.name).toBe('Card Content');
       expect(child.id).not.toBe('child1'); // Should have new ID
@@ -1385,7 +1385,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV5ToV6(persistedState);
       
-      const migratedPage = migratedState.pages[0];
+      const migratedPage = migratedState.pages[0]!;
       const style = migratedPage.props.style as Record<string, string>;
       expect(style).toHaveProperty("--color-foreground");
       expect(style["--color-foreground"]).toBe("hsl(222.2 84% 4.9%)");
@@ -1415,7 +1415,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV5ToV6(persistedState);
       
-      const migratedPage = migratedState.pages[0];
+      const migratedPage = migratedState.pages[0]!;
       expect(migratedPage.props.style).toBeUndefined();
     });
 
@@ -1437,7 +1437,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV5ToV6(persistedState);
       
-      const migratedPage = migratedState.pages[0];
+      const migratedPage = migratedState.pages[0]!;
       expect(migratedPage.props).toEqual({ className: "test-class" });
     });
 
@@ -1504,7 +1504,7 @@ describe("Layer Utils", () => {
 
       const migratedState = migrateV5ToV6(persistedState);
       
-      expect(migratedState.pages[0].props).toEqual({});
+      expect(migratedState.pages[0]!.props).toEqual({});
     });
 
     it("should handle pages with null style property", () => {
@@ -1530,7 +1530,7 @@ describe("Layer Utils", () => {
       const migratedState = migrateV5ToV6(persistedState);
       
       // null style should be preserved (not processed)
-      expect(migratedState.pages[0].props.style).toBeNull();
+      expect(migratedState.pages[0]!.props.style).toBeNull();
     });
 
     it("should handle pages with null data-color-theme property", () => {
@@ -1558,8 +1558,8 @@ describe("Layer Utils", () => {
       const migratedState = migrateV5ToV6(persistedState);
       
       // Style should be removed since theme is null (no custom theme)
-      expect(migratedState.pages[0].props.style).toBeUndefined();
-      expect(migratedState.pages[0].props["data-color-theme"]).toBeNull();
+      expect(migratedState.pages[0]!.props.style).toBeUndefined();
+      expect(migratedState.pages[0]!.props["data-color-theme"]).toBeNull();
     });
   });
 
@@ -1600,12 +1600,12 @@ describe("Layer Utils", () => {
 
       const result = moveLayer(layers, "button1", "container2", 0);
       
-      const container1 = (result[0].children as ComponentLayer[]).find(c => c.id === "container1");
-      const container2 = (result[0].children as ComponentLayer[]).find(c => c.id === "container2");
+      const container1 = (result[0]!.children as ComponentLayer[]).find(c => c.id === "container1");
+      const container2 = (result[0]!.children as ComponentLayer[]).find(c => c.id === "container2");
       
       expect((container1?.children as ComponentLayer[]).length).toBe(0);
       expect((container2?.children as ComponentLayer[]).length).toBe(1);
-      expect((container2?.children as ComponentLayer[])[0].id).toBe("button1");
+      expect((container2?.children as ComponentLayer[])[0]!.id).toBe("button1");
     });
 
     it("should handle moving layer within the same parent", () => {
@@ -1643,10 +1643,10 @@ describe("Layer Utils", () => {
 
       const result = moveLayer(layers, "button3", "page1", 0);
       
-      const pageChildren = result[0].children as ComponentLayer[];
-      expect(pageChildren[0].id).toBe("button3");
-      expect(pageChildren[1].id).toBe("button1");
-      expect(pageChildren[2].id).toBe("button2");
+      const pageChildren = result[0]!.children as ComponentLayer[];
+      expect(pageChildren[0]!.id).toBe("button3");
+      expect(pageChildren[1]!.id).toBe("button1");
+      expect(pageChildren[2]!.id).toBe("button2");
     });
 
     it("should return unchanged layers when source layer not found", () => {
@@ -1704,11 +1704,11 @@ describe("Layer Utils", () => {
 
       const result = moveLayer(layers, "deep-button", "page1", 0);
       
-      const pageChildren = result[0].children as ComponentLayer[];
-      expect(pageChildren[0].id).toBe("deep-button");
+      const pageChildren = result[0]!.children as ComponentLayer[];
+      expect(pageChildren[0]!.id).toBe("deep-button");
       
       const container1 = pageChildren.find(c => c.id === "container1");
-      const nested1 = (container1?.children as ComponentLayer[])[0];
+      const nested1 = (container1?.children as ComponentLayer[])[0]!;
       expect((nested1.children as ComponentLayer[]).length).toBe(0);
     });
   });
@@ -1819,7 +1819,7 @@ describe("Layer Utils", () => {
       const result = addLayer(layers, newLayer, "span1");
       
       // Should not modify the span's children
-      const span = (result[0].children as ComponentLayer[]).find(c => c.id === "span1");
+      const span = (result[0]!.children as ComponentLayer[]).find(c => c.id === "span1");
       expect(span?.children).toBe("some text content");
     });
   });

@@ -346,7 +346,7 @@ describe("ResizableWrapper", () => {
     it("handles mouseDown event correctly", () => {
       renderResizableWrapper({ isResizable: true });
       
-      const resizer = screen.getAllByTestId("resizer")[0];
+      const resizer = screen.getAllByTestId("resizer")[0]!;
       
       // Test that mouseDown event doesn't throw and the component handles it
       expect(() => {
@@ -360,7 +360,7 @@ describe("ResizableWrapper", () => {
     it("handles touchStart event correctly", () => {
       renderResizableWrapper({ isResizable: true });
       
-      const resizer = screen.getAllByTestId("resizer")[0];
+      const resizer = screen.getAllByTestId("resizer")[0]!;
       
       // Test that touchStart event doesn't throw and the component handles it  
       expect(() => {

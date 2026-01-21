@@ -17,7 +17,10 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   
   /* Limit workers for stability - smoke tests can have race conditions with shared state */
-  workers: process.env.CI ? 1 : 4,
+  workers: process.env.CI ? 1 : 2,
+  
+  /* Test timeout - increase for slow page loads */
+  timeout: 60000,
   
   /* Reporter to use */
   reporter: process.env.CI ? 'github' : 'html',

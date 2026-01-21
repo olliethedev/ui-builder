@@ -11,7 +11,7 @@ import { ErrorFallback } from "@/components/ui/ui-builder/internal/components/er
 import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
 import { hasLayerChildren, canLayerAcceptChildren, findLayerRecursive } from "@/lib/ui-builder/store/layer-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/components/dev-profiler";
-import type { ComponentRegistry, ComponentLayer, Variable, PropValue } from '@/components/ui/ui-builder/types';
+import type { ComponentRegistry, ComponentLayer, Variable, PropValue, FunctionRegistry } from '@/components/ui/ui-builder/types';
 import { isVariableReference } from '@/components/ui/ui-builder/types';
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
@@ -93,13 +93,18 @@ export const RenderLayer: React.FC<{
   editorConfig?: EditorConfig;
   variables?: Variable[];
   variableValues?: Record<string, PropValue>;
+  functionRegistry?: FunctionRegistry;
 }> = memo(
-  ({ layer, componentRegistry, editorConfig, variables, variableValues }) => {
+  ({ layer, componentRegistry, editorConfig, variables, variableValues, functionRegistry }) => {
     const storeVariables = useLayerStore((state) => state.variables);
     const pages = useLayerStore((state) => state.pages);
     const isLayerAPage = useLayerStore((state) => state.isLayerAPage(layer.id));
     const registry = useEditorStore((state) => state.registry);
+    const storeFunctionRegistry = useEditorStore((state) => state.functionRegistry);
     const dndContext = useDndContext();
+    
+    // Use provided functionRegistry or fall back to store functionRegistry
+    const effectiveFunctionRegistry = functionRegistry ?? storeFunctionRegistry;
     
     // Use provided variables or fall back to store variables
     const effectiveVariables = variables || storeVariables;
@@ -118,8 +123,8 @@ export const RenderLayer: React.FC<{
 
     // Resolve variable references in props with proper memoization
     const resolvedProps = useMemo(() => 
-      resolveVariableReferences(layer.props, effectiveVariables, variableValues),
-      [layer.props, effectiveVariables, variableValues]
+      resolveVariableReferences(layer.props, effectiveVariables, variableValues, effectiveFunctionRegistry),
+      [layer.props, effectiveVariables, variableValues, effectiveFunctionRegistry]
     );
     
     // Memoize child editor config to avoid creating objects in JSX
@@ -150,7 +155,14 @@ export const RenderLayer: React.FC<{
     // Compute childProps with 'relative' class included when showDropZones is active
     // This must be recomputed when showDropZones changes to avoid stale className mutations
     const childProps: Record<string, PropValue> = useMemo(() => {
-      const props = { ...resolvedProps };
+      // Filter out internal metadata props (e.g., __function_onClick, __function_onSubmit)
+      // These are used internally for tracking function bindings but should not be passed to components
+      const props: Record<string, PropValue> = {};
+      for (const [key, value] of Object.entries(resolvedProps)) {
+        if (!key.startsWith('__function_')) {
+          props[key] = value;
+        }
+      }
       
       // CRITICAL: Add position:relative to parent when showing drop zones
       // This ensures absolutely positioned DropPlaceholders position correctly
@@ -197,6 +209,7 @@ export const RenderLayer: React.FC<{
             variables={variables}
             variableValues={variableValues}
             editorConfig={childEditorConfig}
+            functionRegistry={functionRegistry}
           />
         );
 
@@ -320,7 +333,10 @@ export const RenderLayer: React.FC<{
     const layerEqual = isDeepEqual(prevProps.layer, nextProps.layer);
     const variablesEqual = isDeepEqual(prevProps.variables, nextProps.variables);
     const variableValuesEqual = isDeepEqual(prevProps.variableValues, nextProps.variableValues);
-    return editorConfigEqual && layerEqual && variablesEqual && variableValuesEqual;
+    // Note: We don't deep compare functionRegistry as it's expected to be stable
+    // and comparing function references would be problematic
+    const functionRegistryEqual = prevProps.functionRegistry === nextProps.functionRegistry;
+    return editorConfigEqual && layerEqual && variablesEqual && variableValuesEqual && functionRegistryEqual;
   }
 );
 
