@@ -9,6 +9,7 @@ import React, {
 import isDeepEqual from "fast-deep-equal";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import type { ComponentLayer } from "@/components/ui/ui-builder/types";
+import { isVariableReference } from "@/lib/ui-builder/utils/variable-resolver";
 import { cn } from "@/lib/utils";
 import {
   findAllParentLayersRecursive,
@@ -219,6 +220,10 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
         } else if (typeof layer.children === 'string') {
           // Convert string children to empty array for tree traversal
           // The actual text content is preserved in the original layer
+          processed.children = [];
+        } else if (isVariableReference(layer.children)) {
+          // Convert variable reference children to empty array for tree traversal
+          // The variable binding is preserved in the original layer
           processed.children = [];
         } else if (!layer.children) {
           // Ensure undefined/null children become empty arrays

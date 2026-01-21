@@ -162,9 +162,8 @@ const initialLayers = [
                         name: "User Name",
                         props: {
                           className: "text-primary",
-                          children: { __variableRef: "userName" },
                         },
-                        children: [],
+                        children: { __variableRef: "userName" },
                       },
                       {
                         id: "greeting-emoji",
@@ -182,9 +181,8 @@ const initialLayers = [
                     props: {
                       variant: "secondary",
                       className: "w-fit",
-                      children: { __variableRef: "userRole" },
                     },
-                    children: [],
+                    children: { __variableRef: "userRole" },
                   },
                 ],
               },
@@ -202,9 +200,8 @@ const initialLayers = [
                 name: "Welcome Message",
                 props: {
                   className: "text-base leading-relaxed",
-                  children: { __variableRef: "welcomeMessage" },
                 },
-                children: [],
+                children: { __variableRef: "welcomeMessage" },
               },
             ],
           },
@@ -222,7 +219,7 @@ const initialLayers = [
                 name: "Get Started Button",
                 props: {
                   className: "flex-1",
-                  __function_onClick: "getStartedFn",
+                  onClick: { __variableRef: "getStartedFn" },
                 },
                 children: [
                   {
