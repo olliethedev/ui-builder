@@ -286,10 +286,12 @@ function FunctionPropField({
       // Clear the function
       unbindPropFromVariable(selectedLayer.id, propName);
       // Also remove any direct function binding
-      const newProps = { ...selectedLayer.props };
-      delete newProps[`__function_${propName}`];
-      delete newProps[propName];
-      updateLayer(selectedLayer.id, newProps);
+      // Note: We must explicitly set values to undefined rather than deleting keys,
+      // because updateLayer merges props with { ...layer.props, ...newProps }
+      updateLayer(selectedLayer.id, {
+        [`__function_${propName}`]: undefined,
+        [propName]: undefined,
+      });
       incrementRevision();
       return;
     }
@@ -363,11 +365,6 @@ function FunctionPropField({
   );
 }
 
-/**
- * Field override for function props (onClick, onSubmit, etc.)
- * Shows a dropdown to select directly from functionRegistry,
- * with optional variable binding for function-type variables.
- */
 /**
  * Field override for function props (onClick, onSubmit, etc.)
  * Shows a dropdown to select directly from functionRegistry,
@@ -533,6 +530,7 @@ export function VariableBindingWrapper({
                     variant="outline"
                     onClick={handleUnbind}
                     className="px-3 h-10"
+                    data-testid="unbind-variable-button"
                   >
                     <Unlink className="h-4 w-4" />
                   </Button>
@@ -551,7 +549,7 @@ export function VariableBindingWrapper({
               <Tooltip>
                 <DropdownMenuTrigger asChild>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="sm" className="px-3 h-10">
+                    <Button variant="outline" size="sm" className="px-3 h-10" data-testid="bind-variable-button">
                       <Link className="h-4 w-4 my-1" />
                     </Button>
                   </TooltipTrigger>
@@ -703,6 +701,7 @@ export function ChildrenVariableBindingWrapper({
                     variant="outline"
                     onClick={handleUnbind}
                     className="px-3 h-10"
+                    data-testid="unbind-children-button"
                   >
                     <Unlink className="h-4 w-4" />
                   </Button>
@@ -721,7 +720,7 @@ export function ChildrenVariableBindingWrapper({
               <Tooltip>
                 <DropdownMenuTrigger asChild>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="sm" className="px-3 h-10">
+                    <Button variant="outline" size="sm" className="px-3 h-10" data-testid="bind-children-button">
                       <Link className="h-4 w-4 my-1" />
                     </Button>
                   </TooltipTrigger>
