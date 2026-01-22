@@ -500,7 +500,7 @@ export function VariableBindingWrapper({
         <div className="flex flex-col gap-2 w-full">
           <Label>{propName.charAt(0).toUpperCase() + propName.slice(1)}</Label>
           <div className="flex items-end gap-2 w-full">
-            <Card className="w-full">
+            <Card className="w-full overflow-hidden min-w-0">
               <CardContent className="py-1 px-4">
                 <div className="flex items-center gap-2 w-full">
                   <Link className="h-4 w-4 flex-shrink-0" />
@@ -671,7 +671,7 @@ export function ChildrenVariableBindingWrapper({
         <div className="flex flex-col gap-2 w-full">
           <Label>Children</Label>
           <div className="flex items-end gap-2 w-full">
-            <Card className="w-full">
+            <Card className="w-full overflow-hidden min-w-0">
               <CardContent className="py-1 px-4">
                 <div className="flex items-center gap-2 w-full">
                   <Link className="h-4 w-4 flex-shrink-0" />
