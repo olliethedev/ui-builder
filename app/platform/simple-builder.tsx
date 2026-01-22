@@ -70,18 +70,6 @@ const initialVariables: Variable[] = [
     defaultValue: "Alex",
   },
   {
-    id: "userRole",
-    name: "User Role",
-    type: "string",
-    defaultValue: "Developer",
-  },
-  {
-    id: "welcomeMessage",
-    name: "Welcome Message",
-    type: "string",
-    defaultValue: "Welcome to UI Builder! This card demonstrates variable binding and interactive functions.",
-  },
-  {
     id: "getStartedFn",
     name: "Get Started Action",
     type: "function",
@@ -182,7 +170,7 @@ const initialLayers = [
                       variant: "secondary",
                       className: "w-fit",
                     },
-                    children: { __variableRef: "userRole" },
+                    children: "Developer",
                   },
                 ],
               },
@@ -201,7 +189,7 @@ const initialLayers = [
                 props: {
                   className: "text-base leading-relaxed",
                 },
-                children: { __variableRef: "welcomeMessage" },
+                children: "Welcome to UI Builder! This card demonstrates variable binding and interactive functions.",
               },
             ],
           },
