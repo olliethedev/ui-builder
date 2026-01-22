@@ -31,20 +31,18 @@ const sampleTemplate: ComponentLayer[] = [{
           "type": "span",
           "name": "Main Title",
           "props": {
-            "className": "text-4xl font-bold text-gray-900 block mb-4",
-            "children": { __variableRef: "pageTitle" }
+            "className": "text-4xl font-bold text-gray-900 block mb-4"
           },
-          "children": []
+          "children": { __variableRef: "pageTitle" }
         },
         {
           "id": "subtitle",
           "type": "span",
           "name": "Subtitle",
           "props": {
-            "className": "text-lg text-gray-600 block",
-            "children": { __variableRef: "pageSubtitle" }
+            "className": "text-lg text-gray-600 block"
           },
-          "children": []
+          "children": { __variableRef: "pageSubtitle" }
         }
       ]
     },
@@ -80,10 +78,8 @@ const sampleTemplate: ComponentLayer[] = [{
                       "type": "span",
                       "id": "info-title-text",
                       "name": "Title Text",
-                      "props": {
-                        "children": { __variableRef: "cardTitle" }
-                      },
-                      "children": []
+                      "props": {},
+                      "children": { __variableRef: "cardTitle" }
                     }
                   ]
                 }
@@ -99,10 +95,8 @@ const sampleTemplate: ComponentLayer[] = [{
                   "type": "span",
                   "id": "info-content-text",
                   "name": "Content Text",
-                  "props": {
-                    "children": { __variableRef: "cardContent" }
-                  },
-                  "children": []
+                  "props": {},
+                  "children": { __variableRef: "cardContent" }
                 }
               ]
             }
@@ -160,10 +154,8 @@ const sampleTemplate: ComponentLayer[] = [{
                       "type": "span",
                       "id": "primary-btn-text",
                       "name": "Primary Button Text",
-                      "props": {
-                        "children": { __variableRef: "primaryButtonText" }
-                      },
-                      "children": []
+                      "props": {},
+                      "children": { __variableRef: "primaryButtonText" }
                     }
                   ]
                 },
@@ -180,10 +172,8 @@ const sampleTemplate: ComponentLayer[] = [{
                       "type": "span",
                       "id": "secondary-btn-text",
                       "name": "Secondary Button Text",
-                      "props": {
-                        "children": { __variableRef: "secondaryButtonText" }
-                      },
-                      "children": []
+                      "props": {},
+                      "children": { __variableRef: "secondaryButtonText" }
                     }
                   ]
                 }

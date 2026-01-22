@@ -43,6 +43,13 @@ export const INTRODUCTION_LAYER = {
         "children": "**UI Builder solves the fundamental problem of UI creation tools: they ignore your existing React component library and force you to rebuild from scratch.**\n\nUI Builder is a shadcn/ui package that adds a Figma‑style editor to your own product, letting non‑developers compose pages, emails, dashboards, and white‑label views with the exact React components you already ship.\n\nLayouts are saved as plain JSON for easy versioning and can be rendered instantly with dynamic data, allowing:\n\n- your marketing team to update a landing page without waiting on engineering\n- a customer to tweak a branded portal with their own content and branding  \n- a product manager to modify email templates but parts of the content is dynamic for each user\n- add a visual \"head\" to your headless CMS, connecting your content API with your component library"
       },
       {
+        "id": "quick-setup-snippet",
+        "type": "Markdown",
+        "name": "Markdown",
+        "props": {},
+        "children": "## Quick Setup\n\n```bash\n# Install UI Builder\nnpx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json\n```\n\n```tsx\n// app/builder/page.tsx\n\"use client\";\n\nimport UIBuilder from \"@/components/ui/ui-builder\";\nimport { primitiveComponentDefinitions } from \"@/lib/ui-builder/registry/primitive-component-definitions\";\nimport { complexComponentDefinitions } from \"@/lib/ui-builder/registry/complex-component-definitions\";\n\nexport default function BuilderPage() {\n  return (\n    <main className=\"h-screen\">\n      <UIBuilder\n        componentRegistry={{\n          ...primitiveComponentDefinitions,\n          ...complexComponentDefinitions,\n        }}\n      />\n    </main>\n  );\n}\n```\n\nThat's it! Visit `http://localhost:3000/builder` to see your editor. See **Quick Start** for complete setup details."
+      },
+      {
         "id": "eR9CoTQ",
         "type": "div",
         "name": "div",

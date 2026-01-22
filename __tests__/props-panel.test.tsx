@@ -7,7 +7,7 @@ import {
   useLayerStore,
 } from "@/lib/ui-builder/store/layer-store";
 import type { RegistryEntry, ComponentLayer } from '@/components/ui/ui-builder/types';
-import { textInputFieldOverrides } from '@/lib/ui-builder/registry/form-field-overrides';
+import { textInputFieldOverrides, functionPropFieldOverrides, commonFieldOverrides } from '@/lib/ui-builder/registry/form-field-overrides';
 import { z } from "zod";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 
@@ -970,6 +970,407 @@ describe("PropsPanel", () => {
       );
       expect(unlinkButton).toBeDefined();
       expect(unlinkButton).toBeInTheDocument();
+    });
+  });
+
+  describe('Children Variable Binding UI', () => {
+    const mockVariables = [
+      { id: 'greeting-var', name: 'Greeting', type: 'string', defaultValue: 'Hello, World!' },
+      { id: 'title-var', name: 'Page Title', type: 'string', defaultValue: 'Welcome' },
+    ];
+
+    // Registry with components that have children field with variable binding enabled
+    const mockRegistryWithChildrenBinding: Record<string, RegistryEntry<any>> = {
+      span: {
+        schema: z.object({
+          className: z.string().optional(),
+          children: z.string().optional(),
+        }),
+        fieldOverrides: commonFieldOverrides(), // Has allowBinding=true by default
+      },
+    };
+
+    it('should show binding UI when layer.children is a VariableReference', () => {
+      const testLayer: ComponentLayer = {
+        id: 'span-with-var-children',
+        type: 'span',
+        name: 'Greeting Text',
+        props: {
+          className: 'text-lg',
+        },
+        children: { __variableRef: 'greeting-var' }, // Variable reference in layer.children
+      };
+
+      const layerStateWithChildrenBinding = {
+        ...mockLayerState,
+        variables: mockVariables,
+        selectedLayerId: 'span-with-var-children',
+        findLayerById: jest.fn().mockReturnValue(testLayer),
+        isChildrenBindingImmutable: jest.fn().mockReturnValue(false),
+        isBindingImmutable: jest.fn().mockReturnValue(false),
+        isLayerAPage: jest.fn().mockReturnValue(false),
+        bindChildrenToVariable: jest.fn(),
+        unbindChildrenFromVariable: jest.fn(),
+      };
+
+      const editorStateWithRegistry = {
+        ...mockEditorState,
+        registry: mockRegistryWithChildrenBinding,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => layerStateWithChildrenBinding);
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(layerStateWithChildrenBinding);
+        }
+        return layerStateWithChildrenBinding;
+      });
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(editorStateWithRegistry);
+        }
+        return editorStateWithRegistry;
+      });
+
+      render(<PropsPanel />);
+
+      // Should show the variable name in the binding UI
+      expect(screen.getByText('Greeting')).toBeInTheDocument();
+      
+      // Should show the variable type
+      expect(screen.getByText('string')).toBeInTheDocument();
+      
+      // Should show the resolved value
+      expect(screen.getByText('Hello, World!')).toBeInTheDocument();
+    });
+
+    it('should show unbind button for mutable children binding', () => {
+      const testLayer: ComponentLayer = {
+        id: 'span-mutable',
+        type: 'span',
+        name: 'Mutable Text',
+        props: {},
+        children: { __variableRef: 'greeting-var' },
+      };
+
+      const layerStateWithMutableChildrenBinding = {
+        ...mockLayerState,
+        variables: mockVariables,
+        selectedLayerId: 'span-mutable',
+        findLayerById: jest.fn().mockReturnValue(testLayer),
+        isChildrenBindingImmutable: jest.fn().mockReturnValue(false),
+        isBindingImmutable: jest.fn().mockReturnValue(false),
+        isLayerAPage: jest.fn().mockReturnValue(false),
+        bindChildrenToVariable: jest.fn(),
+        unbindChildrenFromVariable: jest.fn(),
+      };
+
+      const editorStateWithRegistry = {
+        ...mockEditorState,
+        registry: mockRegistryWithChildrenBinding,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => layerStateWithMutableChildrenBinding);
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(layerStateWithMutableChildrenBinding);
+        }
+        return layerStateWithMutableChildrenBinding;
+      });
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(editorStateWithRegistry);
+        }
+        return editorStateWithRegistry;
+      });
+
+      render(<PropsPanel />);
+
+      // Should show the unbind button
+      expect(screen.getByTestId('unbind-children-button')).toBeInTheDocument();
+    });
+
+    it('should show immutable badge for immutable children binding', () => {
+      const testLayer: ComponentLayer = {
+        id: 'span-immutable',
+        type: 'span',
+        name: 'Immutable Text',
+        props: {},
+        children: { __variableRef: 'greeting-var' },
+      };
+
+      const layerStateWithImmutableChildrenBinding = {
+        ...mockLayerState,
+        variables: mockVariables,
+        selectedLayerId: 'span-immutable',
+        findLayerById: jest.fn().mockReturnValue(testLayer),
+        isChildrenBindingImmutable: jest.fn().mockReturnValue(true), // Immutable
+        isBindingImmutable: jest.fn().mockReturnValue(false),
+        isLayerAPage: jest.fn().mockReturnValue(false),
+        bindChildrenToVariable: jest.fn(),
+        unbindChildrenFromVariable: jest.fn(),
+      };
+
+      const editorStateWithRegistry = {
+        ...mockEditorState,
+        registry: mockRegistryWithChildrenBinding,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => layerStateWithImmutableChildrenBinding);
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(layerStateWithImmutableChildrenBinding);
+        }
+        return layerStateWithImmutableChildrenBinding;
+      });
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(editorStateWithRegistry);
+        }
+        return editorStateWithRegistry;
+      });
+
+      render(<PropsPanel />);
+
+      // Should show immutable badge
+      expect(screen.getByTestId('immutable-children-badge')).toBeInTheDocument();
+    });
+
+    it('should show bind button when children is not bound to a variable', () => {
+      const testLayer: ComponentLayer = {
+        id: 'span-unbound',
+        type: 'span',
+        name: 'Unbound Text',
+        props: {},
+        children: 'Static text content',
+      };
+
+      const layerStateWithUnboundChildren = {
+        ...mockLayerState,
+        variables: mockVariables,
+        selectedLayerId: 'span-unbound',
+        findLayerById: jest.fn().mockReturnValue(testLayer),
+        isChildrenBindingImmutable: jest.fn().mockReturnValue(false),
+        isBindingImmutable: jest.fn().mockReturnValue(false),
+        isLayerAPage: jest.fn().mockReturnValue(false),
+        bindChildrenToVariable: jest.fn(),
+        unbindChildrenFromVariable: jest.fn(),
+      };
+
+      const editorStateWithRegistry = {
+        ...mockEditorState,
+        registry: mockRegistryWithChildrenBinding,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => layerStateWithUnboundChildren);
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(layerStateWithUnboundChildren);
+        }
+        return layerStateWithUnboundChildren;
+      });
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(editorStateWithRegistry);
+        }
+        return editorStateWithRegistry;
+      });
+
+      render(<PropsPanel />);
+
+      // Should show the bind button for unbound children
+      expect(screen.getByTestId('bind-children-button')).toBeInTheDocument();
+    });
+  });
+
+  describe('Function Prop Variable Binding UI', () => {
+    const mockFunctionVariables = [
+      { id: 'click-handler-var', name: 'Click Handler', type: 'function', defaultValue: 'handleClick' },
+      { id: 'submit-handler-var', name: 'Submit Handler', type: 'function', defaultValue: 'handleSubmit' },
+    ];
+
+    const mockFunctionRegistry = {
+      handleClick: {
+        name: 'Handle Click',
+        schema: z.tuple([]),
+        fn: () => {},
+        description: 'Handles click events',
+      },
+      handleSubmit: {
+        name: 'Handle Submit',
+        schema: z.tuple([]),
+        fn: () => {},
+        description: 'Handles form submission',
+      },
+    };
+
+    // Registry with Button that has onClick with function prop field override
+    const mockRegistryWithFunctionProp: Record<string, RegistryEntry<any>> = {
+      Button: {
+        schema: z.object({
+          className: z.string().optional(),
+          onClick: z.any().optional(),
+        }),
+        from: "@/components/ui/button",
+        component: ({ children, ...props }: any) => (
+          <button {...props}>{children}</button>
+        ),
+        fieldOverrides: {
+          onClick: () => functionPropFieldOverrides('onClick'),
+        },
+      },
+    };
+
+    it('should show binding UI when onClick is bound to a function variable', () => {
+      const testLayer: ComponentLayer = {
+        id: 'button-with-fn-var',
+        type: 'Button',
+        name: 'Interactive Button',
+        props: {
+          className: 'btn-primary',
+          onClick: { __variableRef: 'click-handler-var' }, // Bound to function variable
+        },
+        children: [],
+      };
+
+      const layerStateWithFunctionBinding = {
+        ...mockLayerState,
+        variables: mockFunctionVariables,
+        selectedLayerId: 'button-with-fn-var',
+        findLayerById: jest.fn().mockReturnValue(testLayer),
+        isBindingImmutable: jest.fn().mockReturnValue(false),
+        isLayerAPage: jest.fn().mockReturnValue(false),
+        bindPropToVariable: jest.fn(),
+        unbindPropFromVariable: jest.fn(),
+      };
+
+      const editorStateWithFunctionRegistry = {
+        ...mockEditorState,
+        registry: mockRegistryWithFunctionProp,
+        functionRegistry: mockFunctionRegistry,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => layerStateWithFunctionBinding);
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(layerStateWithFunctionBinding);
+        }
+        return layerStateWithFunctionBinding;
+      });
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(editorStateWithFunctionRegistry);
+        }
+        return editorStateWithFunctionRegistry;
+      });
+
+      render(<PropsPanel />);
+
+      // Should show the function variable name in the binding UI
+      expect(screen.getByText('Click Handler')).toBeInTheDocument();
+      
+      // Should show the variable type as 'function'
+      expect(screen.getByText('function')).toBeInTheDocument();
+      
+      // Should show the resolved function name
+      expect(screen.getByText('Handle Click')).toBeInTheDocument();
+    });
+
+    it('should show unbind button for mutable function binding', () => {
+      const testLayer: ComponentLayer = {
+        id: 'button-mutable-fn',
+        type: 'Button',
+        name: 'Mutable Button',
+        props: {
+          onClick: { __variableRef: 'click-handler-var' },
+        },
+        children: [],
+      };
+
+      const layerStateWithMutableFunctionBinding = {
+        ...mockLayerState,
+        variables: mockFunctionVariables,
+        selectedLayerId: 'button-mutable-fn',
+        findLayerById: jest.fn().mockReturnValue(testLayer),
+        isBindingImmutable: jest.fn().mockReturnValue(false),
+        isLayerAPage: jest.fn().mockReturnValue(false),
+        bindPropToVariable: jest.fn(),
+        unbindPropFromVariable: jest.fn(),
+      };
+
+      const editorStateWithFunctionRegistry = {
+        ...mockEditorState,
+        registry: mockRegistryWithFunctionProp,
+        functionRegistry: mockFunctionRegistry,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => layerStateWithMutableFunctionBinding);
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(layerStateWithMutableFunctionBinding);
+        }
+        return layerStateWithMutableFunctionBinding;
+      });
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(editorStateWithFunctionRegistry);
+        }
+        return editorStateWithFunctionRegistry;
+      });
+
+      render(<PropsPanel />);
+
+      // Should show the unbind button for mutable function binding
+      expect(screen.getByTestId('unbind-variable-button')).toBeInTheDocument();
+    });
+
+    it('should show bind button when onClick is not bound to a variable', () => {
+      const testLayer: ComponentLayer = {
+        id: 'button-unbound',
+        type: 'Button',
+        name: 'Unbound Button',
+        props: {
+          className: 'btn-default',
+          __function_onClick: 'handleClick', // Direct function binding, not variable
+        },
+        children: [],
+      };
+
+      const layerStateWithUnboundFunction = {
+        ...mockLayerState,
+        variables: mockFunctionVariables,
+        selectedLayerId: 'button-unbound',
+        findLayerById: jest.fn().mockReturnValue(testLayer),
+        isBindingImmutable: jest.fn().mockReturnValue(false),
+        isLayerAPage: jest.fn().mockReturnValue(false),
+        bindPropToVariable: jest.fn(),
+        unbindPropFromVariable: jest.fn(),
+      };
+
+      const editorStateWithFunctionRegistry = {
+        ...mockEditorState,
+        registry: mockRegistryWithFunctionProp,
+        functionRegistry: mockFunctionRegistry,
+      };
+
+      (useLayerStore as any).getState = jest.fn(() => layerStateWithUnboundFunction);
+      mockedUseLayerStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(layerStateWithUnboundFunction);
+        }
+        return layerStateWithUnboundFunction;
+      });
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector(editorStateWithFunctionRegistry);
+        }
+        return editorStateWithFunctionRegistry;
+      });
+
+      render(<PropsPanel />);
+
+      // Should show the bind button for unbound function prop
+      expect(screen.getByTestId('bind-variable-button')).toBeInTheDocument();
     });
   });
 });
