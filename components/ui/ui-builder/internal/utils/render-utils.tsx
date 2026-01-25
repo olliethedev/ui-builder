@@ -49,7 +49,7 @@ export const RenderLayer: React.FC<{
     const isLayerAPage = useLayerStore((state) => state.isLayerAPage(layer.id));
     const registry = useEditorStore((state) => state.registry);
     const dndContext = useSafeDndContext();
-    
+
     // Use provided variables or fall back to store variables
     const effectiveVariables = variables || storeVariables;
     const componentDefinition =
@@ -66,13 +66,12 @@ export const RenderLayer: React.FC<{
     }), [layer, componentRegistry]);
 
     // Resolve variable references in props with proper memoization
-    const resolvedProps = useMemo(() => 
+    const resolvedProps = useMemo(() =>
       resolveVariableReferences(layer.props, effectiveVariables, variableValues),
       [layer.props, effectiveVariables, variableValues]
     );
-    
+
     const childProps: Record<string, PropValue> = useMemo(() => ({ ...resolvedProps }), [resolvedProps]);
-    
     // Memoize child editor config to avoid creating objects in JSX
     const childEditorConfig = useMemo(() => {
       return editorConfig
@@ -82,16 +81,13 @@ export const RenderLayer: React.FC<{
 
     // Check if this layer can accept children and if drag is active (must be before early returns)
     const canAcceptChildren = useMemo(() => canLayerAcceptChildren(layer, registry), [layer, registry]);
-    const showDropZones = useMemo(() => 
+    const showDropZones = useMemo(() =>
       editorConfig && dndContext?.isDragging && canAcceptChildren,
       [editorConfig, dndContext?.isDragging, canAcceptChildren]
     );
 
     if (!componentDefinition) {
-      console.error(
-        `[UIBuilder] Component definition not found in registry:`, 
-        infoData
-      );
+
       return null;
     }
 
@@ -104,7 +100,7 @@ export const RenderLayer: React.FC<{
     }
 
     if (!Component) return null;
-    
+
     // Handle children rendering with improved drop zones
     if (hasLayerChildren(layer) && layer.children.length > 0) {
       const childElements = layer.children.map((child, index) => {
@@ -211,7 +207,7 @@ export const RenderLayer: React.FC<{
     }
   },
   (prevProps, nextProps) => {
-    if(nextProps.editorConfig?.parentUpdated) {
+    if (nextProps.editorConfig?.parentUpdated) {
       return false;
     }
     const editorConfigEqual = isDeepEqual(
@@ -230,7 +226,7 @@ const ErrorSuspenseWrapper: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
   const loadingFallback = useMemo(() => <LoadingComponent />, []);
-  
+
   return (
     <ErrorBoundary fallbackRender={ErrorFallback}>
       <Suspense fallback={loadingFallback}>{children}</Suspense>
