@@ -937,7 +937,7 @@ describe('NavBar', () => {
       expect(shortcuts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            keys: { metaKey: true },
+            keys: { metaKey: true, shiftKey: false },
             key: 'z',
           }),
           expect.objectContaining({

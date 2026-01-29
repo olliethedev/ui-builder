@@ -63,6 +63,7 @@ describe('Shortcut Registry', () => {
     it('should have correct properties for undo shortcut', () => {
       expect(SHORTCUTS.undo.id).toBe('undo');
       expect(SHORTCUTS.undo.keys.metaKey).toBe(true);
+      expect(SHORTCUTS.undo.keys.shiftKey).toBe(false);
       expect(SHORTCUTS.undo.key).toBe('z');
       expect(SHORTCUTS.undo.label).toBe('Undo');
       expect(SHORTCUTS.undo.shortcutDisplay).toBe('⌘Z');

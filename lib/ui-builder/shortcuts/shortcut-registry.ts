@@ -69,7 +69,7 @@ export const SHORTCUTS = {
   },
   undo: {
     id: 'undo',
-    keys: { metaKey: true },
+    keys: { metaKey: true, shiftKey: false },
     key: 'z',
     label: 'Undo',
     shortcutDisplay: '⌘Z',
