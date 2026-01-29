@@ -1,9 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import {
-  useLayerActions,
   useGlobalLayerActions,
-  getGlobalClipboard,
-  setGlobalClipboard,
 } from '@/lib/ui-builder/hooks/use-layer-actions';
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
@@ -23,7 +20,7 @@ import { canPasteLayer } from '@/lib/ui-builder/utils/paste-validation';
 
 const mockCanPasteLayer = canPasteLayer as jest.MockedFunction<typeof canPasteLayer>;
 
-describe('useLayerActions', () => {
+describe('useGlobalLayerActions', () => {
   const mockLayer: ComponentLayer = {
     id: 'layer-1',
     type: 'div',
@@ -68,16 +65,24 @@ describe('useLayerActions', () => {
   const mockDuplicateLayer = jest.fn();
   const mockAddLayerDirect = jest.fn();
   const mockIsLayerAPage = jest.fn();
+  const mockSetClipboard = jest.fn();
+  const mockClearClipboard = jest.fn();
+
+  let mockClipboard = {
+    layer: null as ComponentLayer | null,
+    isCut: false,
+    sourceLayerId: null as string | null,
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Reset global clipboard
-    setGlobalClipboard({
+    // Reset mock clipboard
+    mockClipboard = {
       layer: null,
       isCut: false,
       sourceLayerId: null,
-    });
+    };
 
     // Setup layer store mock
     (useLayerStore as unknown as jest.Mock).mockImplementation((selector) => {
@@ -92,12 +97,15 @@ describe('useLayerActions', () => {
       return selector(state);
     });
 
-    // Setup editor store mock
+    // Setup editor store mock with clipboard
     (useEditorStore as unknown as jest.Mock).mockImplementation((selector) => {
       const state = {
         registry: mockRegistry,
         allowPagesCreation: true,
         allowPagesDeletion: true,
+        clipboard: mockClipboard,
+        setClipboard: mockSetClipboard,
+        clearClipboard: mockClearClipboard,
       };
       return selector(state);
     });
@@ -107,26 +115,49 @@ describe('useLayerActions', () => {
     mockCanPasteLayer.mockReturnValue(true);
   });
 
-  describe('useLayerActions hook', () => {
-    it('should initialize with empty clipboard', () => {
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+  describe('clipboard initialization', () => {
+    it('should initialize with empty clipboard from editor store', () => {
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
       expect(result.current.clipboard.layer).toBeNull();
       expect(result.current.clipboard.isCut).toBe(false);
       expect(result.current.clipboard.sourceLayerId).toBeNull();
     });
 
-    it('should copy layer to clipboard', () => {
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+    it('should use clipboard from editor store when it has content', () => {
+      mockClipboard = {
+        layer: mockLayer,
+        isCut: false,
+        sourceLayerId: 'layer-1',
+      };
+
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
+
+      expect(result.current.clipboard.layer).toEqual(mockLayer);
+      expect(result.current.clipboard.sourceLayerId).toBe('layer-1');
+    });
+  });
+
+  describe('copy operations', () => {
+    it('should copy layer to clipboard via editor store', () => {
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
       act(() => {
         result.current.handleCopy();
       });
 
-      expect(result.current.clipboard.layer).not.toBeNull();
-      expect(result.current.clipboard.layer?.type).toBe('div');
-      expect(result.current.clipboard.isCut).toBe(false);
-      expect(result.current.clipboard.sourceLayerId).toBe('layer-1');
+      expect(mockSetClipboard).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isCut: false,
+          sourceLayerId: 'layer-1',
+        })
+      );
+      // Layer should be cloned with new ID
+      expect(mockSetClipboard).toHaveBeenCalledWith(
+        expect.objectContaining({
+          layer: expect.objectContaining({ type: 'div' }),
+        })
+      );
     });
 
     it('should not copy if no layer ID is provided and no layer is selected', () => {
@@ -142,36 +173,42 @@ describe('useLayerActions', () => {
         return selector(state);
       });
 
-      const { result } = renderHook(() => useLayerActions());
+      const { result } = renderHook(() => useGlobalLayerActions());
 
       act(() => {
         result.current.handleCopy();
       });
 
-      expect(result.current.clipboard.layer).toBeNull();
+      expect(mockSetClipboard).not.toHaveBeenCalled();
     });
 
     it('should not copy if layer is not found', () => {
       mockFindLayerById.mockReturnValue(undefined);
 
-      const { result } = renderHook(() => useLayerActions('non-existent'));
+      const { result } = renderHook(() => useGlobalLayerActions('non-existent'));
 
       act(() => {
         result.current.handleCopy();
       });
 
-      expect(result.current.clipboard.layer).toBeNull();
+      expect(mockSetClipboard).not.toHaveBeenCalled();
     });
+  });
 
+  describe('cut operations', () => {
     it('should cut layer (copy and delete)', () => {
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
       act(() => {
         result.current.handleCut();
       });
 
-      expect(result.current.clipboard.layer).not.toBeNull();
-      expect(result.current.clipboard.isCut).toBe(true);
+      expect(mockSetClipboard).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isCut: true,
+          sourceLayerId: 'layer-1',
+        })
+      );
       expect(mockRemoveLayer).toHaveBeenCalledWith('layer-1');
     });
 
@@ -182,29 +219,50 @@ describe('useLayerActions', () => {
           registry: mockRegistry,
           allowPagesCreation: true,
           allowPagesDeletion: false,
+          clipboard: mockClipboard,
+          setClipboard: mockSetClipboard,
+          clearClipboard: mockClearClipboard,
         };
         return selector(state);
       });
 
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
       act(() => {
         result.current.handleCut();
       });
 
-      expect(result.current.clipboard.layer).toBeNull();
+      expect(mockSetClipboard).not.toHaveBeenCalled();
       expect(mockRemoveLayer).not.toHaveBeenCalled();
     });
 
-    it('should paste layer into target', () => {
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+    it('should not cut if layer is not found', () => {
+      mockFindLayerById.mockReturnValue(undefined);
 
-      // First copy
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
+
       act(() => {
-        result.current.handleCopy();
+        result.current.handleCut();
       });
 
-      // Then paste
+      expect(mockSetClipboard).not.toHaveBeenCalled();
+      expect(mockRemoveLayer).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('paste operations', () => {
+    beforeEach(() => {
+      // Set up clipboard with content
+      mockClipboard = {
+        layer: mockLayer,
+        isCut: false,
+        sourceLayerId: 'layer-1',
+      };
+    });
+
+    it('should paste layer into target', () => {
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
+
       act(() => {
         result.current.handlePaste();
       });
@@ -213,7 +271,31 @@ describe('useLayerActions', () => {
     });
 
     it('should not paste if clipboard is empty', () => {
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+      mockClipboard = { layer: null, isCut: false, sourceLayerId: null };
+
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
+
+      act(() => {
+        result.current.handlePaste();
+      });
+
+      expect(mockAddLayerDirect).not.toHaveBeenCalled();
+    });
+
+    it('should not paste if no target layer ID', () => {
+      (useLayerStore as unknown as jest.Mock).mockImplementation((selector) => {
+        const state = {
+          selectedLayerId: null,
+          findLayerById: mockFindLayerById,
+          removeLayer: mockRemoveLayer,
+          duplicateLayer: mockDuplicateLayer,
+          addLayerDirect: mockAddLayerDirect,
+          isLayerAPage: mockIsLayerAPage,
+        };
+        return selector(state);
+      });
+
+      const { result } = renderHook(() => useGlobalLayerActions());
 
       act(() => {
         result.current.handlePaste();
@@ -225,14 +307,8 @@ describe('useLayerActions', () => {
     it('should not paste if validation fails', () => {
       mockCanPasteLayer.mockReturnValue(false);
 
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
-      // First copy
-      act(() => {
-        result.current.handleCopy();
-      });
-
-      // Then try to paste
       act(() => {
         result.current.handlePaste();
       });
@@ -241,47 +317,69 @@ describe('useLayerActions', () => {
     });
 
     it('should clear clipboard after paste if it was a cut operation', () => {
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+      mockClipboard = {
+        layer: mockLayer,
+        isCut: true,
+        sourceLayerId: 'layer-1',
+      };
 
-      // Cut
-      act(() => {
-        result.current.handleCut();
-      });
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
-      expect(result.current.clipboard.isCut).toBe(true);
-
-      // Paste
       act(() => {
         result.current.handlePaste();
       });
 
-      expect(result.current.clipboard.layer).toBeNull();
+      expect(mockClearClipboard).toHaveBeenCalled();
     });
 
     it('should not clear clipboard after paste if it was a copy operation', () => {
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+      mockClipboard = {
+        layer: mockLayer,
+        isCut: false,
+        sourceLayerId: 'layer-1',
+      };
 
-      // Copy
-      act(() => {
-        result.current.handleCopy();
-      });
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
-      // Paste
       act(() => {
         result.current.handlePaste();
       });
 
-      expect(result.current.clipboard.layer).not.toBeNull();
+      expect(mockClearClipboard).not.toHaveBeenCalled();
     });
+  });
 
+  describe('delete operations', () => {
     it('should delete layer', () => {
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
       act(() => {
         result.current.handleDelete();
       });
 
       expect(mockRemoveLayer).toHaveBeenCalledWith('layer-1');
+    });
+
+    it('should not delete if no layer ID', () => {
+      (useLayerStore as unknown as jest.Mock).mockImplementation((selector) => {
+        const state = {
+          selectedLayerId: null,
+          findLayerById: mockFindLayerById,
+          removeLayer: mockRemoveLayer,
+          duplicateLayer: mockDuplicateLayer,
+          addLayerDirect: mockAddLayerDirect,
+          isLayerAPage: mockIsLayerAPage,
+        };
+        return selector(state);
+      });
+
+      const { result } = renderHook(() => useGlobalLayerActions());
+
+      act(() => {
+        result.current.handleDelete();
+      });
+
+      expect(mockRemoveLayer).not.toHaveBeenCalled();
     });
 
     it('should not delete if layer is a page and page deletion is not allowed', () => {
@@ -291,11 +389,14 @@ describe('useLayerActions', () => {
           registry: mockRegistry,
           allowPagesCreation: true,
           allowPagesDeletion: false,
+          clipboard: mockClipboard,
+          setClipboard: mockSetClipboard,
+          clearClipboard: mockClearClipboard,
         };
         return selector(state);
       });
 
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
       act(() => {
         result.current.handleDelete();
@@ -303,15 +404,39 @@ describe('useLayerActions', () => {
 
       expect(mockRemoveLayer).not.toHaveBeenCalled();
     });
+  });
 
+  describe('duplicate operations', () => {
     it('should duplicate layer', () => {
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
       act(() => {
         result.current.handleDuplicate();
       });
 
       expect(mockDuplicateLayer).toHaveBeenCalledWith('layer-1');
+    });
+
+    it('should not duplicate if no layer ID', () => {
+      (useLayerStore as unknown as jest.Mock).mockImplementation((selector) => {
+        const state = {
+          selectedLayerId: null,
+          findLayerById: mockFindLayerById,
+          removeLayer: mockRemoveLayer,
+          duplicateLayer: mockDuplicateLayer,
+          addLayerDirect: mockAddLayerDirect,
+          isLayerAPage: mockIsLayerAPage,
+        };
+        return selector(state);
+      });
+
+      const { result } = renderHook(() => useGlobalLayerActions());
+
+      act(() => {
+        result.current.handleDuplicate();
+      });
+
+      expect(mockDuplicateLayer).not.toHaveBeenCalled();
     });
 
     it('should not duplicate if layer is a page and page creation is not allowed', () => {
@@ -321,11 +446,14 @@ describe('useLayerActions', () => {
           registry: mockRegistry,
           allowPagesCreation: false,
           allowPagesDeletion: true,
+          clipboard: mockClipboard,
+          setClipboard: mockSetClipboard,
+          clearClipboard: mockClearClipboard,
         };
         return selector(state);
       });
 
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
       act(() => {
         result.current.handleDuplicate();
@@ -333,124 +461,83 @@ describe('useLayerActions', () => {
 
       expect(mockDuplicateLayer).not.toHaveBeenCalled();
     });
+  });
 
+  describe('canPaste and canPerformPaste', () => {
     it('should return canPaste as false when clipboard is empty', () => {
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
       expect(result.current.canPaste).toBe(false);
     });
 
     it('should return canPaste as true when clipboard has content and validation passes', () => {
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+      mockClipboard = {
+        layer: mockLayer,
+        isCut: false,
+        sourceLayerId: 'layer-1',
+      };
 
-      act(() => {
-        result.current.handleCopy();
-      });
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
       expect(result.current.canPaste).toBe(true);
     });
 
-    it('should canPerformPaste check validation for a given target', () => {
-      const { result } = renderHook(() => useLayerActions('layer-1'));
+    it('should return canPaste as false when validation fails', () => {
+      mockClipboard = {
+        layer: mockLayer,
+        isCut: false,
+        sourceLayerId: 'layer-1',
+      };
+      mockCanPasteLayer.mockReturnValue(false);
 
-      act(() => {
-        result.current.handleCopy();
-      });
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
+
+      expect(result.current.canPaste).toBe(false);
+    });
+
+    it('should canPerformPaste check validation for a given target', () => {
+      mockClipboard = {
+        layer: mockLayer,
+        isCut: false,
+        sourceLayerId: 'layer-1',
+      };
+
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
+
+      result.current.canPerformPaste('target-layer');
+
+      expect(mockCanPasteLayer).toHaveBeenCalledWith(
+        mockLayer,
+        'target-layer',
+        mockRegistry,
+        mockFindLayerById
+      );
+    });
+
+    it('should canPerformPaste return false when clipboard is empty', () => {
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
       const canPaste = result.current.canPerformPaste('target-layer');
 
-      expect(mockCanPasteLayer).toHaveBeenCalled();
+      expect(canPaste).toBe(false);
     });
   });
 
-  describe('useGlobalLayerActions hook', () => {
-    it('should use global clipboard state', () => {
-      setGlobalClipboard({
-        layer: mockLayer,
-        isCut: false,
-        sourceLayerId: 'layer-1',
-      });
-
-      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
-
-      expect(result.current.clipboard.layer).toEqual(mockLayer);
-    });
-
-    it('should update global clipboard on copy', () => {
-      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
+  describe('uses selected layer when no layerId provided', () => {
+    it('should use selectedLayerId when no layerId is passed', () => {
+      const { result } = renderHook(() => useGlobalLayerActions());
 
       act(() => {
         result.current.handleCopy();
       });
 
-      const globalClipboard = getGlobalClipboard();
-      expect(globalClipboard.layer).not.toBeNull();
-      expect(globalClipboard.sourceLayerId).toBe('layer-1');
-    });
-
-    it('should update global clipboard on cut', () => {
-      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
-
-      act(() => {
-        result.current.handleCut();
-      });
-
-      const globalClipboard = getGlobalClipboard();
-      expect(globalClipboard.isCut).toBe(true);
-      expect(mockRemoveLayer).toHaveBeenCalledWith('layer-1');
-    });
-
-    it('should paste from global clipboard', () => {
-      setGlobalClipboard({
-        layer: mockLayer,
-        isCut: false,
-        sourceLayerId: 'layer-1',
-      });
-
-      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
-
-      act(() => {
-        result.current.handlePaste();
-      });
-
-      expect(mockAddLayerDirect).toHaveBeenCalled();
-    });
-
-    it('should clear global clipboard after cut-paste', () => {
-      setGlobalClipboard({
-        layer: mockLayer,
-        isCut: true,
-        sourceLayerId: 'layer-1',
-      });
-
-      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
-
-      act(() => {
-        result.current.handlePaste();
-      });
-
-      const globalClipboard = getGlobalClipboard();
-      expect(globalClipboard.layer).toBeNull();
-    });
-  });
-
-  describe('Global clipboard functions', () => {
-    it('should get global clipboard', () => {
-      const clipboard = getGlobalClipboard();
-      expect(clipboard).toBeDefined();
-    });
-
-    it('should set global clipboard', () => {
-      const newClipboard = {
-        layer: mockLayer,
-        isCut: true,
-        sourceLayerId: 'test-id',
-      };
-
-      setGlobalClipboard(newClipboard);
-
-      const clipboard = getGlobalClipboard();
-      expect(clipboard).toEqual(newClipboard);
+      // Should have used 'layer-1' from selectedLayerId
+      expect(mockFindLayerById).toHaveBeenCalledWith('layer-1');
+      expect(mockSetClipboard).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sourceLayerId: 'layer-1',
+        })
+      );
     });
   });
 });

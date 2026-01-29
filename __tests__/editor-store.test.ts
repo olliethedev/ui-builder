@@ -41,6 +41,11 @@ describe('EditorStore', () => {
       allowPagesCreation: true,
       allowPagesDeletion: true,
       allowVariableEditing: true,
+      clipboard: {
+        layer: null,
+        isCut: false,
+        sourceLayerId: null,
+      },
     });
   });
 
@@ -523,6 +528,94 @@ describe('EditorStore', () => {
       // Verify component definition lookup still works
       const buttonDef = result.current.getComponentDefinition('Button');
       expect(buttonDef).toEqual(mockRegistry.Button);
+    });
+  });
+
+  describe('Clipboard', () => {
+    const mockLayer = {
+      id: 'layer-1',
+      type: 'Button',
+      name: 'Test Button',
+      props: { label: 'Click me' },
+      children: [],
+    };
+
+    it('should initialize with empty clipboard', () => {
+      const { result } = renderHook(() => useEditorStore());
+
+      expect(result.current.clipboard.layer).toBeNull();
+      expect(result.current.clipboard.isCut).toBe(false);
+      expect(result.current.clipboard.sourceLayerId).toBeNull();
+    });
+
+    it('should set clipboard with layer', () => {
+      const { result } = renderHook(() => useEditorStore());
+
+      act(() => {
+        result.current.setClipboard({
+          layer: mockLayer,
+          isCut: false,
+          sourceLayerId: 'layer-1',
+        });
+      });
+
+      expect(result.current.clipboard.layer).toEqual(mockLayer);
+      expect(result.current.clipboard.isCut).toBe(false);
+      expect(result.current.clipboard.sourceLayerId).toBe('layer-1');
+    });
+
+    it('should set clipboard with isCut flag', () => {
+      const { result } = renderHook(() => useEditorStore());
+
+      act(() => {
+        result.current.setClipboard({
+          layer: mockLayer,
+          isCut: true,
+          sourceLayerId: 'layer-1',
+        });
+      });
+
+      expect(result.current.clipboard.isCut).toBe(true);
+    });
+
+    it('should clear clipboard', () => {
+      const { result } = renderHook(() => useEditorStore());
+
+      // First set some clipboard content
+      act(() => {
+        result.current.setClipboard({
+          layer: mockLayer,
+          isCut: true,
+          sourceLayerId: 'layer-1',
+        });
+      });
+
+      expect(result.current.clipboard.layer).not.toBeNull();
+
+      // Then clear it
+      act(() => {
+        result.current.clearClipboard();
+      });
+
+      expect(result.current.clipboard.layer).toBeNull();
+      expect(result.current.clipboard.isCut).toBe(false);
+      expect(result.current.clipboard.sourceLayerId).toBeNull();
+    });
+
+    it('should share clipboard state across hook instances', () => {
+      const { result: result1 } = renderHook(() => useEditorStore());
+      const { result: result2 } = renderHook(() => useEditorStore());
+
+      act(() => {
+        result1.current.setClipboard({
+          layer: mockLayer,
+          isCut: false,
+          sourceLayerId: 'layer-1',
+        });
+      });
+
+      // Second instance should see the same clipboard
+      expect(result2.current.clipboard.layer).toEqual(mockLayer);
     });
   });
 });
