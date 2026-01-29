@@ -88,41 +88,6 @@ export const SHORTCUTS = {
 export type ShortcutId = keyof typeof SHORTCUTS;
 
 /**
- * Get the display string for a shortcut.
- * Returns the human-readable shortcut display (e.g., "⌘C" for copy).
- */
-export function getShortcutDisplay(shortcutId: ShortcutId): string {
-  return SHORTCUTS[shortcutId].shortcutDisplay;
-}
-
-/**
- * Get a shortcut definition by ID.
- */
-export function getShortcut(shortcutId: ShortcutId): ShortcutDefinition {
-  return SHORTCUTS[shortcutId];
-}
-
-/**
- * Check if a keyboard event matches a shortcut definition.
- */
-export function matchesShortcut(
-  event: KeyboardEvent,
-  shortcutId: ShortcutId
-): boolean {
-  const shortcut = SHORTCUTS[shortcutId];
-  const keys = shortcut.keys as ShortcutKeys;
-  const key = shortcut.key;
-
-  const metaKeyMatch = keys.metaKey === undefined || event.metaKey === keys.metaKey;
-  const shiftKeyMatch = keys.shiftKey === undefined || event.shiftKey === keys.shiftKey;
-  const ctrlKeyMatch = keys.ctrlKey === undefined || event.ctrlKey === keys.ctrlKey;
-  const altKeyMatch = keys.altKey === undefined || event.altKey === keys.altKey;
-  const keyMatch = event.key.toLowerCase() === key.toLowerCase();
-
-  return metaKeyMatch && shiftKeyMatch && ctrlKeyMatch && altKeyMatch && keyMatch;
-}
-
-/**
  * Convert a shortcut definition to the format expected by useKeyboardShortcuts hook.
  */
 export function toKeyboardShortcut(
