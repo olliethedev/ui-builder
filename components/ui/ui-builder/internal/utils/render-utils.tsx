@@ -81,8 +81,6 @@ export interface EditorConfig {
   selectedLayer: ComponentLayer;
   parentUpdated?: boolean;
   onSelectElement: (layerId: string) => void;
-  handleDuplicateLayer?: () => void;
-  handleDeleteLayer?: () => void;
 }
 
 
@@ -296,8 +294,6 @@ export const RenderLayer: React.FC<{
         totalLayers,
         selectedLayer,
         onSelectElement,
-        handleDuplicateLayer,
-        handleDeleteLayer,
       } = editorConfig;
 
       return (
@@ -313,8 +309,6 @@ export const RenderLayer: React.FC<{
             onSelectElement={onSelectElement}
             isPageLayer={isLayerAPage}
             totalLayers={totalLayers}
-            onDuplicateLayer={handleDuplicateLayer}
-            onDeleteLayer={handleDeleteLayer}
           >
             {DragFeedbackWrapper}
           </ElementSelector>

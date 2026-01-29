@@ -22,6 +22,8 @@ import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/compon
 import { NameEdit } from "@/components/ui/ui-builder/internal/components/name-edit";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { hasAnyChildrenField, hasChildrenFieldOfTypeString } from "@/lib/ui-builder/store/schema-utils";
+import { useGlobalLayerActions } from "@/lib/ui-builder/hooks/use-layer-actions";
+import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 
 interface TreeRowNodeProps {
   node: ComponentLayer;
@@ -33,16 +35,6 @@ interface TreeRowNodeProps {
   nodeAttributes: NodeAttrs;
   selectedLayerId: string | null;
   selectLayer: (id: string) => void;
-  removeLayer: (id: string) => void;
-  duplicateLayer: (id: string) => void;
-  updateLayer: (
-    id: string,
-    update: Partial<ComponentLayer>,
-    options?: {
-      name?: string;
-      children?: ComponentLayer[];
-    }
-  ) => void;
 }
 
 export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
@@ -55,11 +47,12 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
   nodeAttributes,
   selectedLayerId,
   selectLayer,
-  removeLayer,
-  duplicateLayer,
-  updateLayer,
 }) => {
   const componentRegistry = useEditorStore((state) => state.registry);
+  const updateLayer = useLayerStore((state) => state.updateLayer);
+  
+  // Use global layer actions for delete and duplicate
+  const { handleDelete, handleDuplicate } = useGlobalLayerActions(node.id);
 
   const [isRenaming, setIsRenaming] = useState(false);
 
@@ -79,14 +72,6 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
   const handleSelect = useCallback(() => {
     selectLayer(node.id);
   }, [node.id, selectLayer]);
-
-  const handleRemove = useCallback(() => {
-    removeLayer(node.id);
-  }, [node.id, removeLayer]);
-
-  const handleDuplicate = useCallback(() => {
-    duplicateLayer(node.id);
-  }, [node.id, duplicateLayer]);
 
   const handleRenameClick = useCallback(() => {
     setIsRenaming(true);
@@ -216,7 +201,7 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
             </DropdownMenuItem>
           )}
           {allowPagesDeletion && (
-            <DropdownMenuItem onClick={handleRemove}>Remove</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleDelete}>Remove</DropdownMenuItem>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
@@ -243,9 +228,6 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
   // If not, these will cause re-renders but that might be necessary
   if (prevProps.onToggle !== nextProps.onToggle) return false;
   if (prevProps.selectLayer !== nextProps.selectLayer) return false;
-  if (prevProps.removeLayer !== nextProps.removeLayer) return false;
-  if (prevProps.duplicateLayer !== nextProps.duplicateLayer) return false;
-  if (prevProps.updateLayer !== nextProps.updateLayer) return false;
   
   return true;
 });

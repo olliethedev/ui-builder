@@ -16,6 +16,22 @@ jest.mock("@/lib/ui-builder/store/editor-store", () => ({
   useEditorStore: jest.fn(),
 }));
 
+// Mock useGlobalLayerActions
+const mockHandleDuplicate = jest.fn();
+const mockHandleDelete = jest.fn();
+jest.mock("@/lib/ui-builder/hooks/use-layer-actions", () => ({
+  useGlobalLayerActions: () => ({
+    handleDuplicate: mockHandleDuplicate,
+    handleDelete: mockHandleDelete,
+    handleCopy: jest.fn(),
+    handleCut: jest.fn(),
+    handlePaste: jest.fn(),
+    canPaste: false,
+    clipboard: { layer: null, isCut: false },
+    canPerformPaste: jest.fn().mockReturnValue(false),
+  }),
+}));
+
 // Mock the AddComponentsPopover
 jest.mock("@/components/ui/ui-builder/internal/components/add-component-popover", () => ({
   AddComponentsPopover: ({ children }: { children: React.ReactNode }) => (
@@ -62,18 +78,12 @@ const mockPageLayer: ComponentLayer = {
 describe("LayerMenu", () => {
   const defaultProps = {
     layerId: "test-layer-1",
-    x: 100,
-    y: 200,
-    width: 300,
-    height: 400,
-    zIndex: 1000,
-    onClose: jest.fn(),
-    handleDuplicateComponent: jest.fn(),
-    handleDeleteComponent: jest.fn(),
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockHandleDuplicate.mockClear();
+    mockHandleDelete.mockClear();
     
     // Default mock setup for component layer
     mockedUseLayerStore.mockImplementation((selector) => {
@@ -223,10 +233,8 @@ describe("LayerMenu", () => {
   });
 
   describe("interaction handling", () => {
-    it("should call handleDuplicateComponent when duplicate button is clicked", () => {
-      const mockHandleDuplicate = jest.fn();
-      
-      render(<LayerMenu {...defaultProps} handleDuplicateComponent={mockHandleDuplicate} />);
+    it("should call handleDuplicate from global actions when duplicate button is clicked", () => {
+      render(<LayerMenu {...defaultProps} />);
 
       const duplicateButton = screen.getByTestId('duplicate-button');
       expect(duplicateButton).toBeInTheDocument();
@@ -235,10 +243,8 @@ describe("LayerMenu", () => {
       expect(mockHandleDuplicate).toHaveBeenCalledTimes(1);
     });
 
-    it("should call handleDeleteComponent when delete button is clicked", () => {
-      const mockHandleDelete = jest.fn();
-      
-      render(<LayerMenu {...defaultProps} handleDeleteComponent={mockHandleDelete} />);
+    it("should call handleDelete from global actions when delete button is clicked", () => {
+      render(<LayerMenu {...defaultProps} />);
 
       const deleteButton = screen.getByTestId('delete-button');
       expect(deleteButton).toBeInTheDocument();

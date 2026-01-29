@@ -141,23 +141,12 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
     selectLayer,
     selectedLayerId,
     findLayerById,
-    duplicateLayer,
-    removeLayer,
     selectedPageId,
   } = useLayerStore();
   const previewMode = useEditorStore((state) => state.previewMode);
   const componentRegistry = useEditorStore((state) => state.registry);
   const selectedLayer = findLayerById(selectedLayerId) as ComponentLayer;
   const selectedPage = findLayerById(selectedPageId) as ComponentLayer;
-  const isLayerAPage = useLayerStore((state) =>
-    state.isLayerAPage(selectedLayerId || "")
-  );
-  const allowPagesCreation = useEditorStore(
-    (state) => state.allowPagesCreation
-  );
-  const allowPagesDeletion = useEditorStore(
-    (state) => state.allowPagesDeletion
-  );
 
   const onSelectElement = useCallback(
     (layerId: string) => {
@@ -165,18 +154,6 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
     },
     [selectLayer]
   );
-
-  const handleDeleteLayer = useCallback(() => {
-    if (selectedLayer && !isLayerAPage) {
-      removeLayer(selectedLayer.id);
-    }
-  }, [selectedLayer, removeLayer, isLayerAPage]);
-
-  const handleDuplicateLayer = useCallback(() => {
-    if (selectedLayer && !isLayerAPage) {
-      duplicateLayer(selectedLayer.id);
-    }
-  }, [selectedLayer, duplicateLayer, isLayerAPage]);
 
   return (
     <DndContextProvider>
@@ -186,15 +163,10 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
         selectedPageId={selectedPageId}
         selectedLayer={selectedLayer}
         selectedPage={selectedPage}
-        isLayerAPage={isLayerAPage}
-        allowPagesCreation={allowPagesCreation}
-        allowPagesDeletion={allowPagesDeletion}
         previewMode={previewMode}
         componentRegistry={componentRegistry}
         autoZoomToSelected={false}
         onSelectElement={onSelectElement}
-        handleDeleteLayer={handleDeleteLayer}
-        handleDuplicateLayer={handleDuplicateLayer}
       />
     </DndContextProvider>
   );
@@ -208,15 +180,10 @@ interface EditorPanelContentProps {
   selectedPageId: string;
   selectedLayer: ComponentLayer;
   selectedPage: ComponentLayer;
-  isLayerAPage: boolean;
-  allowPagesCreation: boolean;
-  allowPagesDeletion: boolean;
   previewMode: string;
   componentRegistry: any;
   autoZoomToSelected?: boolean;
   onSelectElement: (layerId: string) => void;
-  handleDeleteLayer: () => void;
-  handleDuplicateLayer: () => void;
 }
 
 // Inner component that can access ComponentDragContext
@@ -226,14 +193,10 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
   selectedLayerId,
   selectedLayer,
   selectedPage,
-  allowPagesCreation,
-  allowPagesDeletion,
   previewMode,
   componentRegistry,
   autoZoomToSelected,
   onSelectElement,
-  handleDeleteLayer,
-  handleDuplicateLayer
 }) => {
   const { isDragging: isComponentDragging } = useComponentDragContext();
   const [resizing, setResizing] = useState(false);
@@ -267,19 +230,11 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
       totalLayers: totalLayers,
       selectedLayer: selectedLayer,
       onSelectElement: onSelectElement,
-      handleDuplicateLayer: allowPagesCreation
-        ? handleDuplicateLayer
-        : undefined,
-      handleDeleteLayer: allowPagesDeletion ? handleDeleteLayer : undefined,
     }),
     [
       totalLayers,
       selectedLayer,
       onSelectElement,
-      handleDuplicateLayer,
-      handleDeleteLayer,
-      allowPagesCreation,
-      allowPagesDeletion,
     ]
   );
 

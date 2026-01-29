@@ -76,6 +76,7 @@ import {
   useKeyboardShortcuts,
 } from "@/hooks/use-keyboard-shortcuts";
 import { useStore } from "zustand";
+import { toKeyboardShortcut } from "@/lib/ui-builder/shortcuts/shortcut-registry";
 
 const Z_INDEX = 1000;
 
@@ -132,16 +133,10 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
 
   const keyCombinations = useMemo<KeyCombination[]>(
     () => [
-      {
-        keys: { metaKey: true, shiftKey: false },
-        key: "z",
-        handler: handleUndo,
-      },
-      {
-        keys: { metaKey: true, shiftKey: true },
-        key: "z",
-        handler: handleRedo,
-      },
+      // Use shortcut registry for undo/redo
+      toKeyboardShortcut('undo', handleUndo),
+      toKeyboardShortcut('redo', handleRedo),
+      // Debug shortcuts (not in registry)
       {
         keys: { metaKey: true, shiftKey: true },
         key: "9",
