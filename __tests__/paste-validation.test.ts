@@ -1,4 +1,4 @@
-import { canPasteLayer, canPasteComponentType } from '@/lib/ui-builder/utils/paste-validation';
+import { canPasteLayer } from '@/lib/ui-builder/utils/paste-validation';
 import type { ComponentLayer, ComponentRegistry } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
 
@@ -168,81 +168,6 @@ describe('Paste Validation', () => {
       const findLayerById = jest.fn().mockReturnValue(targetLayer);
 
       const result = canPasteLayer(sourceLayer, 'target', registry, findLayerById);
-
-      expect(result).toBe(true);
-    });
-  });
-
-  describe('canPasteComponentType', () => {
-    it('should return false if target layer does not exist', () => {
-      const registry = createMockRegistry();
-      const findLayerById = jest.fn().mockReturnValue(undefined);
-
-      const result = canPasteComponentType('div', 'non-existent', registry, findLayerById);
-
-      expect(result).toBe(false);
-    });
-
-    it('should return false if target cannot accept children', () => {
-      const targetLayer = createMockLayer({ id: 'target', type: 'Text' });
-      const registry = createMockRegistry();
-      const findLayerById = jest.fn().mockReturnValue(targetLayer);
-
-      mockCanLayerAcceptChildren.mockReturnValue(false);
-
-      const result = canPasteComponentType('div', 'target', registry, findLayerById);
-
-      expect(result).toBe(false);
-    });
-
-    it('should return false if target only accepts string children', () => {
-      const targetLayer = createMockLayer({ id: 'target', type: 'Button' });
-      const registry = createMockRegistry();
-      const findLayerById = jest.fn().mockReturnValue(targetLayer);
-
-      mockHasChildrenFieldOfTypeString.mockReturnValue(true);
-
-      const result = canPasteComponentType('div', 'target', registry, findLayerById);
-
-      expect(result).toBe(false);
-    });
-
-    it('should return false if component type has childOf constraint that does not include target type', () => {
-      const targetLayer = createMockLayer({ id: 'target', type: 'div' });
-      const registry = createMockRegistry();
-      const findLayerById = jest.fn().mockReturnValue(targetLayer);
-
-      const result = canPasteComponentType('CardContent', 'target', registry, findLayerById);
-
-      expect(result).toBe(false);
-    });
-
-    it('should return true if component type childOf constraint includes target type', () => {
-      const targetLayer = createMockLayer({ id: 'target', type: 'Card' });
-      const registry = createMockRegistry();
-      const findLayerById = jest.fn().mockReturnValue(targetLayer);
-
-      const result = canPasteComponentType('CardContent', 'target', registry, findLayerById);
-
-      expect(result).toBe(true);
-    });
-
-    it('should return true for valid paste operation without childOf constraint', () => {
-      const targetLayer = createMockLayer({ id: 'target', type: 'div', children: [] });
-      const registry = createMockRegistry();
-      const findLayerById = jest.fn().mockReturnValue(targetLayer);
-
-      const result = canPasteComponentType('Button', 'target', registry, findLayerById);
-
-      expect(result).toBe(true);
-    });
-
-    it('should return true when component type is not in registry', () => {
-      const targetLayer = createMockLayer({ id: 'target', type: 'div', children: [] });
-      const registry = createMockRegistry();
-      const findLayerById = jest.fn().mockReturnValue(targetLayer);
-
-      const result = canPasteComponentType('UnknownComponent', 'target', registry, findLayerById);
 
       expect(result).toBe(true);
     });
