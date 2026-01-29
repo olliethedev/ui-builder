@@ -134,13 +134,20 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
   const keyCombinations = useMemo<KeyCombination[]>(
     () => [
       // Use shortcut registry for undo/redo
-      toKeyboardShortcut('undo', handleUndo),
-      toKeyboardShortcut('redo', handleRedo),
+      toKeyboardShortcut('undo', (e) => {
+        e.preventDefault();
+        handleUndo();
+      }),
+      toKeyboardShortcut('redo', (e) => {
+        e.preventDefault();
+        handleRedo();
+      }),
       // Debug shortcuts (not in registry)
       {
         keys: { metaKey: true, shiftKey: true },
         key: "9",
-        handler: () => {
+        handler: (e: KeyboardEvent) => {
+          e.preventDefault();
           const elements = document.querySelectorAll("*");
           elements.forEach((element) => {
             element.classList.add("animate-spin", "origin-center");
@@ -150,7 +157,8 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
       {
         keys: { metaKey: true, shiftKey: true },
         key: "0",
-        handler: () => {
+        handler: (e: KeyboardEvent) => {
+          e.preventDefault();
           const elements = document.querySelectorAll("*");
           elements.forEach((element) => {
             element.classList.remove("animate-spin", "origin-center");
@@ -500,7 +508,8 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
       {
         keys: { metaKey: true, shiftKey: true },
         key: "p",
-        handler: () => {
+        handler: (e: KeyboardEvent) => {
+          e.preventDefault();
           onOpenChange(true);
         },
       },
@@ -548,7 +557,8 @@ const CodeDialog: React.FC<CodeDialogProps> = ({ isOpen, onOpenChange }) => {
       {
         keys: { metaKey: true, shiftKey: true },
         key: "e",
-        handler: () => {
+        handler: (e: KeyboardEvent) => {
+          e.preventDefault();
           onOpenChange(true);
         },
       },
