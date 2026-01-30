@@ -416,7 +416,7 @@ describe('TreeRowNode', () => {
       expect(screen.getByText('Duplicate')).toBeInTheDocument();
     });
 
-    it('should not show duplicate option when pages creation is not allowed', () => {
+    it('should show duplicate option for non-page layers even when pages creation is not allowed', () => {
       mockUseEditorStore.mockImplementation((selector) => {
         const state = {
           allowPagesCreation: false,
@@ -426,7 +426,31 @@ describe('TreeRowNode', () => {
         return selector(state as any);
       });
 
+      // Non-page layer should always allow duplicate
+      mockIsLayerAPage.mockReturnValue(false);
+
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
+
+      const moreButton = screen.getByLabelText('More options');
+      fireEvent.click(moreButton);
+
+      expect(screen.getByText('Duplicate')).toBeInTheDocument();
+    });
+
+    it('should not show duplicate option for page layers when pages creation is not allowed', () => {
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          allowPagesCreation: false,
+          allowPagesDeletion: true,
+          registry: createMockRegistry('page', true, false),
+        };
+        return selector(state as any);
+      });
+
+      // Page layer should respect allowPagesCreation
+      mockIsLayerAPage.mockReturnValue(true);
+
+      render(<TreeRowNode {...defaultProps} node={mockPageNode} />);
 
       const moreButton = screen.getByLabelText('More options');
       fireEvent.click(moreButton);
@@ -452,7 +476,7 @@ describe('TreeRowNode', () => {
       expect(screen.getByText('Remove')).toBeInTheDocument();
     });
 
-    it('should not show remove option when pages deletion is not allowed', () => {
+    it('should show remove option for non-page layers even when pages deletion is not allowed', () => {
       mockUseEditorStore.mockImplementation((selector) => {
         const state = {
           allowPagesCreation: true,
@@ -462,7 +486,31 @@ describe('TreeRowNode', () => {
         return selector(state as any);
       });
 
+      // Non-page layer should always allow delete
+      mockIsLayerAPage.mockReturnValue(false);
+
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
+
+      const moreButton = screen.getByLabelText('More options');
+      fireEvent.click(moreButton);
+
+      expect(screen.getByText('Remove')).toBeInTheDocument();
+    });
+
+    it('should not show remove option for page layers when pages deletion is not allowed', () => {
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          allowPagesCreation: true,
+          allowPagesDeletion: false,
+          registry: createMockRegistry('page', true, false),
+        };
+        return selector(state as any);
+      });
+
+      // Page layer should respect allowPagesDeletion
+      mockIsLayerAPage.mockReturnValue(true);
+
+      render(<TreeRowNode {...defaultProps} node={mockPageNode} />);
 
       const moreButton = screen.getByLabelText('More options');
       fireEvent.click(moreButton);

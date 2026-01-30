@@ -64,6 +64,11 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
   const allowPagesDeletion = useEditorStore(
     (state) => state.allowPagesDeletion
   );
+  const isLayerAPage = useLayerStore((state) => state.isLayerAPage(node.id));
+
+  // Check permissions for page operations (same logic as LayerMenu/LayerMenuItems)
+  const canDuplicate = !isLayerAPage || allowPagesCreation;
+  const canDelete = !isLayerAPage || allowPagesDeletion;
 
   const handleOpen = useCallback(() => {
     onToggle(id, !open);
@@ -189,12 +194,12 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
           <DropdownMenuItem onClick={handleRenameClick}>
             Rename
           </DropdownMenuItem>
-          {allowPagesCreation && (
+          {canDuplicate && (
             <DropdownMenuItem onClick={handleDuplicate}>
               Duplicate
             </DropdownMenuItem>
           )}
-          {allowPagesDeletion && (
+          {canDelete && (
             <DropdownMenuItem onClick={handleDelete}>Remove</DropdownMenuItem>
           )}
         </DropdownMenuContent>
