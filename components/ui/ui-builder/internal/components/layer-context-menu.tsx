@@ -142,5 +142,3 @@ export const LayerContextMenu: React.FC<LayerContextMenuProps> = ({
     </ContextMenu>
   );
 };
-
-export default LayerContextMenu;

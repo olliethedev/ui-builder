@@ -149,5 +149,3 @@ export const LayerMenuItems: React.FC<LayerMenuItemsProps> = ({
     </>
   );
 };
-
-export default LayerMenuItems;
