@@ -22,6 +22,7 @@ jest.mock('@/lib/ui-builder/hooks/use-layer-actions', () => ({
 jest.mock('@/lib/ui-builder/store/schema-utils', () => ({
   hasAnyChildrenField: jest.fn(),
   hasChildrenFieldOfTypeString: jest.fn(),
+  canComponentAcceptChildren: jest.fn(),
 }));
 
 // Mock context menu components
@@ -52,13 +53,12 @@ jest.mock('@/components/ui/ui-builder/internal/components/add-component-popover'
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
 import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 import { useGlobalLayerActions } from '@/lib/ui-builder/hooks/use-layer-actions';
-import { hasAnyChildrenField, hasChildrenFieldOfTypeString } from '@/lib/ui-builder/store/schema-utils';
+import { canComponentAcceptChildren } from '@/lib/ui-builder/store/schema-utils';
 
 const mockUseLayerStore = useLayerStore as jest.MockedFunction<typeof useLayerStore>;
 const mockUseEditorStore = useEditorStore as jest.MockedFunction<typeof useEditorStore>;
 const mockUseGlobalLayerActions = useGlobalLayerActions as jest.MockedFunction<typeof useGlobalLayerActions>;
-const mockHasAnyChildrenField = hasAnyChildrenField as jest.MockedFunction<typeof hasAnyChildrenField>;
-const mockHasChildrenFieldOfTypeString = hasChildrenFieldOfTypeString as jest.MockedFunction<typeof hasChildrenFieldOfTypeString>;
+const mockCanComponentAcceptChildren = canComponentAcceptChildren as jest.MockedFunction<typeof canComponentAcceptChildren>;
 
 describe('LayerMenuItems', () => {
   const mockLayer: ComponentLayer = {
@@ -121,8 +121,7 @@ describe('LayerMenuItems', () => {
     });
 
     // Setup schema utils mocks
-    mockHasAnyChildrenField.mockReturnValue(true);
-    mockHasChildrenFieldOfTypeString.mockReturnValue(false);
+    mockCanComponentAcceptChildren.mockReturnValue(true);
   });
 
   it('should render copy menu item', () => {
@@ -175,7 +174,7 @@ describe('LayerMenuItems', () => {
   });
 
   it('should not render Add Child option when component cannot have children', () => {
-    mockHasAnyChildrenField.mockReturnValue(false);
+    mockCanComponentAcceptChildren.mockReturnValue(false);
 
     render(<LayerMenuItems layerId="layer-1" />);
 
@@ -183,7 +182,7 @@ describe('LayerMenuItems', () => {
   });
 
   it('should not render Add Child option when component only accepts string children', () => {
-    mockHasChildrenFieldOfTypeString.mockReturnValue(true);
+    mockCanComponentAcceptChildren.mockReturnValue(false);
 
     render(<LayerMenuItems layerId="layer-1" />);
 

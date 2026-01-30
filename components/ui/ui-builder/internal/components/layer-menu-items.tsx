@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/context-menu";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
-import { hasAnyChildrenField, hasChildrenFieldOfTypeString } from "@/lib/ui-builder/store/schema-utils";
+import { canComponentAcceptChildren } from "@/lib/ui-builder/store/schema-utils";
 import { SHORTCUTS } from "@/lib/ui-builder/shortcuts/shortcut-registry";
 import { useGlobalLayerActions } from "@/lib/ui-builder/hooks/use-layer-actions";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/components/add-component-popover";
@@ -59,13 +59,7 @@ export const LayerMenuItems: React.FC<LayerMenuItemsProps> = ({
     const componentDef = componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
     if (!componentDef) return false;
 
-    // Safely check if schema has shape property (ZodObject) and children field
-    const canAddChildren =
-      "shape" in componentDef.schema &&
-      hasAnyChildrenField(componentDef.schema) &&
-      !hasChildrenFieldOfTypeString(componentDef.schema);
-
-    return canAddChildren;
+    return canComponentAcceptChildren(componentDef.schema);
   }, [showAddChild, selectedLayer, componentRegistry]);
 
   const handleCopyClick = () => {

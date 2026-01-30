@@ -21,7 +21,7 @@ import {
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/components/add-component-popover";
 import { NameEdit } from "@/components/ui/ui-builder/internal/components/name-edit";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
-import { hasAnyChildrenField, hasChildrenFieldOfTypeString } from "@/lib/ui-builder/store/schema-utils";
+import { canComponentAcceptChildren } from "@/lib/ui-builder/store/schema-utils";
 import { useGlobalLayerActions } from "@/lib/ui-builder/hooks/use-layer-actions";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 
@@ -90,17 +90,11 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
   }, []);
 
   const canRenderAddChild = useMemo(() => {
-
     const componentDef =
       componentRegistry[node.type as keyof typeof componentRegistry];
     if (!componentDef) return false;
 
-    // Safely check if schema has shape property (ZodObject) and children field
-    const canAddChildren =
-      "shape" in componentDef.schema &&
-      hasAnyChildrenField(componentDef.schema) && !hasChildrenFieldOfTypeString(componentDef.schema);
-
-    return canAddChildren;
+    return canComponentAcceptChildren(componentDef.schema);
   }, [node, componentRegistry]);
 
   const { key, ...rest } = nodeAttributes;

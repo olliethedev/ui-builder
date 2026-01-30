@@ -75,6 +75,7 @@ jest.mock('@/lib/ui-builder/store/layer-utils', () => ({
 jest.mock('@/lib/ui-builder/store/schema-utils', () => ({
   hasAnyChildrenField: jest.fn(),
   hasChildrenFieldOfTypeString: jest.fn(),
+  canComponentAcceptChildren: jest.fn(),
 }));
 
 const mockUseEditorStore = useEditorStore as jest.MockedFunction<typeof useEditorStore>;
@@ -311,9 +312,8 @@ describe('TreeRowNode', () => {
         return selector(state as any);
       });
 
-      const { hasAnyChildrenField, hasChildrenFieldOfTypeString } = require('@/lib/ui-builder/store/schema-utils');
-      hasAnyChildrenField.mockReturnValue(true);
-      hasChildrenFieldOfTypeString.mockReturnValue(false);
+      const { canComponentAcceptChildren } = require('@/lib/ui-builder/store/schema-utils');
+      canComponentAcceptChildren.mockReturnValue(true);
 
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
 
@@ -332,9 +332,8 @@ describe('TreeRowNode', () => {
         return selector(state as any);
       });
 
-      const { hasAnyChildrenField, hasChildrenFieldOfTypeString } = require('@/lib/ui-builder/store/schema-utils');
-      hasAnyChildrenField.mockReturnValue(true);
-      hasChildrenFieldOfTypeString.mockReturnValue(true);
+      const { canComponentAcceptChildren } = require('@/lib/ui-builder/store/schema-utils');
+      canComponentAcceptChildren.mockReturnValue(false);
 
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
 
