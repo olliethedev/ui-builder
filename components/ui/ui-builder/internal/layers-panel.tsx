@@ -37,8 +37,6 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
     findLayerById,
     updateLayer,
     selectLayer,
-    removeLayer,
-    duplicateLayer,
   } = useLayerStore();
 
   const pageLayer = findLayerById(selectedPageId);
@@ -57,8 +55,6 @@ const LayersPanel: React.FC<LayersPanelProps> = ({ className }) => {
       selectedLayerId={selectedLayerId}
       updateLayer={updateLayer}
       selectLayer={selectLayer}
-      removeLayer={removeLayer}
-      duplicateLayer={duplicateLayer}
     />
   );
 };
@@ -74,8 +70,6 @@ interface LayersTreeProps {
     layerRest?: Partial<Omit<ComponentLayer, "props">>
   ) => void;
   selectLayer: (layerId: string) => void;
-  removeLayer: (layerId: string) => void;
-  duplicateLayer: (layerId: string) => void;
 }
 
 export const LayersTree: React.FC<LayersTreeProps> = React.memo(
@@ -86,8 +80,6 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
     selectedLayerId,
     updateLayer,
     selectLayer,
-    removeLayer,
-    duplicateLayer,
   }) => {
     const [openIdsArray, setOpenIdsArray] = useState<Id[]>([]);
 
@@ -192,9 +184,6 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
             level={stat.level}
             selectedLayerId={selectedLayerId}
             selectLayer={selectLayer}
-            removeLayer={removeLayer}
-            duplicateLayer={duplicateLayer}
-            updateLayer={updateLayer}
           />
         );
       },
@@ -202,9 +191,6 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
         handleNodeToggle,
         selectedLayerId,
         selectLayer,
-        removeLayer,
-        duplicateLayer,
-        updateLayer,
         layers,
       ]
     );

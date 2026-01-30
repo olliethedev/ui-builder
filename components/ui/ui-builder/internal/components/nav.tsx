@@ -76,6 +76,7 @@ import {
   useKeyboardShortcuts,
 } from "@/hooks/use-keyboard-shortcuts";
 import { useStore } from "zustand";
+import { SHORTCUTS, toKeyboardShortcut } from "@/lib/ui-builder/shortcuts/shortcut-registry";
 
 const Z_INDEX = 1000;
 
@@ -132,20 +133,21 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
 
   const keyCombinations = useMemo<KeyCombination[]>(
     () => [
-      {
-        keys: { metaKey: true, shiftKey: false },
-        key: "z",
-        handler: handleUndo,
-      },
-      {
-        keys: { metaKey: true, shiftKey: true },
-        key: "z",
-        handler: handleRedo,
-      },
+      // Use shortcut registry for undo/redo
+      toKeyboardShortcut('undo', (e) => {
+        e.preventDefault();
+        handleUndo();
+      }),
+      toKeyboardShortcut('redo', (e) => {
+        e.preventDefault();
+        handleRedo();
+      }),
+      // Debug shortcuts (not in registry)
       {
         keys: { metaKey: true, shiftKey: true },
         key: "9",
-        handler: () => {
+        handler: (e: KeyboardEvent) => {
+          e.preventDefault();
           const elements = document.querySelectorAll("*");
           elements.forEach((element) => {
             element.classList.add("animate-spin", "origin-center");
@@ -155,7 +157,8 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
       {
         keys: { metaKey: true, shiftKey: true },
         key: "0",
-        handler: () => {
+        handler: (e: KeyboardEvent) => {
+          e.preventDefault();
           const elements = document.querySelectorAll("*");
           elements.forEach((element) => {
             element.classList.remove("animate-spin", "origin-center");
@@ -331,7 +334,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         <TooltipContent className="flex items-center gap-2">
           Undo
           <CommandShortcut className="ml-0 text-sm leading-3">
-            ⌘Z
+            {SHORTCUTS.undo.shortcutDisplay}
           </CommandShortcut>
         </TooltipContent>
       </Tooltip>
@@ -352,7 +355,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         <TooltipContent className="flex items-center gap-2">
           Redo
           <CommandShortcut className="ml-0 text-sm leading-3">
-            ⌘+⇧+Z
+            {SHORTCUTS.redo.shortcutDisplay}
           </CommandShortcut>
         </TooltipContent>
       </Tooltip>
@@ -445,7 +448,7 @@ const ResponsiveDropdown: React.FC<ResponsiveDropdownProps> = ({
         >
           <Undo className="w-4 h-4" />
           Undo
-          <span className="ml-auto text-xs text-muted-foreground">⌘Z</span>
+          <span className="ml-auto text-xs text-muted-foreground">{SHORTCUTS.undo.shortcutDisplay}</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           className="gap-2"
@@ -454,7 +457,7 @@ const ResponsiveDropdown: React.FC<ResponsiveDropdownProps> = ({
         >
           <Redo className="w-4 h-4" />
           Redo
-          <span className="ml-auto text-xs text-muted-foreground">⌘+⇧+Z</span>
+          <span className="ml-auto text-xs text-muted-foreground">{SHORTCUTS.redo.shortcutDisplay}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="gap-2" onClick={onOpenPreview}>
@@ -505,7 +508,8 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
       {
         keys: { metaKey: true, shiftKey: true },
         key: "p",
-        handler: () => {
+        handler: (e: KeyboardEvent) => {
+          e.preventDefault();
           onOpenChange(true);
         },
       },
@@ -553,7 +557,8 @@ const CodeDialog: React.FC<CodeDialogProps> = ({ isOpen, onOpenChange }) => {
       {
         keys: { metaKey: true, shiftKey: true },
         key: "e",
-        handler: () => {
+        handler: (e: KeyboardEvent) => {
+          e.preventDefault();
           onOpenChange(true);
         },
       },

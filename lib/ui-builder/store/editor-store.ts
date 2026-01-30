@@ -1,7 +1,15 @@
- 
 import { create, type StateCreator } from 'zustand';
-import { type ComponentType as ReactComponentType } from "react";
-import type { RegistryEntry, ComponentRegistry, BlockRegistry, FunctionRegistry, FunctionDefinition } from '@/components/ui/ui-builder/types';
+import type { ComponentType as ReactComponentType } from "react";
+import type { RegistryEntry, ComponentRegistry, BlockRegistry, FunctionRegistry, FunctionDefinition, ComponentLayer } from '@/components/ui/ui-builder/types';
+
+/**
+ * Clipboard state for copy/cut/paste operations
+ */
+export interface ClipboardState {
+  layer: ComponentLayer | null;
+  isCut: boolean;
+  sourceLayerId: string | null;
+}
 
 
 
@@ -36,6 +44,11 @@ export interface EditorStore {
     setShowLeftPanel: (show: boolean) => void;
     showRightPanel: boolean;
     setShowRightPanel: (show: boolean) => void;
+
+    // Clipboard state for copy/cut/paste
+    clipboard: ClipboardState;
+    setClipboard: (clipboard: ClipboardState) => void;
+    clearClipboard: () => void;
 }
 
 const store: StateCreator<EditorStore, [], []> = (set, get) => ({
@@ -83,6 +96,21 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
     setShowLeftPanel: (show) => set({ showLeftPanel: show }),
     showRightPanel: true,
     setShowRightPanel: (show) => set({ showRightPanel: show }),
+
+    // Clipboard state for copy/cut/paste
+    clipboard: {
+        layer: null,
+        isCut: false,
+        sourceLayerId: null,
+    },
+    setClipboard: (clipboard) => set({ clipboard }),
+    clearClipboard: () => set({ 
+        clipboard: { 
+            layer: null, 
+            isCut: false, 
+            sourceLayerId: null 
+        } 
+    }),
 });
 
 export const useEditorStore = create<EditorStore>()(store);

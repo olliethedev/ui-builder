@@ -161,6 +161,7 @@ function getRegistryDependencies(): string[] {
         "calendar",
         "card",
         "command",
+        "context-menu",
         "dropdown-menu",
         "scroll-area",
         "tabs",
