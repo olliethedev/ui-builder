@@ -76,7 +76,7 @@ import {
   useKeyboardShortcuts,
 } from "@/hooks/use-keyboard-shortcuts";
 import { useStore } from "zustand";
-import { toKeyboardShortcut } from "@/lib/ui-builder/shortcuts/shortcut-registry";
+import { SHORTCUTS, toKeyboardShortcut } from "@/lib/ui-builder/shortcuts/shortcut-registry";
 
 const Z_INDEX = 1000;
 
@@ -334,7 +334,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         <TooltipContent className="flex items-center gap-2">
           Undo
           <CommandShortcut className="ml-0 text-sm leading-3">
-            ⌘Z
+            {SHORTCUTS.undo.shortcutDisplay}
           </CommandShortcut>
         </TooltipContent>
       </Tooltip>
@@ -355,7 +355,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         <TooltipContent className="flex items-center gap-2">
           Redo
           <CommandShortcut className="ml-0 text-sm leading-3">
-            ⌘+⇧+Z
+            {SHORTCUTS.redo.shortcutDisplay}
           </CommandShortcut>
         </TooltipContent>
       </Tooltip>
@@ -448,7 +448,7 @@ const ResponsiveDropdown: React.FC<ResponsiveDropdownProps> = ({
         >
           <Undo className="w-4 h-4" />
           Undo
-          <span className="ml-auto text-xs text-muted-foreground">⌘Z</span>
+          <span className="ml-auto text-xs text-muted-foreground">{SHORTCUTS.undo.shortcutDisplay}</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           className="gap-2"
@@ -457,7 +457,7 @@ const ResponsiveDropdown: React.FC<ResponsiveDropdownProps> = ({
         >
           <Redo className="w-4 h-4" />
           Redo
-          <span className="ml-auto text-xs text-muted-foreground">⌘+⇧+Z</span>
+          <span className="ml-auto text-xs text-muted-foreground">{SHORTCUTS.redo.shortcutDisplay}</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="gap-2" onClick={onOpenPreview}>

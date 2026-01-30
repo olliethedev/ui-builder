@@ -3,14 +3,14 @@
  * Centralizes all shortcut definitions for consistency across menus and keyboard handlers.
  */
 
-export interface ShortcutKeys {
+interface ShortcutKeys {
   metaKey?: boolean;
   shiftKey?: boolean;
   ctrlKey?: boolean;
   altKey?: boolean;
 }
 
-export interface ShortcutDefinition {
+interface ShortcutDefinition {
   id: string;
   keys: ShortcutKeys;
   key: string;
