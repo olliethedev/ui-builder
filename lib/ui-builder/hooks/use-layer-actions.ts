@@ -6,27 +6,9 @@
 
 import { useCallback } from 'react';
 import { useLayerStore } from '@/lib/ui-builder/store/layer-store';
-import { useEditorStore, type ClipboardState } from '@/lib/ui-builder/store/editor-store';
+import { useEditorStore } from '@/lib/ui-builder/store/editor-store';
 import { duplicateWithNewIdsAndName } from '@/lib/ui-builder/store/layer-utils';
 import { canPasteLayer } from '@/lib/ui-builder/utils/paste-validation';
-
-export type { ClipboardState } from '@/lib/ui-builder/store/editor-store';
-
-export interface LayerActionsState {
-  clipboard: ClipboardState;
-  canPaste: boolean;
-}
-
-export interface LayerActionsHandlers {
-  handleCopy: () => void;
-  handleCut: () => void;
-  handlePaste: () => void;
-  handleDelete: () => void;
-  handleDuplicate: () => void;
-  canPerformPaste: (targetLayerId: string) => boolean;
-}
-
-export interface UseLayerActionsResult extends LayerActionsState, LayerActionsHandlers {}
 
 /**
  * Hook that provides layer actions with clipboard support.
@@ -35,7 +17,7 @@ export interface UseLayerActionsResult extends LayerActionsState, LayerActionsHa
  * @param layerId - The ID of the layer to operate on (optional, defaults to selected layer)
  * @returns Object with clipboard state and action handlers
  */
-export function useGlobalLayerActions(layerId?: string): UseLayerActionsResult {
+export function useGlobalLayerActions(layerId?: string) {
   // Layer store
   const selectedLayerId = useLayerStore((state) => state.selectedLayerId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
@@ -101,27 +83,31 @@ export function useGlobalLayerActions(layerId?: string): UseLayerActionsResult {
   }, [effectiveLayerId, findLayerById, isLayerAPage, allowPagesDeletion, removeLayer, setClipboard]);
 
   /**
-   * Paste the clipboard layer into the selected layer
+   * Paste the clipboard layer into the selected layer.
    */
   const handlePaste = useCallback(() => {
-    if (!clipboard.layer || !effectiveLayerId) return;
+    if (!effectiveLayerId) return;
+
+    // Read current clipboard state imperatively to avoid stale closure
+    const currentClipboard = useEditorStore.getState().clipboard;
+    if (!currentClipboard.layer) return;
 
     // Validate paste operation
-    if (!canPasteLayer(clipboard.layer, effectiveLayerId, componentRegistry, findLayerById)) {
+    if (!canPasteLayer(currentClipboard.layer, effectiveLayerId, componentRegistry, findLayerById)) {
       return;
     }
 
     // Create a new copy with fresh IDs
-    const layerToAdd = duplicateWithNewIdsAndName(clipboard.layer, false);
+    const layerToAdd = duplicateWithNewIdsAndName(currentClipboard.layer, false);
 
     // Add the layer to the target
     addLayerDirect(layerToAdd, effectiveLayerId);
 
     // If this was a cut operation, clear the clipboard
-    if (clipboard.isCut) {
+    if (currentClipboard.isCut) {
       clearClipboard();
     }
-  }, [clipboard, effectiveLayerId, componentRegistry, findLayerById, addLayerDirect, clearClipboard]);
+  }, [effectiveLayerId, componentRegistry, findLayerById, addLayerDirect, clearClipboard]);
 
   /**
    * Delete the layer

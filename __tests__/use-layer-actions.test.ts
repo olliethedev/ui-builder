@@ -98,17 +98,23 @@ describe('useGlobalLayerActions', () => {
     });
 
     // Setup editor store mock with clipboard
-    (useEditorStore as unknown as jest.Mock).mockImplementation((selector) => {
-      const state = {
-        registry: mockRegistry,
-        allowPagesCreation: true,
-        allowPagesDeletion: true,
-        clipboard: mockClipboard,
-        setClipboard: mockSetClipboard,
-        clearClipboard: mockClearClipboard,
-      };
-      return selector(state);
+    // Use a getter function to always read the current mockClipboard value
+    const getEditorState = () => ({
+      registry: mockRegistry,
+      allowPagesCreation: true,
+      allowPagesDeletion: true,
+      clipboard: mockClipboard,
+      setClipboard: mockSetClipboard,
+      clearClipboard: mockClearClipboard,
     });
+    
+    const mockUseEditorStore = useEditorStore as unknown as jest.Mock & { getState: typeof getEditorState };
+    mockUseEditorStore.mockImplementation((selector) => {
+      return selector(getEditorState());
+    });
+    
+    // Add getState for imperative access in handlePaste
+    mockUseEditorStore.getState = getEditorState;
 
     mockFindLayerById.mockReturnValue(mockLayer);
     mockIsLayerAPage.mockReturnValue(false);
@@ -346,6 +352,40 @@ describe('useGlobalLayerActions', () => {
       });
 
       expect(mockClearClipboard).not.toHaveBeenCalled();
+    });
+
+    it('should not paste twice on rapid paste after cut (stale closure fix)', () => {
+      // This test verifies the fix for the stale closure issue where rapid
+      // paste after cut could paste the layer twice before the callback refreshed.
+      mockClipboard = {
+        layer: mockLayer,
+        isCut: true,
+        sourceLayerId: 'layer-1',
+      };
+
+      // Simulate clearClipboard actually clearing the clipboard
+      mockClearClipboard.mockImplementation(() => {
+        mockClipboard = { layer: null, isCut: false, sourceLayerId: null };
+      });
+
+      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
+
+      // First paste - should succeed and clear clipboard
+      act(() => {
+        result.current.handlePaste();
+      });
+
+      expect(mockAddLayerDirect).toHaveBeenCalledTimes(1);
+      expect(mockClearClipboard).toHaveBeenCalledTimes(1);
+
+      // Second paste - clipboard is now empty, should NOT paste
+      // This verifies handlePaste reads current state, not stale closure
+      act(() => {
+        result.current.handlePaste();
+      });
+
+      // Should still be 1 call, not 2
+      expect(mockAddLayerDirect).toHaveBeenCalledTimes(1);
     });
   });
 
