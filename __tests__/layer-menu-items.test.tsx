@@ -112,6 +112,9 @@ describe('LayerMenuItems', () => {
     mockUseGlobalLayerActions.mockReturnValue({
       clipboard: { layer: null, isCut: false, sourceLayerId: null },
       canPaste: false,
+      canDuplicate: true,
+      canDelete: true,
+      canCut: true,
       handleCopy: mockHandleCopy,
       handleCut: mockHandleCut,
       handlePaste: mockHandlePaste,
@@ -209,6 +212,9 @@ describe('LayerMenuItems', () => {
     mockUseGlobalLayerActions.mockReturnValue({
       clipboard: { layer: mockLayer, isCut: false, sourceLayerId: 'layer-1' },
       canPaste: true,
+      canDuplicate: true,
+      canDelete: true,
+      canCut: true,
       handleCopy: mockHandleCopy,
       handleCut: mockHandleCut,
       handlePaste: mockHandlePaste,
@@ -251,21 +257,19 @@ describe('LayerMenuItems', () => {
   });
 
   it('should not render cut option for pages when page deletion is not allowed', () => {
-    mockUseLayerStore.mockImplementation((selector: any) => {
-      const state = {
-        findLayerById: jest.fn().mockReturnValue(mockLayer),
-        isLayerAPage: jest.fn().mockReturnValue(true),
-      };
-      return selector(state);
-    });
-
-    mockUseEditorStore.mockImplementation((selector: any) => {
-      const state = {
-        registry: mockRegistry,
-        allowPagesCreation: true,
-        allowPagesDeletion: false,
-      };
-      return selector(state);
+    // Simulate: page layer with allowPagesDeletion=false
+    mockUseGlobalLayerActions.mockReturnValue({
+      clipboard: { layer: null, isCut: false, sourceLayerId: null },
+      canPaste: false,
+      canDuplicate: true,
+      canDelete: false,
+      canCut: false,
+      handleCopy: mockHandleCopy,
+      handleCut: mockHandleCut,
+      handlePaste: mockHandlePaste,
+      handleDelete: mockHandleDelete,
+      handleDuplicate: mockHandleDuplicate,
+      canPerformPaste: jest.fn().mockReturnValue(false),
     });
 
     render(<LayerMenuItems layerId="layer-1" />);
@@ -274,21 +278,19 @@ describe('LayerMenuItems', () => {
   });
 
   it('should not render delete option for pages when page deletion is not allowed', () => {
-    mockUseLayerStore.mockImplementation((selector: any) => {
-      const state = {
-        findLayerById: jest.fn().mockReturnValue(mockLayer),
-        isLayerAPage: jest.fn().mockReturnValue(true),
-      };
-      return selector(state);
-    });
-
-    mockUseEditorStore.mockImplementation((selector: any) => {
-      const state = {
-        registry: mockRegistry,
-        allowPagesCreation: true,
-        allowPagesDeletion: false,
-      };
-      return selector(state);
+    // Simulate: page layer with allowPagesDeletion=false
+    mockUseGlobalLayerActions.mockReturnValue({
+      clipboard: { layer: null, isCut: false, sourceLayerId: null },
+      canPaste: false,
+      canDuplicate: true,
+      canDelete: false,
+      canCut: false,
+      handleCopy: mockHandleCopy,
+      handleCut: mockHandleCut,
+      handlePaste: mockHandlePaste,
+      handleDelete: mockHandleDelete,
+      handleDuplicate: mockHandleDuplicate,
+      canPerformPaste: jest.fn().mockReturnValue(false),
     });
 
     render(<LayerMenuItems layerId="layer-1" />);
@@ -297,21 +299,19 @@ describe('LayerMenuItems', () => {
   });
 
   it('should not render duplicate option for pages when page creation is not allowed', () => {
-    mockUseLayerStore.mockImplementation((selector: any) => {
-      const state = {
-        findLayerById: jest.fn().mockReturnValue(mockLayer),
-        isLayerAPage: jest.fn().mockReturnValue(true),
-      };
-      return selector(state);
-    });
-
-    mockUseEditorStore.mockImplementation((selector: any) => {
-      const state = {
-        registry: mockRegistry,
-        allowPagesCreation: false,
-        allowPagesDeletion: true,
-      };
-      return selector(state);
+    // Simulate: page layer with allowPagesCreation=false
+    mockUseGlobalLayerActions.mockReturnValue({
+      clipboard: { layer: null, isCut: false, sourceLayerId: null },
+      canPaste: false,
+      canDuplicate: false,
+      canDelete: true,
+      canCut: true,
+      handleCopy: mockHandleCopy,
+      handleCut: mockHandleCut,
+      handlePaste: mockHandlePaste,
+      handleDelete: mockHandleDelete,
+      handleDuplicate: mockHandleDuplicate,
+      canPerformPaste: jest.fn().mockReturnValue(false),
     });
 
     render(<LayerMenuItems layerId="layer-1" />);
@@ -330,6 +330,9 @@ describe('LayerMenuItems', () => {
     mockUseGlobalLayerActions.mockReturnValue({
       clipboard: { layer: mockLayer, isCut: false, sourceLayerId: 'layer-1' },
       canPaste: true,
+      canDuplicate: true,
+      canDelete: true,
+      canCut: true,
       handleCopy: mockHandleCopy,
       handleCut: mockHandleCut,
       handlePaste: mockHandlePaste,

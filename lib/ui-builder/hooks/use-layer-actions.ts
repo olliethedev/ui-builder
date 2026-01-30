@@ -151,9 +151,18 @@ export function useGlobalLayerActions(layerId?: string) {
     ? canPerformPaste(effectiveLayerId)
     : false;
 
+  // Compute permissions for layer operations
+  const isPage = effectiveLayerId ? isLayerAPage(effectiveLayerId) : false;
+  const canDuplicate = !isPage || allowPagesCreation;
+  const canDelete = !isPage || allowPagesDeletion;
+  const canCut = canDelete; // Cut is only possible if we can delete
+
   return {
     clipboard,
     canPaste,
+    canDuplicate,
+    canDelete,
+    canCut,
     handleCopy,
     handleCut,
     handlePaste,

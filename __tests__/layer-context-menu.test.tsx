@@ -80,6 +80,9 @@ describe('LayerContextMenu', () => {
     mockUseGlobalLayerActions.mockReturnValue({
       clipboard: { layer: null, isCut: false, sourceLayerId: null },
       canPaste: false,
+      canDuplicate: true,
+      canDelete: true,
+      canCut: true,
       handleCopy: mockHandleCopy,
       handleCut: mockHandleCut,
       handlePaste: mockHandlePaste,
@@ -333,6 +336,9 @@ describe('LayerContextMenu', () => {
       mockUseGlobalLayerActions.mockReturnValue({
         clipboard: { layer: mockLayer, isCut: false, sourceLayerId: 'layer-1' },
         canPaste: true,
+        canDuplicate: true,
+        canDelete: true,
+        canCut: true,
         handleCopy: mockHandleCopy,
         handleCut: mockHandleCut,
         handlePaste: mockHandlePaste,

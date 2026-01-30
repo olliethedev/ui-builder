@@ -32,24 +32,19 @@ export const LayerMenuItems: React.FC<LayerMenuItemsProps> = ({
   showAddChild = true,
 }) => {
   const selectedLayer = useLayerStore((state) => state.findLayerById(layerId));
-  const isLayerAPage = useLayerStore((state) => state.isLayerAPage(layerId));
   const componentRegistry = useEditorStore((state) => state.registry);
-  const allowPagesCreation = useEditorStore((state) => state.allowPagesCreation);
-  const allowPagesDeletion = useEditorStore((state) => state.allowPagesDeletion);
 
   const {
     canPaste,
+    canDuplicate,
+    canDelete,
+    canCut,
     handleCopy,
     handleCut,
     handlePaste,
     handleDelete,
     handleDuplicate,
   } = useGlobalLayerActions(layerId);
-
-  // Check permissions for page operations
-  const canDuplicate = !isLayerAPage || allowPagesCreation;
-  const canDelete = !isLayerAPage || allowPagesDeletion;
-  const canCut = canDelete; // Cut is only possible if we can delete
 
   // Check if component can have children added
   const canRenderAddChild = useMemo(() => {

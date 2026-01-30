@@ -19,17 +19,21 @@ jest.mock("@/lib/ui-builder/store/editor-store", () => ({
 // Mock useGlobalLayerActions
 const mockHandleDuplicate = jest.fn();
 const mockHandleDelete = jest.fn();
+const mockLayerActionsReturn = {
+  handleDuplicate: mockHandleDuplicate,
+  handleDelete: mockHandleDelete,
+  handleCopy: jest.fn(),
+  handleCut: jest.fn(),
+  handlePaste: jest.fn(),
+  canPaste: false,
+  canDuplicate: true,
+  canDelete: true,
+  canCut: true,
+  clipboard: { layer: null, isCut: false },
+  canPerformPaste: jest.fn().mockReturnValue(false),
+};
 jest.mock("@/lib/ui-builder/hooks/use-layer-actions", () => ({
-  useGlobalLayerActions: () => ({
-    handleDuplicate: mockHandleDuplicate,
-    handleDelete: mockHandleDelete,
-    handleCopy: jest.fn(),
-    handleCut: jest.fn(),
-    handlePaste: jest.fn(),
-    canPaste: false,
-    clipboard: { layer: null, isCut: false },
-    canPerformPaste: jest.fn().mockReturnValue(false),
-  }),
+  useGlobalLayerActions: () => mockLayerActionsReturn,
 }));
 
 // Mock the AddComponentsPopover
@@ -85,6 +89,11 @@ describe("LayerMenu", () => {
     mockHandleDuplicate.mockClear();
     mockHandleDelete.mockClear();
     
+    // Reset mock layer actions to defaults
+    mockLayerActionsReturn.canDuplicate = true;
+    mockLayerActionsReturn.canDelete = true;
+    mockLayerActionsReturn.canCut = true;
+    
     // Default mock setup for component layer
     mockedUseLayerStore.mockImplementation((selector) => {
       if (typeof selector === 'function') {
@@ -110,17 +119,10 @@ describe("LayerMenu", () => {
 
   describe("permission controls for component layers", () => {
     it("should show both duplicate and delete buttons for component layers regardless of page permissions", () => {
-      // Override with strict page permissions
-      mockedUseEditorStore.mockImplementation((selector) => {
-        if (typeof selector === 'function') {
-          return selector({
-            registry: mockRegistry,
-            allowPagesCreation: false,
-            allowPagesDeletion: false,
-          } as any);
-        }
-        return null;
-      });
+      // For component layers, canDuplicate and canDelete should be true
+      // (page permissions don't affect non-page layers)
+      mockLayerActionsReturn.canDuplicate = true;
+      mockLayerActionsReturn.canDelete = true;
 
       render(<LayerMenu {...defaultProps} />);
 
@@ -148,16 +150,9 @@ describe("LayerMenu", () => {
     });
 
     it("should hide duplicate button when allowPagesCreation is false", () => {
-      mockedUseEditorStore.mockImplementation((selector) => {
-        if (typeof selector === 'function') {
-          return selector({
-            registry: mockRegistry,
-            allowPagesCreation: false,
-            allowPagesDeletion: true,
-          } as any);
-        }
-        return null;
-      });
+      // Simulate: page layer with allowPagesCreation=false
+      mockLayerActionsReturn.canDuplicate = false;
+      mockLayerActionsReturn.canDelete = true;
 
       render(<LayerMenu {...defaultProps} layerId="test-page-1" />);
 
@@ -169,16 +164,9 @@ describe("LayerMenu", () => {
     });
 
     it("should hide delete button when allowPagesDeletion is false", () => {
-      mockedUseEditorStore.mockImplementation((selector) => {
-        if (typeof selector === 'function') {
-          return selector({
-            registry: mockRegistry,
-            allowPagesCreation: true,
-            allowPagesDeletion: false,
-          } as any);
-        }
-        return null;
-      });
+      // Simulate: page layer with allowPagesDeletion=false
+      mockLayerActionsReturn.canDuplicate = true;
+      mockLayerActionsReturn.canDelete = false;
 
       render(<LayerMenu {...defaultProps} layerId="test-page-1" />);
 
@@ -190,16 +178,9 @@ describe("LayerMenu", () => {
     });
 
     it("should hide both buttons when both permissions are false", () => {
-      mockedUseEditorStore.mockImplementation((selector) => {
-        if (typeof selector === 'function') {
-          return selector({
-            registry: mockRegistry,
-            allowPagesCreation: false,
-            allowPagesDeletion: false,
-          } as any);
-        }
-        return null;
-      });
+      // Simulate: page layer with both permissions false
+      mockLayerActionsReturn.canDuplicate = false;
+      mockLayerActionsReturn.canDelete = false;
 
       render(<LayerMenu {...defaultProps} layerId="test-page-1" />);
 
@@ -211,16 +192,9 @@ describe("LayerMenu", () => {
     });
 
     it("should show both buttons when both permissions are true", () => {
-      mockedUseEditorStore.mockImplementation((selector) => {
-        if (typeof selector === 'function') {
-          return selector({
-            registry: mockRegistry,
-            allowPagesCreation: true,
-            allowPagesDeletion: true,
-          } as any);
-        }
-        return null;
-      });
+      // Simulate: page layer with both permissions true
+      mockLayerActionsReturn.canDuplicate = true;
+      mockLayerActionsReturn.canDelete = true;
 
       render(<LayerMenu {...defaultProps} layerId="test-page-1" />);
 

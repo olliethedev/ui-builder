@@ -17,19 +17,9 @@ export const LayerMenu: React.FC<MenuProps> = ({ layerId }) => {
   const isLayerAPage = useLayerStore((state) => state.isLayerAPage(layerId));
   const [popoverOpen, setPopoverOpen] = useState(false);
   const componentRegistry = useEditorStore((state) => state.registry);
-  const allowPagesCreation = useEditorStore(
-    (state) => state.allowPagesCreation
-  );
-  const allowPagesDeletion = useEditorStore(
-    (state) => state.allowPagesDeletion
-  );
 
-  // Use global layer actions
-  const { handleDuplicate, handleDelete } = useGlobalLayerActions(layerId);
-
-  // Check permissions for page operations
-  const canDuplicate = !isLayerAPage || allowPagesCreation;
-  const canDelete = !isLayerAPage || allowPagesDeletion;
+  // Use global layer actions (includes permission checks)
+  const { canDuplicate, canDelete, handleDuplicate, handleDelete } = useGlobalLayerActions(layerId);
 
   const buttonVariantsValues = useMemo(() => {
     return buttonVariants({ variant: "ghost", size: "sm" });
