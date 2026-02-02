@@ -22,6 +22,11 @@ describe('Shortcut Registry', () => {
       expect(SHORTCUTS.delete.label).toBe('Delete');
       expect(SHORTCUTS.delete.shortcutDisplay).toBe('⌫');
       expect(SHORTCUTS.delete.category).toBe('edit');
+      // Delete must require NO modifier keys to avoid triggering on Cmd+Backspace, etc.
+      expect(SHORTCUTS.delete.keys.metaKey).toBe(false);
+      expect(SHORTCUTS.delete.keys.ctrlKey).toBe(false);
+      expect(SHORTCUTS.delete.keys.shiftKey).toBe(false);
+      expect(SHORTCUTS.delete.keys.altKey).toBe(false);
     });
 
     it('should have correct properties for duplicate shortcut', () => {

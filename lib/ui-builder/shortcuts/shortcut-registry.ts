@@ -29,7 +29,7 @@ interface ShortcutDefinition {
 export const SHORTCUTS = {
   delete: {
     id: 'delete',
-    keys: {},
+    keys: { metaKey: false, ctrlKey: false, shiftKey: false, altKey: false },
     key: 'Backspace',
     label: 'Delete',
     shortcutDisplay: '⌫',
