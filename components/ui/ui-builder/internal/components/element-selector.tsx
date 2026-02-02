@@ -24,6 +24,7 @@ import {
 } from "@floating-ui/react";
 import { getScrollParent } from "@/lib/ui-builder/utils/get-scroll-parent";
 import { useFrame } from "@/components/ui/ui-builder/internal/canvas/auto-frame";
+import { LayerContextMenu } from "@/components/ui/ui-builder/internal/components/layer-context-menu";
 
 const style: React.CSSProperties = {
   display: "contents",
@@ -35,8 +36,6 @@ interface ElementSelectorProps {
   zIndex: number;
   totalLayers: number;
   onSelectElement: (layerId: string) => void;
-  onDuplicateLayer?: () => void;
-  onDeleteLayer?: () => void;
   children: React.ReactNode;
   isPageLayer?: boolean;
 }
@@ -51,8 +50,6 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
   isSelected,
   zIndex,
   onSelectElement,
-  onDuplicateLayer,
-  onDeleteLayer,
   children,
   isPageLayer = false,
 }) => {
@@ -97,6 +94,7 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
     e.preventDefault();
   }, []);
 
+
   const overlayStyle = useMemo(() => {
     if (!boundingRect) return { display: "none" };
     return {
@@ -135,23 +133,28 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
       </MeasureRange>
 
       {boundingRect && (
-        <div
-          onClick={handleClick}
-          onMouseDown={handlePointerEvent}
-          onMouseUp={handlePointerEvent}
-          onDoubleClick={handlePointerEvent}
-          onContextMenu={handlePointerEvent}
-          ref={refs.setReference}
-          className={cn(
-            "fixed box-border hover:border-blue-300 hover:border-2 hover:bg-blue-300/20 hover:shadow-md hover:shadow-blue-500/20 cursor-default",
-            isBeingDragged
-              ? "border-2 border-green-500 border-dashed shadow-lg opacity-70 bg-orange-50/20"
-              : isSelected
-              ? "border-2 border-blue-500 hover:border-blue-500 hover:bg-transparent  hover:shadow-none"
-              : ""
-          )}
-          style={overlayStyle}
-        ></div>
+        <LayerContextMenu
+          layerId={layer.id}
+          isSelected={isSelected}
+          onSelect={onSelectElement}
+        >
+          <div
+            onClick={handleClick}
+            onMouseDown={handlePointerEvent}
+            onMouseUp={handlePointerEvent}
+            onDoubleClick={handlePointerEvent}
+            ref={refs.setReference}
+            className={cn(
+              "fixed box-border hover:border-blue-300 hover:border-2 hover:bg-blue-300/20 hover:shadow-md hover:shadow-blue-500/20 cursor-default",
+              isBeingDragged
+                ? "border-2 border-green-500 border-dashed shadow-lg opacity-70 bg-orange-50/20"
+                : isSelected
+                ? "border-2 border-blue-500 hover:border-blue-500 hover:bg-transparent  hover:shadow-none"
+                : ""
+            )}
+            style={overlayStyle}
+          ></div>
+        </LayerContextMenu>
       )}
 
       {/* Floating UI element - positioned outside the overlay */}
@@ -165,7 +168,7 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
 
             {!isBeingDragged && (
               <>
-                <span className="text-xs text-white  px-[1px] whitespace-nowrap cursor-default">
+                <span className="text-xs text-white px-[1px] whitespace-nowrap cursor-default">
                   {layer.name
                     ?.toLowerCase()
                     .startsWith(layer.type.toLowerCase())
@@ -173,11 +176,7 @@ export const ElementSelector: React.FC<ElementSelectorProps> = ({
                     : `${layer.name} (${layer.type.replaceAll("_", "")})`}
                 </span>
                 <div className="w-px h-4 bg-white/20 ml-1" />
-                <LayerMenu
-                  layerId={layer.id}
-                  handleDuplicateComponent={onDuplicateLayer}
-                  handleDeleteComponent={onDeleteLayer}
-                />
+                <LayerMenu layerId={layer.id} />
               </>
             )}
           </div>

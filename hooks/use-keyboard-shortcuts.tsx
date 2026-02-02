@@ -24,7 +24,6 @@ export function useKeyboardShortcuts(combinations: KeyCombination[]) {
           event.key.toLowerCase() === key.toLowerCase();
 
         if (isMatch) {
-          event.preventDefault();
           handler(event);
         }
       });

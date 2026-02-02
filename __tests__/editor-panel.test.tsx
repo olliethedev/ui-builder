@@ -49,6 +49,12 @@ jest.mock("@/components/ui/ui-builder/internal/canvas/auto-frame", () => ({
       {children}
     </div>
   )),
+  useFrame: () => ({ document: undefined, window: undefined }),
+}));
+
+// Mock LayerContextMenuPortal (rendered inside AutoFrame)
+jest.mock("@/components/ui/ui-builder/internal/components/layer-context-menu-portal", () => ({
+  LayerContextMenuPortal: () => <div data-testid="layer-context-menu-portal" />,
 }));
 
 jest.mock("@/components/ui/ui-builder/layer-renderer", () => ({
@@ -59,8 +65,6 @@ jest.mock("@/components/ui/ui-builder/layer-renderer", () => ({
       <div data-testid="selected-layer-id">{editorConfig?.selectedLayer?.id}</div>
       <div data-testid="registry-count">{Object.keys(componentRegistry).length}</div>
       <div data-testid="total-layers">{editorConfig?.totalLayers}</div>
-      <div data-testid="has-duplicate-handler">{editorConfig?.handleDuplicateLayer ? 'yes' : 'no'}</div>
-      <div data-testid="has-delete-handler">{editorConfig?.handleDeleteLayer ? 'yes' : 'no'}</div>
     </div>
   ),
 }));
@@ -573,13 +577,14 @@ describe("EditorPanel", () => {
       expect(screen.getByTestId("total-layers")).toHaveTextContent("2");
     });
 
-    it("includes duplicate handler when allowPagesCreation is true", () => {
+    it("renders correctly when allowPagesCreation is true", () => {
       renderEditorPanel();
       
-      expect(screen.getByTestId("has-duplicate-handler")).toHaveTextContent("yes");
+      // Component should render and layer renderer should be present
+      expect(screen.getByTestId("layer-renderer")).toBeInTheDocument();
     });
 
-    it("excludes duplicate handler when allowPagesCreation is false", () => {
+    it("renders correctly when allowPagesCreation is false", () => {
       mockedUseEditorStore.mockImplementation((selector) => {
         if (typeof selector === "function") {
           return selector({ ...mockEditorState, allowPagesCreation: false });
@@ -589,16 +594,17 @@ describe("EditorPanel", () => {
 
       renderEditorPanel();
       
-      expect(screen.getByTestId("has-duplicate-handler")).toHaveTextContent("no");
+      // Component should still render
+      expect(screen.getByTestId("layer-renderer")).toBeInTheDocument();
     });
 
-    it("includes delete handler when allowPagesDeletion is true", () => {
+    it("renders correctly when allowPagesDeletion is true", () => {
       renderEditorPanel();
       
-      expect(screen.getByTestId("has-delete-handler")).toHaveTextContent("yes");
+      expect(screen.getByTestId("layer-renderer")).toBeInTheDocument();
     });
 
-    it("excludes delete handler when allowPagesDeletion is false", () => {
+    it("renders correctly when allowPagesDeletion is false", () => {
       mockedUseEditorStore.mockImplementation((selector) => {
         if (typeof selector === "function") {
           return selector({ ...mockEditorState, allowPagesDeletion: false });
@@ -608,7 +614,7 @@ describe("EditorPanel", () => {
 
       renderEditorPanel();
       
-      expect(screen.getByTestId("has-delete-handler")).toHaveTextContent("no");
+      expect(screen.getByTestId("layer-renderer")).toBeInTheDocument();
     });
 
     it("updates editor config when layer count changes", () => {
@@ -687,41 +693,21 @@ describe("EditorPanel", () => {
       expect(screen.getByTestId("layer-renderer")).toBeInTheDocument();
     });
 
-    it("handles delete layer for non-page layers", () => {
+    it("renders layer renderer for non-page layers", () => {
       mockIsLayerAPage.mockReturnValue(false);
       
       renderEditorPanel();
       
-      // The delete handler should be available
-      expect(screen.getByTestId("has-delete-handler")).toHaveTextContent("yes");
-    });
-
-    it("prevents delete layer for page layers", () => {
-      mockIsLayerAPage.mockReturnValue(true);
-      
-      renderEditorPanel();
-      
-      // Even though allowPagesDeletion is true, page layers shouldn't be deletable
-      // This logic would be handled in the actual delete handler
+      // Layer actions are now handled by useGlobalLayerActions inside LayerMenu
       expect(screen.getByTestId("layer-renderer")).toBeInTheDocument();
     });
 
-    it("handles duplicate layer for non-page layers", () => {
-      mockIsLayerAPage.mockReturnValue(false);
-      
-      renderEditorPanel();
-      
-      // The duplicate handler should be available
-      expect(screen.getByTestId("has-duplicate-handler")).toHaveTextContent("yes");
-    });
-
-    it("prevents duplicate layer for page layers", () => {
+    it("renders layer renderer for page layers", () => {
       mockIsLayerAPage.mockReturnValue(true);
       
       renderEditorPanel();
       
-      // Even though allowPagesCreation is true, page layers shouldn't be duplicatable
-      // This logic would be handled in the actual duplicate handler
+      // Layer actions are now handled by useGlobalLayerActions inside LayerMenu
       expect(screen.getByTestId("layer-renderer")).toBeInTheDocument();
     });
 
@@ -1159,30 +1145,30 @@ describe("EditorPanel", () => {
     it("handles editor config updates when permissions change", () => {
       const { rerender } = renderEditorPanel();
       
-      // Initial state with both permissions enabled
-      expect(screen.getByTestId("has-duplicate-handler")).toHaveTextContent("yes");
-      expect(screen.getByTestId("has-delete-handler")).toHaveTextContent("yes");
+      // Initial state - component should render
+      expect(screen.getByTestId("layer-renderer")).toBeInTheDocument();
       
       // Disable both permissions
       mockedUseEditorStore.mockImplementation((selector) => {
         if (typeof selector === "function") {
           return selector({ 
             ...mockEditorState, 
-            allowPagesCreation: false,
+            allowPagesCreation: false, 
             allowPagesDeletion: false 
           });
         }
         return { 
           ...mockEditorState, 
-          allowPagesCreation: false,
+          allowPagesCreation: false, 
           allowPagesDeletion: false 
         };
       });
       
       rerender(<EditorPanel />);
       
-      expect(screen.getByTestId("has-duplicate-handler")).toHaveTextContent("no");
-      expect(screen.getByTestId("has-delete-handler")).toHaveTextContent("no");
+      // Component should still render after permission changes
+      // Layer actions are now handled by useGlobalLayerActions
+      expect(screen.getByTestId("layer-renderer")).toBeInTheDocument();
     });
 
     it("handles layer selection changes with different layer types", () => {
@@ -1239,7 +1225,8 @@ describe("EditorPanel", () => {
       expect(wrapper).toHaveAttribute("data-panning-disabled", "true");
       expect(transformDiv).toHaveClass("w-[390px]");
       expect(resizableWrapper).toHaveAttribute("data-is-resizable", "false");
-      expect(screen.getByTestId("has-duplicate-handler")).toHaveTextContent("no");
+      // Layer actions are now handled by useGlobalLayerActions, not via editorConfig
+      expect(screen.getByTestId("layer-renderer")).toBeInTheDocument();
     });
 
     it("handles registry changes", () => {

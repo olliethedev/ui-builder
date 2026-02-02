@@ -41,6 +41,17 @@ describe('EditorStore', () => {
       allowPagesCreation: true,
       allowPagesDeletion: true,
       allowVariableEditing: true,
+      clipboard: {
+        layer: null,
+        isCut: false,
+        sourceLayerId: null,
+      },
+      contextMenu: {
+        open: false,
+        x: 0,
+        y: 0,
+        layerId: null,
+      },
     });
   });
 
@@ -523,6 +534,174 @@ describe('EditorStore', () => {
       // Verify component definition lookup still works
       const buttonDef = result.current.getComponentDefinition('Button');
       expect(buttonDef).toEqual(mockRegistry.Button);
+    });
+  });
+
+  describe('Clipboard', () => {
+    const mockLayer = {
+      id: 'layer-1',
+      type: 'Button',
+      name: 'Test Button',
+      props: { label: 'Click me' },
+      children: [],
+    };
+
+    it('should initialize with empty clipboard', () => {
+      const { result } = renderHook(() => useEditorStore());
+
+      expect(result.current.clipboard.layer).toBeNull();
+      expect(result.current.clipboard.isCut).toBe(false);
+      expect(result.current.clipboard.sourceLayerId).toBeNull();
+    });
+
+    it('should set clipboard with layer', () => {
+      const { result } = renderHook(() => useEditorStore());
+
+      act(() => {
+        result.current.setClipboard({
+          layer: mockLayer,
+          isCut: false,
+          sourceLayerId: 'layer-1',
+        });
+      });
+
+      expect(result.current.clipboard.layer).toEqual(mockLayer);
+      expect(result.current.clipboard.isCut).toBe(false);
+      expect(result.current.clipboard.sourceLayerId).toBe('layer-1');
+    });
+
+    it('should set clipboard with isCut flag', () => {
+      const { result } = renderHook(() => useEditorStore());
+
+      act(() => {
+        result.current.setClipboard({
+          layer: mockLayer,
+          isCut: true,
+          sourceLayerId: 'layer-1',
+        });
+      });
+
+      expect(result.current.clipboard.isCut).toBe(true);
+    });
+
+    it('should clear clipboard', () => {
+      const { result } = renderHook(() => useEditorStore());
+
+      // First set some clipboard content
+      act(() => {
+        result.current.setClipboard({
+          layer: mockLayer,
+          isCut: true,
+          sourceLayerId: 'layer-1',
+        });
+      });
+
+      expect(result.current.clipboard.layer).not.toBeNull();
+
+      // Then clear it
+      act(() => {
+        result.current.clearClipboard();
+      });
+
+      expect(result.current.clipboard.layer).toBeNull();
+      expect(result.current.clipboard.isCut).toBe(false);
+      expect(result.current.clipboard.sourceLayerId).toBeNull();
+    });
+
+    it('should share clipboard state across hook instances', () => {
+      const { result: result1 } = renderHook(() => useEditorStore());
+      const { result: result2 } = renderHook(() => useEditorStore());
+
+      act(() => {
+        result1.current.setClipboard({
+          layer: mockLayer,
+          isCut: false,
+          sourceLayerId: 'layer-1',
+        });
+      });
+
+      // Second instance should see the same clipboard
+      expect(result2.current.clipboard.layer).toEqual(mockLayer);
+    });
+  });
+
+  describe('Context Menu', () => {
+    it('should initialize with closed context menu', () => {
+      const { result } = renderHook(() => useEditorStore());
+
+      expect(result.current.contextMenu.open).toBe(false);
+      expect(result.current.contextMenu.x).toBe(0);
+      expect(result.current.contextMenu.y).toBe(0);
+      expect(result.current.contextMenu.layerId).toBeNull();
+    });
+
+    it('should open context menu with position and layerId', () => {
+      const { result } = renderHook(() => useEditorStore());
+
+      act(() => {
+        result.current.openContextMenu(100, 200, 'layer-1');
+      });
+
+      expect(result.current.contextMenu.open).toBe(true);
+      expect(result.current.contextMenu.x).toBe(100);
+      expect(result.current.contextMenu.y).toBe(200);
+      expect(result.current.contextMenu.layerId).toBe('layer-1');
+    });
+
+    it('should close context menu and reset state', () => {
+      const { result } = renderHook(() => useEditorStore());
+
+      // First open the context menu
+      act(() => {
+        result.current.openContextMenu(100, 200, 'layer-1');
+      });
+
+      expect(result.current.contextMenu.open).toBe(true);
+
+      // Then close it
+      act(() => {
+        result.current.closeContextMenu();
+      });
+
+      expect(result.current.contextMenu.open).toBe(false);
+      expect(result.current.contextMenu.x).toBe(0);
+      expect(result.current.contextMenu.y).toBe(0);
+      expect(result.current.contextMenu.layerId).toBeNull();
+    });
+
+    it('should update position when opening context menu on different layer', () => {
+      const { result } = renderHook(() => useEditorStore());
+
+      act(() => {
+        result.current.openContextMenu(100, 200, 'layer-1');
+      });
+
+      expect(result.current.contextMenu.layerId).toBe('layer-1');
+
+      // Open on a different layer
+      act(() => {
+        result.current.openContextMenu(300, 400, 'layer-2');
+      });
+
+      expect(result.current.contextMenu.open).toBe(true);
+      expect(result.current.contextMenu.x).toBe(300);
+      expect(result.current.contextMenu.y).toBe(400);
+      expect(result.current.contextMenu.layerId).toBe('layer-2');
+    });
+
+    it('should share context menu state across hook instances', () => {
+      const { result: result1 } = renderHook(() => useEditorStore());
+      const { result: result2 } = renderHook(() => useEditorStore());
+
+      act(() => {
+        result1.current.openContextMenu(150, 250, 'layer-1');
+      });
+
+      // Second instance should see the same context menu state
+      expect(result2.current.contextMenu.open).toBe(true);
+      expect(result2.current.contextMenu.x).toBe(150);
+      expect(result2.current.contextMenu.y).toBe(250);
+      expect(result2.current.contextMenu.layerId).toBe('layer-1');
     });
   });
 });

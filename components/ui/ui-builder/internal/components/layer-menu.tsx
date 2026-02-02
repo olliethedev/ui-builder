@@ -1,37 +1,25 @@
 import React, { useMemo, useState } from "react";
-import {  Plus, Trash, Copy } from "lucide-react";
+import { Plus, Trash, Copy } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { AddComponentsPopover } from "@/components/ui/ui-builder/internal/components/add-component-popover";
 import { cn } from "@/lib/utils";
-import { hasAnyChildrenField, hasChildrenFieldOfTypeString } from "@/lib/ui-builder/store/schema-utils";
+import { canComponentAcceptChildren } from "@/lib/ui-builder/store/schema-utils";
+import { useGlobalLayerActions } from "@/lib/ui-builder/hooks/use-layer-actions";
 
 interface MenuProps {
   layerId: string;
-  handleDuplicateComponent?: () => void;
-  handleDeleteComponent?: () => void;
 }
 
-export const LayerMenu: React.FC<MenuProps> = ({
-  layerId,
-  handleDuplicateComponent,
-  handleDeleteComponent,
-}) => {
+export const LayerMenu: React.FC<MenuProps> = ({ layerId }) => {
   const selectedLayer = useLayerStore((state) => state.findLayerById(layerId));
   const isLayerAPage = useLayerStore((state) => state.isLayerAPage(layerId));
   const [popoverOpen, setPopoverOpen] = useState(false);
   const componentRegistry = useEditorStore((state) => state.registry);
-  const allowPagesCreation = useEditorStore(
-    (state) => state.allowPagesCreation
-  );
-  const allowPagesDeletion = useEditorStore(
-    (state) => state.allowPagesDeletion
-  );
 
-  // Check permissions for page operations
-  const canDuplicate = !isLayerAPage || allowPagesCreation;
-  const canDelete = !isLayerAPage || allowPagesDeletion;
+  // Use global layer actions (includes permission checks)
+  const { canDuplicate, canDelete, handleDuplicate, handleDelete } = useGlobalLayerActions(layerId);
 
   const buttonVariantsValues = useMemo(() => {
     return buttonVariants({ variant: "ghost", size: "sm" });
@@ -46,12 +34,7 @@ export const LayerMenu: React.FC<MenuProps> = ({
       componentRegistry[selectedLayer.type as keyof typeof componentRegistry];
     if (!componentDef) return false;
 
-    // Safely check if schema has shape property (ZodObject) and children field
-    const canAddChildren =
-      "shape" in componentDef.schema &&
-      hasAnyChildrenField(componentDef.schema) && !hasChildrenFieldOfTypeString(componentDef.schema);
-
-    return canAddChildren;
+    return canComponentAcceptChildren(componentDef.schema);
   }, [selectedLayer, componentRegistry]);
 
   return (
@@ -76,7 +59,7 @@ export const LayerMenu: React.FC<MenuProps> = ({
         {canDuplicate && (
           <div
             className={cn(buttonVariantsValues, buttonClass)}
-            onClick={handleDuplicateComponent}
+            onClick={handleDuplicate}
             data-testid="duplicate-button"
           >
             <span className="sr-only">
@@ -88,7 +71,7 @@ export const LayerMenu: React.FC<MenuProps> = ({
         {canDelete && (
           <div
             className={cn(buttonVariantsValues, buttonClass)}
-            onClick={handleDeleteComponent}
+            onClick={handleDelete}
             data-testid="delete-button"
           >
             <span className="sr-only">

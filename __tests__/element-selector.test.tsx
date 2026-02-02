@@ -98,6 +98,21 @@ jest.mock('@/components/ui/ui-builder/internal/dnd/drag-handle', () => ({
   DragHandle: jest.fn(() => <div data-testid="drag-handle">Handle</div>),
 }));
 
+// Store the context menu props for testing
+let capturedContextMenuProps: any = {};
+
+// Mock LayerContextMenu component
+jest.mock('@/components/ui/ui-builder/internal/components/layer-context-menu', () => ({
+  LayerContextMenu: jest.fn(({ children, layerId, isSelected, onSelect }: any) => {
+    capturedContextMenuProps = { layerId, isSelected, onSelect };
+    return (
+      <div data-testid="layer-context-menu" data-layer-id={layerId} data-is-selected={isSelected}>
+        {children}
+      </div>
+    );
+  }),
+}));
+
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <div>{children}</div>
 );
@@ -255,4 +270,87 @@ describe("ElementSelector", () => {
     fireEvent(window, new Event('resize'));
     // Should not crash
   });
-}); 
+
+  describe("Context Menu Integration", () => {
+    beforeEach(() => {
+      capturedContextMenuProps = {};
+    });
+
+    it("renders LayerContextMenu wrapper around overlay", async () => {
+      render(
+        <TestWrapper>
+          <ElementSelector {...defaultProps}>
+            <div>Test Content</div>
+          </ElementSelector>
+        </TestWrapper>
+      );
+      
+      await waitFor(() => {
+        expect(screen.getByTestId("layer-context-menu")).toBeInTheDocument();
+      });
+    });
+
+    it("passes correct layerId to LayerContextMenu", async () => {
+      render(
+        <TestWrapper>
+          <ElementSelector {...defaultProps}>
+            <div>Test Content</div>
+          </ElementSelector>
+        </TestWrapper>
+      );
+      
+      await waitFor(() => {
+        const contextMenu = screen.getByTestId("layer-context-menu");
+        expect(contextMenu).toHaveAttribute("data-layer-id", "test-layer");
+      });
+    });
+
+    it("passes isSelected state to LayerContextMenu", async () => {
+      render(
+        <TestWrapper>
+          <ElementSelector {...defaultProps} isSelected={true}>
+            <div>Test Content</div>
+          </ElementSelector>
+        </TestWrapper>
+      );
+      
+      await waitFor(() => {
+        const contextMenu = screen.getByTestId("layer-context-menu");
+        expect(contextMenu).toHaveAttribute("data-is-selected", "true");
+      });
+    });
+
+    it("passes onSelect callback to LayerContextMenu", async () => {
+      const mockOnSelect = jest.fn();
+      render(
+        <TestWrapper>
+          <ElementSelector {...defaultProps} onSelectElement={mockOnSelect}>
+            <div>Test Content</div>
+          </ElementSelector>
+        </TestWrapper>
+      );
+      
+      await waitFor(() => {
+        expect(screen.getByTestId("layer-context-menu")).toBeInTheDocument();
+      });
+
+      // Verify onSelect is passed correctly
+      expect(capturedContextMenuProps.onSelect).toBe(mockOnSelect);
+    });
+
+    it("passes isSelected=false when layer is not selected", async () => {
+      render(
+        <TestWrapper>
+          <ElementSelector {...defaultProps} isSelected={false}>
+            <div>Test Content</div>
+          </ElementSelector>
+        </TestWrapper>
+      );
+      
+      await waitFor(() => {
+        const contextMenu = screen.getByTestId("layer-context-menu");
+        expect(contextMenu).toHaveAttribute("data-is-selected", "false");
+      });
+    });
+  });
+});

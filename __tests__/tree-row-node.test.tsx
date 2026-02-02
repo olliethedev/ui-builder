@@ -10,6 +10,25 @@ import type { NodeAttrs } from 'he-tree-react';
 jest.mock('@/lib/ui-builder/store/editor-store');
 jest.mock('@/lib/ui-builder/store/layer-store');
 
+// Mock useGlobalLayerActions - dynamic mock that computes permissions from other mocks
+const mockHandleDelete = jest.fn();
+const mockHandleDuplicate = jest.fn();
+let mockCanDuplicate = true;
+let mockCanDelete = true;
+jest.mock('@/lib/ui-builder/hooks/use-layer-actions', () => ({
+  useGlobalLayerActions: () => ({
+    handleDelete: mockHandleDelete,
+    handleDuplicate: mockHandleDuplicate,
+    handleCopy: jest.fn(),
+    handleCut: jest.fn(),
+    handlePaste: jest.fn(),
+    canPaste: false,
+    get canDuplicate() { return mockCanDuplicate; },
+    get canDelete() { return mockCanDelete; },
+    clipboard: { layer: null, isCut: false },
+  }),
+}));
+
 // Mock dropdown menu components directly
 jest.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div data-testid="dropdown-menu">{children}</div>,
@@ -59,6 +78,7 @@ jest.mock('@/lib/ui-builder/store/layer-utils', () => ({
 jest.mock('@/lib/ui-builder/store/schema-utils', () => ({
   hasAnyChildrenField: jest.fn(),
   hasChildrenFieldOfTypeString: jest.fn(),
+  canComponentAcceptChildren: jest.fn(),
 }));
 
 const mockUseEditorStore = useEditorStore as jest.MockedFunction<typeof useEditorStore>;
@@ -66,8 +86,6 @@ const mockUseLayerStore = useLayerStore as jest.MockedFunction<typeof useLayerSt
 
 describe('TreeRowNode', () => {
   const mockSelectLayer = jest.fn();
-  const mockRemoveLayer = jest.fn();
-  const mockDuplicateLayer = jest.fn();
   const mockUpdateLayer = jest.fn();
   const mockOnToggle = jest.fn();
   const mockIsLayerAPage = jest.fn();
@@ -112,9 +130,6 @@ describe('TreeRowNode', () => {
     onToggle: mockOnToggle,
     selectedLayerId: null,
     selectLayer: mockSelectLayer,
-    removeLayer: mockRemoveLayer,
-    duplicateLayer: mockDuplicateLayer,
-    updateLayer: mockUpdateLayer,
     nodeAttributes: {
       key: 'test-key',
       'data-key': 'test-key',
@@ -133,6 +148,12 @@ describe('TreeRowNode', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockHandleDelete.mockClear();
+    mockHandleDuplicate.mockClear();
+    
+    // Reset permission mocks to defaults
+    mockCanDuplicate = true;
+    mockCanDelete = true;
     
     // Mock EditorStore with registry
     mockUseEditorStore.mockImplementation((selector) => {
@@ -144,10 +165,11 @@ describe('TreeRowNode', () => {
       return selector(state as any);
     });
 
-    // Mock LayerStore
+    // Mock LayerStore with updateLayer
     mockUseLayerStore.mockImplementation((selector) => {
       const state = {
         isLayerAPage: mockIsLayerAPage,
+        updateLayer: mockUpdateLayer,
       };
       return selector(state as any);
     });
@@ -297,9 +319,8 @@ describe('TreeRowNode', () => {
         return selector(state as any);
       });
 
-      const { hasAnyChildrenField, hasChildrenFieldOfTypeString } = require('@/lib/ui-builder/store/schema-utils');
-      hasAnyChildrenField.mockReturnValue(true);
-      hasChildrenFieldOfTypeString.mockReturnValue(false);
+      const { canComponentAcceptChildren } = require('@/lib/ui-builder/store/schema-utils');
+      canComponentAcceptChildren.mockReturnValue(true);
 
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
 
@@ -318,9 +339,8 @@ describe('TreeRowNode', () => {
         return selector(state as any);
       });
 
-      const { hasAnyChildrenField, hasChildrenFieldOfTypeString } = require('@/lib/ui-builder/store/schema-utils');
-      hasAnyChildrenField.mockReturnValue(true);
-      hasChildrenFieldOfTypeString.mockReturnValue(true);
+      const { canComponentAcceptChildren } = require('@/lib/ui-builder/store/schema-utils');
+      canComponentAcceptChildren.mockReturnValue(false);
 
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
 
@@ -403,7 +423,7 @@ describe('TreeRowNode', () => {
       expect(screen.getByText('Duplicate')).toBeInTheDocument();
     });
 
-    it('should not show duplicate option when pages creation is not allowed', () => {
+    it('should show duplicate option for non-page layers even when pages creation is not allowed', () => {
       mockUseEditorStore.mockImplementation((selector) => {
         const state = {
           allowPagesCreation: false,
@@ -413,7 +433,32 @@ describe('TreeRowNode', () => {
         return selector(state as any);
       });
 
+      // Non-page layer should always allow duplicate
+      mockIsLayerAPage.mockReturnValue(false);
+
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
+
+      const moreButton = screen.getByLabelText('More options');
+      fireEvent.click(moreButton);
+
+      expect(screen.getByText('Duplicate')).toBeInTheDocument();
+    });
+
+    it('should not show duplicate option for page layers when pages creation is not allowed', () => {
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          allowPagesCreation: false,
+          allowPagesDeletion: true,
+          registry: createMockRegistry('page', true, false),
+        };
+        return selector(state as any);
+      });
+
+      // Page layer should respect allowPagesCreation
+      mockIsLayerAPage.mockReturnValue(true);
+      mockCanDuplicate = false;
+
+      render(<TreeRowNode {...defaultProps} node={mockPageNode} />);
 
       const moreButton = screen.getByLabelText('More options');
       fireEvent.click(moreButton);
@@ -439,7 +484,7 @@ describe('TreeRowNode', () => {
       expect(screen.getByText('Remove')).toBeInTheDocument();
     });
 
-    it('should not show remove option when pages deletion is not allowed', () => {
+    it('should show remove option for non-page layers even when pages deletion is not allowed', () => {
       mockUseEditorStore.mockImplementation((selector) => {
         const state = {
           allowPagesCreation: true,
@@ -449,7 +494,32 @@ describe('TreeRowNode', () => {
         return selector(state as any);
       });
 
+      // Non-page layer should always allow delete
+      mockIsLayerAPage.mockReturnValue(false);
+
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
+
+      const moreButton = screen.getByLabelText('More options');
+      fireEvent.click(moreButton);
+
+      expect(screen.getByText('Remove')).toBeInTheDocument();
+    });
+
+    it('should not show remove option for page layers when pages deletion is not allowed', () => {
+      mockUseEditorStore.mockImplementation((selector) => {
+        const state = {
+          allowPagesCreation: true,
+          allowPagesDeletion: false,
+          registry: createMockRegistry('page', true, false),
+        };
+        return selector(state as any);
+      });
+
+      // Page layer should respect allowPagesDeletion
+      mockIsLayerAPage.mockReturnValue(true);
+      mockCanDelete = false;
+
+      render(<TreeRowNode {...defaultProps} node={mockPageNode} />);
 
       const moreButton = screen.getByLabelText('More options');
       fireEvent.click(moreButton);
@@ -459,7 +529,7 @@ describe('TreeRowNode', () => {
   });
 
   describe('Node Actions', () => {
-    it('should call duplicateLayer when duplicate is clicked', () => {
+    it('should call handleDuplicate from global actions when duplicate is clicked', () => {
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
 
       const moreButton = screen.getByLabelText('More options');
@@ -468,10 +538,10 @@ describe('TreeRowNode', () => {
       const duplicateButton = screen.getByText('Duplicate');
       fireEvent.click(duplicateButton);
 
-      expect(mockDuplicateLayer).toHaveBeenCalledWith('node-1');
+      expect(mockHandleDuplicate).toHaveBeenCalled();
     });
 
-    it('should call removeLayer when remove is clicked', () => {
+    it('should call handleDelete from global actions when remove is clicked', () => {
       render(<TreeRowNode {...defaultProps} node={mockNode} />);
 
       const moreButton = screen.getByLabelText('More options');
@@ -480,7 +550,7 @@ describe('TreeRowNode', () => {
       const removeButton = screen.getByText('Remove');
       fireEvent.click(removeButton);
 
-      expect(mockRemoveLayer).toHaveBeenCalledWith('node-1');
+      expect(mockHandleDelete).toHaveBeenCalled();
     });
 
     it('should enter rename mode when rename is clicked', () => {
@@ -663,8 +733,6 @@ describe('TreeRowPlaceholder', () => {
 
 describe('TreeRowNode edge cases', () => {
   const mockSelectLayer = jest.fn();
-  const mockRemoveLayer = jest.fn();
-  const mockDuplicateLayer = jest.fn();
   const mockUpdateLayer = jest.fn();
   const mockOnToggle = jest.fn();
 
@@ -676,9 +744,6 @@ describe('TreeRowNode edge cases', () => {
     onToggle: mockOnToggle,
     selectedLayerId: null,
     selectLayer: mockSelectLayer,
-    removeLayer: mockRemoveLayer,
-    duplicateLayer: mockDuplicateLayer,
-    updateLayer: mockUpdateLayer,
     nodeAttributes: {
       key: 'test-key',
       'data-key': 'test-key',
@@ -712,6 +777,7 @@ describe('TreeRowNode edge cases', () => {
     mockUseLayerStore.mockImplementation((selector) => {
       const state = {
         isLayerAPage: jest.fn().mockReturnValue(false),
+        updateLayer: mockUpdateLayer,
       };
       return selector(state as any);
     });
@@ -837,37 +903,5 @@ describe('TreeRowNode edge cases', () => {
       expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
     });
 
-    it('should re-render when removeLayer callback changes', () => {
-      const newRemoveLayer = jest.fn();
-      const { rerender } = render(
-        <TreeRowNode {...defaultProps} node={mockNode} />
-      );
-
-      rerender(<TreeRowNode {...defaultProps} node={mockNode} removeLayer={newRemoveLayer} />);
-
-      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
-    });
-
-    it('should re-render when duplicateLayer callback changes', () => {
-      const newDuplicateLayer = jest.fn();
-      const { rerender } = render(
-        <TreeRowNode {...defaultProps} node={mockNode} />
-      );
-
-      rerender(<TreeRowNode {...defaultProps} node={mockNode} duplicateLayer={newDuplicateLayer} />);
-
-      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
-    });
-
-    it('should re-render when updateLayer callback changes', () => {
-      const newUpdateLayer = jest.fn();
-      const { rerender } = render(
-        <TreeRowNode {...defaultProps} node={mockNode} />
-      );
-
-      rerender(<TreeRowNode {...defaultProps} node={mockNode} updateLayer={newUpdateLayer} />);
-
-      expect(screen.getByText('Memo Test Node')).toBeInTheDocument();
-    });
   });
 });

@@ -284,6 +284,26 @@ export function addDefaultValues<T extends z.ZodObject<any>>(
 }
 
 /**
+ * Checks if a component schema can accept child components.
+ * This combines the logic for checking:
+ * 1. Schema has a shape property (is a ZodObject)
+ * 2. Has a children field of type any
+ * 3. Children field is NOT string-only
+ * 
+ * @param schema - The component's Zod schema
+ * @returns true if the component can accept child components
+ */
+export function canComponentAcceptChildren(schema: z.ZodType): boolean {
+    // Check if schema has shape property (ZodObject)
+    if (!("shape" in schema)) {
+        return false;
+    }
+    
+    const objectSchema = schema as z.ZodObject<any>;
+    return hasAnyChildrenField(objectSchema) && !hasChildrenFieldOfTypeString(objectSchema);
+}
+
+/**
  * Checks if a Zod schema has a children field of type ANY
  */
 export function hasAnyChildrenField(schema: z.ZodObject<any>): boolean {
