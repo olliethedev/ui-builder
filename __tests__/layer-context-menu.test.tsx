@@ -450,6 +450,8 @@ describe('LayerContextMenu', () => {
     it('should not call handlers when contenteditable is focused', () => {
       const editableDiv = document.createElement('div');
       editableDiv.setAttribute('contenteditable', 'true');
+      // jsdom doesn't implement isContentEditable, so we need to mock it
+      Object.defineProperty(editableDiv, 'isContentEditable', { value: true, configurable: true });
       document.body.appendChild(editableDiv);
       editableDiv.focus();
 
@@ -468,6 +470,37 @@ describe('LayerContextMenu', () => {
       duplicateShortcut!.handler(mockEvent);
 
       expect(mockHandleDuplicate).not.toHaveBeenCalled();
+
+      document.body.removeChild(editableDiv);
+    });
+
+    it('should not call handlers when short-form contenteditable is focused', () => {
+      // Test the short-form syntax: <div contenteditable> (empty string attribute)
+      // This is valid HTML and should also be detected as editable
+      const editableDiv = document.createElement('div');
+      editableDiv.setAttribute('contenteditable', ''); // Empty string, like <div contenteditable>
+      // jsdom doesn't implement isContentEditable, so we need to mock it
+      // In real browsers, short-form contenteditable="" returns isContentEditable: true
+      Object.defineProperty(editableDiv, 'isContentEditable', { value: true, configurable: true });
+      document.body.appendChild(editableDiv);
+      editableDiv.focus();
+
+      render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={true}
+          onSelect={mockOnSelect}
+        >
+          <div>Child</div>
+        </LayerContextMenu>
+      );
+
+      // Test delete shortcut specifically since Backspace in contenteditable would be problematic
+      const deleteShortcut = capturedKeyboardShortcuts.find(s => s.key === 'Backspace');
+      const mockEvent = { preventDefault: jest.fn() } as unknown as KeyboardEvent;
+      deleteShortcut!.handler(mockEvent);
+
+      expect(mockHandleDelete).not.toHaveBeenCalled();
 
       document.body.removeChild(editableDiv);
     });

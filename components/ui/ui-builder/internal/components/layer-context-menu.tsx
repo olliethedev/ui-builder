@@ -73,7 +73,9 @@ export const LayerContextMenu: React.FC<LayerContextMenuProps> = ({
     if (!activeElement) return false;
     
     const tagName = activeElement.tagName.toLowerCase();
-    const isContentEditable = activeElement.getAttribute('contenteditable') === 'true';
+    // Use isContentEditable property instead of getAttribute to handle all variations:
+    // <div contenteditable>, <div contenteditable="">, <div contenteditable="true">
+    const isContentEditable = (activeElement as HTMLElement).isContentEditable;
     
     return tagName === 'input' || tagName === 'textarea' || isContentEditable;
   }, []);
