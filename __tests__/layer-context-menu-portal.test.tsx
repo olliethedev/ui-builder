@@ -93,7 +93,6 @@ jest.mock('@/lib/ui-builder/hooks/use-layer-actions', () => ({
     handlePaste: mockHandlePaste,
     handleDelete: mockHandleDelete,
     handleDuplicate: mockHandleDuplicate,
-    canPerformPaste: jest.fn().mockReturnValue(true),
   })),
 }));
 
@@ -105,6 +104,15 @@ jest.mock('@/lib/ui-builder/store/schema-utils', () => ({
 // Mock AddComponentsPopover
 jest.mock('@/components/ui/ui-builder/internal/components/add-component-popover', () => ({
   AddComponentsPopover: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+// Mock useFrame - default to no iframe (uses parent document)
+let mockFrameDocument: Document | undefined = undefined;
+jest.mock('@/components/ui/ui-builder/internal/canvas/auto-frame', () => ({
+  useFrame: jest.fn(() => ({
+    document: mockFrameDocument,
+    window: undefined,
+  })),
 }));
 
 describe('LayerContextMenuPortal', () => {
@@ -128,6 +136,8 @@ describe('LayerContextMenuPortal', () => {
     mockSelectedLayerId = 'layer-1';
     mockFloatingElement = null;
     mockFindLayerById.mockReturnValue(mockLayer);
+    // Reset to no iframe context by default
+    mockFrameDocument = undefined;
   });
 
   describe('Rendering', () => {
@@ -386,6 +396,75 @@ describe('LayerContextMenuPortal', () => {
 
       const shortcuts = screen.getAllByTestId('menu-shortcut');
       expect(shortcuts.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Iframe event handling', () => {
+    beforeEach(() => {
+      mockContextMenuState = {
+        open: true,
+        x: 100,
+        y: 200,
+        layerId: 'layer-1',
+      };
+    });
+
+    it('should attach event listeners to iframe document when available', () => {
+      // Create a mock iframe document
+      const mockIframeDoc = document.implementation.createHTMLDocument('iframe');
+      const addEventListenerSpy = jest.spyOn(mockIframeDoc, 'addEventListener');
+      const removeEventListenerSpy = jest.spyOn(mockIframeDoc, 'removeEventListener');
+      
+      // Set the mock iframe document
+      mockFrameDocument = mockIframeDoc;
+
+      const { unmount } = render(<LayerContextMenuPortal />);
+
+      // Verify listeners were attached to iframe document
+      expect(addEventListenerSpy).toHaveBeenCalledWith('mousedown', expect.any(Function));
+      expect(addEventListenerSpy).toHaveBeenCalledWith('contextmenu', expect.any(Function));
+      expect(addEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+
+      // Unmount and verify cleanup
+      unmount();
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('mousedown', expect.any(Function));
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('contextmenu', expect.any(Function));
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', expect.any(Function));
+
+      addEventListenerSpy.mockRestore();
+      removeEventListenerSpy.mockRestore();
+    });
+
+    it('should close menu when Escape is pressed inside iframe document', () => {
+      // Create a mock iframe document
+      const mockIframeDoc = document.implementation.createHTMLDocument('iframe');
+      mockFrameDocument = mockIframeDoc;
+
+      render(<LayerContextMenuPortal />);
+
+      // Simulate keydown on iframe document
+      act(() => {
+        const event = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+        mockIframeDoc.dispatchEvent(event);
+      });
+
+      expect(mockCloseContextMenu).toHaveBeenCalled();
+    });
+
+    it('should close menu when clicking outside inside iframe document', () => {
+      // Create a mock iframe document with a body
+      const mockIframeDoc = document.implementation.createHTMLDocument('iframe');
+      mockFrameDocument = mockIframeDoc;
+
+      render(<LayerContextMenuPortal />);
+
+      // Simulate mousedown on iframe document body
+      act(() => {
+        const event = new MouseEvent('mousedown', { bubbles: true });
+        mockIframeDoc.body.dispatchEvent(event);
+      });
+
+      expect(mockCloseContextMenu).toHaveBeenCalled();
     });
   });
 });

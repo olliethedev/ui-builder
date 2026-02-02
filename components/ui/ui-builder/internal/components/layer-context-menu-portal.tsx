@@ -125,15 +125,19 @@ export const LayerContextMenuPortal: React.FC = () => {
       }
     };
 
+    // Attach listeners to iframe document if available, otherwise parent document
+    // This ensures events inside the iframe are captured correctly
+    const targetDoc = frameContext.document ?? document;
+
     // Use mousedown for faster response
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("contextmenu", handleContextMenuOutside);
+    targetDoc.addEventListener("mousedown", handleClickOutside);
+    targetDoc.addEventListener("contextmenu", handleContextMenuOutside);
     
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("contextmenu", handleContextMenuOutside);
+      targetDoc.removeEventListener("mousedown", handleClickOutside);
+      targetDoc.removeEventListener("contextmenu", handleContextMenuOutside);
     };
-  }, [contextMenu.open, closeContextMenu, refs.floating]);
+  }, [contextMenu.open, closeContextMenu, refs.floating, frameContext.document]);
 
   // Handle escape key to close menu
   useEffect(() => {
@@ -145,9 +149,13 @@ export const LayerContextMenuPortal: React.FC = () => {
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [contextMenu.open, closeContextMenu]);
+    // Attach listener to iframe document if available, otherwise parent document
+    // This ensures escape key is captured when focus is inside the iframe
+    const targetDoc = frameContext.document ?? document;
+
+    targetDoc.addEventListener("keydown", handleKeyDown);
+    return () => targetDoc.removeEventListener("keydown", handleKeyDown);
+  }, [contextMenu.open, closeContextMenu, frameContext.document]);
 
   if (!mounted || !contextMenu.open || !contextMenu.layerId) {
     return null;
