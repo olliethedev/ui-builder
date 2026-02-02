@@ -10,9 +10,11 @@ import type { NodeAttrs } from 'he-tree-react';
 jest.mock('@/lib/ui-builder/store/editor-store');
 jest.mock('@/lib/ui-builder/store/layer-store');
 
-// Mock useGlobalLayerActions
+// Mock useGlobalLayerActions - dynamic mock that computes permissions from other mocks
 const mockHandleDelete = jest.fn();
 const mockHandleDuplicate = jest.fn();
+let mockCanDuplicate = true;
+let mockCanDelete = true;
 jest.mock('@/lib/ui-builder/hooks/use-layer-actions', () => ({
   useGlobalLayerActions: () => ({
     handleDelete: mockHandleDelete,
@@ -21,8 +23,9 @@ jest.mock('@/lib/ui-builder/hooks/use-layer-actions', () => ({
     handleCut: jest.fn(),
     handlePaste: jest.fn(),
     canPaste: false,
+    get canDuplicate() { return mockCanDuplicate; },
+    get canDelete() { return mockCanDelete; },
     clipboard: { layer: null, isCut: false },
-    canPerformPaste: jest.fn().mockReturnValue(false),
   }),
 }));
 
@@ -147,6 +150,10 @@ describe('TreeRowNode', () => {
     jest.clearAllMocks();
     mockHandleDelete.mockClear();
     mockHandleDuplicate.mockClear();
+    
+    // Reset permission mocks to defaults
+    mockCanDuplicate = true;
+    mockCanDelete = true;
     
     // Mock EditorStore with registry
     mockUseEditorStore.mockImplementation((selector) => {
@@ -449,6 +456,7 @@ describe('TreeRowNode', () => {
 
       // Page layer should respect allowPagesCreation
       mockIsLayerAPage.mockReturnValue(true);
+      mockCanDuplicate = false;
 
       render(<TreeRowNode {...defaultProps} node={mockPageNode} />);
 
@@ -509,6 +517,7 @@ describe('TreeRowNode', () => {
 
       // Page layer should respect allowPagesDeletion
       mockIsLayerAPage.mockReturnValue(true);
+      mockCanDelete = false;
 
       render(<TreeRowNode {...defaultProps} node={mockPageNode} />);
 

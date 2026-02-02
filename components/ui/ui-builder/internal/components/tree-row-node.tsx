@@ -52,23 +52,11 @@ export const TreeRowNode: React.FC<TreeRowNodeProps> = memo(({
   const updateLayer = useLayerStore((state) => state.updateLayer);
   
   // Use global layer actions for delete and duplicate
-  const { handleDelete, handleDuplicate } = useGlobalLayerActions(node.id);
+  const { handleDelete, handleDuplicate, canDuplicate, canDelete } = useGlobalLayerActions(node.id);
 
   const [isRenaming, setIsRenaming] = useState(false);
 
   const [popoverOrMenuOpen, setPopoverOrMenuOpen] = useState(false);
-
-  const allowPagesCreation = useEditorStore(
-    (state) => state.allowPagesCreation
-  );
-  const allowPagesDeletion = useEditorStore(
-    (state) => state.allowPagesDeletion
-  );
-  const isLayerAPage = useLayerStore((state) => state.isLayerAPage(node.id));
-
-  // Check permissions for page operations (same logic as LayerMenu/LayerMenuItems)
-  const canDuplicate = !isLayerAPage || allowPagesCreation;
-  const canDelete = !isLayerAPage || allowPagesDeletion;
 
   const handleOpen = useCallback(() => {
     onToggle(id, !open);
