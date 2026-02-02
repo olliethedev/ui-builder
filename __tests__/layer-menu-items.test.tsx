@@ -120,7 +120,6 @@ describe('LayerMenuItems', () => {
       handlePaste: mockHandlePaste,
       handleDelete: mockHandleDelete,
       handleDuplicate: mockHandleDuplicate,
-      canPerformPaste: jest.fn().mockReturnValue(false),
     });
 
     // Setup schema utils mocks
@@ -220,7 +219,6 @@ describe('LayerMenuItems', () => {
       handlePaste: mockHandlePaste,
       handleDelete: mockHandleDelete,
       handleDuplicate: mockHandleDuplicate,
-      canPerformPaste: jest.fn().mockReturnValue(true),
     });
 
     render(<LayerMenuItems layerId="layer-1" />);
@@ -269,7 +267,6 @@ describe('LayerMenuItems', () => {
       handlePaste: mockHandlePaste,
       handleDelete: mockHandleDelete,
       handleDuplicate: mockHandleDuplicate,
-      canPerformPaste: jest.fn().mockReturnValue(false),
     });
 
     render(<LayerMenuItems layerId="layer-1" />);
@@ -290,7 +287,6 @@ describe('LayerMenuItems', () => {
       handlePaste: mockHandlePaste,
       handleDelete: mockHandleDelete,
       handleDuplicate: mockHandleDuplicate,
-      canPerformPaste: jest.fn().mockReturnValue(false),
     });
 
     render(<LayerMenuItems layerId="layer-1" />);
@@ -311,7 +307,6 @@ describe('LayerMenuItems', () => {
       handlePaste: mockHandlePaste,
       handleDelete: mockHandleDelete,
       handleDuplicate: mockHandleDuplicate,
-      canPerformPaste: jest.fn().mockReturnValue(false),
     });
 
     render(<LayerMenuItems layerId="layer-1" />);
@@ -338,7 +333,6 @@ describe('LayerMenuItems', () => {
       handlePaste: mockHandlePaste,
       handleDelete: mockHandleDelete,
       handleDuplicate: mockHandleDuplicate,
-      canPerformPaste: jest.fn().mockReturnValue(true),
     });
 
     render(<LayerMenuItems layerId="layer-1" />);

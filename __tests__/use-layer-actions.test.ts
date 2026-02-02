@@ -503,7 +503,7 @@ describe('useGlobalLayerActions', () => {
     });
   });
 
-  describe('canPaste and canPerformPaste', () => {
+  describe('canPaste', () => {
     it('should return canPaste as false when clipboard is empty', () => {
       const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
@@ -533,33 +533,6 @@ describe('useGlobalLayerActions', () => {
       const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
 
       expect(result.current.canPaste).toBe(false);
-    });
-
-    it('should canPerformPaste check validation for a given target', () => {
-      mockClipboard = {
-        layer: mockLayer,
-        isCut: false,
-        sourceLayerId: 'layer-1',
-      };
-
-      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
-
-      result.current.canPerformPaste('target-layer');
-
-      expect(mockCanPasteLayer).toHaveBeenCalledWith(
-        mockLayer,
-        'target-layer',
-        mockRegistry,
-        mockFindLayerById
-      );
-    });
-
-    it('should canPerformPaste return false when clipboard is empty', () => {
-      const { result } = renderHook(() => useGlobalLayerActions('layer-1'));
-
-      const canPaste = result.current.canPerformPaste('target-layer');
-
-      expect(canPaste).toBe(false);
     });
   });
 

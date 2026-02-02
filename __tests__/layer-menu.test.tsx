@@ -30,7 +30,6 @@ const mockLayerActionsReturn = {
   canDelete: true,
   canCut: true,
   clipboard: { layer: null, isCut: false },
-  canPerformPaste: jest.fn().mockReturnValue(false),
 };
 jest.mock("@/lib/ui-builder/hooks/use-layer-actions", () => ({
   useGlobalLayerActions: () => mockLayerActionsReturn,

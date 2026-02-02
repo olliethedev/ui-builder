@@ -67,7 +67,6 @@ describe('LayerContextMenu', () => {
       handlePaste: mockHandlePaste,
       handleDelete: mockHandleDelete,
       handleDuplicate: mockHandleDuplicate,
-      canPerformPaste: jest.fn().mockReturnValue(false),
     });
   });
 
@@ -335,7 +334,6 @@ describe('LayerContextMenu', () => {
         handlePaste: mockHandlePaste,
         handleDelete: mockHandleDelete,
         handleDuplicate: mockHandleDuplicate,
-        canPerformPaste: jest.fn().mockReturnValue(true),
       });
 
       render(

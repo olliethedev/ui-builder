@@ -168,6 +168,5 @@ export function useGlobalLayerActions(layerId?: string) {
     handlePaste,
     handleDelete,
     handleDuplicate,
-    canPerformPaste,
   };
 }
