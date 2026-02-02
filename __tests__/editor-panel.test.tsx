@@ -49,6 +49,12 @@ jest.mock("@/components/ui/ui-builder/internal/canvas/auto-frame", () => ({
       {children}
     </div>
   )),
+  useFrame: () => ({ document: undefined, window: undefined }),
+}));
+
+// Mock LayerContextMenuPortal (rendered inside AutoFrame)
+jest.mock("@/components/ui/ui-builder/internal/components/layer-context-menu-portal", () => ({
+  LayerContextMenuPortal: () => <div data-testid="layer-context-menu-portal" />,
 }));
 
 jest.mock("@/components/ui/ui-builder/layer-renderer", () => ({

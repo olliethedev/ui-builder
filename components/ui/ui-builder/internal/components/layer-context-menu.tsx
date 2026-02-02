@@ -1,13 +1,8 @@
 "use client";
 
 import React, { useCallback, useMemo } from "react";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { LayerMenuItems } from "@/components/ui/ui-builder/internal/components/layer-menu-items";
 import { useGlobalLayerActions } from "@/lib/ui-builder/hooks/use-layer-actions";
+import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import {
   type KeyCombination,
   useKeyboardShortcuts,
@@ -30,8 +25,9 @@ export interface LayerContextMenuProps {
 
 /**
  * Context menu wrapper for layers.
- * Wraps children with a right-click context menu that provides layer actions.
+ * Captures right-click events and dispatches them to the global context menu portal.
  * If the layer is not selected, right-clicking will select it first.
+ * Also handles keyboard shortcuts for copy/cut/paste/duplicate/delete.
  */
 export const LayerContextMenu: React.FC<LayerContextMenuProps> = ({
   layerId,
@@ -41,6 +37,8 @@ export const LayerContextMenu: React.FC<LayerContextMenuProps> = ({
   className,
   style,
 }) => {
+  const openContextMenu = useEditorStore((state) => state.openContextMenu);
+  
   const {
     handleCopy,
     handleCut,
@@ -50,14 +48,23 @@ export const LayerContextMenu: React.FC<LayerContextMenuProps> = ({
     canPaste,
   } = useGlobalLayerActions(layerId);
 
-  // Handle context menu open - select the layer if not selected
-  const handleContextMenuOpen = useCallback(
-    (open: boolean) => {
-      if (open && !isSelected) {
+  // Handle right-click - open global context menu
+  // Use the raw event coordinates since the menu renders inside the iframe
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Select the layer if not already selected
+      if (!isSelected) {
         onSelect(layerId);
       }
+      
+      // Use raw event coordinates - the menu renders inside the iframe
+      // so we don't need any coordinate conversion
+      openContextMenu(e.clientX, e.clientY, layerId);
     },
-    [isSelected, layerId, onSelect]
+    [isSelected, layerId, onSelect, openContextMenu]
   );
 
   // Check if the active element is an input or textarea
@@ -127,18 +134,23 @@ export const LayerContextMenu: React.FC<LayerContextMenuProps> = ({
 
   useKeyboardShortcuts(keyCombinations);
 
+  // If children is a single React element, clone it with the context menu handler
+  // Otherwise, wrap in a span
+  if (React.isValidElement(children)) {
+    return React.cloneElement(children as React.ReactElement<React.HTMLAttributes<HTMLElement>>, {
+      onContextMenu: handleContextMenu,
+      className: className ? `${(children.props as React.HTMLAttributes<HTMLElement>).className || ''} ${className}`.trim() : (children.props as React.HTMLAttributes<HTMLElement>).className,
+      style: style ? { ...(children.props as React.HTMLAttributes<HTMLElement>).style, ...style } : (children.props as React.HTMLAttributes<HTMLElement>).style,
+    });
+  }
+
   return (
-    <ContextMenu onOpenChange={handleContextMenuOpen}>
-      <ContextMenuTrigger
-        className={className}
-        style={style}
-        asChild
-      >
-        {children}
-      </ContextMenuTrigger>
-      <ContextMenuContent className="w-56">
-        <LayerMenuItems layerId={layerId} />
-      </ContextMenuContent>
-    </ContextMenu>
+    <span
+      onContextMenu={handleContextMenu}
+      className={className}
+      style={style}
+    >
+      {children}
+    </span>
   );
 };

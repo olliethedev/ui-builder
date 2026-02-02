@@ -11,6 +11,16 @@ export interface ClipboardState {
   sourceLayerId: string | null;
 }
 
+/**
+ * Context menu state for right-click menus
+ */
+export interface ContextMenuState {
+  open: boolean;
+  x: number;
+  y: number;
+  layerId: string | null;
+}
+
 
 
 export interface EditorStore {
@@ -49,6 +59,11 @@ export interface EditorStore {
     clipboard: ClipboardState;
     setClipboard: (clipboard: ClipboardState) => void;
     clearClipboard: () => void;
+
+    // Context menu state for right-click menus
+    contextMenu: ContextMenuState;
+    openContextMenu: (x: number, y: number, layerId: string) => void;
+    closeContextMenu: () => void;
 }
 
 const store: StateCreator<EditorStore, [], []> = (set, get) => ({
@@ -110,6 +125,30 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
             isCut: false, 
             sourceLayerId: null 
         } 
+    }),
+
+    // Context menu state for right-click menus
+    contextMenu: {
+        open: false,
+        x: 0,
+        y: 0,
+        layerId: null,
+    },
+    openContextMenu: (x, y, layerId) => set({
+        contextMenu: {
+            open: true,
+            x,
+            y,
+            layerId,
+        }
+    }),
+    closeContextMenu: () => set({
+        contextMenu: {
+            open: false,
+            x: 0,
+            y: 0,
+            layerId: null,
+        }
     }),
 });
 

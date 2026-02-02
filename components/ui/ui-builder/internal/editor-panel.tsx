@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { ResizableWrapper } from "@/components/ui/ui-builder/internal/canvas/resizable-wrapper";
 import AutoFrame from "@/components/ui/ui-builder/internal/canvas/auto-frame";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { LayerContextMenuPortal } from "@/components/ui/ui-builder/internal/components/layer-context-menu-portal";
 
 // Static style objects to prevent recreation on every render
 const WRAPPER_STYLE = {
@@ -301,6 +302,7 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
         >
           <AutoFrame {...autoFrameProps} ref={frameRef}>
             <LayerRenderer {...layerRendererProps} />
+            <LayerContextMenuPortal />
           </AutoFrame>
         </div>
       </ResizableWrapper>

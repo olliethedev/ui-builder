@@ -1,12 +1,21 @@
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { LayerContextMenu } from '@/components/ui/ui-builder/internal/components/layer-context-menu';
-import type { ComponentLayer, ComponentRegistry } from '@/components/ui/ui-builder/types';
-import { z } from 'zod';
+import type { ComponentLayer } from '@/components/ui/ui-builder/types';
 
 // Capture the keyboard shortcuts for testing
-let capturedKeyboardShortcuts: any[] = [];
-let capturedOnOpenChange: ((open: boolean) => void) | null = null;
+let capturedKeyboardShortcuts: Array<{ key: string; keys: string[]; handler: (e: KeyboardEvent) => void }> = [];
+
+// Mock the editor store
+const mockOpenContextMenu = jest.fn();
+jest.mock('@/lib/ui-builder/store/editor-store', () => ({
+  useEditorStore: jest.fn((selector) => {
+    const state = {
+      openContextMenu: mockOpenContextMenu,
+    };
+    return selector(state);
+  }),
+}));
 
 // Mock the layer actions hook
 jest.mock('@/lib/ui-builder/hooks/use-layer-actions', () => ({
@@ -18,35 +27,6 @@ jest.mock('@/hooks/use-keyboard-shortcuts', () => ({
   useKeyboardShortcuts: jest.fn((shortcuts) => {
     capturedKeyboardShortcuts = shortcuts;
   }),
-}));
-
-// Mock context menu components - capture onOpenChange for testing
-jest.mock('@/components/ui/context-menu', () => ({
-  ContextMenu: ({ children, onOpenChange }: any) => {
-    capturedOnOpenChange = onOpenChange;
-    return <div data-testid="context-menu" data-on-open-change={!!onOpenChange}>
-      {children}
-    </div>;
-  },
-  ContextMenuTrigger: ({ children, className, style }: any) => (
-    <div data-testid="context-menu-trigger" className={className} style={style}>
-      {children}
-    </div>
-  ),
-  ContextMenuContent: ({ children, className }: any) => (
-    <div data-testid="context-menu-content" className={className}>
-      {children}
-    </div>
-  ),
-}));
-
-// Mock LayerMenuItems
-jest.mock('@/components/ui/ui-builder/internal/components/layer-menu-items', () => ({
-  LayerMenuItems: ({ layerId }: any) => (
-    <div data-testid="layer-menu-items" data-layer-id={layerId}>
-      Menu Items
-    </div>
-  ),
 }));
 
 import { useGlobalLayerActions } from '@/lib/ui-builder/hooks/use-layer-actions';
@@ -74,7 +54,6 @@ describe('LayerContextMenu', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     capturedKeyboardShortcuts = [];
-    capturedOnOpenChange = null;
 
     // Setup layer actions mock
     mockUseGlobalLayerActions.mockReturnValue({
@@ -92,184 +71,196 @@ describe('LayerContextMenu', () => {
     });
   });
 
-  it('should render children inside context menu trigger', () => {
-    render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={true}
-        onSelect={mockOnSelect}
-      >
-        <div data-testid="child-content">Child Content</div>
-      </LayerContextMenu>
-    );
+  describe('Rendering', () => {
+    it('should render children', () => {
+      render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={true}
+          onSelect={mockOnSelect}
+        >
+          <div data-testid="child-content">Child Content</div>
+        </LayerContextMenu>
+      );
 
-    expect(screen.getByTestId('child-content')).toBeInTheDocument();
-  });
-
-  it('should render context menu structure', () => {
-    render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={true}
-        onSelect={mockOnSelect}
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
-
-    expect(screen.getByTestId('context-menu')).toBeInTheDocument();
-    expect(screen.getByTestId('context-menu-trigger')).toBeInTheDocument();
-    expect(screen.getByTestId('context-menu-content')).toBeInTheDocument();
-  });
-
-  it('should render LayerMenuItems with correct layer ID', () => {
-    render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={true}
-        onSelect={mockOnSelect}
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
-
-    const menuItems = screen.getByTestId('layer-menu-items');
-    expect(menuItems).toHaveAttribute('data-layer-id', 'layer-1');
-  });
-
-  it('should apply className to trigger', () => {
-    render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={true}
-        onSelect={mockOnSelect}
-        className="custom-class"
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
-
-    expect(screen.getByTestId('context-menu-trigger')).toHaveClass('custom-class');
-  });
-
-  it('should apply style to trigger', () => {
-    const customStyle = { backgroundColor: 'red' };
-
-    render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={true}
-        onSelect={mockOnSelect}
-        style={customStyle}
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
-
-    expect(screen.getByTestId('context-menu-trigger')).toHaveStyle(customStyle);
-  });
-
-  it('should register keyboard shortcuts when selected', () => {
-    render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={true}
-        onSelect={mockOnSelect}
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
-
-    expect(mockUseKeyboardShortcuts).toHaveBeenCalled();
-    expect(capturedKeyboardShortcuts.length).toBeGreaterThan(0);
-  });
-
-  it('should not register keyboard shortcuts when not selected', () => {
-    render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={false}
-        onSelect={mockOnSelect}
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
-
-    expect(mockUseKeyboardShortcuts).toHaveBeenCalled();
-    expect(capturedKeyboardShortcuts.length).toBe(0);
-  });
-
-  it('should use layer actions hook with correct layer ID', () => {
-    render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={true}
-        onSelect={mockOnSelect}
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
-
-    expect(mockUseGlobalLayerActions).toHaveBeenCalledWith('layer-1');
-  });
-
-  it('should select layer when context menu opens and layer is not selected', () => {
-    render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={false}
-        onSelect={mockOnSelect}
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
-
-    expect(capturedOnOpenChange).toBeDefined();
-    
-    act(() => {
-      capturedOnOpenChange!(true);
+      expect(screen.getByTestId('child-content')).toBeInTheDocument();
     });
 
-    expect(mockOnSelect).toHaveBeenCalledWith('layer-1');
-  });
+    it('should apply className to child element', () => {
+      render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={true}
+          onSelect={mockOnSelect}
+          className="custom-class"
+        >
+          <div data-testid="child-content" className="existing-class">Child</div>
+        </LayerContextMenu>
+      );
 
-  it('should not select layer when context menu opens and layer is already selected', () => {
-    render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={true}
-        onSelect={mockOnSelect}
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
-
-    act(() => {
-      capturedOnOpenChange!(true);
+      const child = screen.getByTestId('child-content');
+      expect(child).toHaveClass('existing-class');
+      expect(child).toHaveClass('custom-class');
     });
 
-    expect(mockOnSelect).not.toHaveBeenCalled();
-  });
+    it('should apply style to child element', () => {
+      const customStyle = { backgroundColor: 'red' };
 
-  it('should not select layer when context menu closes', () => {
-    render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={false}
-        onSelect={mockOnSelect}
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
+      render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={true}
+          onSelect={mockOnSelect}
+          style={customStyle}
+        >
+          <div data-testid="child-content">Child</div>
+        </LayerContextMenu>
+      );
 
-    act(() => {
-      capturedOnOpenChange!(false);
+      expect(screen.getByTestId('child-content')).toHaveStyle(customStyle);
     });
 
-    expect(mockOnSelect).not.toHaveBeenCalled();
+    it('should wrap non-element children in span', () => {
+      render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={true}
+          onSelect={mockOnSelect}
+        >
+          Text content
+        </LayerContextMenu>
+      );
+
+      expect(screen.getByText('Text content').tagName).toBe('SPAN');
+    });
   });
 
-  describe('Keyboard shortcut handlers', () => {
+  describe('Context menu event handling', () => {
+    it('should call openContextMenu with mouse position on right-click', () => {
+      render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={true}
+          onSelect={mockOnSelect}
+        >
+          <div data-testid="child-content">Child</div>
+        </LayerContextMenu>
+      );
+
+      const child = screen.getByTestId('child-content');
+      fireEvent.contextMenu(child, { clientX: 100, clientY: 200 });
+
+      expect(mockOpenContextMenu).toHaveBeenCalledWith(100, 200, 'layer-1');
+    });
+
+    it('should select layer on right-click when not selected', () => {
+      render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={false}
+          onSelect={mockOnSelect}
+        >
+          <div data-testid="child-content">Child</div>
+        </LayerContextMenu>
+      );
+
+      const child = screen.getByTestId('child-content');
+      fireEvent.contextMenu(child, { clientX: 100, clientY: 200 });
+
+      expect(mockOnSelect).toHaveBeenCalledWith('layer-1');
+    });
+
+    it('should not select layer on right-click when already selected', () => {
+      render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={true}
+          onSelect={mockOnSelect}
+        >
+          <div data-testid="child-content">Child</div>
+        </LayerContextMenu>
+      );
+
+      const child = screen.getByTestId('child-content');
+      fireEvent.contextMenu(child, { clientX: 100, clientY: 200 });
+
+      expect(mockOnSelect).not.toHaveBeenCalled();
+    });
+
+    it('should prevent default and stop propagation on right-click', () => {
+      render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={true}
+          onSelect={mockOnSelect}
+        >
+          <div data-testid="child-content">Child</div>
+        </LayerContextMenu>
+      );
+
+      const child = screen.getByTestId('child-content');
+      const event = new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 100,
+        clientY: 200,
+      });
+
+      const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+      const stopPropagationSpy = jest.spyOn(event, 'stopPropagation');
+
+      child.dispatchEvent(event);
+
+      expect(preventDefaultSpy).toHaveBeenCalled();
+      expect(stopPropagationSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe('Keyboard shortcuts', () => {
+    it('should register keyboard shortcuts when selected', () => {
+      render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={true}
+          onSelect={mockOnSelect}
+        >
+          <div>Child</div>
+        </LayerContextMenu>
+      );
+
+      expect(mockUseKeyboardShortcuts).toHaveBeenCalled();
+      expect(capturedKeyboardShortcuts.length).toBeGreaterThan(0);
+    });
+
+    it('should not register keyboard shortcuts when not selected', () => {
+      render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={false}
+          onSelect={mockOnSelect}
+        >
+          <div>Child</div>
+        </LayerContextMenu>
+      );
+
+      expect(mockUseKeyboardShortcuts).toHaveBeenCalled();
+      expect(capturedKeyboardShortcuts.length).toBe(0);
+    });
+
+    it('should use layer actions hook with correct layer ID', () => {
+      render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={true}
+          onSelect={mockOnSelect}
+        >
+          <div>Child</div>
+        </LayerContextMenu>
+      );
+
+      expect(mockUseGlobalLayerActions).toHaveBeenCalledWith('layer-1');
+    });
+
     it('should call handleCopy when copy shortcut handler is invoked', () => {
       render(
         <LayerContextMenu
@@ -285,7 +276,7 @@ describe('LayerContextMenu', () => {
       expect(copyShortcut).toBeDefined();
 
       const mockEvent = { preventDefault: jest.fn() } as unknown as KeyboardEvent;
-      copyShortcut.handler(mockEvent);
+      copyShortcut!.handler(mockEvent);
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockHandleCopy).toHaveBeenCalled();
@@ -306,7 +297,7 @@ describe('LayerContextMenu', () => {
       expect(cutShortcut).toBeDefined();
 
       const mockEvent = { preventDefault: jest.fn() } as unknown as KeyboardEvent;
-      cutShortcut.handler(mockEvent);
+      cutShortcut!.handler(mockEvent);
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockHandleCut).toHaveBeenCalled();
@@ -327,7 +318,7 @@ describe('LayerContextMenu', () => {
       expect(pasteShortcut).toBeDefined();
 
       const mockEvent = { preventDefault: jest.fn() } as unknown as KeyboardEvent;
-      pasteShortcut.handler(mockEvent);
+      pasteShortcut!.handler(mockEvent);
 
       expect(mockHandlePaste).not.toHaveBeenCalled();
     });
@@ -361,7 +352,7 @@ describe('LayerContextMenu', () => {
       expect(pasteShortcut).toBeDefined();
 
       const mockEvent = { preventDefault: jest.fn() } as unknown as KeyboardEvent;
-      pasteShortcut.handler(mockEvent);
+      pasteShortcut!.handler(mockEvent);
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockHandlePaste).toHaveBeenCalled();
@@ -382,7 +373,7 @@ describe('LayerContextMenu', () => {
       expect(duplicateShortcut).toBeDefined();
 
       const mockEvent = { preventDefault: jest.fn() } as unknown as KeyboardEvent;
-      duplicateShortcut.handler(mockEvent);
+      duplicateShortcut!.handler(mockEvent);
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockHandleDuplicate).toHaveBeenCalled();
@@ -403,7 +394,7 @@ describe('LayerContextMenu', () => {
       expect(deleteShortcut).toBeDefined();
 
       const mockEvent = { preventDefault: jest.fn() } as unknown as KeyboardEvent;
-      deleteShortcut.handler(mockEvent);
+      deleteShortcut!.handler(mockEvent);
 
       expect(mockEvent.preventDefault).toHaveBeenCalled();
       expect(mockHandleDelete).toHaveBeenCalled();
@@ -427,7 +418,7 @@ describe('LayerContextMenu', () => {
 
       const copyShortcut = capturedKeyboardShortcuts.find(s => s.key === 'c');
       const mockEvent = { preventDefault: jest.fn() } as unknown as KeyboardEvent;
-      copyShortcut.handler(mockEvent);
+      copyShortcut!.handler(mockEvent);
 
       expect(mockHandleCopy).not.toHaveBeenCalled();
 
@@ -451,7 +442,7 @@ describe('LayerContextMenu', () => {
 
       const cutShortcut = capturedKeyboardShortcuts.find(s => s.key === 'x');
       const mockEvent = { preventDefault: jest.fn() } as unknown as KeyboardEvent;
-      cutShortcut.handler(mockEvent);
+      cutShortcut!.handler(mockEvent);
 
       expect(mockHandleCut).not.toHaveBeenCalled();
 
@@ -476,7 +467,7 @@ describe('LayerContextMenu', () => {
 
       const duplicateShortcut = capturedKeyboardShortcuts.find(s => s.key === 'd');
       const mockEvent = { preventDefault: jest.fn() } as unknown as KeyboardEvent;
-      duplicateShortcut.handler(mockEvent);
+      duplicateShortcut!.handler(mockEvent);
 
       expect(mockHandleDuplicate).not.toHaveBeenCalled();
 
@@ -484,45 +475,38 @@ describe('LayerContextMenu', () => {
     });
   });
 
-  it('should render context menu content with correct class', () => {
-    render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={true}
-        onSelect={mockOnSelect}
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
+  describe('Layer ID handling', () => {
+    it('should handle different layer IDs', () => {
+      const { rerender } = render(
+        <LayerContextMenu
+          layerId="layer-1"
+          isSelected={true}
+          onSelect={mockOnSelect}
+        >
+          <div data-testid="child-content">Child</div>
+        </LayerContextMenu>
+      );
 
-    expect(screen.getByTestId('context-menu-content')).toHaveClass('w-56');
-  });
+      const child = screen.getByTestId('child-content');
+      fireEvent.contextMenu(child, { clientX: 100, clientY: 200 });
 
-  it('should render with different layer IDs', () => {
-    const { rerender } = render(
-      <LayerContextMenu
-        layerId="layer-1"
-        isSelected={true}
-        onSelect={mockOnSelect}
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
+      expect(mockOpenContextMenu).toHaveBeenCalledWith(100, 200, 'layer-1');
 
-    let menuItems = screen.getByTestId('layer-menu-items');
-    expect(menuItems).toHaveAttribute('data-layer-id', 'layer-1');
+      mockOpenContextMenu.mockClear();
 
-    rerender(
-      <LayerContextMenu
-        layerId="layer-2"
-        isSelected={true}
-        onSelect={mockOnSelect}
-      >
-        <div>Child</div>
-      </LayerContextMenu>
-    );
+      rerender(
+        <LayerContextMenu
+          layerId="layer-2"
+          isSelected={true}
+          onSelect={mockOnSelect}
+        >
+          <div data-testid="child-content">Child</div>
+        </LayerContextMenu>
+      );
 
-    menuItems = screen.getByTestId('layer-menu-items');
-    expect(menuItems).toHaveAttribute('data-layer-id', 'layer-2');
+      fireEvent.contextMenu(child, { clientX: 150, clientY: 250 });
+
+      expect(mockOpenContextMenu).toHaveBeenCalledWith(150, 250, 'layer-2');
+    });
   });
 });
