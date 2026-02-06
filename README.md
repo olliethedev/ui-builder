@@ -10,7 +10,7 @@ Layouts are saved as plain JSON for easy versioning and can be rendered instantl
 
 ---
 
-> **UI Builder is now part of [Better Stack](https://better-stack.ai/)** — ship full-stack features faster with production-ready plugins that generate database schemas, API routes, and pages for Next.js, TanStack Start, and React Router.
+> **UI Builder is now part of [BTST](https://better-stack.ai/)** — ship full-stack features faster with production-ready plugins that generate database schemas, API routes, and pages for Next.js, TanStack Start, and React Router.
 
 ---
 
