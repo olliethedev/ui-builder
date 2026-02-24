@@ -4,7 +4,7 @@ import {
   type AutoScrollState, 
   AUTO_SCROLL_THRESHOLD, 
   calculateScrollSpeed 
-} from '../context/auto-scroll-constants';
+} from '@/lib/ui-builder/context/auto-scroll-constants';
 
 export const useAutoScroll = () => {
   // Auto-scroll state management

@@ -63,17 +63,27 @@ async function buildRegistry() {
             
             const content = await readFile(file, "utf-8");
             
-            // Only set target for registry:page and registry:file types
-            const needsTarget = config.type === "registry:page" || config.type === "registry:file";
-            const targetPath = needsTarget && config.targetFunction ? config.targetFunction(file) : undefined;
+            // Normalize path by stripping leading "./"
+            const normalizedPath = file.replace(/^\.\//, "");
             
-            console.log("Processing file", { file, type: config.type, ...(targetPath && { target: targetPath }) });
+            // Set target for all files to ensure correct placement on all platforms.
+            // The shadcn CLI's resolveNestedFilePath has a known bug on Windows (#8778)
+            // where backslash path separators cause files to be flattened to their
+            // base directory. Explicit targets bypass this logic entirely.
+            let targetPath: string | undefined;
+            if (config.targetFunction) {
+                targetPath = config.targetFunction(normalizedPath);
+            } else {
+                targetPath = normalizedPath;
+            }
+            
+            console.log("Processing file", { file: normalizedPath, type: config.type, target: targetPath });
 
             files.push({
-                path: file,
+                path: normalizedPath,
                 content,
                 type: config.type,
-                ...(targetPath && { target: targetPath }),
+                target: targetPath,
             });
         }
     }
