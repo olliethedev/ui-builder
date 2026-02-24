@@ -61,12 +61,15 @@ async function buildRegistry() {
         for (const file of matchedFiles) {
             const content = await readFile(file, "utf-8");
             
-            console.log("Processing file", { file, type: config.type });
+            const normalizedPath = file.replace(/^\.\//, "");
+            
+            console.log("Processing file", { file: normalizedPath, type: config.type, target: normalizedPath });
 
             files.push({
-                path: file,
+                path: normalizedPath,
                 content,
                 type: config.type,
+                target: normalizedPath,
             });
         }
     }

@@ -13,7 +13,7 @@
 
 import type { ComponentRegistry, ComponentLayer } from '@/components/ui/ui-builder/types';
 import { z } from 'zod';
-import { customComponentDefinitions } from './custom-component-definitions';
+import { customComponentDefinitions } from '@/lib/ui-builder/registry/custom-component-definitions';
 
 // Essential shadcn components for core UI Builder functionality
 import { Button } from '@/components/ui/button';
@@ -314,4 +314,4 @@ export const complexComponentDefinitions: ComponentRegistry = {
 };
 
 // Re-export for convenience
-export { customComponentDefinitions } from './custom-component-definitions';
+export { customComponentDefinitions } from '@/lib/ui-builder/registry/custom-component-definitions';
