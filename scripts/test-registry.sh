@@ -79,11 +79,11 @@ main() {
     echo "╚═══════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 
-    # Step 1: Build the registry
-    step "Building the registry"
+    # Step 1: Build all registries
+    step "Building all registries"
     cd "$PROJECT_ROOT"
-    npm run build-registry
-    success "Registry built successfully"
+    npm run build-all-registries
+    success "All registries built successfully"
 
     # Step 2: Start HTTP server to host the registry (using http-server like package.json)
     step "Starting HTTP server on port $SERVER_PORT"
@@ -138,6 +138,14 @@ main() {
         --base-color zinc
     
     success "shadcn initialized with ui-builder registry"
+
+    # Step 5b: Install shadcn components registry (optional add-on)
+    step "Installing shadcn components registry"
+
+    npx --yes shadcn@latest add "http://localhost:$SERVER_PORT/shadcn-components-registry.json" \
+        --yes --overwrite
+
+    success "shadcn components registry installed"
 
     # Step 6: Add @ts-nocheck to files with known TypeScript issues from external registries
     step "Adding @ts-nocheck to problematic files"

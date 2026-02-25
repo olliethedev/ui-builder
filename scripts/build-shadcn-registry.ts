@@ -44,6 +44,11 @@ const registryConfigs: RegistryConfig[] = [
         type: "registry:lib",
         path: "./lib/ui-builder/registry/form-field-overrides.tsx",
     },
+    // Custom chart demo components (not available in the shadcn registry)
+    {
+        type: "registry:ui",
+        path: "./components/ui/chart-demos.tsx",
+    },
 ];
 
 async function buildRegistry() {
@@ -115,6 +120,7 @@ async function buildRegistry() {
 function getDependencies(): string[] {
     return [
         "zod",
+        "recharts",
     ];
 }
 
@@ -129,6 +135,7 @@ function getShadcnDependencies(): string[] {
         "badge",
         "breadcrumb",
         "button",
+        "button-group",
         "calendar",
         "card",
         "carousel",
@@ -140,10 +147,15 @@ function getShadcnDependencies(): string[] {
         "dialog",
         "drawer",
         "dropdown-menu",
+        "empty",
+        "field",
         "form",
         "hover-card",
         "input",
+        "input-group",
         "input-otp",
+        "item",
+        "kbd",
         "label",
         "menubar",
         "navigation-menu",
@@ -160,11 +172,11 @@ function getShadcnDependencies(): string[] {
         "skeleton",
         "slider",
         "sonner",
+        "spinner",
         "switch",
         "table",
         "tabs",
         "textarea",
-        "toast",
         "toggle",
         "toggle-group",
         "tooltip",
