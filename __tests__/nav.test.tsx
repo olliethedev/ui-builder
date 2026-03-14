@@ -52,8 +52,13 @@ jest.mock('@/components/ui/tooltip', () => {
       React.createElement(React.Fragment, null, children),
     Tooltip: ({ children }: { children: React.ReactNode }) =>
       React.createElement(React.Fragment, null, children),
-    TooltipTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) =>
-      React.createElement(React.Fragment, null, children),
+    TooltipTrigger: ({ children, asChild, ...rest }: { children: React.ReactNode; asChild?: boolean; [key: string]: any }) => {
+      // Pass through extra props (e.g. onClick from PopoverTrigger asChild chain) to children
+      if (asChild && React.isValidElement(children)) {
+        return React.cloneElement(children as React.ReactElement, rest);
+      }
+      return React.createElement(React.Fragment, null, children);
+    },
     TooltipContent: () => null,
   };
 });
@@ -95,17 +100,26 @@ jest.mock('@/components/ui/popover', () => {
 // Mock Radix UI Dialog to prevent infinite re-render loops from focus/scroll effects in JSDOM
 jest.mock('@/components/ui/dialog', () => {
   const React = require('react');
+  const DialogContext = React.createContext<{ onOpenChange: (v: boolean) => void }>({ onOpenChange: () => {} });
   return {
-    Dialog: ({ children, open }: { children: React.ReactNode; open?: boolean }) =>
-      open ? React.createElement('div', { 'data-testid': 'dialog' }, children) : null,
+    Dialog: ({ children, open, onOpenChange }: { children: React.ReactNode; open?: boolean; onOpenChange?: (v: boolean) => void }) =>
+      open
+        ? React.createElement(
+            DialogContext.Provider,
+            { value: { onOpenChange: onOpenChange || (() => {}) } },
+            React.createElement('div', { 'data-testid': 'dialog' }, children)
+          )
+        : null,
     DialogContent: ({ children }: { children: React.ReactNode }) =>
       React.createElement('div', { 'data-testid': 'dialog-content' }, children),
     DialogHeader: ({ children }: { children: React.ReactNode }) =>
       React.createElement('div', null, children),
     DialogTitle: ({ children }: { children: React.ReactNode }) =>
       React.createElement('h2', null, children),
-    DialogClose: ({ children }: { children: React.ReactNode }) =>
-      React.createElement('button', null, children),
+    DialogClose: ({ children, className }: { children: React.ReactNode; className?: string }) => {
+      const { onOpenChange } = React.useContext(DialogContext);
+      return React.createElement('button', { onClick: () => onOpenChange(false), className }, children);
+    },
     DialogTrigger: ({ children }: { children: React.ReactNode }) =>
       React.createElement('div', null, children),
     DialogPortal: ({ children }: { children: React.ReactNode }) =>
@@ -794,7 +808,7 @@ describe('NavBar', () => {
         const form = input.closest('form');
         if (form) {
           fireEvent.submit(form);
-          expect(mockAddPageLayer).toHaveBeenCalledWith('New Page');
+          expect(mockAddPageLayer).toHaveBeenCalledWith('New Page', undefined, undefined, undefined);
         }
       });
     });
@@ -810,7 +824,7 @@ describe('NavBar', () => {
         fireEvent.change(input, { target: { value: 'Another Page' } });
         fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
         
-        expect(mockAddPageLayer).toHaveBeenCalledWith('Another Page');
+        expect(mockAddPageLayer).toHaveBeenCalledWith('Another Page', undefined, undefined, undefined);
       });
     });
 
@@ -912,6 +926,7 @@ describe('NavBar', () => {
         setShowLeftPanel: mockSetShowLeftPanel,
         showRightPanel: false,
         setShowRightPanel: mockSetShowRightPanel,
+        pageTypeRenderers: {},
       };
 
       mockUseEditorStore.mockImplementation((selector) => {
