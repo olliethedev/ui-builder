@@ -29,7 +29,7 @@ test.describe('Email Builder (/smoke/email)', () => {
     await expect(page.getByTestId('smoke-email-page')).toBeVisible();
 
     // The current page "Email 1" should be shown in the nav
-    await expect(page.getByRole('button', { name: 'Email 1' })).toBeVisible();
+    await expect(page.getByTestId('current-page-button')).toContainText('Email 1');
   });
 
   test('shows the layers tree with email components', async ({ page }) => {
@@ -42,7 +42,7 @@ test.describe('Email Builder (/smoke/email)', () => {
 
   test('page type selector appears when creating a new page', async ({ page }) => {
     // Click the page button to open pages popover
-    await page.getByRole('button', { name: 'Email 1' }).click();
+    await page.getByTestId('current-page-button').click();
 
     // The page creation area should show the page type selector
     // Look for the type toggle buttons (Web / Email)
@@ -53,7 +53,7 @@ test.describe('Email Builder (/smoke/email)', () => {
 
   test('can create a new email page', async ({ page }) => {
     // Open pages popover
-    await page.getByRole('button', { name: 'Email 1' }).click();
+    await page.getByTestId('current-page-button').click();
 
     // Wait for page type selector
     await expect(page.getByTestId('page-type-selector')).toBeVisible({ timeout: 5000 });
@@ -66,13 +66,13 @@ test.describe('Email Builder (/smoke/email)', () => {
     await input.fill('Welcome Email');
     await input.press('Enter');
 
-    // New email page should appear in the page button
-    await expect(page.getByRole('button', { name: 'Welcome Email' })).toBeVisible({ timeout: 5000 });
+    // New email page should appear in the nav page button
+    await expect(page.getByTestId('current-page-button')).toContainText('Welcome Email', { timeout: 5000 });
   });
 
   test('can create a new default (web) page', async ({ page }) => {
     // Open pages popover
-    await page.getByRole('button', { name: 'Email 1' }).click();
+    await page.getByTestId('current-page-button').click();
 
     // Wait for page type selector
     await expect(page.getByTestId('page-type-selector')).toBeVisible({ timeout: 5000 });
@@ -82,8 +82,8 @@ test.describe('Email Builder (/smoke/email)', () => {
     await input.fill('Web Page');
     await input.press('Enter');
 
-    // New page should appear
-    await expect(page.getByRole('button', { name: 'Web Page' })).toBeVisible({ timeout: 5000 });
+    // New page should appear in the nav page button
+    await expect(page.getByTestId('current-page-button')).toContainText('Web Page', { timeout: 5000 });
   });
 
   test('code panel shows "Email JSX" tab label for email pages', async ({ page }) => {

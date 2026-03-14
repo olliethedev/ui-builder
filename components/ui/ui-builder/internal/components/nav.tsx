@@ -754,6 +754,7 @@ function PagesPopover() {
                 variant="outline"
                 size="default"
                 className="max-w-30 overflow-hidden"
+                data-testid="current-page-button"
               >
                 {selectedPageData?.name}
               </Button>
