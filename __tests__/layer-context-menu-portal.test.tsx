@@ -20,6 +20,7 @@ jest.mock('@/lib/ui-builder/store/editor-store', () => ({
       contextMenu: mockContextMenuState,
       closeContextMenu: mockCloseContextMenu,
       registry: {},
+      getFilteredRegistry: jest.fn().mockReturnValue({}),
       clipboard: { layer: mockClipboardLayer, isCut: false, sourceLayerId: null },
     };
     return selector(state);

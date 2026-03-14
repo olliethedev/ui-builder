@@ -198,6 +198,7 @@ describe("LayersPanel", () => {
     registry: mockEditorRegistry,
     initializeRegistry: mockInitializeRegistry,
     getComponentDefinition: mockGetComponentDefinition,
+    getFilteredRegistry: jest.fn().mockReturnValue(mockEditorRegistry),
     previewMode: 'responsive',
     setPreviewMode: jest.fn(),
   };

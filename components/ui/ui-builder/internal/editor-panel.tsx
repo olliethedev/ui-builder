@@ -312,7 +312,7 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
       // Default path: keep AutoFrame + ResizableWrapper
       // Custom renderers that don't skipAutoFrame render inside the same AutoFrame chrome
       const canvasContent = pageTypeRenderer
-        ? pageTypeRenderer.renderEditorCanvas(pageTypeRendererProps)
+        ? <>{pageTypeRenderer.renderEditorCanvas(pageTypeRendererProps)}<LayerContextMenuPortal /></>
         : <><LayerRenderer {...layerRendererProps} /><LayerContextMenuPortal /></>;
 
       return (

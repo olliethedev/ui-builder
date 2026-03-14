@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
 import { NavBar } from '@/components/ui/ui-builder/internal/components/nav';
 import type { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -30,6 +30,90 @@ jest.mock('next-themes', () => ({
 jest.mock('@/hooks/use-keyboard-shortcuts', () => ({
   useKeyboardShortcuts: jest.fn(),
 }));
+
+// Mock LayerRenderer to prevent infinite re-render loops in JSDOM
+jest.mock('@/components/ui/ui-builder/layer-renderer', () => ({
+  __esModule: true,
+  default: ({ page }: { page: { name?: string } }) => (
+    <div data-testid="mock-layer-renderer">{page?.name}</div>
+  ),
+}));
+
+// Mock CodePanel to prevent store dependency issues in dialog tests
+jest.mock('@/components/ui/ui-builder/components/code-panel', () => ({
+  CodePanel: () => <div data-testid="mock-code-panel">Code Panel</div>,
+}));
+
+// Mock Radix UI Tooltip to avoid JSDOM effects (focus/hover management)
+jest.mock('@/components/ui/tooltip', () => {
+  const React = require('react');
+  return {
+    TooltipProvider: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+    Tooltip: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+    TooltipTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) =>
+      React.createElement(React.Fragment, null, children),
+    TooltipContent: () => null,
+  };
+});
+
+// Mock Radix UI Popover with proper open/close state to avoid JSDOM positioning effects
+jest.mock('@/components/ui/popover', () => {
+  const React = require('react');
+  const PopoverContext = React.createContext<{ open: boolean; setOpen: (v: boolean) => void }>({
+    open: false,
+    setOpen: () => {},
+  });
+  return {
+    Popover: ({ children, open: controlledOpen, onOpenChange }: {
+      children: React.ReactNode; open?: boolean; onOpenChange?: (v: boolean) => void;
+    }) => {
+      const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
+      const isOpen = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
+      const setOpen = (v: boolean) => { setUncontrolledOpen(v); onOpenChange?.(v); };
+      return React.createElement(PopoverContext.Provider, { value: { open: isOpen, setOpen } }, children);
+    },
+    PopoverTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) => {
+      const { setOpen, open } = React.useContext(PopoverContext);
+      const child = React.Children.only(children) as React.ReactElement;
+      const onClick = (e: React.MouseEvent) => { child.props?.onClick?.(e); setOpen(!open); };
+      if (asChild && React.isValidElement(child)) {
+        return React.cloneElement(child, { onClick } as any);
+      }
+      return React.createElement('button', { onClick }, children);
+    },
+    PopoverContent: ({ children }: { children: React.ReactNode }) => {
+      const { open } = React.useContext(PopoverContext);
+      return open ? React.createElement('div', { 'data-testid': 'popover-content' }, children) : null;
+    },
+    PopoverAnchor: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+  };
+});
+
+// Mock Radix UI Dialog to prevent infinite re-render loops from focus/scroll effects in JSDOM
+jest.mock('@/components/ui/dialog', () => {
+  const React = require('react');
+  return {
+    Dialog: ({ children, open }: { children: React.ReactNode; open?: boolean }) =>
+      open ? React.createElement('div', { 'data-testid': 'dialog' }, children) : null,
+    DialogContent: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('div', { 'data-testid': 'dialog-content' }, children),
+    DialogHeader: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('div', null, children),
+    DialogTitle: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('h2', null, children),
+    DialogClose: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('button', null, children),
+    DialogTrigger: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('div', null, children),
+    DialogPortal: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('div', null, children),
+    DialogOverlay: () => null,
+  };
+});
+
 
 // Mock zustand store
 jest.mock('zustand', () => ({
@@ -159,6 +243,12 @@ describe('NavBar', () => {
       }
       return [];
     });
+  });
+
+  afterEach(async () => {
+    // Flush all pending React work to prevent test pollution in React 18
+    await act(async () => {});
+    cleanup();
   });
 
   describe('Basic Rendering', () => {

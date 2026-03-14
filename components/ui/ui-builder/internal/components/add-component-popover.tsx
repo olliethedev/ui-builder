@@ -292,6 +292,7 @@ export function AddComponentsPopover({
                           <GroupedComponentItem
                             key={component.value}
                             component={component}
+                            componentRegistry={componentRegistry}
                             onClick={handleSelect}
                             onDragStart={handleDragStart}
                             enableDrag={enableDragToCanvas}
@@ -434,11 +435,13 @@ function formatBlockName(name: string): string {
 
 const GroupedComponentItem = memo(({
   component,
+  componentRegistry,
   onClick,
   onDragStart,
   enableDrag = false,
 }: {
   component: { value: string; label: string };
+  componentRegistry: ComponentRegistry;
   onClick: (value: string) => void;
   onDragStart?: () => void;
   enableDrag?: boolean;
@@ -446,14 +449,6 @@ const GroupedComponentItem = memo(({
   const handleSelect = useCallback(() => {
     onClick(component.value);
   }, [onClick, component.value]);
-
-  const selectedPageId = useLayerStore((state) => state.selectedPageId);
-  const findLayerById = useLayerStore((state) => state.findLayerById);
-  const getFilteredRegistry = useEditorStore((state) => state.getFilteredRegistry);
-  const componentRegistry = useMemo(() => {
-    const page = findLayerById(selectedPageId);
-    return getFilteredRegistry(page?.pageType);
-  }, [findLayerById, selectedPageId, getFilteredRegistry]);
 
   const content = (
     <div className="flex items-center gap-3">
