@@ -100,6 +100,7 @@ export function AddComponentsPopover({
 
   const blocks = useEditorStore((state) => state.blocks);
   const getFilteredRegistry = useEditorStore((state) => state.getFilteredRegistry);
+  const registry = useEditorStore((state) => state.registry);
   const findLayerById = useLayerStore((state) => state.findLayerById);
   const selectedPageId = useLayerStore((state) => state.selectedPageId);
 
@@ -109,10 +110,13 @@ export function AddComponentsPopover({
     return page?.pageType;
   }, [findLayerById, selectedPageId]);
 
-  // Apply per-page-type registry filtering
+  // Apply per-page-type registry filtering.
+  // `registry` is included as a dependency so this recomputes if the store's
+  // registry changes — `getFilteredRegistry` reads it internally via get() but
+  // is itself a stable function reference that would not trigger recomputation.
   const componentRegistry = useMemo(
     () => getFilteredRegistry(activePageType),
-    [getFilteredRegistry, activePageType]
+    [getFilteredRegistry, activePageType, registry]
   );
 
   // Get the parent layer type to filter valid child components
