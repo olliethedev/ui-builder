@@ -116,6 +116,7 @@ export function AddComponentsPopover({
   // is itself a stable function reference that would not trigger recomputation.
   const componentRegistry = useMemo(
     () => getFilteredRegistry(activePageType),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [getFilteredRegistry, activePageType, registry]
   );
 
