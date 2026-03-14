@@ -66,10 +66,7 @@ jest.mock('@/components/ui/tooltip', () => {
 // Mock Radix UI Popover with proper open/close state to avoid JSDOM positioning effects
 jest.mock('@/components/ui/popover', () => {
   const React = require('react');
-  const PopoverContext = React.createContext<{ open: boolean; setOpen: (v: boolean) => void }>({
-    open: false,
-    setOpen: () => {},
-  });
+  const PopoverContext = React.createContext({ open: false as boolean, setOpen: (() => {}) as (v: boolean) => void });
   return {
     Popover: ({ children, open: controlledOpen, onOpenChange }: {
       children: React.ReactNode; open?: boolean; onOpenChange?: (v: boolean) => void;
@@ -82,7 +79,7 @@ jest.mock('@/components/ui/popover', () => {
     PopoverTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) => {
       const { setOpen, open } = React.useContext(PopoverContext);
       const child = React.Children.only(children) as React.ReactElement;
-      const onClick = (e: React.MouseEvent) => { child.props?.onClick?.(e); setOpen(!open); };
+      const onClick = (e: React.MouseEvent) => { (child.props as any)?.onClick?.(e); setOpen(!open); };
       if (asChild && React.isValidElement(child)) {
         return React.cloneElement(child, { onClick } as any);
       }
@@ -100,7 +97,7 @@ jest.mock('@/components/ui/popover', () => {
 // Mock Radix UI Dialog to prevent infinite re-render loops from focus/scroll effects in JSDOM
 jest.mock('@/components/ui/dialog', () => {
   const React = require('react');
-  const DialogContext = React.createContext<{ onOpenChange: (v: boolean) => void }>({ onOpenChange: () => {} });
+  const DialogContext = React.createContext({ onOpenChange: (() => {}) as (v: boolean) => void });
   return {
     Dialog: ({ children, open, onOpenChange }: { children: React.ReactNode; open?: boolean; onOpenChange?: (v: boolean) => void }) =>
       open

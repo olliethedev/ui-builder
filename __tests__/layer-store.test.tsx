@@ -246,6 +246,32 @@ describe('LayerStore', () => {
       expect(newPage).toBeDefined();
       expect(newPage!.pageType).toBeUndefined();
     });
+
+    it('should use empty props when rootLayerType is non-div and rootLayerProps is omitted', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addPageLayer('PDF Page', 'pdf', 'Document');
+      });
+
+      const newPage = result.current.pages[1];
+      expect(newPage).toBeDefined();
+      expect(newPage!.type).toBe('Document');
+      expect(newPage!.props).toEqual({});
+    });
+
+    it('should use DEFAULT_PAGE_PROPS when rootLayerType is div and rootLayerProps is omitted', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addPageLayer('Div Page', undefined, 'div');
+      });
+
+      const newPage = result.current.pages[1];
+      expect(newPage).toBeDefined();
+      expect(newPage!.type).toBe('div');
+      expect(newPage!.props).toHaveProperty('className');
+    });
   });
 
   describe('duplicateLayer', () => {

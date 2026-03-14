@@ -179,7 +179,7 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
         type: rootLayerType ?? 'div',
         name: pageName,
         ...(pageType !== undefined ? { pageType } : {}),
-        props: (rootLayerProps ?? DEFAULT_PAGE_PROPS) as ComponentLayer['props'],
+        props: (rootLayerProps ?? (rootLayerType !== undefined && rootLayerType !== 'div' ? {} : DEFAULT_PAGE_PROPS)) as ComponentLayer['props'],
         children: [],
       };
       return {
