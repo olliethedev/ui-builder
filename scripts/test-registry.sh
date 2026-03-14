@@ -133,16 +133,17 @@ main() {
     # Step 5: Initialize shadcn with the registry
     step "Initializing shadcn with ui-builder registry"
     
-    npx --yes shadcn@latest init "http://localhost:$SERVER_PORT/block-registry.json" \
-        --yes \
-        --base-color zinc
+    npx --yes shadcn@4.0.5 init "http://localhost:$SERVER_PORT/block-registry.json" \
+        --defaults \
+        --force \
+        --base radix
     
     success "shadcn initialized with ui-builder registry"
 
     # Step 5b: Install shadcn components registry (optional add-on)
     step "Installing shadcn components registry"
 
-    npx --yes shadcn@latest add "http://localhost:$SERVER_PORT/shadcn-components-registry.json" \
+    npx --yes shadcn@4.0.5 add "http://localhost:$SERVER_PORT/shadcn-components-registry.json" \
         --yes --overwrite
 
     success "shadcn components registry installed"
