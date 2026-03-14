@@ -24,7 +24,7 @@ export interface LayerStore {
   initialize: (pages: ComponentLayer[], selectedPageId?: string, selectedLayerId?: string, variables?: Variable[]) => void;
   addComponentLayer: (layerType: string, parentId: string, parentPosition?: number) => void;
   addLayerDirect: (layer: ComponentLayer, parentId: string, parentPosition?: number) => void;
-  addPageLayer: (pageId: string) => void;
+  addPageLayer: (pageId: string, pageType?: string, rootLayerType?: string, rootLayerProps?: Record<string, unknown>) => void;
   duplicateLayer: (layerId: string, parentId?: string) => void;
   removeLayer: (layerId: string) => void;
   updateLayer: (layerId: string, newProps: Record<string, PropValue>, layerRest?: Partial<Omit<ComponentLayer, 'props'>>) => void;
@@ -173,12 +173,13 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
       state.selectedLayerId = layer.id;
     })),
 
-    addPageLayer: (pageName: string) => set(produce((state: LayerStore) => {
+    addPageLayer: (pageName: string, pageType?: string, rootLayerType?: string, rootLayerProps?: Record<string, unknown>) => set(produce((state: LayerStore) => {
       const newPage: ComponentLayer = {
         id: createId(),
-        type: 'div',
+        type: rootLayerType ?? 'div',
         name: pageName,
-        props: DEFAULT_PAGE_PROPS,
+        ...(pageType !== undefined ? { pageType } : {}),
+        props: (rootLayerProps ?? (rootLayerType !== undefined && rootLayerType !== 'div' ? {} : DEFAULT_PAGE_PROPS)) as ComponentLayer['props'],
         children: [],
       };
       return {

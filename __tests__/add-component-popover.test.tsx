@@ -84,6 +84,8 @@ describe('AddComponentsPopover', () => {
     mockUseEditorStore.mockImplementation((selector) => {
       const state = {
         registry: mockRegistry,
+        blocks: undefined,
+        getFilteredRegistry: jest.fn().mockReturnValue(mockRegistry),
       };
       return selector(state as any);
     });
@@ -358,6 +360,8 @@ describe('AddComponentsPopover', () => {
       mockUseEditorStore.mockImplementation((selector) => {
         const state = {
           registry: {},
+          blocks: undefined,
+          getFilteredRegistry: jest.fn().mockReturnValue({}),
         };
         return selector(state as any);
       });
@@ -392,6 +396,8 @@ describe('AddComponentsPopover', () => {
       mockUseEditorStore.mockImplementation((selector) => {
         const state = {
           registry: singleGroupRegistry,
+          blocks: undefined,
+          getFilteredRegistry: jest.fn().mockReturnValue(singleGroupRegistry),
         };
         return selector(state as any);
       });
@@ -548,6 +554,7 @@ describe('AddComponentsPopover', () => {
         const state = {
           registry: mockRegistry,
           blocks: mockBlocksRegistry,
+          getFilteredRegistry: jest.fn().mockReturnValue(mockRegistry),
         };
         return selector(state as any);
       });
@@ -577,6 +584,7 @@ describe('AddComponentsPopover', () => {
         const state = {
           registry: mockRegistry,
           blocks: undefined,
+          getFilteredRegistry: jest.fn().mockReturnValue(mockRegistry),
         };
         return selector(state as any);
       });
@@ -857,6 +865,8 @@ describe('AddComponentsPopover', () => {
       mockUseEditorStore.mockImplementation((selector) => {
         const state = {
           registry: registryWithChildOf,
+          blocks: undefined,
+          getFilteredRegistry: jest.fn().mockReturnValue(registryWithChildOf),
         };
         return selector(state as any);
       });

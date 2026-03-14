@@ -11,7 +11,7 @@ import { ErrorFallback } from "@/components/ui/ui-builder/internal/components/er
 import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
 import { hasLayerChildren, canLayerAcceptChildren, findLayerRecursive } from "@/lib/ui-builder/store/layer-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/components/dev-profiler";
-import type { ComponentRegistry, ComponentLayer, Variable, PropValue, FunctionRegistry } from '@/components/ui/ui-builder/types';
+import type { ComponentRegistry, ComponentLayer, Variable, PropValue, FunctionRegistry, EditorConfig } from '@/components/ui/ui-builder/types';
 import { isVariableReference } from '@/components/ui/ui-builder/types';
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
@@ -75,13 +75,8 @@ function isLayerBeingDraggedOrDescendant(
   return false;
 }
 
-export interface EditorConfig {
-  zIndex: number;
-  totalLayers: number;
-  selectedLayer: ComponentLayer;
-  parentUpdated?: boolean;
-  onSelectElement: (layerId: string) => void;
-}
+// EditorConfig is defined in types.ts and re-exported here for convenience
+export type { EditorConfig };
 
 
 

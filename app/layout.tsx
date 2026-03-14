@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-sync-scripts */
 import "@/styles/globals.css";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "UI Builder",
   description: "An open source UI builder for building complex UIs",

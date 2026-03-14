@@ -1,5 +1,7 @@
 import { BuilderWithImmutableBindings } from "app/platform/builder-with-immutable-bindings";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "UI Builder - Immutable Bindings Example",
   description: "Showcase of immutable variable bindings feature in UI Builder"

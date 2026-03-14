@@ -28,7 +28,9 @@ import type {
   LayerChangeHandler,
   VariableChangeHandler,
   BlockRegistry,
-  FunctionRegistry
+  FunctionRegistry,
+  PageTypeRenderers,
+  PageTypeCodeGenerators,
 } from "@/components/ui/ui-builder/types";
 import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
@@ -84,6 +86,17 @@ interface UIBuilderBaseProps<TRegistry extends ComponentRegistry = ComponentRegi
   blocks?: BlockRegistry;
   /** Optional function registry for bindable event handlers (onClick, onSubmit, etc.) */
   functionRegistry?: FunctionRegistry;
+  /**
+   * Optional map of page type key → PageTypeRenderer config.
+   * When provided, UIBuilder shows a page type selector when creating new pages,
+   * and uses the matching renderer's renderEditorCanvas for pages of that type.
+   */
+  pageTypeRenderers?: PageTypeRenderers;
+  /**
+   * Optional map of page type key → PageTypeCodeGenerator.
+   * When provided, replaces the default React code tab in the code panel for pages of that type.
+   */
+  pageTypeCodeGenerators?: PageTypeCodeGenerators;
 }
 
 /**
@@ -141,6 +154,8 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
   showExport = true,
   blocks,
   functionRegistry,
+  pageTypeRenderers,
+  pageTypeCodeGenerators,
 }: UIBuilderProps<TRegistry>) => {
   const layerStore = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
@@ -165,7 +180,12 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
   // Effect 1: Initialize Editor Store with registry and page form props
   useEffect(() => {
     if (editorStore && componentRegistry && !editorStoreInitialized) {
-      editorStore.initialize(componentRegistry, persistLayerStore, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks, functionRegistry);
+      editorStore.initialize(componentRegistry, persistLayerStore, allowPagesCreation, allowPagesDeletion, allowVariableEditing, {
+        blocks,
+        functionRegistry,
+        pageTypeRenderers,
+        pageTypeCodeGenerators,
+      });
       setEditorStoreInitialized(true);
     }
   }, [
@@ -178,6 +198,8 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
     allowVariableEditing,
     blocks,
     functionRegistry,
+    pageTypeRenderers,
+    pageTypeCodeGenerators,
   ]);
 
   // Effect 2: Conditionally initialize Layer Store *after* Editor Store is initialized

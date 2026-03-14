@@ -41,6 +41,8 @@ describe('EditorStore', () => {
       allowPagesCreation: true,
       allowPagesDeletion: true,
       allowVariableEditing: true,
+      pageTypeRenderers: {},
+      pageTypeCodeGenerators: {},
       clipboard: {
         layer: null,
         isCut: false,
@@ -240,6 +242,91 @@ describe('EditorStore', () => {
 
       const componentDef = result.current.getComponentDefinition('');
       expect(componentDef).toBeUndefined();
+    });
+  });
+
+  describe('Page Type Renderers and Code Generators', () => {
+    const mockRenderer = {
+      label: 'Email',
+      defaultRootLayerType: 'Html',
+      renderEditorCanvas: jest.fn(),
+    };
+    const mockCodeGenerator = {
+      label: 'HTML Email',
+      generateCode: jest.fn().mockReturnValue('<html></html>'),
+    };
+
+    it('should return undefined for unknown page type renderer', () => {
+      const { result } = renderHook(() => useEditorStore());
+      expect(result.current.getPageTypeRenderer('unknown')).toBeUndefined();
+    });
+
+    it('should return the registered page type renderer', () => {
+      const { result } = renderHook(() => useEditorStore());
+      act(() => {
+        useEditorStore.setState({ pageTypeRenderers: { email: mockRenderer } });
+      });
+      expect(result.current.getPageTypeRenderer('email')).toBe(mockRenderer);
+    });
+
+    it('should return undefined for unknown page type code generator', () => {
+      const { result } = renderHook(() => useEditorStore());
+      expect(result.current.getPageTypeCodeGenerator('unknown')).toBeUndefined();
+    });
+
+    it('should return the registered page type code generator', () => {
+      const { result } = renderHook(() => useEditorStore());
+      act(() => {
+        useEditorStore.setState({ pageTypeCodeGenerators: { email: mockCodeGenerator } });
+      });
+      expect(result.current.getPageTypeCodeGenerator('email')).toBe(mockCodeGenerator);
+    });
+
+    it('should initialize with pageTypeRenderers and pageTypeCodeGenerators via options', () => {
+      const { result } = renderHook(() => useEditorStore());
+      act(() => {
+        result.current.initialize(mockRegistry, true, true, true, true, {
+          pageTypeRenderers: { email: mockRenderer },
+          pageTypeCodeGenerators: { email: mockCodeGenerator },
+        });
+      });
+      expect(result.current.pageTypeRenderers).toEqual({ email: mockRenderer });
+      expect(result.current.pageTypeCodeGenerators).toEqual({ email: mockCodeGenerator });
+    });
+
+    it('getFilteredRegistry returns full registry when no pageType given', () => {
+      const { result } = renderHook(() => useEditorStore());
+      act(() => {
+        result.current.initialize(mockRegistry, true, true, true, true);
+      });
+      expect(result.current.getFilteredRegistry(undefined)).toEqual(mockRegistry);
+    });
+
+    it('getFilteredRegistry returns full registry when renderer has no filterRegistry hook', () => {
+      const { result } = renderHook(() => useEditorStore());
+      act(() => {
+        result.current.initialize(mockRegistry, true, true, true, true, {
+          pageTypeRenderers: { email: mockRenderer },
+        });
+      });
+      expect(result.current.getFilteredRegistry('email')).toEqual(mockRegistry);
+    });
+
+    it('getFilteredRegistry calls filterRegistry hook when provided', () => {
+      const { result } = renderHook(() => useEditorStore());
+      const filteredRegistry = { Button: mockRegistry.Button! };
+      const rendererWithFilter = {
+        ...mockRenderer,
+        filterRegistry: jest.fn().mockReturnValue(filteredRegistry),
+      };
+      act(() => {
+        result.current.initialize(mockRegistry, true, true, true, true, {
+          pageTypeRenderers: { email: rendererWithFilter },
+        });
+      });
+      const filtered = result.current.getFilteredRegistry('email');
+      expect(rendererWithFilter.filterRegistry).toHaveBeenCalledWith(mockRegistry);
+      expect(filtered).toEqual(filteredRegistry);
     });
   });
 

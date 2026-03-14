@@ -293,21 +293,42 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
     componentRegistry: componentRegistry
   }), [selectedPage, editorConfig, componentRegistry]);
 
+  const pageTypeRenderer = useEditorStore((state) => state.getPageTypeRenderer(selectedPage?.pageType ?? ""));
+
+  // Build the page type renderer props once so they can be shared
+  const pageTypeRendererProps = useMemo(() => ({
+    page: selectedPage,
+    componentRegistry,
+    editorConfig,
+  }), [selectedPage, componentRegistry, editorConfig]);
+
   const renderer = useMemo(
-    () => (
-      <ResizableWrapper {...resizableProps}>
-        <div
-          id="editor-panel-content"
-          className={cn("overflow-visible ", widthClass)}
-        >
-          <AutoFrame {...autoFrameProps} ref={frameRef}>
-            <LayerRenderer {...layerRendererProps} />
-            <LayerContextMenuPortal />
-          </AutoFrame>
-        </div>
-      </ResizableWrapper>
-    ),
-    [resizableProps, widthClass, autoFrameProps, layerRendererProps]
+    () => {
+      // When skipAutoFrame is true, the custom renderer owns the full canvas area
+      if (pageTypeRenderer?.skipAutoFrame) {
+        return pageTypeRenderer.renderEditorCanvas(pageTypeRendererProps);
+      }
+
+      // Default path: keep AutoFrame + ResizableWrapper
+      // Custom renderers that don't skipAutoFrame render inside the same AutoFrame chrome
+      const canvasContent = pageTypeRenderer
+        ? <>{pageTypeRenderer.renderEditorCanvas(pageTypeRendererProps)}<LayerContextMenuPortal /></>
+        : <><LayerRenderer {...layerRendererProps} /><LayerContextMenuPortal /></>;
+
+      return (
+        <ResizableWrapper {...resizableProps}>
+          <div
+            id="editor-panel-content"
+            className={cn("overflow-visible ", widthClass)}
+          >
+            <AutoFrame {...autoFrameProps} ref={frameRef}>
+              {canvasContent}
+            </AutoFrame>
+          </div>
+        </ResizableWrapper>
+      );
+    },
+    [resizableProps, widthClass, autoFrameProps, layerRendererProps, pageTypeRenderer, pageTypeRendererProps]
   );
 
   

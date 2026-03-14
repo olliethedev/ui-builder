@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react';
 import { NavBar } from '@/components/ui/ui-builder/internal/components/nav';
 import type { ComponentLayer } from '@/components/ui/ui-builder/types';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -30,6 +30,101 @@ jest.mock('next-themes', () => ({
 jest.mock('@/hooks/use-keyboard-shortcuts', () => ({
   useKeyboardShortcuts: jest.fn(),
 }));
+
+// Mock LayerRenderer to prevent infinite re-render loops in JSDOM
+jest.mock('@/components/ui/ui-builder/layer-renderer', () => ({
+  __esModule: true,
+  default: ({ page }: { page: { name?: string } }) => (
+    <div data-testid="mock-layer-renderer">{page?.name}</div>
+  ),
+}));
+
+// Mock CodePanel to prevent store dependency issues in dialog tests
+jest.mock('@/components/ui/ui-builder/components/code-panel', () => ({
+  CodePanel: () => <div data-testid="mock-code-panel">Code Panel</div>,
+}));
+
+// Mock Radix UI Tooltip to avoid JSDOM effects (focus/hover management)
+jest.mock('@/components/ui/tooltip', () => {
+  const React = require('react');
+  return {
+    TooltipProvider: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+    Tooltip: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+    TooltipTrigger: ({ children, asChild, ...rest }: { children: React.ReactNode; asChild?: boolean; [key: string]: any }) => {
+      // Pass through extra props (e.g. onClick from PopoverTrigger asChild chain) to children
+      if (asChild && React.isValidElement(children)) {
+        return React.cloneElement(children as React.ReactElement, rest);
+      }
+      return React.createElement(React.Fragment, null, children);
+    },
+    TooltipContent: () => null,
+  };
+});
+
+// Mock Radix UI Popover with proper open/close state to avoid JSDOM positioning effects
+jest.mock('@/components/ui/popover', () => {
+  const React = require('react');
+  const PopoverContext = React.createContext({ open: false as boolean, setOpen: (() => {}) as (v: boolean) => void });
+  return {
+    Popover: ({ children, open: controlledOpen, onOpenChange }: {
+      children: React.ReactNode; open?: boolean; onOpenChange?: (v: boolean) => void;
+    }) => {
+      const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
+      const isOpen = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
+      const setOpen = (v: boolean) => { setUncontrolledOpen(v); onOpenChange?.(v); };
+      return React.createElement(PopoverContext.Provider, { value: { open: isOpen, setOpen } }, children);
+    },
+    PopoverTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) => {
+      const { setOpen, open } = React.useContext(PopoverContext);
+      const child = React.Children.only(children) as React.ReactElement;
+      const onClick = (e: React.MouseEvent) => { (child.props as any)?.onClick?.(e); setOpen(!open); };
+      if (asChild && React.isValidElement(child)) {
+        return React.cloneElement(child, { onClick } as any);
+      }
+      return React.createElement('button', { onClick }, children);
+    },
+    PopoverContent: ({ children }: { children: React.ReactNode }) => {
+      const { open } = React.useContext(PopoverContext);
+      return open ? React.createElement('div', { 'data-testid': 'popover-content' }, children) : null;
+    },
+    PopoverAnchor: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(React.Fragment, null, children),
+  };
+});
+
+// Mock Radix UI Dialog to prevent infinite re-render loops from focus/scroll effects in JSDOM
+jest.mock('@/components/ui/dialog', () => {
+  const React = require('react');
+  const DialogContext = React.createContext({ onOpenChange: (() => {}) as (v: boolean) => void });
+  return {
+    Dialog: ({ children, open, onOpenChange }: { children: React.ReactNode; open?: boolean; onOpenChange?: (v: boolean) => void }) =>
+      open
+        ? React.createElement(
+            DialogContext.Provider,
+            { value: { onOpenChange: onOpenChange || (() => {}) } },
+            React.createElement('div', { 'data-testid': 'dialog' }, children)
+          )
+        : null,
+    DialogContent: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('div', { 'data-testid': 'dialog-content' }, children),
+    DialogHeader: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('div', null, children),
+    DialogTitle: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('h2', null, children),
+    DialogClose: ({ children, className }: { children: React.ReactNode; className?: string }) => {
+      const { onOpenChange } = React.useContext(DialogContext);
+      return React.createElement('button', { onClick: () => onOpenChange(false), className }, children);
+    },
+    DialogTrigger: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('div', null, children),
+    DialogPortal: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('div', null, children),
+    DialogOverlay: () => null,
+  };
+});
+
 
 // Mock zustand store
 jest.mock('zustand', () => ({
@@ -136,6 +231,7 @@ describe('NavBar', () => {
       setShowLeftPanel: mockSetShowLeftPanel,
       showRightPanel: true,
       setShowRightPanel: mockSetShowRightPanel,
+      pageTypeRenderers: {},
     };
 
     mockUseEditorStore.mockImplementation((selector) => {
@@ -158,6 +254,12 @@ describe('NavBar', () => {
       }
       return [];
     });
+  });
+
+  afterEach(async () => {
+    // Flush all pending React work to prevent test pollution in React 18
+    await act(async () => {});
+    cleanup();
   });
 
   describe('Basic Rendering', () => {
@@ -703,7 +805,7 @@ describe('NavBar', () => {
         const form = input.closest('form');
         if (form) {
           fireEvent.submit(form);
-          expect(mockAddPageLayer).toHaveBeenCalledWith('New Page');
+          expect(mockAddPageLayer).toHaveBeenCalledWith('New Page', undefined, undefined, undefined);
         }
       });
     });
@@ -719,7 +821,7 @@ describe('NavBar', () => {
         fireEvent.change(input, { target: { value: 'Another Page' } });
         fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
         
-        expect(mockAddPageLayer).toHaveBeenCalledWith('Another Page');
+        expect(mockAddPageLayer).toHaveBeenCalledWith('Another Page', undefined, undefined, undefined);
       });
     });
 
@@ -821,6 +923,7 @@ describe('NavBar', () => {
         setShowLeftPanel: mockSetShowLeftPanel,
         showRightPanel: false,
         setShowRightPanel: mockSetShowRightPanel,
+        pageTypeRenderers: {},
       };
 
       mockUseEditorStore.mockImplementation((selector) => {
@@ -1121,6 +1224,7 @@ describe('NavBar', () => {
         setShowLeftPanel: mockSetShowLeftPanel,
         showRightPanel: true,
         setShowRightPanel: mockSetShowRightPanel,
+        pageTypeRenderers: {},
       };
 
       mockUseEditorStore.mockImplementation((selector) => {
@@ -1139,6 +1243,104 @@ describe('NavBar', () => {
         // Should not show the new page input when creation is disabled
         expect(screen.queryByPlaceholderText('New page name...')).not.toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Page Type Selector', () => {
+    it('should NOT show page type selector when no pageTypeRenderers are configured', async () => {
+      render(<NavBar />, { wrapper: TestWrapper });
+      
+      const pageButton = screen.getByText('Test Page');
+      fireEvent.click(pageButton);
+      
+      await waitFor(() => {
+        expect(screen.queryByTestId('page-type-selector')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should show page type selector when pageTypeRenderers has entries', async () => {
+      const mockEditorStoreWithRenderers = {
+        registry: mockRegistry,
+        incrementRevision: mockIncrementRevision,
+        allowPagesCreation: true,
+        previewMode: 'desktop' as const,
+        setPreviewMode: mockSetPreviewMode,
+        showLeftPanel: true,
+        setShowLeftPanel: mockSetShowLeftPanel,
+        showRightPanel: true,
+        setShowRightPanel: mockSetShowRightPanel,
+        pageTypeRenderers: {
+          email: { label: 'Email', renderEditorCanvas: jest.fn() },
+        },
+      };
+
+      mockUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(mockEditorStoreWithRenderers as any);
+        }
+        return mockEditorStoreWithRenderers as any;
+      });
+
+      render(<NavBar />, { wrapper: TestWrapper });
+      
+      const pageButton = screen.getByText('Test Page');
+      fireEvent.click(pageButton);
+      
+      await waitFor(() => {
+        expect(screen.getByTestId('page-type-selector')).toBeInTheDocument();
+        // Should show the custom type label
+        expect(screen.getByText('Email')).toBeInTheDocument();
+        // Should also show the default "Web" option
+        expect(screen.getByText('Web')).toBeInTheDocument();
+      });
+    });
+
+    it('should call addPageLayer with pageType and rootLayerType when custom type is selected', async () => {
+      const mockEditorStoreWithRenderers = {
+        registry: mockRegistry,
+        incrementRevision: mockIncrementRevision,
+        allowPagesCreation: true,
+        previewMode: 'desktop' as const,
+        setPreviewMode: mockSetPreviewMode,
+        showLeftPanel: true,
+        setShowLeftPanel: mockSetShowLeftPanel,
+        showRightPanel: true,
+        setShowRightPanel: mockSetShowRightPanel,
+        pageTypeRenderers: {
+          email: {
+            label: 'Email',
+            defaultRootLayerType: 'Html',
+            defaultRootLayerProps: { lang: 'en' },
+            renderEditorCanvas: jest.fn(),
+          },
+        },
+      };
+
+      mockUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(mockEditorStoreWithRenderers as any);
+        }
+        return mockEditorStoreWithRenderers as any;
+      });
+
+      render(<NavBar />, { wrapper: TestWrapper });
+      
+      const pageButton = screen.getByText('Test Page');
+      fireEvent.click(pageButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('page-type-selector')).toBeInTheDocument();
+      });
+
+      // Click the "Email" type button
+      fireEvent.click(screen.getByText('Email'));
+
+      // Fill in the name and submit
+      const input = screen.getByPlaceholderText('New page name...');
+      fireEvent.change(input, { target: { value: 'My Email' } });
+      fireEvent.submit(input.closest('form')!);
+
+      expect(mockAddPageLayer).toHaveBeenCalledWith('My Email', 'email', 'Html', { lang: 'en' });
     });
   });
 
