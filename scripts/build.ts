@@ -18,10 +18,11 @@ interface RegistryConfig {
     targetFunction?: (path: string) => string;
 }
 
-// Files to exclude from the core registry (they go in shadcn-components-registry.json)
+// Files to exclude from the core registry (they go in their own separate registries)
 const excludePatterns = [
     'shadcn-component-definitions.ts',
     'block-definitions.ts',
+    'react-email-component-definitions.ts',
 ];
 
 const registryConfigs: RegistryConfig[] = [

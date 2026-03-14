@@ -207,6 +207,45 @@ describe('LayerStore', () => {
       expect(newPage!.name).toBe('Page 2');
       expect(result.current.selectedPageId).toBe(newPage!.id);
     });
+
+    it('should add a page with a custom pageType', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addPageLayer('Email Page', 'email');
+      });
+
+      const newPage = result.current.pages[1];
+      expect(newPage).toBeDefined();
+      expect(newPage!.pageType).toBe('email');
+      expect(newPage!.type).toBe('div');
+    });
+
+    it('should add a page with custom rootLayerType and rootLayerProps', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addPageLayer('Html Email', 'email', 'Html', { lang: 'en' });
+      });
+
+      const newPage = result.current.pages[1];
+      expect(newPage).toBeDefined();
+      expect(newPage!.pageType).toBe('email');
+      expect(newPage!.type).toBe('Html');
+      expect(newPage!.props).toEqual({ lang: 'en' });
+    });
+
+    it('should not set pageType when not provided', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addPageLayer('Regular Page');
+      });
+
+      const newPage = result.current.pages[1];
+      expect(newPage).toBeDefined();
+      expect(newPage!.pageType).toBeUndefined();
+    });
   });
 
   describe('duplicateLayer', () => {

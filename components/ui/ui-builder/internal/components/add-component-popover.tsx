@@ -98,9 +98,22 @@ export function AddComponentsPopover({
   const [open, setOpen] = React.useState(false);
   const [activeView, setActiveView] = React.useState<"components" | "blocks">("components");
 
-  const componentRegistry = useEditorStore((state) => state.registry);
   const blocks = useEditorStore((state) => state.blocks);
+  const getFilteredRegistry = useEditorStore((state) => state.getFilteredRegistry);
   const findLayerById = useLayerStore((state) => state.findLayerById);
+  const selectedPageId = useLayerStore((state) => state.selectedPageId);
+
+  // Get the page type for the active page so filterRegistry can be applied
+  const activePageType = useMemo(() => {
+    const page = findLayerById(selectedPageId);
+    return page?.pageType;
+  }, [findLayerById, selectedPageId]);
+
+  // Apply per-page-type registry filtering
+  const componentRegistry = useMemo(
+    () => getFilteredRegistry(activePageType),
+    [getFilteredRegistry, activePageType]
+  );
 
   // Get the parent layer type to filter valid child components
   const parentLayerType = useMemo(() => {
@@ -434,7 +447,13 @@ const GroupedComponentItem = memo(({
     onClick(component.value);
   }, [onClick, component.value]);
 
-  const componentRegistry = useEditorStore((state) => state.registry);
+  const selectedPageId = useLayerStore((state) => state.selectedPageId);
+  const findLayerById = useLayerStore((state) => state.findLayerById);
+  const getFilteredRegistry = useEditorStore((state) => state.getFilteredRegistry);
+  const componentRegistry = useMemo(() => {
+    const page = findLayerById(selectedPageId);
+    return getFilteredRegistry(page?.pageType);
+  }, [findLayerById, selectedPageId, getFilteredRegistry]);
 
   const content = (
     <div className="flex items-center gap-3">

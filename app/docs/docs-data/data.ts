@@ -12,6 +12,7 @@ import { LAYER_STRUCTURE_LAYER } from "@/app/docs/docs-data/docs-page-layers/lay
 import { PERSISTENCE_LAYER } from "@/app/docs/docs-data/docs-page-layers/persistence";
 import { RENDERING_PAGES_LAYER } from "@/app/docs/docs-data/docs-page-layers/rendering-pages";
 import { SHADCN_REGISTRY_LAYER } from "@/app/docs/docs-data/docs-page-layers/shadcn-registry";
+import { PAGE_TYPE_RENDERERS_LAYER } from "@/app/docs/docs-data/docs-page-layers/page-type-renderers";
 
 export const DOCS_PAGES = [
     // Core
@@ -37,6 +38,7 @@ export const DOCS_PAGES = [
     
     // Rendering
     RENDERING_PAGES_LAYER,
+    PAGE_TYPE_RENDERERS_LAYER,
 
 ] as const;
 
@@ -132,6 +134,10 @@ export const MENU_DATA: DocPageNavItem[] = [
             {
                 title: "Rendering Pages",
                 url: "/docs/rendering-pages",
+            },
+            {
+                title: "Page Type Renderers",
+                url: "/docs/page-type-renderers",
             },
         ],
     }

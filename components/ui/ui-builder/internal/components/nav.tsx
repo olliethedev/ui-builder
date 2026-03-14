@@ -633,9 +633,13 @@ function PagesPopover() {
     selectedPageId
   );
   const [textInputValue, setTextInputValue] = useState("");
+  const [selectedPageType, setSelectedPageType] = useState<string | undefined>(undefined);
   const allowPagesCreation = useEditorStore(
     (state) => state.allowPagesCreation
   );
+  const pageTypeRenderers = useEditorStore((state) => state.pageTypeRenderers);
+  const pageTypeKeys = useMemo(() => Object.keys(pageTypeRenderers), [pageTypeRenderers]);
+  const hasPageTypes = pageTypeKeys.length > 0;
 
   const selectedPageData = useMemo(() => {
     return pages.find((page) => page.id === selectedPageId);
@@ -652,10 +656,16 @@ function PagesPopover() {
 
   const handleAddPageLayer = useCallback(
     (pageName: string) => {
-      addPageLayer(pageName);
+      const renderer = selectedPageType ? pageTypeRenderers[selectedPageType] : undefined;
+      addPageLayer(
+        pageName,
+        selectedPageType,
+        renderer?.defaultRootLayerType,
+        renderer?.defaultRootLayerProps,
+      );
       setTextInputValue("");
     },
-    [addPageLayer, setTextInputValue]
+    [addPageLayer, setTextInputValue, selectedPageType, pageTypeRenderers]
   );
 
   const handleSubmit = useCallback(
@@ -685,8 +695,41 @@ function PagesPopover() {
 
   const style = useMemo(() => ({ zIndex: Z_INDEX + 1 }), []);
 
+  const pageTypeSelector = hasPageTypes ? (
+    <div className="flex gap-1 flex-wrap mb-2" data-testid="page-type-selector">
+      <button
+        type="button"
+        onClick={() => setSelectedPageType(undefined)}
+        className={cn(
+          "px-2 py-0.5 text-xs rounded-full border transition-colors",
+          selectedPageType === undefined
+            ? "bg-primary text-primary-foreground border-primary"
+            : "bg-background text-muted-foreground border-border hover:border-foreground"
+        )}
+      >
+        Web
+      </button>
+      {pageTypeKeys.map((key) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => setSelectedPageType(key)}
+          className={cn(
+            "px-2 py-0.5 text-xs rounded-full border transition-colors",
+            selectedPageType === key
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-background text-muted-foreground border-border hover:border-foreground"
+          )}
+        >
+          {pageTypeRenderers[key]?.label ?? key}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
   const textInputForm = (
     <form className="w-full" onSubmit={handleSubmit}>
+      {pageTypeSelector}
       <div className="w-full flex items-center space-x-2">
         <Input
           className="w-full flex-grow"

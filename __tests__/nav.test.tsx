@@ -136,6 +136,7 @@ describe('NavBar', () => {
       setShowLeftPanel: mockSetShowLeftPanel,
       showRightPanel: true,
       setShowRightPanel: mockSetShowRightPanel,
+      pageTypeRenderers: {},
     };
 
     mockUseEditorStore.mockImplementation((selector) => {
@@ -1121,6 +1122,7 @@ describe('NavBar', () => {
         setShowLeftPanel: mockSetShowLeftPanel,
         showRightPanel: true,
         setShowRightPanel: mockSetShowRightPanel,
+        pageTypeRenderers: {},
       };
 
       mockUseEditorStore.mockImplementation((selector) => {
@@ -1139,6 +1141,104 @@ describe('NavBar', () => {
         // Should not show the new page input when creation is disabled
         expect(screen.queryByPlaceholderText('New page name...')).not.toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Page Type Selector', () => {
+    it('should NOT show page type selector when no pageTypeRenderers are configured', async () => {
+      render(<NavBar />, { wrapper: TestWrapper });
+      
+      const pageButton = screen.getByText('Test Page');
+      fireEvent.click(pageButton);
+      
+      await waitFor(() => {
+        expect(screen.queryByTestId('page-type-selector')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should show page type selector when pageTypeRenderers has entries', async () => {
+      const mockEditorStoreWithRenderers = {
+        registry: mockRegistry,
+        incrementRevision: mockIncrementRevision,
+        allowPagesCreation: true,
+        previewMode: 'desktop' as const,
+        setPreviewMode: mockSetPreviewMode,
+        showLeftPanel: true,
+        setShowLeftPanel: mockSetShowLeftPanel,
+        showRightPanel: true,
+        setShowRightPanel: mockSetShowRightPanel,
+        pageTypeRenderers: {
+          email: { label: 'Email', renderEditorCanvas: jest.fn() },
+        },
+      };
+
+      mockUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(mockEditorStoreWithRenderers as any);
+        }
+        return mockEditorStoreWithRenderers as any;
+      });
+
+      render(<NavBar />, { wrapper: TestWrapper });
+      
+      const pageButton = screen.getByText('Test Page');
+      fireEvent.click(pageButton);
+      
+      await waitFor(() => {
+        expect(screen.getByTestId('page-type-selector')).toBeInTheDocument();
+        // Should show the custom type label
+        expect(screen.getByText('Email')).toBeInTheDocument();
+        // Should also show the default "Web" option
+        expect(screen.getByText('Web')).toBeInTheDocument();
+      });
+    });
+
+    it('should call addPageLayer with pageType and rootLayerType when custom type is selected', async () => {
+      const mockEditorStoreWithRenderers = {
+        registry: mockRegistry,
+        incrementRevision: mockIncrementRevision,
+        allowPagesCreation: true,
+        previewMode: 'desktop' as const,
+        setPreviewMode: mockSetPreviewMode,
+        showLeftPanel: true,
+        setShowLeftPanel: mockSetShowLeftPanel,
+        showRightPanel: true,
+        setShowRightPanel: mockSetShowRightPanel,
+        pageTypeRenderers: {
+          email: {
+            label: 'Email',
+            defaultRootLayerType: 'Html',
+            defaultRootLayerProps: { lang: 'en' },
+            renderEditorCanvas: jest.fn(),
+          },
+        },
+      };
+
+      mockUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(mockEditorStoreWithRenderers as any);
+        }
+        return mockEditorStoreWithRenderers as any;
+      });
+
+      render(<NavBar />, { wrapper: TestWrapper });
+      
+      const pageButton = screen.getByText('Test Page');
+      fireEvent.click(pageButton);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('page-type-selector')).toBeInTheDocument();
+      });
+
+      // Click the "Email" type button
+      fireEvent.click(screen.getByText('Email'));
+
+      // Fill in the name and submit
+      const input = screen.getByPlaceholderText('New page name...');
+      fireEvent.change(input, { target: { value: 'My Email' } });
+      fireEvent.submit(input.closest('form')!);
+
+      expect(mockAddPageLayer).toHaveBeenCalledWith('My Email', 'email', 'Html', { lang: 'en' });
     });
   });
 
