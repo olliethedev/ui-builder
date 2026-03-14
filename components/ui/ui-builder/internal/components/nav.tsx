@@ -664,8 +664,20 @@ function PagesPopover() {
         renderer?.defaultRootLayerProps,
       );
       setTextInputValue("");
+      setSelectedPageType(undefined);
     },
-    [addPageLayer, setTextInputValue, selectedPageType, pageTypeRenderers]
+    [addPageLayer, selectedPageType, pageTypeRenderers]
+  );
+
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) {
+        setTextInputValue("");
+        setSelectedPageType(undefined);
+      }
+      setOpen(nextOpen);
+    },
+    []
   );
 
   const handleSubmit = useCallback(
@@ -746,7 +758,7 @@ function PagesPopover() {
   );
   return (
     <div className="relative flex justify-center">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <Tooltip>
           <PopoverTrigger asChild>
             <TooltipTrigger asChild>
