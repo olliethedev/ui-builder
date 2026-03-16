@@ -241,7 +241,7 @@ export interface EditorConfig {
 export interface PageTypeRendererProps {
   page: ComponentLayer;
   componentRegistry: ComponentRegistry;
-  editorConfig: EditorConfig;
+  editorConfig?: EditorConfig;
   variables?: Variable[];
   variableValues?: Record<string, PropValue>;
   functionRegistry?: FunctionRegistry;
