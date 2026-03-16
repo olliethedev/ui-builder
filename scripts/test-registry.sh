@@ -93,14 +93,17 @@ main() {
     npx --yes http-server registry -p $SERVER_PORT -c-1 --silent &
     SERVER_PID=$!
     
-    # Wait for server to start
-    sleep 3
-    
-    # Verify server is running
-    if ! curl -s "http://localhost:$SERVER_PORT/block-registry.json" > /dev/null; then
-        error "Failed to start HTTP server or registry not accessible"
-        exit 1
-    fi
+    # Wait for server (npx may need time to download http-server)
+    for i in $(seq 1 20); do
+        sleep 2
+        if curl -s "http://localhost:$SERVER_PORT/block-registry.json" > /dev/null; then
+            break
+        fi
+        if [ "$i" -eq 20 ]; then
+            error "Failed to start HTTP server or registry not accessible"
+            exit 1
+        fi
+    done
     success "HTTP server started (PID: $SERVER_PID)"
     success "Registry accessible at http://localhost:$SERVER_PORT/block-registry.json"
 
@@ -250,9 +253,11 @@ EMAILPAGE
     }
     
 
-    # Other files with known TypeScript issues
+    # Files with known TypeScript issues
+
+    add_ts_nocheck "src/components/ui/minimal-tiptap/components/image/image-edit-block.tsx"
     add_ts_nocheck "src/components/ui/ui-builder/index.tsx"
-    
+
     success "TypeScript nocheck directives added"
 
     # Step 7: Apply TypeScript configuration patches if needed

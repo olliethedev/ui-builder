@@ -34,18 +34,18 @@ import type {
   ComponentRegistry,
 } from "@/components/ui/ui-builder/types";
 
-// ---------------------------------------------------------------------------
-// Canvas-safe substitutes for structural HTML elements.
-//
-// React-email components like <Html>, <Head>, <Body> render actual <html>,
-// <head>, <body> DOM elements. When placed inside an iframe's content div
-// those elements are either moved by the browser or rendered invisibly.
-// For the editor canvas we swap them with div/null equivalents so the visual
-// content appears correctly while click-to-select and drag-and-drop still work.
-//
-// The real @react-email components are preserved in the registry for code
-// generation (generateEmailCode uses the original `from` paths and types).
-// ---------------------------------------------------------------------------
+/**
+ * Canvas-safe substitutes for structural HTML elements.
+ *
+ * React-email components like Html, Head, Body render actual html/head/body DOM
+ * elements. When placed inside an iframe's content div those elements are either
+ * moved by the browser or rendered invisibly. For the editor canvas we swap them
+ * with div/null equivalents so the visual content appears correctly while
+ * click-to-select and drag-and-drop still work.
+ *
+ * The real @react-email components are preserved in the registry for code
+ * generation (generateEmailCode uses the original `from` paths and types).
+ */
 export const NullComponent = () => null;
 NullComponent.displayName = "NullComponent";
 
@@ -59,13 +59,12 @@ export const CanvasBody = ({ children, className }: { children?: React.ReactNode
 );
 CanvasBody.displayName = "CanvasBody";
 
-// ---------------------------------------------------------------------------
-// Email canvas renderer
-//
-// Uses a canvas-specific registry that replaces structural HTML elements
-// (Html, Head, Preview) with safe div/null substitutes so they render
-// correctly inside the AutoFrame iframe.
-// ---------------------------------------------------------------------------
+/**
+ * Email canvas renderer.
+ * Uses a canvas-specific registry that replaces structural HTML elements
+ * (Html, Head, Preview) with safe div/null substitutes so they render
+ * correctly inside the AutoFrame iframe.
+ */
 export function EmailCanvasRenderer({ page, componentRegistry, editorConfig }: PageTypeRendererProps) {
   const canvasRegistry: ComponentRegistry = useMemo(() => {
     const base = { ...componentRegistry };
@@ -86,11 +85,11 @@ export function EmailCanvasRenderer({ page, componentRegistry, editorConfig }: P
   );
 }
 
-// ---------------------------------------------------------------------------
-// Email code generator
-// Generates the JSX component + an example of how to call @react-email/render.
-// This replaces the default "React" tab in the code panel for email pages.
-// ---------------------------------------------------------------------------
+/**
+ * Email code generator.
+ * Generates the JSX component + an example of how to call @react-email/render.
+ * This replaces the default "React" tab in the code panel for email pages.
+ */
 export function generateEmailCode(page: ComponentLayer, registry: ComponentRegistry): string {
   // Map from module path -> set of named exports to import from that module.
   const namedImports = new Map<string, Set<string>>();
@@ -155,9 +154,7 @@ export function generateEmailCode(page: ComponentLayer, registry: ComponentRegis
   ].join("\n");
 }
 
-// ---------------------------------------------------------------------------
-// PageTypeRenderer config for email pages
-// ---------------------------------------------------------------------------
+/** PageTypeRenderer config for email pages. */
 export const emailPageRenderer: PageTypeRenderer = {
   label: "Email",
   defaultRootLayerType: "Html",
@@ -170,9 +167,7 @@ export const emailPageRenderer: PageTypeRenderer = {
   renderEditorCanvas: (props) => <EmailCanvasRenderer {...props} />,
 };
 
-// ---------------------------------------------------------------------------
-// PageTypeCodeGenerator for email pages
-// ---------------------------------------------------------------------------
+/** PageTypeCodeGenerator for email pages. */
 export const emailCodeGenerator: PageTypeCodeGenerator = {
   label: "Email JSX",
   generateCode: generateEmailCode,
