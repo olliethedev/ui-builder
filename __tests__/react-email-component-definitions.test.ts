@@ -172,6 +172,15 @@ describe('reactEmailComponentDefinitions', () => {
     });
   });
 
+  describe('editor wrapper behavior', () => {
+    it('marks structural components to skip editor wrapper overlays', () => {
+      expect(reactEmailComponentDefinitions.Html?.skipEditorWrapper).toBe(true);
+      expect(reactEmailComponentDefinitions.Head?.skipEditorWrapper).toBe(true);
+      expect(reactEmailComponentDefinitions.Body?.skipEditorWrapper).toBe(true);
+      expect(reactEmailComponentDefinitions.Preview?.skipEditorWrapper).toBe(true);
+    });
+  });
+
   describe('default children', () => {
     it('Text should have default string children', () => {
       expect(typeof reactEmailComponentDefinitions.Text?.defaultChildren).toBe('string');

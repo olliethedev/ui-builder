@@ -192,6 +192,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     component: Html,
     schema: htmlSchema,
     from: "@react-email/components",
+    skipEditorWrapper: true,
     defaultChildren: [],
     fieldOverrides: {
       className: classNameFieldOverrides,
@@ -203,6 +204,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     component: Head,
     schema: headSchema,
     from: "@react-email/components",
+    skipEditorWrapper: true,
     childOf: ["Html"],
     defaultChildren: [],
   },
@@ -211,6 +213,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     component: Body,
     schema: bodySchema,
     from: "@react-email/components",
+    skipEditorWrapper: true,
     childOf: ["Html", "Tailwind"],
     defaultChildren: [],
     fieldOverrides: {
@@ -223,6 +226,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     component: Preview,
     schema: previewSchema,
     from: "@react-email/components",
+    skipEditorWrapper: true,
     childOf: ["Html"],
     defaultChildren: "Email preview text",
     fieldOverrides: {
