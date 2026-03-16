@@ -194,9 +194,7 @@ describe("generateEmailCode", () => {
 
   it("generates import statements for all component types used", () => {
     const code = generateEmailCode(mockPage, mockRegistry);
-    expect(code).toContain('import { Html } from "@react-email/components"');
-    expect(code).toContain('import { Body } from "@react-email/components"');
-    expect(code).toContain('import { Text } from "@react-email/components"');
+    expect(code).toContain('import { Body, Html, Text } from "@react-email/components"');
   });
 
   it("generates the EmailTemplate function", () => {
