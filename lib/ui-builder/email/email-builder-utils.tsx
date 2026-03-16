@@ -92,19 +92,27 @@ export function EmailCanvasRenderer({ page, componentRegistry, editorConfig }: P
 // This replaces the default "React" tab in the code panel for email pages.
 // ---------------------------------------------------------------------------
 export function generateEmailCode(page: ComponentLayer, registry: ComponentRegistry): string {
-  const imports = new Set<string>();
-  imports.add('import { render } from "@react-email/render";');
+  // Map from module path -> set of named exports to import from that module.
+  const namedImports = new Map<string, Set<string>>();
+  namedImports.set("@react-email/render", new Set(["render"]));
 
   const collectImports = (layer: ComponentLayer) => {
     const def = registry[layer.type];
     if (def?.from) {
-      imports.add(`import { ${layer.type} } from "${def.from}";`);
+      if (!namedImports.has(def.from)) {
+        namedImports.set(def.from, new Set());
+      }
+      namedImports.get(def.from)!.add(layer.type);
     }
     if (Array.isArray(layer.children)) {
       layer.children.forEach(collectImports);
     }
   };
   collectImports(page);
+
+  const imports = Array.from(namedImports.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([mod, names]) => `import { ${Array.from(names).sort().join(", ")} } from "${mod}";`);
 
   const renderLayer = (layer: ComponentLayer, indent = 0): string => {
     const pad = "  ".repeat(indent);
@@ -130,7 +138,7 @@ export function generateEmailCode(page: ComponentLayer, registry: ComponentRegis
   const jsx = renderLayer(page, 1);
 
   return [
-    Array.from(imports).sort().join("\n"),
+    imports.join("\n"),
     "",
     "// Email template component",
     "export function EmailTemplate() {",

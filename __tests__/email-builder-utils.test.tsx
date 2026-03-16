@@ -206,7 +206,8 @@ describe("generateEmailCode", () => {
 
   it("includes a comment about the render usage", () => {
     const code = generateEmailCode(mockPage, mockRegistry);
-    expect(code).toContain("// const html = await render(<EmailTemplate />);");
+    expect(code).toContain("// Generate HTML string (use in your email sending service)");
+    expect(code).toContain("const html = await render(<EmailTemplate />);");
   });
 
   it("renders a self-closing tag for layers with no children", () => {
