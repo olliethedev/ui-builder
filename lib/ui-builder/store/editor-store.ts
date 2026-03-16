@@ -1,4 +1,3 @@
-// MARKER_XY77ZZ_TEST
 import { create, type StateCreator } from 'zustand';
 import type { ComponentType as ReactComponentType } from "react";
 import type { RegistryEntry, ComponentRegistry, BlockRegistry, FunctionRegistry, FunctionDefinition, ComponentLayer, PageTypeRenderers, PageTypeRenderer, PageTypeCodeGenerators, PageTypeCodeGenerator } from '@/components/ui/ui-builder/types';
