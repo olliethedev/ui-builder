@@ -100,7 +100,7 @@ function generateEmailCode(page: ComponentLayer, registry: ComponentRegistry): s
     const propsStr = Object.entries(layer.props)
       .filter(([, v]) => v !== undefined && v !== null && v !== "")
       .map(([k, v]) => {
-        if (typeof v === "string") return `${k}="${v}"`;
+        if (typeof v === "string") return `${k}=${JSON.stringify(v)}`;
         return `${k}={${JSON.stringify(v)}}`;
       })
       .join(" ");
