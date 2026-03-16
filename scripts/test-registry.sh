@@ -156,11 +156,31 @@ main() {
 
     success "react-email components registry installed"
 
-    # Step 5d: Write a minimal email builder page that wires emailPageRenderer + emailCodeGenerator
+    # Step 5d: Pin tiptap to 3.20.1 (post-install to avoid EOVERRIDE conflict with direct deps)
+    step "Pinning tiptap packages to 3.20.1"
+    node -e "
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+const V = '3.20.1';
+const pkgs = ['@tiptap/core','@tiptap/react','@tiptap/pm','@tiptap/starter-kit','@tiptap/extensions','@tiptap/markdown','@tiptap/extension-blockquote','@tiptap/extension-bold','@tiptap/extension-bubble-menu','@tiptap/extension-bullet-list','@tiptap/extension-code','@tiptap/extension-code-block','@tiptap/extension-code-block-lowlight','@tiptap/extension-color','@tiptap/extension-document','@tiptap/extension-dropcursor','@tiptap/extension-floating-menu','@tiptap/extension-gapcursor','@tiptap/extension-hard-break','@tiptap/extension-heading','@tiptap/extension-horizontal-rule','@tiptap/extension-image','@tiptap/extension-italic','@tiptap/extension-link','@tiptap/extension-list','@tiptap/extension-list-item','@tiptap/extension-list-keymap','@tiptap/extension-ordered-list','@tiptap/extension-paragraph','@tiptap/extension-strike','@tiptap/extension-table','@tiptap/extension-text','@tiptap/extension-text-style','@tiptap/extension-typography','@tiptap/extension-underline'];
+pkg.overrides = pkg.overrides || {};
+for (const p of pkgs) { if (pkg.dependencies?.[p]) pkg.dependencies[p] = V; pkg.overrides[p] = V; }
+fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2));
+"
+    npm install
+    success "Tiptap packages pinned to 3.20.1"
+
+    # minimal-tiptap CSS uses @reference "../../../global.css" (Tailwind v4) which expects the
+    # globals at src/components/global.css, but Next.js places it at src/app/globals.css
+    mkdir -p src/components
+    cp src/app/globals.css src/components/global.css
+
+    # Step 5e: Write a minimal email builder page that wires emailPageRenderer + emailCodeGenerator
     step "Writing email builder test page"
 
     mkdir -p src/app/email-test
     cat > src/app/email-test/page.tsx << 'EMAILPAGE'
+
 "use client";
 
 import "web-streams-polyfill/polyfill";
@@ -170,9 +190,8 @@ import {
   emailPageRenderer,
   emailCodeGenerator,
 } from "@/lib/ui-builder/email/email-builder-utils";
-import type { ComponentLayer } from "@/components/ui/ui-builder/types";
 
-const initialLayers: ComponentLayer[] = [
+const initialLayers = [
   {
     id: "email-page-1",
     type: "Html",
@@ -230,11 +249,6 @@ EMAILPAGE
         fi
     }
     
-    # Add @ts-nocheck to all minimal-tiptap files (it imports @tiptap/* packages which have
-    # type resolution issues in fresh installs despite being listed as dependencies)
-    find "src/components/ui/minimal-tiptap" -name "*.tsx" -o -name "*.ts" | while read f; do
-        add_ts_nocheck "$f"
-    done
 
     # Other files with known TypeScript issues
     add_ts_nocheck "src/components/ui/ui-builder/index.tsx"
