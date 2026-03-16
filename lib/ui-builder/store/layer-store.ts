@@ -174,10 +174,14 @@ const store: StateCreator<LayerStore, [], []> = (set, get) => (
     })),
 
     addPageLayer: (pageName: string, pageType?: string, rootLayerType?: string, rootLayerProps?: Record<string, unknown>) => set(produce((state: LayerStore) => {
+      const trimmedPageName = pageName.trim();
+      if (!trimmedPageName) {
+        return;
+      }
       const newPage: ComponentLayer = {
         id: createId(),
         type: rootLayerType ?? 'div',
-        name: pageName,
+        name: trimmedPageName,
         ...(pageType !== undefined ? { pageType } : {}),
         props: (rootLayerProps ?? (rootLayerType !== undefined && rootLayerType !== 'div' ? {} : DEFAULT_PAGE_PROPS)) as ComponentLayer['props'],
         children: [],

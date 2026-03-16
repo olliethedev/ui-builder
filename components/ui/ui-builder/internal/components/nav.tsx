@@ -634,6 +634,7 @@ function PagesPopover() {
   );
   const [textInputValue, setTextInputValue] = useState("");
   const [selectedPageType, setSelectedPageType] = useState<string | undefined>(undefined);
+  const [pageNameError, setPageNameError] = useState<string | null>(null);
   const allowPagesCreation = useEditorStore(
     (state) => state.allowPagesCreation
   );
@@ -656,15 +657,21 @@ function PagesPopover() {
 
   const handleAddPageLayer = useCallback(
     (pageName: string) => {
+      const trimmedPageName = pageName.trim();
+      if (!trimmedPageName) {
+        setPageNameError("Page name is required.");
+        return;
+      }
       const renderer = selectedPageType ? pageTypeRenderers[selectedPageType] : undefined;
       addPageLayer(
-        pageName,
+        trimmedPageName,
         selectedPageType,
         renderer?.defaultRootLayerType,
         renderer?.defaultRootLayerProps,
       );
       setTextInputValue("");
       setSelectedPageType(undefined);
+      setPageNameError(null);
     },
     [addPageLayer, selectedPageType, pageTypeRenderers]
   );
@@ -674,6 +681,7 @@ function PagesPopover() {
       if (!nextOpen) {
         setTextInputValue("");
         setSelectedPageType(undefined);
+        setPageNameError(null);
       }
       setOpen(nextOpen);
     },
@@ -691,8 +699,11 @@ function PagesPopover() {
   const handleTextInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setTextInputValue(e.target.value);
+      if (pageNameError !== null) {
+        setPageNameError(null);
+      }
     },
-    [setTextInputValue]
+    [pageNameError]
   );
 
   const handleKeyDown = useCallback(
@@ -744,16 +755,22 @@ function PagesPopover() {
       {pageTypeSelector}
       <div className="w-full flex items-center space-x-2">
         <Input
-          className="w-full flex-grow"
+          className="w-full grow"
           placeholder="New page name..."
           value={textInputValue}
           onChange={handleTextInputChange}
           onKeyDown={handleKeyDown}
+          aria-invalid={pageNameError !== null}
         />
-        <Button type="submit" variant="secondary">
+        <Button type="submit" variant="secondary" disabled={!textInputValue.trim()}>
           <PlusIcon className="w-4 h-4" />
         </Button>
       </div>
+      {pageNameError !== null ? (
+        <p className="mt-2 text-xs text-destructive" role="alert">
+          {pageNameError}
+        </p>
+      ) : null}
     </form>
   );
   return (
