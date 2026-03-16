@@ -118,11 +118,11 @@ test.describe('Email Builder (/smoke/email)', () => {
     // This specifically tests that structural react-email components (Html, Head, Body)
     // do NOT prevent visual content from rendering — the canvas-specific registry
     // replaces them with div substitutes so the email is visible in the editor.
-    const autoFrame = page.getByTestId('auto-frame');
+    const autoFrame = page.getByTestId('auto-frame').first();
     await expect(autoFrame).toBeVisible({ timeout: 10000 });
 
     // The iframe should contain the initial email body text from the template
-    const frameLocator = page.frameLocator('[data-testid="auto-frame"]');
+    const frameLocator = page.frameLocator('[data-testid="auto-frame"]').first();
     await expect(frameLocator.getByText('Hello from UIBuilder Email!')).toBeVisible({ timeout: 10000 });
     await expect(frameLocator.getByText('Edit this email template using the UIBuilder editor.')).toBeVisible();
     await expect(frameLocator.getByText('Get Started')).toBeVisible();
