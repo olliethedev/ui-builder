@@ -283,33 +283,45 @@ export const RenderLayer: React.FC<{
 
     if (!editorConfig) {
       return DragFeedbackWrapper;
-    } else {
-      const {
-        zIndex,
-        totalLayers,
-        selectedLayer,
-        onSelectElement,
-      } = editorConfig;
+    }
 
+    // Components with skipEditorWrapper render without the ElementSelector overlay.
+    // This is required for structural HTML elements (<html>, <head>, <body>) that
+    // cannot legally be children of the <span> MeasureRange uses internally.
+    // These layers are still accessible via the layer tree panel.
+    if (componentDefinition.skipEditorWrapper) {
       return (
-        <DevProfiler
-          id={layer.type}
-          threshold={20}
-        >
-          <ElementSelector
-            key={layer.id}
-            layer={layer}
-            zIndex={zIndex}
-            isSelected={layer.id === selectedLayer?.id}
-            onSelectElement={onSelectElement}
-            isPageLayer={isLayerAPage}
-            totalLayers={totalLayers}
-          >
-            {DragFeedbackWrapper}
-          </ElementSelector>
+        <DevProfiler id={layer.type} threshold={20}>
+          {DragFeedbackWrapper}
         </DevProfiler>
       );
     }
+
+    const {
+      zIndex,
+      totalLayers,
+      selectedLayer,
+      onSelectElement,
+    } = editorConfig;
+
+    return (
+      <DevProfiler
+        id={layer.type}
+        threshold={20}
+      >
+        <ElementSelector
+          key={layer.id}
+          layer={layer}
+          zIndex={zIndex}
+          isSelected={layer.id === selectedLayer?.id}
+          onSelectElement={onSelectElement}
+          isPageLayer={isLayerAPage}
+          totalLayers={totalLayers}
+        >
+          {DragFeedbackWrapper}
+        </ElementSelector>
+      </DevProfiler>
+    );
   },
   (prevProps, nextProps) => {
     if(nextProps.editorConfig?.parentUpdated) {

@@ -57,6 +57,7 @@ const htmlSchema = z.object({
   dir: z.enum(["ltr", "rtl", "auto"]).optional().default("ltr"),
   className: z.string().optional(),
   style: styleSchema,
+  children: z.any().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -70,6 +71,7 @@ const headSchema = z.object({});
 const bodySchema = z.object({
   className: z.string().optional(),
   style: styleSchema,
+  children: z.any().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -90,6 +92,7 @@ const tailwindSchema = z.object({
     .describe(
       "Tailwind config object (without 'content'). Supports theme, plugins, darkMode, etc."
     ),
+  children: z.any().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -98,6 +101,7 @@ const tailwindSchema = z.object({
 const containerSchema = z.object({
   className: z.string().optional(),
   style: styleSchema,
+  children: z.any().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -106,6 +110,7 @@ const containerSchema = z.object({
 const sectionSchema = z.object({
   className: z.string().optional(),
   style: styleSchema,
+  children: z.any().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -114,6 +119,7 @@ const sectionSchema = z.object({
 const rowSchema = z.object({
   className: z.string().optional(),
   style: styleSchema,
+  children: z.any().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -124,6 +130,7 @@ const columnSchema = z.object({
   style: styleSchema,
   colSpan: z.number().optional(),
   width: z.union([z.string(), z.number()]).optional(),
+  children: z.any().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -132,6 +139,7 @@ const columnSchema = z.object({
 const textSchema = z.object({
   className: z.string().optional(),
   style: styleSchema,
+  children: z.string().optional().default("Text content"),
 });
 
 // ---------------------------------------------------------------------------
@@ -142,6 +150,7 @@ const buttonSchema = z.object({
   target: z.string().optional().default("_blank"),
   className: z.string().optional(),
   style: styleSchema,
+  children: z.string().optional().default("Click me"),
 });
 
 // ---------------------------------------------------------------------------
@@ -152,6 +161,7 @@ const linkSchema = z.object({
   target: z.string().optional().default("_blank"),
   className: z.string().optional(),
   style: styleSchema,
+  children: z.string().optional().default("Click here"),
 });
 
 // ---------------------------------------------------------------------------
@@ -185,6 +195,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     defaultChildren: [],
     fieldOverrides: {
       className: classNameFieldOverrides,
+      children: childrenFieldOverrides,
     },
   },
 
@@ -204,6 +215,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     defaultChildren: [],
     fieldOverrides: {
       className: classNameFieldOverrides,
+      children: childrenFieldOverrides,
     },
   },
 
@@ -224,6 +236,9 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     from: "@react-email/components",
     childOf: ["Html"],
     defaultChildren: [],
+    fieldOverrides: {
+      children: childrenFieldOverrides,
+    },
   },
 
   Container: {
@@ -233,6 +248,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     defaultChildren: [],
     fieldOverrides: {
       className: classNameFieldOverrides,
+      children: childrenFieldOverrides,
     },
   },
 
@@ -243,6 +259,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     defaultChildren: [],
     fieldOverrides: {
       className: classNameFieldOverrides,
+      children: childrenFieldOverrides,
     },
   },
 
@@ -254,6 +271,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     defaultChildren: [],
     fieldOverrides: {
       className: classNameFieldOverrides,
+      children: childrenFieldOverrides,
     },
   },
 
@@ -265,6 +283,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     defaultChildren: [],
     fieldOverrides: {
       className: classNameFieldOverrides,
+      children: childrenFieldOverrides,
     },
   },
 
@@ -275,7 +294,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     defaultChildren: "Text content",
     fieldOverrides: {
       className: classNameFieldOverrides,
-      children: childrenFieldOverrides,
+      children: childrenAsTextareaFieldOverrides,
     },
   },
 
@@ -286,7 +305,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     defaultChildren: "Click me",
     fieldOverrides: {
       className: classNameFieldOverrides,
-      children: childrenFieldOverrides,
+      children: childrenAsTextareaFieldOverrides,
     },
   },
 
@@ -297,7 +316,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     defaultChildren: "Click here",
     fieldOverrides: {
       className: classNameFieldOverrides,
-      children: childrenFieldOverrides,
+      children: childrenAsTextareaFieldOverrides,
     },
   },
 

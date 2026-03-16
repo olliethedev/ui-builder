@@ -11,7 +11,7 @@
  *  - pageTypeCodeGenerators → replaces the React code tab with the actual rendered HTML
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import UIBuilder from "@/components/ui/ui-builder";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
 import { reactEmailComponentDefinitions } from "@/lib/ui-builder/registry/react-email-component-definitions";
@@ -24,16 +24,52 @@ import type {
 } from "@/components/ui/ui-builder/types";
 
 // ---------------------------------------------------------------------------
+// Canvas-safe substitutes for structural HTML elements.
+//
+// React-email components like <Html>, <Head>, <Body> render actual <html>,
+// <head>, <body> DOM elements. When placed inside an iframe's content div
+// those elements are either moved by the browser or rendered invisibly.
+// For the editor canvas we swap them with div/null equivalents so the visual
+// content appears correctly while click-to-select and drag-and-drop still work.
+//
+// The real @react-email components are preserved in the registry for code
+// generation (generateEmailCode uses the original `from` paths and types).
+// ---------------------------------------------------------------------------
+const NullComponent = () => null;
+NullComponent.displayName = "NullComponent";
+
+const CanvasHtml = ({ children }: { children?: React.ReactNode }) => (
+  <div data-email-html style={{ display: "contents" }}>{children}</div>
+);
+CanvasHtml.displayName = "CanvasHtml";
+
+const CanvasBody = ({ children, className }: { children?: React.ReactNode; className?: string }) => (
+  <div data-email-body className={className} style={{ backgroundColor: "white", minHeight: "100%" }}>{children}</div>
+);
+CanvasBody.displayName = "CanvasBody";
+
+// ---------------------------------------------------------------------------
 // Email canvas renderer
-// Email components render fine in a browser, so we reuse <LayerRenderer>
-// unchanged — this gives click-to-select and drag-and-drop for free.
+//
+// Uses a canvas-specific registry that replaces structural HTML elements
+// (Html, Head, Preview) with safe div/null substitutes so they render
+// correctly inside the AutoFrame iframe.
 // ---------------------------------------------------------------------------
 function EmailCanvasRenderer({ page, componentRegistry, editorConfig }: PageTypeRendererProps) {
+  const canvasRegistry: ComponentRegistry = useMemo(() => {
+    const base = { ...componentRegistry };
+    if (base.Html) base.Html = { ...base.Html, component: CanvasHtml };
+    if (base.Head) base.Head = { ...base.Head, component: NullComponent };
+    if (base.Preview) base.Preview = { ...base.Preview, component: NullComponent };
+    if (base.Body) base.Body = { ...base.Body, component: CanvasBody };
+    return base;
+  }, [componentRegistry]);
+
   return (
     <LayerRenderer
       className="contents"
       page={page}
-      componentRegistry={componentRegistry}
+      componentRegistry={canvasRegistry}
       editorConfig={editorConfig}
     />
   );
@@ -104,8 +140,10 @@ const emailPageRenderer: PageTypeRenderer = {
   label: "Email",
   defaultRootLayerType: "Html",
   defaultRootLayerProps: { lang: "en" },
-  // skipAutoFrame intentionally omitted — email components render fine in the
-  // AutoFrame iframe, preserving click-to-select and drag-and-drop.
+  // skipAutoFrame is intentionally omitted so the canvas uses the AutoFrame
+  // iframe (which provides style isolation and zoom/pan).
+  // EmailCanvasRenderer swaps structural HTML elements with div substitutes
+  // so the content renders visibly inside the iframe.
   filterRegistry: (registry) => registry,
   renderEditorCanvas: (props) => <EmailCanvasRenderer {...props} />,
 };

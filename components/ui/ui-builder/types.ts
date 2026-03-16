@@ -93,6 +93,17 @@ export interface RegistryEntry<T extends ReactComponentType<any>> {
    * Example: TabsTrigger has childOf: ["TabsList"]
    */
   childOf?: string[];
+  /**
+   * When true, the editor will render this component without wrapping it in the
+   * ElementSelector / MeasureRange <span> overlay. Use this for components that
+   * render structural HTML elements (<html>, <head>, <body>) which cannot legally
+   * be children of a <span> according to the HTML spec. Without this flag, those
+   * elements are moved or suppressed by the browser, making canvas content invisible.
+   *
+   * Layers with this flag set can still be selected via the layer tree panel; they
+   * simply won't have click-to-select overlays in the canvas.
+   */
+  skipEditorWrapper?: boolean;
 }
 
 // Improved field config function type

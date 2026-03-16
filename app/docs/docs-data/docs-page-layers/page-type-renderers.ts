@@ -37,7 +37,54 @@ export const PAGE_TYPE_RENDERERS_LAYER = {
         "type": "Markdown",
         "name": "Markdown",
         "props": {},
-        "children": "## Email Builder Example\n\nThe following example wires up UI Builder with react-email component support. UI Builder does **not** import `@react-email/*` — all email-specific logic lives in consumer code.\n\n### 1. Install react-email components registry\n\n```bash\nnpx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/react-email-components-registry.json\n```\n\nThis installs `lib/ui-builder/registry/react-email-component-definitions.ts` and the required npm packages (`@react-email/components`, `@react-email/render`, `web-streams-polyfill`).\n\n### 2. Wire up the email builder\n\n```tsx\nimport UIBuilder from '@/components/ui/ui-builder';\nimport LayerRenderer from '@/components/ui/ui-builder/layer-renderer';\nimport { reactEmailComponentDefinitions } from '@/lib/ui-builder/registry/react-email-component-definitions';\nimport type {\n  PageTypeRenderer,\n  PageTypeCodeGenerator,\n  PageTypeRendererProps,\n  ComponentLayer,\n  ComponentRegistry,\n} from '@/components/ui/ui-builder/types';\n\n// Canvas renderer — email components render fine in a browser,\n// so we reuse LayerRenderer unchanged (click-to-select and DnD work for free)\nconst emailPageRenderer: PageTypeRenderer = {\n  label: 'Email',\n  defaultRootLayerType: 'Html',        // new email pages start with <Html> root\n  defaultRootLayerProps: { lang: 'en' },\n  // filterRegistry: (registry) => registry, // already email-only\n  renderEditorCanvas: (props: PageTypeRendererProps) => (\n    <LayerRenderer\n      className=\"contents\"\n      page={props.page}\n      componentRegistry={props.componentRegistry}\n      editorConfig={props.editorConfig}\n    />\n  ),\n};\n\n// Code generator — produces JSX + usage example for the email template\nconst emailCodeGenerator: PageTypeCodeGenerator = {\n  label: 'Email JSX',\n  generateCode: (page: ComponentLayer, registry: ComponentRegistry) => {\n    // Build import statements and JSX from the layer tree\n    // See app/platform/email-builder.tsx for a full implementation\n    return `// Generated email template for ${page.name}`;\n  },\n};\n\nexport function EmailBuilder() {\n  return (\n    <UIBuilder\n      componentRegistry={reactEmailComponentDefinitions}\n      pageTypeRenderers={{ email: emailPageRenderer }}\n      pageTypeCodeGenerators={{ email: emailCodeGenerator }}\n      allowPagesCreation\n    />\n  );\n}\n```\n\n### 3. Safari / iOS compatibility\n\nAdd this import at the **top** of your email route's entry file for Safari/iOS compatibility with `@react-email/render`:\n\n```ts\nimport 'web-streams-polyfill/polyfill';\n```"
+        "children": "## Email Builder Example\n\nThe following example wires up UI Builder with react-email component support. UI Builder does **not** import `@react-email/*` — all email-specific logic lives in consumer code.\n\n### 1. Install react-email components registry\n\n```bash\nnpx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/react-email-components-registry.json\n```\n\nThis installs `lib/ui-builder/registry/react-email-component-definitions.ts` and the required npm packages (`@react-email/components`, `@react-email/render`, `web-streams-polyfill`).\n\n### 2. Wire up the email builder\n\nReact-email components like `<Html>`, `<Head>`, and `<Body>` render actual structural HTML elements. When placed inside the editor's canvas iframe these elements are suppressed by the browser, producing a blank canvas. The solution is a **canvas-specific registry** that swaps those structural components with rendering-safe div/null substitutes — while keeping the real `@react-email` components in the registry for code generation.\n\n```tsx\nimport { useMemo } from 'react';\nimport UIBuilder from '@/components/ui/ui-builder';\nimport LayerRenderer from '@/components/ui/ui-builder/layer-renderer';\nimport { reactEmailComponentDefinitions } from '@/lib/ui-builder/registry/react-email-component-definitions';\nimport type {\n  PageTypeRenderer,\n  PageTypeCodeGenerator,\n  PageTypeRendererProps,\n  ComponentLayer,\n  ComponentRegistry,\n} from '@/components/ui/ui-builder/types';\n\n// Canvas-safe substitutes for structural HTML elements.\n// The real @react-email components are preserved in the registry for code generation.\nconst NullComponent = () => null;\nconst CanvasHtml = ({ children }: { children?: React.ReactNode }) => (\n  <div data-email-html style={{ display: 'contents' }}>{children}</div>\n);\nconst CanvasBody = ({ children, className }: { children?: React.ReactNode; className?: string }) => (\n  <div data-email-body className={className} style={{ backgroundColor: 'white', minHeight: '100%' }}>{children}</div>\n);\n\n// Canvas renderer — swaps structural HTML elements with div substitutes\n// so the email content is visible and interactive in the editor canvas.\nfunction EmailCanvasRenderer({ page, componentRegistry, editorConfig }: PageTypeRendererProps) {\n  const canvasRegistry: ComponentRegistry = useMemo(() => {\n    const base = { ...componentRegistry };\n    if (base.Html) base.Html = { ...base.Html, component: CanvasHtml };\n    if (base.Head) base.Head = { ...base.Head, component: NullComponent };\n    if (base.Preview) base.Preview = { ...base.Preview, component: NullComponent };\n    if (base.Body) base.Body = { ...base.Body, component: CanvasBody };\n    return base;\n  }, [componentRegistry]);\n\n  return (\n    <LayerRenderer\n      className=\"contents\"\n      page={page}\n      componentRegistry={canvasRegistry}\n      editorConfig={editorConfig}\n    />\n  );\n}\n\nconst emailPageRenderer: PageTypeRenderer = {\n  label: 'Email',\n  defaultRootLayerType: 'Html',        // new email pages start with <Html> root\n  defaultRootLayerProps: { lang: 'en' },\n  renderEditorCanvas: (props) => <EmailCanvasRenderer {...props} />,\n};\n\n// Code generator — produces JSX + usage example for the email template.\n// Uses the original registry (with real @react-email components) for accurate imports.\nconst emailCodeGenerator: PageTypeCodeGenerator = {\n  label: 'Email JSX',\n  generateCode: (page: ComponentLayer, registry: ComponentRegistry) => {\n    // Build import statements and JSX from the layer tree\n    // See app/platform/email-builder.tsx for a full implementation\n    return `// Generated email template for ${page.name}`;\n  },\n};\n\nexport function EmailBuilder() {\n  return (\n    <UIBuilder\n      componentRegistry={reactEmailComponentDefinitions}\n      pageTypeRenderers={{ email: emailPageRenderer }}\n      pageTypeCodeGenerators={{ email: emailCodeGenerator }}\n      allowPagesCreation\n    />\n  );\n}\n```\n\n### 3. Safari / iOS compatibility\n\nAdd this import at the **top** of your email route's entry file for Safari/iOS compatibility with `@react-email/render`:\n\n```ts\nimport 'web-streams-polyfill/polyfill';\n```"
+      },
+      {
+        "id": "page-type-renderers-email-demo",
+        "type": "div",
+        "name": "div",
+        "props": {},
+        "children": [
+          {
+            "id": "page-type-renderers-email-demo-badge",
+            "type": "Badge",
+            "name": "Badge",
+            "props": {
+              "variant": "default",
+              "className": "rounded rounded-b-none"
+            },
+            "children": [
+              {
+                "id": "page-type-renderers-email-demo-badge-text",
+                "type": "span",
+                "name": "span",
+                "props": {},
+                "children": "Try it now"
+              }
+            ]
+          },
+          {
+            "id": "page-type-renderers-email-demo-container",
+            "type": "div",
+            "name": "div",
+            "props": {
+              "className": "border border-primary shadow-lg rounded-b-sm rounded-tr-sm overflow-hidden"
+            },
+            "children": [
+              {
+                "id": "page-type-renderers-email-iframe",
+                "type": "iframe",
+                "name": "iframe",
+                "props": {
+                  "src": "/examples/email",
+                  "title": "Email Builder Demo",
+                  "className": "aspect-square md:aspect-video"
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
       },
       {
         "id": "page-type-renderers-email-components",

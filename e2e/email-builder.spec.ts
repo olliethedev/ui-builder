@@ -113,6 +113,21 @@ test.describe('Email Builder (/smoke/email)', () => {
     expect(codeText).toContain('@react-email/components');
   });
 
+  test('renders email content visibly in the canvas center panel', async ({ page }) => {
+    // The editor canvas (AutoFrame iframe) should show the initial email template content.
+    // This specifically tests that structural react-email components (Html, Head, Body)
+    // do NOT prevent visual content from rendering — the canvas-specific registry
+    // replaces them with div substitutes so the email is visible in the editor.
+    const autoFrame = page.getByTestId('auto-frame');
+    await expect(autoFrame).toBeVisible({ timeout: 10000 });
+
+    // The iframe should contain the initial email body text from the template
+    const frameLocator = page.frameLocator('[data-testid="auto-frame"]');
+    await expect(frameLocator.getByText('Hello from UIBuilder Email!')).toBeVisible({ timeout: 10000 });
+    await expect(frameLocator.getByText('Edit this email template using the UIBuilder editor.')).toBeVisible();
+    await expect(frameLocator.getByText('Get Started')).toBeVisible();
+  });
+
   test('can select a layer in the email page', async ({ page }) => {
     // Click the page area to select a layer
     const layersTree = page.getByTestId('layers-tree');

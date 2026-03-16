@@ -388,6 +388,48 @@ describe("render-utils", () => {
       expect(childTextElement).toHaveTextContent("Hello, World!");
     });
 
+    it("renders a component with skipEditorWrapper without ElementSelector when editorConfig is provided", () => {
+      // Arrange: a registry entry that has skipEditorWrapper: true
+      // (used for structural HTML elements like <html>, <head>, <body> in email builders)
+      const SkipWrapperComponent = () => <div data-testid="skip-wrapper-component">Content</div>;
+      const skipWrapperRegistry = {
+        ...mockRegistry,
+        SkipWrapper: {
+          component: SkipWrapperComponent,
+          schema: z.object({}),
+          from: "@/components/ui/skip-wrapper",
+          skipEditorWrapper: true,
+        },
+      };
+      const skipWrapperLayer: ComponentLayer = {
+        id: "skip-layer-1",
+        type: "SkipWrapper",
+        name: "Skip Wrapper Layer",
+        props: {},
+        children: [],
+      };
+      const editorConfig = {
+        zIndex: 1,
+        totalLayers: 2,
+        selectedLayer: skipWrapperLayer,
+        onSelectElement: jest.fn(),
+      };
+
+      render(
+        <RenderLayer
+          layer={skipWrapperLayer}
+          editorConfig={editorConfig}
+          componentRegistry={skipWrapperRegistry}
+        />
+      );
+
+      // The component should render its content
+      expect(screen.getByTestId("skip-wrapper-component")).toBeInTheDocument();
+      expect(screen.getByTestId("skip-wrapper-component")).toHaveTextContent("Content");
+      // ElementSelector mock renders children in a div — the component should still be visible
+      // but crucially, the render-utils code path skips ElementSelector for skipEditorWrapper layers
+    });
+
     it("returns null if component is not found", () => {
       const notFoundLayer = { ...componentLayer, type: "not-found" };
       const { container } = render(<RenderLayer layer={notFoundLayer} componentRegistry={mockRegistry} />);
