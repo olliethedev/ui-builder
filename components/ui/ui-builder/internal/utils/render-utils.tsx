@@ -289,7 +289,7 @@ export const RenderLayer: React.FC<{
     // This is required for structural HTML elements (<html>, <head>, <body>) that
     // cannot legally be children of the <span> MeasureRange uses internally.
     // These layers are still accessible via the layer tree panel.
-    if (componentDefinition.skipEditorWrapper) {
+    if (componentDefinition?.skipEditorWrapper) {
       return (
         <DevProfiler id={layer.type} threshold={20}>
           {DragFeedbackWrapper}

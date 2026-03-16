@@ -148,6 +148,76 @@ main() {
 
     success "shadcn components registry installed"
 
+    # Step 5c: Install react-email components registry
+    step "Installing react-email components registry"
+
+    npx --yes shadcn@4.0.5 add "http://localhost:$SERVER_PORT/react-email-components-registry.json" \
+        --yes --overwrite
+
+    success "react-email components registry installed"
+
+    # Step 5d: Write a minimal email builder page that wires emailPageRenderer + emailCodeGenerator
+    step "Writing email builder test page"
+
+    mkdir -p src/app/email-test
+    cat > src/app/email-test/page.tsx << 'EMAILPAGE'
+"use client";
+
+import "web-streams-polyfill/polyfill";
+import UIBuilder from "@/components/ui/ui-builder";
+import { reactEmailComponentDefinitions } from "@/lib/ui-builder/registry/react-email-component-definitions";
+import {
+  emailPageRenderer,
+  emailCodeGenerator,
+} from "@/lib/ui-builder/email/email-builder-utils";
+import type { ComponentLayer } from "@/components/ui/ui-builder/types";
+
+const initialLayers: ComponentLayer[] = [
+  {
+    id: "email-page-1",
+    type: "Html",
+    name: "Email 1",
+    pageType: "email",
+    props: { lang: "en" },
+    children: [
+      {
+        id: "email-body-1",
+        type: "Body",
+        name: "Body",
+        props: {},
+        children: [
+          {
+            id: "email-text-1",
+            type: "Text",
+            name: "Text",
+            props: {},
+            children: "Hello from UIBuilder Email!",
+          },
+        ],
+      },
+    ],
+  },
+];
+
+export default function EmailTestPage() {
+  return (
+    <main className="flex flex-col h-dvh">
+      <UIBuilder
+        initialLayers={initialLayers}
+        persistLayerStore={false}
+        componentRegistry={reactEmailComponentDefinitions}
+        pageTypeRenderers={{ email: emailPageRenderer }}
+        pageTypeCodeGenerators={{ email: emailCodeGenerator }}
+        allowPagesCreation
+        allowPagesDeletion
+      />
+    </main>
+  );
+}
+EMAILPAGE
+
+    success "Email builder test page written to src/app/email-test/page.tsx"
+
     # Step 6: Add @ts-nocheck to files with known TypeScript issues from external registries
     step "Adding @ts-nocheck to problematic files"
     

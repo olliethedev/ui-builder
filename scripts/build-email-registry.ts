@@ -5,6 +5,10 @@
  *
  * Install in a consumer project:
  *   npx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/react-email-components-registry.json
+ *
+ * Includes:
+ *   - react-email-component-definitions.ts — ComponentRegistry for all @react-email/components
+ *   - email-builder-utils.tsx — canvas substitutes, emailPageRenderer, emailCodeGenerator
  */
 
 import { readFile, writeFile } from "fs/promises";
@@ -19,6 +23,10 @@ console.log("Building react-email components registry...");
 const EMAIL_FILES: Array<{ path: string; type: RegistryItemFile["type"] }> = [
   {
     path: "lib/ui-builder/registry/react-email-component-definitions.ts",
+    type: "registry:lib",
+  },
+  {
+    path: "lib/ui-builder/email/email-builder-utils.tsx",
     type: "registry:lib",
   },
 ];
@@ -37,7 +45,7 @@ async function buildEmailRegistry() {
     type: "registry:lib",
     title: "React Email Component Definitions",
     description:
-      "UIBuilder component registry definitions for @react-email/components. Enables email page editing inside UIBuilder.",
+      "UIBuilder component registry definitions for @react-email/components. Enables email page editing inside UIBuilder. Includes emailPageRenderer and emailCodeGenerator for wiring UIBuilder as an email editor.",
     registryDependencies: [
       "https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json",
     ],
