@@ -140,7 +140,10 @@ export function generateEmailCode(page: ComponentLayer, registry: ComponentRegis
     "}",
     "",
     "// Generate HTML string (use in your email sending service)",
-    "// const html = await render(<EmailTemplate />);",
+    "export async function renderEmailHtml() {",
+    "  const html = await render(<EmailTemplate />);",
+    "  return html;",
+    "}",
   ].join("\n");
 }
 
