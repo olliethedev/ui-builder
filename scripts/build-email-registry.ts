@@ -20,6 +20,11 @@ import {
 
 console.log("Building react-email components registry...");
 
+const DEFAULT_BLOCK_REGISTRY_URL =
+  "https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json";
+const blockRegistryDependencyUrl =
+  process.env.UI_BUILDER_BLOCK_REGISTRY_URL ?? DEFAULT_BLOCK_REGISTRY_URL;
+
 const EMAIL_FILES: Array<{ path: string; type: RegistryItemFile["type"] }> = [
   {
     path: "lib/ui-builder/registry/react-email-component-definitions.ts",
@@ -46,9 +51,7 @@ async function buildEmailRegistry() {
     title: "React Email Component Definitions",
     description:
       "UIBuilder component registry definitions for @react-email/components. Enables email page editing inside UIBuilder. Includes emailPageRenderer and emailCodeGenerator for wiring UIBuilder as an email editor.",
-    registryDependencies: [
-      "https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/block-registry.json",
-    ],
+    registryDependencies: [blockRegistryDependencyUrl],
     dependencies: [
       "@react-email/components",
       "@react-email/render",
@@ -72,6 +75,7 @@ async function buildEmailRegistry() {
 
   console.log(`React-email registry built successfully → ${outFile}`);
   console.log(`  - ${files.length} files`);
+  console.log(`  - Block registry dependency: ${blockRegistryDependencyUrl}`);
   console.log(
     `  - Dependencies: ${item.dependencies?.join(", ")}`
   );

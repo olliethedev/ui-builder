@@ -82,7 +82,7 @@ main() {
     # Step 1: Build all registries
     step "Building all registries"
     cd "$PROJECT_ROOT"
-    npm run build-all-registries
+    UI_BUILDER_BLOCK_REGISTRY_URL="http://localhost:$SERVER_PORT/block-registry.json" npm run build-all-registries
     success "All registries built successfully"
 
     # Step 2: Start HTTP server to host the registry (using http-server like package.json)
@@ -120,7 +120,6 @@ main() {
         --app \
         --src-dir \
         --no-import-alias \
-        --turbopack \
         --yes
     
     success "Next.js project created at $TEST_DIR/test-app"
@@ -186,7 +185,6 @@ fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2));
 
 "use client";
 
-import "web-streams-polyfill/polyfill";
 import UIBuilder from "@/components/ui/ui-builder";
 import { reactEmailComponentDefinitions } from "@/lib/ui-builder/registry/react-email-component-definitions";
 import {
@@ -299,7 +297,7 @@ console.log('TypeScript config patched');
 
     # Step 9: Build the project
     step "Building the Next.js project"
-    npm run build
+    npm run build -- --webpack
     success "Project built successfully!"
 
     # Mark test as passed
