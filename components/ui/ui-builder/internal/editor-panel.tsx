@@ -303,25 +303,27 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
 
   const pageTypeRenderer = useEditorStore((state) => state.getPageTypeRenderer(selectedPage?.pageType ?? ""));
 
-  // Build the page type renderer props once so they can be shared
-  const pageTypeRendererProps = useMemo(() => ({
-    page: selectedPage,
-    componentRegistry,
-    editorConfig,
-    variables,
-    functionRegistry,
-  }), [selectedPage, componentRegistry, editorConfig, variables, functionRegistry]);
+  const pageTypeRendererProps = useMemo(() => {
+    if (!pageTypeRenderer) return null;
+    return {
+      page: selectedPage,
+      componentRegistry,
+      editorConfig,
+      variables,
+      functionRegistry,
+    };
+  }, [pageTypeRenderer, selectedPage, componentRegistry, editorConfig, variables, functionRegistry]);
 
   const renderer = useMemo(
     () => {
       // When skipAutoFrame is true, the custom renderer owns the full canvas area
-      if (pageTypeRenderer?.skipAutoFrame) {
+      if (pageTypeRenderer?.skipAutoFrame && pageTypeRendererProps) {
         return pageTypeRenderer.renderEditorCanvas(pageTypeRendererProps);
       }
 
       // Default path: keep AutoFrame + ResizableWrapper
       // Custom renderers that don't skipAutoFrame render inside the same AutoFrame chrome
-      const canvasContent = pageTypeRenderer
+      const canvasContent = pageTypeRenderer && pageTypeRendererProps
         ? <>{pageTypeRenderer.renderEditorCanvas(pageTypeRendererProps)}<LayerContextMenuPortal /></>
         : <><LayerRenderer {...layerRendererProps} /><LayerContextMenuPortal /></>;
 
