@@ -118,7 +118,7 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
 
   const page = findLayerById(selectedPageId) as ComponentLayer;
   const pageTypeRenderer = useMemo(
-    () => getPageTypeRenderer(page?.pageType ?? ""),
+    () => getPageTypeRenderer?.(page?.pageType ?? ""),
     [getPageTypeRenderer, page?.pageType]
   );
 
