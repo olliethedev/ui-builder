@@ -65,7 +65,14 @@ CanvasBody.displayName = "CanvasBody";
  * (Html, Head, Preview) with safe div/null substitutes so they render
  * correctly inside the AutoFrame iframe.
  */
-export function EmailCanvasRenderer({ page, componentRegistry, editorConfig }: PageTypeRendererProps) {
+export function EmailCanvasRenderer({
+  page,
+  componentRegistry,
+  editorConfig,
+  variables,
+  variableValues,
+  functionRegistry,
+}: PageTypeRendererProps) {
   const canvasRegistry: ComponentRegistry = useMemo(() => {
     const base = { ...componentRegistry };
     if (base.Html) base.Html = { ...base.Html, component: CanvasHtml };
@@ -81,6 +88,9 @@ export function EmailCanvasRenderer({ page, componentRegistry, editorConfig }: P
       page={page}
       componentRegistry={canvasRegistry}
       editorConfig={editorConfig}
+      variables={variables}
+      variableValues={variableValues}
+      functionRegistry={functionRegistry}
     />
   );
 }
