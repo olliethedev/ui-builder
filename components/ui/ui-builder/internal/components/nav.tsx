@@ -96,7 +96,6 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
   const variables = useLayerStore((state) => state.variables);
   const componentRegistry = useEditorStore((state) => state.registry);
   const getPageTypeRenderer = useEditorStore((state) => state.getPageTypeRenderer);
-  const pageTypeRenderers = useEditorStore((state) => state.pageTypeRenderers);
   const functionRegistry = useEditorStore((state) => state.functionRegistry);
   const incrementRevision = useEditorStore((state) => state.incrementRevision);
   
@@ -119,11 +118,8 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
 
   const page = findLayerById(selectedPageId) as ComponentLayer;
   const pageTypeRenderer = useMemo(
-    () =>
-      (typeof getPageTypeRenderer === "function"
-        ? getPageTypeRenderer(page?.pageType ?? "")
-        : undefined) ?? pageTypeRenderers[page?.pageType ?? ""],
-    [getPageTypeRenderer, pageTypeRenderers, page?.pageType]
+    () => getPageTypeRenderer(page?.pageType ?? ""),
+    [getPageTypeRenderer, page?.pageType]
   );
 
   const canUndo = !!pastStates.length;

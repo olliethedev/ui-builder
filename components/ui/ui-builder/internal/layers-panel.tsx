@@ -72,6 +72,46 @@ interface LayersTreeProps {
   selectLayer: (layerId: string) => void;
 }
 
+const findLayerByIdInTree = (
+  treeLayers: ComponentLayer[],
+  layerId: string
+): ComponentLayer | null => {
+  for (const layer of treeLayers) {
+    if (layer.id === layerId) {
+      return layer;
+    }
+    if (hasLayerChildren(layer)) {
+      const found = findLayerByIdInTree(layer.children, layerId);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
+};
+
+const rebuildLayerFromOriginalTree = (
+  layer: ComponentLayer,
+  originalLayers: ComponentLayer[]
+): ComponentLayer => {
+  const originalLayer = findLayerByIdInTree(originalLayers, layer.id) || layer;
+
+  if (!hasLayerChildren(originalLayer)) {
+    return originalLayer;
+  }
+
+  const rebuiltChildren = hasLayerChildren(layer)
+    ? layer.children.map((child) =>
+        rebuildLayerFromOriginalTree(child, originalLayers)
+      )
+    : [];
+
+  return {
+    ...originalLayer,
+    children: rebuiltChildren,
+  };
+};
+
 export const LayersTree: React.FC<LayersTreeProps> = React.memo(
   ({
     className,
@@ -108,9 +148,14 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
             );
             return;
           }
+
+          const rebuiltPageLayer = rebuildLayerFromOriginalTree(
+            updatedPageLayer,
+            layers
+          );
           
-          const updatedChildren = hasLayerChildren(updatedPageLayer)
-            ? updatedPageLayer.children || []
+          const updatedChildren = hasLayerChildren(rebuiltPageLayer)
+            ? rebuiltPageLayer.children || []
             : [];
             
           // Only update if children actually changed
@@ -140,9 +185,11 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
     );
 
     const canNodeDrop = useCallback((layer: { node: ComponentLayer }) => {
-      const isDroppable = hasLayerChildren(layer.node);
+      const originalNode = findLayerByIdInTree(layers, String(layer.node.id));
+      const nodeToCheck = originalNode || layer.node;
+      const isDroppable = hasLayerChildren(nodeToCheck);
       return isDroppable;
-    }, []);
+    }, [layers]);
 
     const renderNode = useCallback(
       ({ stat, attrs, isPlaceholder }: any) => {
@@ -158,19 +205,7 @@ export const LayersTree: React.FC<LayersTreeProps> = React.memo(
           );
         }
         
-        // Find the original layer data (not processed) to preserve text children info
-        const findOriginalLayer = (layers: ComponentLayer[], id: string): ComponentLayer | null => {
-          for (const layer of layers) {
-            if (layer.id === id) return layer;
-            if (hasLayerChildren(layer)) {
-              const found = findOriginalLayer(layer.children, id);
-              if (found) return found;
-            }
-          }
-          return null;
-        };
-        
-        const originalNode = findOriginalLayer(layers, stat.node.id) || stat.node;
+        const originalNode = findLayerByIdInTree(layers, String(stat.node.id)) || stat.node;
         
         return (
           <TreeRowNode
