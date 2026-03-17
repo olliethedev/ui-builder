@@ -65,6 +65,9 @@ import {
 import type {
   ComponentRegistry,
   ComponentLayer,
+  PageTypeRenderer,
+  Variable,
+  FunctionRegistry,
 } from "@/components/ui/ui-builder/types";
 import {
   Tooltip,
@@ -90,7 +93,11 @@ export interface NavBarProps {
 export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBarProps = {}) {
   const selectedPageId = useLayerStore((state) => state.selectedPageId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
+  const variables = useLayerStore((state) => state.variables);
   const componentRegistry = useEditorStore((state) => state.registry);
+  const getPageTypeRenderer = useEditorStore((state) => state.getPageTypeRenderer);
+  const pageTypeRenderers = useEditorStore((state) => state.pageTypeRenderers);
+  const functionRegistry = useEditorStore((state) => state.functionRegistry);
   const incrementRevision = useEditorStore((state) => state.incrementRevision);
   
   // Panel visibility state
@@ -111,6 +118,13 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
   const { undo, redo } = useLayerStore.temporal.getState();
 
   const page = findLayerById(selectedPageId) as ComponentLayer;
+  const pageTypeRenderer = useMemo(
+    () =>
+      (typeof getPageTypeRenderer === "function"
+        ? getPageTypeRenderer(page?.pageType ?? "")
+        : undefined) ?? pageTypeRenderers[page?.pageType ?? ""],
+    [getPageTypeRenderer, pageTypeRenderers, page?.pageType]
+  );
 
   const canUndo = !!pastStates.length;
   const canRedo = !!futureStates.length;
@@ -283,6 +297,9 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
         onOpenChange={setIsPreviewModalOpen}
         page={page}
         componentRegistry={componentRegistry}
+        pageTypeRenderer={pageTypeRenderer}
+        variables={variables}
+        functionRegistry={functionRegistry}
       />
       {showExport && (
         <CodeDialog
@@ -493,6 +510,9 @@ interface PreviewDialogProps {
   onOpenChange: (open: boolean) => void;
   page: ComponentLayer;
   componentRegistry: ComponentRegistry;
+  pageTypeRenderer?: PageTypeRenderer;
+  variables?: Variable[];
+  functionRegistry?: FunctionRegistry;
 }
 
 const PreviewDialog: React.FC<PreviewDialogProps> = ({
@@ -500,6 +520,9 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
   onOpenChange,
   page,
   componentRegistry,
+  pageTypeRenderer,
+  variables,
+  functionRegistry,
 }) => {
   const style = useMemo(() => ({ zIndex: Z_INDEX + 1 }), []);
 
@@ -531,11 +554,22 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
             <span className="text-lg font-semibold">Page Preview</span>
           </DialogTitle>
         </DialogHeader>
-        <LayerRenderer
-          className="w-full h-full flex flex-col overflow-x-hidden"
-          page={page}
-          componentRegistry={componentRegistry}
-        />
+        {pageTypeRenderer
+          ? pageTypeRenderer.renderEditorCanvas({
+              page,
+              componentRegistry,
+              variables,
+              functionRegistry,
+            })
+          : (
+            <LayerRenderer
+              className="w-full h-full flex flex-col overflow-x-hidden"
+              page={page}
+              componentRegistry={componentRegistry}
+              variables={variables}
+              functionRegistry={functionRegistry}
+            />
+          )}
       </DialogContentWithZIndex>
     </Dialog>
   );

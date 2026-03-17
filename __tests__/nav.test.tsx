@@ -483,6 +483,64 @@ describe('NavBar', () => {
         }
       }
     });
+
+    it('should use page type renderer for preview when selected page has a pageType', async () => {
+      const renderEditorCanvas = jest.fn().mockReturnValue(
+        <div data-testid="custom-preview-canvas">Email Preview Canvas</div>
+      );
+      const getPageTypeRenderer = jest.fn().mockReturnValue({
+        label: 'Email',
+        renderEditorCanvas,
+      });
+
+      const emailPage: ComponentLayer = {
+        ...mockPage,
+        pageType: 'email',
+      };
+
+      mockFindLayerById.mockReturnValue(emailPage);
+
+      const mockEditorStoreWithRenderer = {
+        registry: mockRegistry,
+        incrementRevision: mockIncrementRevision,
+        allowPagesCreation: true,
+        previewMode: 'desktop' as const,
+        setPreviewMode: mockSetPreviewMode,
+        showLeftPanel: true,
+        setShowLeftPanel: mockSetShowLeftPanel,
+        showRightPanel: true,
+        setShowRightPanel: mockSetShowRightPanel,
+        pageTypeRenderers: {},
+        getPageTypeRenderer,
+        functionRegistry: undefined,
+      };
+
+      mockUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === 'function') {
+          return selector(mockEditorStoreWithRenderer as any);
+        }
+        return mockEditorStoreWithRenderer as any;
+      });
+
+      render(<NavBar />, { wrapper: TestWrapper });
+
+      const buttons = screen.getAllByRole('button');
+      const previewButton = buttons.find(button => button.textContent?.includes('Preview'));
+
+      if (previewButton) {
+        fireEvent.click(previewButton);
+
+        await waitFor(() => {
+          expect(screen.getByTestId('custom-preview-canvas')).toBeInTheDocument();
+          expect(renderEditorCanvas).toHaveBeenCalledWith(
+            expect.objectContaining({
+              page: emailPage,
+              componentRegistry: mockRegistry,
+            })
+          );
+        });
+      }
+    });
   });
 
   describe('Code Export Dialog', () => {
