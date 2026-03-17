@@ -301,14 +301,10 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
     componentRegistry: componentRegistry
   }), [selectedPage, editorConfig, componentRegistry]);
 
-  const pageTypeRenderers = useEditorStore((state) => state.pageTypeRenderers ?? {});
   const getPageTypeRenderer = useEditorStore((state) => state.getPageTypeRenderer);
   const pageTypeRenderer = useMemo(
-    () =>
-      (typeof getPageTypeRenderer === "function"
-        ? getPageTypeRenderer(selectedPage?.pageType ?? "")
-        : undefined) ?? pageTypeRenderers[selectedPage?.pageType ?? ""],
-    [getPageTypeRenderer, pageTypeRenderers, selectedPage?.pageType]
+    () => getPageTypeRenderer(selectedPage?.pageType ?? ""),
+    [getPageTypeRenderer, selectedPage?.pageType]
   );
 
   const pageTypeRendererProps = useMemo(() => {
