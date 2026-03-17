@@ -116,7 +116,8 @@ export function generateEmailCode(page: ComponentLayer, registry: ComponentRegis
   const renderLayer = (layer: ComponentLayer, indent = 0): string => {
     const pad = "  ".repeat(indent);
     const propsStr = Object.entries(layer.props)
-      .filter(([, v]) => v !== undefined && v !== null && v !== "")
+      // `children` is rendered from `layer.children` to avoid duplicate/conflicting output.
+      .filter(([k, v]) => k !== "children" && v !== undefined && v !== null && v !== "")
       .map(([k, v]) => {
         if (typeof v === "string") return `${k}=${JSON.stringify(v)}`;
         return `${k}={${JSON.stringify(v)}}`;

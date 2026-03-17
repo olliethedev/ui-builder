@@ -290,6 +290,19 @@ describe("generateEmailCode", () => {
     expect(code).not.toContain("title=");
   });
 
+  it("does not serialize children prop when layer.children exists", () => {
+    const page: ComponentLayer = {
+      id: "p1",
+      type: "Text",
+      name: "Text",
+      props: { children: "From props" },
+      children: "From layer children",
+    };
+    const code = generateEmailCode(page, mockRegistry);
+    expect(code).toContain('<Text>{"From layer children"}</Text>');
+    expect(code).not.toContain('children="From props"');
+  });
+
   it("does not add an import for component types not in the registry", () => {
     const page: ComponentLayer = {
       id: "p1",
