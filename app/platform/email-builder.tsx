@@ -11,6 +11,8 @@ import React from "react";
 import UIBuilder from "@/components/ui/ui-builder";
 import { reactEmailComponentDefinitions } from "@/lib/ui-builder/registry/react-email-component-definitions";
 import {
+  DEFAULT_EMAIL_TAILWIND_CONFIG,
+  EmailTailwindThemePanel,
   emailPageRenderer,
   emailCodeGenerator,
 } from "@/lib/ui-builder/email/email-builder-utils";
@@ -42,40 +44,50 @@ const initialLayers: ComponentLayer[] = [
         children: "Welcome to our email",
       },
       {
-        id: "email-body-1",
-        type: "Body",
-        name: "Body",
-        props: { className: "bg-white font-sans" },
+        id: "email-tailwind-1",
+        type: "Tailwind",
+        name: "Tailwind",
+        props: {
+          config: DEFAULT_EMAIL_TAILWIND_CONFIG,
+        },
         children: [
           {
-            id: "email-container-1",
-            type: "Container",
-            name: "Container",
-            props: { className: "max-w-2xl mx-auto p-6" },
+            id: "email-body-1",
+            type: "Body",
+            name: "Body",
+            props: { className: "bg-white font-sans" },
             children: [
               {
-                id: "email-text-1",
-                type: "Text",
-                name: "Heading",
-                props: { className: "text-2xl font-bold text-gray-900" },
-                children: "Hello from UIBuilder Email!",
-              },
-              {
-                id: "email-text-2",
-                type: "Text",
-                name: "Body Text",
-                props: { className: "text-base text-gray-600" },
-                children: "Edit this email template using the UIBuilder editor.",
-              },
-              {
-                id: "email-button-1",
-                type: "Button",
-                name: "CTA Button",
-                props: {
-                  href: "https://example.com",
-                  className: "bg-blue-600 text-white px-6 py-3 rounded font-semibold",
-                },
-                children: "Get Started",
+                id: "email-container-1",
+                type: "Container",
+                name: "Container",
+                props: { className: "max-w-2xl mx-auto p-6" },
+                children: [
+                  {
+                    id: "email-text-1",
+                    type: "Text",
+                    name: "Heading",
+                    props: { className: "text-2xl font-bold text-gray-900" },
+                    children: "Hello from UIBuilder Email!",
+                  },
+                  {
+                    id: "email-text-2",
+                    type: "Text",
+                    name: "Body Text",
+                    props: { className: "text-base text-gray-600" },
+                    children: "Edit this email template using the UIBuilder editor.",
+                  },
+                  {
+                    id: "email-button-1",
+                    type: "Button",
+                    name: "CTA Button",
+                    props: {
+                      href: "https://example.com",
+                      className: "bg-blue-600 text-white px-6 py-3 rounded font-semibold",
+                    },
+                    children: "Get Started",
+                  },
+                ],
               },
             ],
           },
@@ -96,6 +108,7 @@ export function EmailBuilder() {
       componentRegistry={reactEmailComponentDefinitions}
       pageTypeRenderers={{ email: emailPageRenderer }}
       pageTypeCodeGenerators={{ email: emailCodeGenerator }}
+      tailwindThemePanel={<EmailTailwindThemePanel />}
       allowPagesCreation
       allowPagesDeletion
     />

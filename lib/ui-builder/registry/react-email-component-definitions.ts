@@ -38,7 +38,7 @@ import {
 import { z } from "zod";
 import type { ComponentRegistry } from "@/components/ui/ui-builder/types";
 import {
-  classNameFieldOverrides,
+  emailClassNameFieldOverrides,
   childrenFieldOverrides,
   childrenAsTextareaFieldOverrides,
 } from "@/lib/ui-builder/registry/form-field-overrides";
@@ -195,7 +195,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     skipEditorWrapper: true,
     defaultChildren: [],
     fieldOverrides: {
-      className: classNameFieldOverrides,
+      className: emailClassNameFieldOverrides,
       children: childrenFieldOverrides,
     },
   },
@@ -217,7 +217,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     childOf: ["Html", "Tailwind"],
     defaultChildren: [],
     fieldOverrides: {
-      className: classNameFieldOverrides,
+      className: emailClassNameFieldOverrides,
       children: childrenFieldOverrides,
     },
   },
@@ -251,7 +251,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     from: "@react-email/components",
     defaultChildren: [],
     fieldOverrides: {
-      className: classNameFieldOverrides,
+      className: emailClassNameFieldOverrides,
       children: childrenFieldOverrides,
     },
   },
@@ -262,7 +262,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     from: "@react-email/components",
     defaultChildren: [],
     fieldOverrides: {
-      className: classNameFieldOverrides,
+      className: emailClassNameFieldOverrides,
       children: childrenFieldOverrides,
     },
   },
@@ -274,7 +274,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     childOf: ["Section", "Container", "Column", "Body"],
     defaultChildren: [],
     fieldOverrides: {
-      className: classNameFieldOverrides,
+      className: emailClassNameFieldOverrides,
       children: childrenFieldOverrides,
     },
   },
@@ -286,7 +286,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     childOf: ["Row"],
     defaultChildren: [],
     fieldOverrides: {
-      className: classNameFieldOverrides,
+      className: emailClassNameFieldOverrides,
       children: childrenFieldOverrides,
     },
   },
@@ -297,7 +297,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     from: "@react-email/components",
     defaultChildren: "Text content",
     fieldOverrides: {
-      className: classNameFieldOverrides,
+      className: emailClassNameFieldOverrides,
       children: childrenAsTextareaFieldOverrides,
     },
   },
@@ -308,7 +308,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     from: "@react-email/components",
     defaultChildren: "Click me",
     fieldOverrides: {
-      className: classNameFieldOverrides,
+      className: emailClassNameFieldOverrides,
       children: childrenAsTextareaFieldOverrides,
     },
   },
@@ -319,7 +319,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     from: "@react-email/components",
     defaultChildren: "Click here",
     fieldOverrides: {
-      className: classNameFieldOverrides,
+      className: emailClassNameFieldOverrides,
       children: childrenAsTextareaFieldOverrides,
     },
   },
@@ -329,7 +329,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     schema: imgSchema,
     from: "@react-email/components",
     fieldOverrides: {
-      className: classNameFieldOverrides,
+      className: emailClassNameFieldOverrides,
     },
   },
 
@@ -338,7 +338,7 @@ export const reactEmailComponentDefinitions: ComponentRegistry = {
     schema: hrSchema,
     from: "@react-email/components",
     fieldOverrides: {
-      className: classNameFieldOverrides,
+      className: emailClassNameFieldOverrides,
     },
   },
 };

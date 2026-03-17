@@ -31,6 +31,7 @@ import type {
   FunctionRegistry,
   PageTypeRenderers,
   PageTypeCodeGenerators,
+  TailwindThemePanelOverride,
 } from "@/components/ui/ui-builder/types";
 import { TailwindThemePanel } from "@/components/ui/ui-builder/internal/tailwind-theme-panel";
 import { ConfigPanel } from "@/components/ui/ui-builder/internal/config-panel";
@@ -97,6 +98,13 @@ interface UIBuilderBaseProps<TRegistry extends ComponentRegistry = ComponentRegi
    * When provided, replaces the default React code tab in the code panel for pages of that type.
    */
   pageTypeCodeGenerators?: PageTypeCodeGenerators;
+  /**
+   * Overrides Tailwind theme panel content in the default Appearance tab.
+   * - undefined: render the built-in TailwindThemePanel
+   * - false: hide the Tailwind theme panel
+   * - ReactNode: render custom content instead of the built-in panel
+   */
+  tailwindThemePanel?: TailwindThemePanelOverride;
 }
 
 /**
@@ -156,6 +164,7 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
   functionRegistry,
   pageTypeRenderers,
   pageTypeCodeGenerators,
+  tailwindThemePanel,
 }: UIBuilderProps<TRegistry>) => {
   const layerStore = useStore(useLayerStore, (state) => state);
   const editorStore = useStore(useEditorStore, (state) => state);
@@ -163,7 +172,10 @@ const UIBuilder = <TRegistry extends ComponentRegistry = ComponentRegistry>({
   const [editorStoreInitialized, setEditorStoreInitialized] = useState(false);
   const [layerStoreInitialized, setLayerStoreInitialized] = useState(false);
 
-  const memoizedDefaultTabsContent = useMemo(() => defaultConfigTabsContent(), []);
+  const memoizedDefaultTabsContent = useMemo(
+    () => defaultConfigTabsContent(tailwindThemePanel),
+    [tailwindThemePanel]
+  );
 
   const currentPanelConfig = useMemo(() => {
     const effectiveTabsContent = userPanelConfig?.pageConfigPanelTabsContent || memoizedDefaultTabsContent;
@@ -416,13 +428,33 @@ export function PageConfigPanel({
  * @param {boolean} editVariables - Whether to allow editing variables.
  * @returns {TabsContentConfig} The default tabs content configuration.
  */
-export function defaultConfigTabsContent() {
+function getTailwindThemePanelContent(
+  tailwindThemePanel?: TailwindThemePanelOverride
+) {
+  if (tailwindThemePanel === false) {
+    return null;
+  }
+
+  if (tailwindThemePanel !== undefined) {
+    return tailwindThemePanel;
+  }
+
+  return <TailwindThemePanel />;
+}
+
+export function defaultConfigTabsContent(
+  tailwindThemePanel?: TailwindThemePanelOverride
+) {
+  const tailwindThemePanelContent = getTailwindThemePanelContent(
+    tailwindThemePanel
+  );
+
   return {
     layers: { title: "Layers", content: <LayersPanel /> },
     appearance: { title: "Appearance", content: (
       <div className="py-2 px-4 gap-2 flex flex-col overflow-y-auto overflow-x-auto">
         <ConfigPanel />
-        <TailwindThemePanel />
+        {tailwindThemePanelContent}
         </div>
       ),
     },

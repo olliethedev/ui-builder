@@ -11,6 +11,14 @@ export type {
     FieldConfigItem,
   } from "@/components/ui/auto-form/types";
 
+/**
+ * Controls how the default Appearance tab renders the Tailwind theme panel.
+ * - undefined: render the built-in TailwindThemePanel
+ * - false: hide the Tailwind theme panel
+ * - ReactNode: render custom content in place of the default panel
+ */
+export type TailwindThemePanelOverride = ReactNode | false;
+
 // Enhanced prop value types that can accommodate React props, variables, and common data types
 export type PropValue = 
   | ReactNode 

@@ -23,6 +23,8 @@ const excludePatterns = [
     'shadcn-component-definitions.ts',
     'block-definitions.ts',
     'react-email-component-definitions.ts',
+    'email-builder-utils.tsx',
+    'email-tailwind-theme-panel.tsx',
 ];
 
 const registryConfigs: RegistryConfig[] = [

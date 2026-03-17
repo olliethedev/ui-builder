@@ -26,6 +26,7 @@
 
 import React, { useMemo } from "react";
 import LayerRenderer from "@/components/ui/ui-builder/layer-renderer";
+import { pixelBasedPreset } from "@react-email/components";
 import type {
   PageTypeRenderer,
   PageTypeCodeGenerator,
@@ -33,6 +34,14 @@ import type {
   ComponentLayer,
   ComponentRegistry,
 } from "@/components/ui/ui-builder/types";
+export { EmailTailwindThemePanel } from "@/lib/ui-builder/email/email-tailwind-theme-panel";
+
+export const DEFAULT_EMAIL_TAILWIND_CONFIG = {
+  presets: [pixelBasedPreset],
+  theme: {
+    extend: {},
+  },
+};
 
 /**
  * Canvas-safe substitutes for structural HTML elements.

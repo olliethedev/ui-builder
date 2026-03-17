@@ -5,8 +5,8 @@ import userEvent from "@testing-library/user-event";
 import { ClassNameItemControl } from "@/components/ui/ui-builder/internal/form-fields/classname-control/classname-item-control";
 
 // Mock the dependencies
-jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/config", () => ({
-  CONFIG: {
+jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/config", () => {
+  const CONFIG = {
     width: {
       label: "Width",
       possibleTypes: [null, "w-full", "w-auto", "w-4", "w-8"] as const,
@@ -208,15 +208,15 @@ jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/con
       multiple: true,
       options: [],
     },
-  },
-  LAYOUT_GROUPS: [
+  };
+  const LAYOUT_GROUPS = [
     {
       label: "Padding",
       keys: ["padding", "directionalPadding"],
       clearState: () => ["p-1", "p-2", "p-4", "p-8", "px-1", "px-2", "py-1", "py-2"],
     },
-  ],
-  LAYOUT_ORDER: [
+  ];
+  const LAYOUT_ORDER = [
     { type: "item", key: "width" },
     { type: "item", key: "height" },
     { type: "group", label: "Padding", className: "w-fit" },
@@ -227,9 +227,20 @@ jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/con
       key: "flexSettings",
       isVisible: (state: any) => state.display === "flex",
     },
-  ],
-  StateType: {} as any,
-}));
+  ];
+
+  return {
+    CONFIG,
+    LAYOUT_GROUPS,
+    LAYOUT_ORDER,
+    StateType: {} as any,
+    resolveClassNameControlConfig: () => ({
+      config: CONFIG,
+      layoutGroups: LAYOUT_GROUPS,
+      layoutOrder: LAYOUT_ORDER,
+    }),
+  };
+});
 
 jest.mock("@/components/ui/ui-builder/internal/form-fields/classname-control/classname-group-control", () => ({
   ClassNameGroupControl: ({ group, selectedKey, handleStateChange, handleGroupKeySelect }: any) => (

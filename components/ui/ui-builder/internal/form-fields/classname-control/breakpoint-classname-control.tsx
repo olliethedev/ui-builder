@@ -14,14 +14,17 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import type { ClassNameControlProfile } from "@/components/ui/ui-builder/internal/form-fields/classname-control/config";
 
 interface BreakpointClassNameControlProps {
   onChange?: (classes: string) => void;
   value?: string;
+  classProfile?: ClassNameControlProfile;
 }
 export const BreakpointClassNameControl = ({
   onChange,
   value,
+  classProfile,
 }: BreakpointClassNameControlProps) => {
   // Helper to parse classString into base, md, rest
   const parseClassString = (str: string) => {
@@ -169,10 +172,18 @@ export const BreakpointClassNameControl = ({
           value="base"
           data-testid="base-tab-content"
         >
-          <ClassNameItemControl value={base} onChange={handleBaseChange} />
+          <ClassNameItemControl
+            value={base}
+            onChange={handleBaseChange}
+            classProfile={classProfile}
+          />
         </TabsContent>
         <TabsContent className="mt-0" value="md" data-testid="md-tab-content">
-          <ClassNameItemControl value={md} onChange={handleMdChange} />
+          <ClassNameItemControl
+            value={md}
+            onChange={handleMdChange}
+            classProfile={classProfile}
+          />
         </TabsContent>
       </Tabs>
       <Accordion
@@ -199,6 +210,7 @@ export const BreakpointClassNameControl = ({
             <ClassNameMultiselect
               value={classString}
               onChange={handleMultiselectChange}
+              classProfile={classProfile}
             />
           </AccordionContent>
         </AccordionItem>

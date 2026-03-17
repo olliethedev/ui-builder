@@ -11,6 +11,10 @@ import {
 } from "@/lib/ui-builder/email/email-builder-utils";
 import type { ComponentLayer, ComponentRegistry } from "@/components/ui/ui-builder/types";
 
+jest.mock("@react-email/components", () => ({
+  pixelBasedPreset: {},
+}));
+
 jest.mock("@/components/ui/ui-builder/layer-renderer", () => ({
   __esModule: true,
   default: ({ page, componentRegistry, className }: { page: ComponentLayer; componentRegistry: ComponentRegistry; className?: string }) => (
