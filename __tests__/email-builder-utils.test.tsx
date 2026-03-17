@@ -229,7 +229,19 @@ describe("generateEmailCode", () => {
       children: "Hello",
     };
     const code = generateEmailCode(page, mockRegistry);
-    expect(code).toContain("<Text>Hello</Text>");
+    expect(code).toContain('<Text>{"Hello"}</Text>');
+  });
+
+  it("escapes special JSX characters in string children", () => {
+    const page: ComponentLayer = {
+      id: "p1",
+      type: "Text",
+      name: "Text",
+      props: {},
+      children: "Price < $100 and Use {variables}",
+    };
+    const code = generateEmailCode(page, mockRegistry);
+    expect(code).toContain('<Text>{"Price < $100 and Use {variables}"}</Text>');
   });
 
   it("renders a tag with array children", () => {

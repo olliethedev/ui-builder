@@ -129,7 +129,7 @@ export function generateEmailCode(page: ComponentLayer, registry: ComponentRegis
         .join("\n");
       return `${pad}<${layer.type}${propsStr ? " " + propsStr : ""}>\n${childrenStr}\n${pad}</${layer.type}>`;
     } else if (typeof layer.children === "string" && layer.children) {
-      return `${pad}<${layer.type}${propsStr ? " " + propsStr : ""}>${layer.children}</${layer.type}>`;
+      return `${pad}<${layer.type}${propsStr ? " " + propsStr : ""}>{${JSON.stringify(layer.children)}}</${layer.type}>`;
     }
     return `${pad}<${layer.type}${propsStr ? " " + propsStr : ""} />`;
   };
