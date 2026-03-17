@@ -11,6 +11,10 @@ import {
   type BaseColor,
 } from "@/components/ui/ui-builder/internal/utils/base-colors";
 import type { ComponentLayer } from "@/components/ui/ui-builder/types";
+import {
+  createEmailTailwindConfig,
+  getEmailThemeColors,
+} from "@/lib/ui-builder/email/email-theme-config";
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { cn } from "@/lib/utils";
 
@@ -39,33 +43,6 @@ function getTailwindLayerConfig(layer: ComponentLayer | null): Record<string, un
   return asRecord(layerProps.config);
 }
 
-function getColorTheme(mode: "light" | "dark", colorName: BaseColor["name"]) {
-  const color = baseColors.find((item) => item.name === colorName) ?? baseColors[0];
-  const vars = color?.cssVars[mode];
-  if (!vars) return {};
-
-  return {
-    background: `hsl(${vars.background})`,
-    foreground: `hsl(${vars.foreground})`,
-    card: `hsl(${vars.card})`,
-    "card-foreground": `hsl(${vars["card-foreground"]})`,
-    popover: `hsl(${vars.popover})`,
-    "popover-foreground": `hsl(${vars["popover-foreground"]})`,
-    primary: `hsl(${vars.primary})`,
-    "primary-foreground": `hsl(${vars["primary-foreground"]})`,
-    secondary: `hsl(${vars.secondary})`,
-    "secondary-foreground": `hsl(${vars["secondary-foreground"]})`,
-    muted: `hsl(${vars.muted})`,
-    "muted-foreground": `hsl(${vars["muted-foreground"]})`,
-    accent: `hsl(${vars.accent})`,
-    "accent-foreground": `hsl(${vars["accent-foreground"]})`,
-    destructive: `hsl(${vars.destructive})`,
-    border: `hsl(${vars.border})`,
-    input: `hsl(${vars.input})`,
-    ring: `hsl(${vars.ring})`,
-  };
-}
-
 export function EmailTailwindThemePanel() {
   const selectedPageId = useLayerStore((state) => state.selectedPageId);
   const updateLayer = useLayerStore((state) => state.updateLayer);
@@ -87,7 +64,17 @@ export function EmailTailwindThemePanel() {
     const existingConfig = getTailwindLayerConfig(tailwindLayer);
     const theme = asRecord(existingConfig.theme);
     const themeExtend = asRecord(theme.extend);
-    const hasCustomColors = Boolean(themeExtend.colors);
+    const currentColors = asRecord(themeExtend.colors);
+    const currentRadius = asRecord(themeExtend.borderRadius);
+    const defaultColors = getEmailThemeColors("light", "zinc");
+    const defaultRadius = {
+      lg: "0.5rem",
+      md: "calc(0.5rem - 2px)",
+      sm: "calc(0.5rem - 4px)",
+    };
+    const hasCustomColors =
+      JSON.stringify(currentColors) !== JSON.stringify(defaultColors) ||
+      JSON.stringify(currentRadius) !== JSON.stringify(defaultRadius);
 
     setIsCustomTheme((prev) => (prev === hasCustomColors ? prev : hasCustomColors));
   }, [tailwindLayer]);
@@ -98,10 +85,7 @@ export function EmailTailwindThemePanel() {
     const existingConfig = getTailwindLayerConfig(tailwindLayer);
 
     if (!isCustomTheme) {
-      const nextConfig = {
-        presets: [pixelBasedPreset],
-        theme: { extend: {} },
-      };
+      const nextConfig = createEmailTailwindConfig();
       if (JSON.stringify(existingConfig) !== JSON.stringify(nextConfig)) {
         updateLayer(tailwindLayer.id, { config: nextConfig });
       }
@@ -110,7 +94,7 @@ export function EmailTailwindThemePanel() {
 
     const existingTheme = asRecord(existingConfig.theme);
     const existingExtend = asRecord(existingTheme.extend);
-    const colors = getColorTheme(mode, colorTheme);
+    const colors = getEmailThemeColors(mode, colorTheme);
 
     const nextConfig = {
       ...existingConfig,

@@ -9,6 +9,7 @@
  * Includes:
  *   - react-email-component-definitions.ts — ComponentRegistry for all @react-email/components
  *   - email-builder-utils.tsx — canvas substitutes, emailPageRenderer, emailCodeGenerator
+ *   - email-theme-config.ts — react-email Tailwind theme helpers/default config
  *   - email-tailwind-theme-panel.tsx — custom Tailwind theme controls for email pages
  */
 
@@ -33,6 +34,10 @@ const EMAIL_FILES: Array<{ path: string; type: RegistryItemFile["type"] }> = [
   },
   {
     path: "lib/ui-builder/email/email-builder-utils.tsx",
+    type: "registry:lib",
+  },
+  {
+    path: "lib/ui-builder/email/email-theme-config.ts",
     type: "registry:lib",
   },
   {

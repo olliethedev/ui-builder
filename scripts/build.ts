@@ -24,6 +24,7 @@ const excludePatterns = [
     'block-definitions.ts',
     'react-email-component-definitions.ts',
     'email-builder-utils.tsx',
+    'email-theme-config.ts',
     'email-tailwind-theme-panel.tsx',
 ];
 

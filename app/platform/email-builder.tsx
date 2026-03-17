@@ -55,26 +55,26 @@ const initialLayers: ComponentLayer[] = [
             id: "email-body-1",
             type: "Body",
             name: "Body",
-            props: { className: "bg-white font-sans" },
+            props: { className: "bg-background font-sans" },
             children: [
               {
                 id: "email-container-1",
                 type: "Container",
                 name: "Container",
-                props: { className: "max-w-2xl mx-auto p-6" },
+                props: { className: "max-w-2xl mx-auto p-6 bg-card text-card-foreground rounded-lg border border-border" },
                 children: [
                   {
                     id: "email-text-1",
                     type: "Text",
                     name: "Heading",
-                    props: { className: "text-2xl font-bold text-gray-900" },
+                    props: { className: "text-2xl font-bold text-foreground" },
                     children: "Hello from UIBuilder Email!",
                   },
                   {
                     id: "email-text-2",
                     type: "Text",
                     name: "Body Text",
-                    props: { className: "text-base text-gray-600" },
+                    props: { className: "text-base text-muted-foreground" },
                     children: "Edit this email template using the UIBuilder editor.",
                   },
                   {
@@ -83,7 +83,7 @@ const initialLayers: ComponentLayer[] = [
                     name: "CTA Button",
                     props: {
                       href: "https://example.com",
-                      className: "bg-blue-600 text-white px-6 py-3 rounded font-semibold",
+                      className: "bg-primary text-primary-foreground px-6 py-3 rounded font-semibold",
                     },
                     children: "Get Started",
                   },
