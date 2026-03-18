@@ -66,6 +66,114 @@ export const CanvasBody = ({ children, className }: { children?: React.ReactNode
 CanvasBody.displayName = "CanvasBody";
 
 /**
+ * Canvas-safe substitute for the react-email Tailwind component.
+ *
+ * The real @react-email/tailwind Tailwind component uses `mapReactTree` to walk
+ * the React tree and inline CSS styles by calling component functions directly.
+ * In the UIBuilder canvas, components are wrapped in hook-using wrappers
+ * (RenderLayer, ElementSelector, etc.) that break this direct-call approach.
+ *
+ * Instead, this canvas substitute injects the email theme colors as CSS custom
+ * property overrides via a <style> tag. Because the AutoFrame iframe copies the
+ * host page's Tailwind CSS (which uses `hsl(var(--primary))` etc.), overriding
+ * the CSS custom properties is sufficient to reflect the email theme in the canvas.
+ */
+
+function asConfigRecord(value: unknown): Record<string, unknown> {
+  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+}
+
+function extractHslValues(hslString: string): string {
+  // "hsl(221.2 83.2% 53.3%)" -> "221.2 83.2% 53.3%"
+  const match = /^hsl\((.+)\)$/.exec(hslString);
+  return match?.[1] ?? hslString;
+}
+
+// All shadcn/ui theme color keys that map to CSS custom properties.
+const THEME_COLOR_KEYS = [
+  "background",
+  "foreground",
+  "card",
+  "card-foreground",
+  "popover",
+  "popover-foreground",
+  "primary",
+  "primary-foreground",
+  "secondary",
+  "secondary-foreground",
+  "muted",
+  "muted-foreground",
+  "accent",
+  "accent-foreground",
+  "destructive",
+  "border",
+  "input",
+  "ring",
+] as const;
+
+function generateCanvasThemeCss(config: Record<string, unknown>): string {
+  const theme = asConfigRecord(config.theme);
+  const extend = asConfigRecord(theme.extend);
+  const colors = asConfigRecord(extend.colors);
+  const borderRadius = asConfigRecord(extend.borderRadius);
+
+  const cssVars: string[] = [];
+
+  for (const colorKey of THEME_COLOR_KEYS) {
+    const colorValue = colors[colorKey];
+    if (typeof colorValue === "string") {
+      const hslValues = extractHslValues(colorValue);
+      // --primary: 221.2 83.2% 53.3%  (for hsl(var(--primary)) pattern)
+      cssVars.push(`--${colorKey}: ${hslValues};`);
+      // --color-primary: hsl(221.2 83.2% 53.3%)  (for Tailwind v4 var(--color-*) pattern)
+      // AutoFrame copies pre-computed --color-* values as inline styles on <html>/<body>,
+      // so we must explicitly override them here for all descendant elements.
+      cssVars.push(`--color-${colorKey}: ${colorValue};`);
+    }
+  }
+
+  // Border radius: override both --radius (base) and the Tailwind v4 --radius-* tokens
+  // that AutoFrame copies as pre-computed inline styles.
+  const radiusLg = borderRadius.lg;
+  if (typeof radiusLg === "string") {
+    cssVars.push(`--radius: ${radiusLg};`);
+    cssVars.push(`--radius-lg: ${radiusLg};`);
+    if (typeof borderRadius.md === "string") {
+      cssVars.push(`--radius-md: ${borderRadius.md};`);
+    }
+    if (typeof borderRadius.sm === "string") {
+      cssVars.push(`--radius-sm: ${borderRadius.sm};`);
+    }
+  }
+
+  if (cssVars.length === 0) return "";
+
+  return `*,::before,::after,::backdrop {\n  ${cssVars.join("\n  ")}\n}`;
+}
+
+export const CanvasTailwind = ({
+  children,
+  config,
+}: {
+  children?: React.ReactNode;
+  config?: Record<string, unknown>;
+}) => {
+  const cssOverrides = config ? generateCanvasThemeCss(config) : "";
+  return (
+    <>
+      {cssOverrides && (
+        <style dangerouslySetInnerHTML={{ __html: cssOverrides }} />
+      )}
+      {children}
+    </>
+  );
+};
+CanvasTailwind.displayName = "CanvasTailwind";
+
+/**
  * Email canvas renderer.
  * Uses a canvas-specific registry that replaces structural HTML elements
  * (Html, Head, Preview) with safe div/null substitutes so they render
@@ -85,6 +193,11 @@ export function EmailCanvasRenderer({
     if (base.Head) base.Head = { ...base.Head, component: NullComponent };
     if (base.Preview) base.Preview = { ...base.Preview, component: NullComponent };
     if (base.Body) base.Body = { ...base.Body, component: CanvasBody };
+    // Replace the @react-email Tailwind component with a canvas-safe substitute.
+    // The real Tailwind component uses mapReactTree to inline styles by calling
+    // component functions directly — this breaks when those components use hooks.
+    // CanvasTailwind instead injects theme colors as CSS custom property overrides.
+    if (base.Tailwind) base.Tailwind = { ...base.Tailwind, component: CanvasTailwind };
     return base;
   }, [componentRegistry]);
 
