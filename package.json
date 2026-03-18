@@ -13,8 +13,9 @@
     "lint": "next lint",
     "scan": "next dev & npx react-scan@latest http://localhost:3000",
     "build-registry": "npx tsx scripts/build.ts",
+    "build-email-registry": "npx tsx scripts/build-email-registry.ts",
     "build-shadcn-registry": "npx tsx scripts/build-shadcn-registry.ts",
-    "build-all-registries": "npm run build-registry && npm run build-shadcn-registry",
+    "build-all-registries": "npm run build-registry && npm run build-shadcn-registry && npm run build-email-registry",
     "sync-shadcn": "npx tsx scripts/sync-shadcn-components.ts",
     "host-registry": "npx http-server registry"
   },
@@ -51,6 +52,8 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@react-email/components": "1.0.9",
+    "@react-email/render": "2.0.4",
     "@tiptap/extension-bubble-menu": "^3.14.0",
     "@tiptap/extension-code-block-lowlight": "^3.14.0",
     "@tiptap/extension-color": "^3.14.0",
@@ -100,6 +103,7 @@
     "tailwind-merge": "^2.5.2",
     "tiptap-markdown": "^0.8.10",
     "vaul": "^1.1.2",
+    "web-streams-polyfill": "4.2.0",
     "zod": "^4.3.5",
     "zundo": "^2.1.0",
     "zustand": "^4.5.5"

@@ -82,7 +82,7 @@ main() {
     # Step 1: Build all registries
     step "Building all registries"
     cd "$PROJECT_ROOT"
-    npm run build-all-registries
+    UI_BUILDER_BLOCK_REGISTRY_URL="http://localhost:$SERVER_PORT/block-registry.json" npm run build-all-registries
     success "All registries built successfully"
 
     # Step 2: Start HTTP server to host the registry (using http-server like package.json)
@@ -93,14 +93,17 @@ main() {
     npx --yes http-server registry -p $SERVER_PORT -c-1 --silent &
     SERVER_PID=$!
     
-    # Wait for server to start
-    sleep 3
-    
-    # Verify server is running
-    if ! curl -s "http://localhost:$SERVER_PORT/block-registry.json" > /dev/null; then
-        error "Failed to start HTTP server or registry not accessible"
-        exit 1
-    fi
+    # Wait for server (npx may need time to download http-server)
+    for i in $(seq 1 20); do
+        sleep 2
+        if curl -s "http://localhost:$SERVER_PORT/block-registry.json" > /dev/null; then
+            break
+        fi
+        if [ "$i" -eq 20 ]; then
+            error "Failed to start HTTP server or registry not accessible"
+            exit 1
+        fi
+    done
     success "HTTP server started (PID: $SERVER_PID)"
     success "Registry accessible at http://localhost:$SERVER_PORT/block-registry.json"
 
@@ -117,7 +120,6 @@ main() {
         --app \
         --src-dir \
         --no-import-alias \
-        --turbopack \
         --yes
     
     success "Next.js project created at $TEST_DIR/test-app"
@@ -133,19 +135,108 @@ main() {
     # Step 5: Initialize shadcn with the registry
     step "Initializing shadcn with ui-builder registry"
     
-    npx --yes shadcn@latest init "http://localhost:$SERVER_PORT/block-registry.json" \
-        --yes \
-        --base-color zinc
+    npx --yes shadcn@4.0.5 init "http://localhost:$SERVER_PORT/block-registry.json" \
+        --defaults \
+        --force \
+        --base radix
     
     success "shadcn initialized with ui-builder registry"
 
     # Step 5b: Install shadcn components registry (optional add-on)
     step "Installing shadcn components registry"
 
-    npx --yes shadcn@latest add "http://localhost:$SERVER_PORT/shadcn-components-registry.json" \
+    npx --yes shadcn@4.0.5 add "http://localhost:$SERVER_PORT/shadcn-components-registry.json" \
         --yes --overwrite
 
     success "shadcn components registry installed"
+
+    # Step 5c: Install react-email components registry
+    step "Installing react-email components registry"
+
+    npx --yes shadcn@4.0.5 add "http://localhost:$SERVER_PORT/react-email-components-registry.json" \
+        --yes --overwrite
+
+    success "react-email components registry installed"
+
+    # Step 5d: Pin tiptap to 3.20.1 (post-install to avoid EOVERRIDE conflict with direct deps)
+    step "Pinning tiptap packages to 3.20.1"
+    node -e "
+const fs = require('fs');
+const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+const V = '3.20.1';
+const pkgs = ['@tiptap/core','@tiptap/react','@tiptap/pm','@tiptap/starter-kit','@tiptap/extensions','@tiptap/markdown','@tiptap/extension-blockquote','@tiptap/extension-bold','@tiptap/extension-bubble-menu','@tiptap/extension-bullet-list','@tiptap/extension-code','@tiptap/extension-code-block','@tiptap/extension-code-block-lowlight','@tiptap/extension-color','@tiptap/extension-document','@tiptap/extension-dropcursor','@tiptap/extension-floating-menu','@tiptap/extension-gapcursor','@tiptap/extension-hard-break','@tiptap/extension-heading','@tiptap/extension-horizontal-rule','@tiptap/extension-image','@tiptap/extension-italic','@tiptap/extension-link','@tiptap/extension-list','@tiptap/extension-list-item','@tiptap/extension-list-keymap','@tiptap/extension-ordered-list','@tiptap/extension-paragraph','@tiptap/extension-strike','@tiptap/extension-table','@tiptap/extension-text','@tiptap/extension-text-style','@tiptap/extension-typography','@tiptap/extension-underline'];
+pkg.overrides = pkg.overrides || {};
+for (const p of pkgs) { if (pkg.dependencies?.[p]) pkg.dependencies[p] = V; pkg.overrides[p] = V; }
+fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2));
+"
+    npm install
+    success "Tiptap packages pinned to 3.20.1"
+
+    # minimal-tiptap CSS uses @reference "../../../global.css" (Tailwind v4) which expects the
+    # globals at src/components/global.css, but Next.js places it at src/app/globals.css
+    mkdir -p src/components
+    cp src/app/globals.css src/components/global.css
+
+    # Step 5e: Write a minimal email builder page that wires emailPageRenderer + emailCodeGenerator
+    step "Writing email builder test page"
+
+    mkdir -p src/app/email-test
+    cat > src/app/email-test/page.tsx << 'EMAILPAGE'
+
+"use client";
+
+import UIBuilder from "@/components/ui/ui-builder";
+import { reactEmailComponentDefinitions } from "@/lib/ui-builder/registry/react-email-component-definitions";
+import {
+  emailPageRenderer,
+  emailCodeGenerator,
+} from "@/lib/ui-builder/email/email-builder-utils";
+
+const initialLayers = [
+  {
+    id: "email-page-1",
+    type: "Html",
+    name: "Email 1",
+    pageType: "email",
+    props: { lang: "en" },
+    children: [
+      {
+        id: "email-body-1",
+        type: "Body",
+        name: "Body",
+        props: {},
+        children: [
+          {
+            id: "email-text-1",
+            type: "Text",
+            name: "Text",
+            props: {},
+            children: "Hello from UIBuilder Email!",
+          },
+        ],
+      },
+    ],
+  },
+];
+
+export default function EmailTestPage() {
+  return (
+    <main className="flex flex-col h-dvh">
+      <UIBuilder
+        initialLayers={initialLayers}
+        persistLayerStore={false}
+        componentRegistry={reactEmailComponentDefinitions}
+        pageTypeRenderers={{ email: emailPageRenderer }}
+        pageTypeCodeGenerators={{ email: emailCodeGenerator }}
+        allowPagesCreation
+        allowPagesDeletion
+      />
+    </main>
+  );
+}
+EMAILPAGE
+
+    success "Email builder test page written to src/app/email-test/page.tsx"
 
     # Step 6: Add @ts-nocheck to files with known TypeScript issues from external registries
     step "Adding @ts-nocheck to problematic files"
@@ -159,10 +250,12 @@ main() {
         fi
     }
     
+
     # Files with known TypeScript issues
+
     add_ts_nocheck "src/components/ui/minimal-tiptap/components/image/image-edit-block.tsx"
     add_ts_nocheck "src/components/ui/ui-builder/index.tsx"
-    
+
     success "TypeScript nocheck directives added"
 
     # Step 7: Apply TypeScript configuration patches if needed
@@ -204,7 +297,7 @@ console.log('TypeScript config patched');
 
     # Step 9: Build the project
     step "Building the Next.js project"
-    npm run build
+    npm run build -- --webpack
     success "Project built successfully!"
 
     # Mark test as passed

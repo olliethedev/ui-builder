@@ -36,6 +36,7 @@ const smokeRoutes = [
   { label: "New (Empty)", href: "/smoke/new" },
   { label: "Populated", href: "/smoke/populated" },
   { label: "With Blocks", href: "/smoke/with-blocks" },
+  { label: "Email Builder", href: "/smoke/email" },
 ];
 
 export default function Page() {

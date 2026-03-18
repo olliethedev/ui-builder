@@ -88,6 +88,11 @@ export type ConfigItem = {
 export type ConfigType = {
   [key: string]: ConfigItem;
 };
+
+export type ClassNameControlProfile = {
+  allowedConfigKeys?: readonly string[];
+  allowedClassNames?: readonly string[];
+};
 export const CONFIG: ConfigType = {
   width: {
     label: "Width",
@@ -758,3 +763,176 @@ export const LAYOUT_ORDER: Array<
     { type: "item", key: "border", className: "w-fit mr-2" },
     { type: "item", key: "boxShadow", className: "w-fit" },
   ];
+
+export const EMAIL_CLASSNAME_CONTROL_PROFILE: ClassNameControlProfile = {
+  allowedClassNames: [
+    ...TAILWIND_AUTO_WIDTH_CLASSES,
+    ...TAILWIND_FIXED_WIDTH_CLASSES,
+    ...TAILWIND_PERCENTAGE_WIDTH_CLASSES,
+    ...TAILWIND_AUTO_HEIGHT_CLASSES,
+    ...TAILWIND_FIXED_HEIGHT_CLASSES,
+    ...TAILWIND_PERCENTAGE_HEIGHT_CLASSES,
+    ...TAILWIND_BORDER_WIDTH_CLASSES,
+    ...SHADCN_TAILWIND_BORDER_COLOR_CLASSES,
+    ...TAILWIND_BORDER_COLOR_CLASSES,
+    ...TAILWIND_CORNER_RADIUS_CLASSES,
+    ...TAILWIND_BACKGROUND_COLOR_CLASSES,
+    ...SHADCN_TAILWIND_BACKGROUND_COLOR_CLASSES,
+    ...TAILWIND_OPACITY_CLASSES,
+    ...TAILWIND_TEXT_ALIGN_CLASSES,
+    ...TAILWIND_LETTER_SPACING_CLASSES,
+    ...TAILWIND_LINE_HEIGHT_CLASSES,
+    ...TAILWIND_FONT_SIZE_CLASSES,
+    ...TAILWIND_FONT_WEIGHT_CLASSES,
+    ...SHADCN_TAILWIND_TEXT_COLOR_CLASSES,
+    ...TAILWIND_TEXT_COLOR_CLASSES,
+    ...TAILWIND_BOX_SHADOW_CLASSES,
+    ...TAILWIND_BOX_SHADOW_COLOR_CLASSES,
+    ...TAILWIND_DISPLAY_CLASSES,
+    ...TAILWIND_GAP_CLASSES,
+    ...TAILWIND_FLEX_DIRECTION_CLASSES,
+    ...TAILWIND_JUSTIFY_CONTENT_CLASSES,
+    ...TAILWIND_ALIGN_ITEMS_CLASSES,
+    ...TAILWIND_FLEX_WRAP_CLASSES,
+    ...TAILWIND_PADDING_CLASSES,
+    ...TAILWIND_HORIZONTAL_PADDING_CLASSES,
+    ...TAILWIND_VERTICAL_PADDING_CLASSES,
+    ...TAILWIND_TOP_PADDING_CLASSES,
+    ...TAILWIND_RIGHT_PADDING_CLASSES,
+    ...TAILWIND_BOTTOM_PADDING_CLASSES,
+    ...TAILWIND_LEFT_PADDING_CLASSES,
+    ...TAILWIND_MARGIN_CLASSES,
+    ...TAILWIND_HORIZONTAL_MARGIN_CLASSES,
+    ...TAILWIND_VERTICAL_MARGIN_CLASSES,
+    ...TAILWIND_TOP_MARGIN_CLASSES,
+    ...TAILWIND_RIGHT_MARGIN_CLASSES,
+    ...TAILWIND_BOTTOM_MARGIN_CLASSES,
+    ...TAILWIND_LEFT_MARGIN_CLASSES,
+  ],
+};
+
+type LayoutGroup = (typeof LAYOUT_GROUPS)[number];
+type LayoutOrderEntry = (typeof LAYOUT_ORDER)[number];
+
+function normalizeClassToken(token: string): string {
+  if (!token.includes(":")) {
+    return token;
+  }
+  const parts = token.split(":");
+  return parts[parts.length - 1] ?? token;
+}
+
+function isTokenAllowed(token: string | null, allowed: Set<string>): boolean {
+  if (!token) return true;
+  if (allowed.has(token)) return true;
+  return allowed.has(normalizeClassToken(token));
+}
+
+export function resolveClassNameControlConfig(profile?: ClassNameControlProfile): {
+  config: ConfigType;
+  layoutGroups: LayoutGroup[];
+  layoutOrder: LayoutOrderEntry[];
+  allowedClassNames?: readonly string[];
+} {
+  if (!profile) {
+    return {
+      config: CONFIG,
+      layoutGroups: LAYOUT_GROUPS,
+      layoutOrder: LAYOUT_ORDER,
+    };
+  }
+
+  const allowedKeys = profile.allowedConfigKeys
+    ? new Set(profile.allowedConfigKeys)
+    : null;
+  const allowedClassNames = profile.allowedClassNames;
+  const allowedClassSet = allowedClassNames
+    ? new Set(allowedClassNames)
+    : null;
+
+  const filteredConfigEntries = Object.entries(CONFIG).flatMap(([key, item]) => {
+    if (allowedKeys && !allowedKeys.has(key)) {
+      return [];
+    }
+
+    if (!allowedClassSet) {
+      return [[key, item] as const];
+    }
+
+    const possibleTypes = item.possibleTypes.filter((possibleType) =>
+      possibleType === null ? true : isTokenAllowed(possibleType, allowedClassSet)
+    );
+
+    const options = item.options.flatMap((option) => {
+      if (option.dropdown) {
+        const items = option.dropdown.items.filter((dropdownItem) =>
+          isTokenAllowed(dropdownItem.value, allowedClassSet)
+        );
+        if (items.length === 0) {
+          return [];
+        }
+        return [
+          {
+            ...option,
+            dropdown: {
+              ...option.dropdown,
+              items,
+            },
+          },
+        ];
+      }
+
+      if (option.value.startsWith("_")) {
+        return [option];
+      }
+
+      return isTokenAllowed(option.value, allowedClassSet) ? [option] : [];
+    });
+
+    if (possibleTypes.length <= 1 && options.length === 0) {
+      return [];
+    }
+
+    return [
+      [
+        key,
+        {
+          ...item,
+          possibleTypes,
+          options,
+        },
+      ] as const,
+    ];
+  });
+
+  const config = Object.fromEntries(filteredConfigEntries) as ConfigType;
+  const existingKeys = new Set(Object.keys(config));
+
+  const layoutGroups: LayoutGroup[] = LAYOUT_GROUPS.flatMap((group) => {
+    const keys = group.keys.filter((key) => existingKeys.has(key));
+    if (keys.length === 0) {
+      return [];
+    }
+    return [
+      {
+        ...group,
+        keys,
+      },
+    ];
+  });
+
+  const layoutGroupLabels = new Set(layoutGroups.map((group) => group.label));
+  const layoutOrder = LAYOUT_ORDER.filter((entry) => {
+    if (entry.type === "item") {
+      return existingKeys.has(String(entry.key));
+    }
+    return layoutGroupLabels.has(entry.label);
+  });
+
+  return {
+    config,
+    layoutGroups,
+    layoutOrder,
+    allowedClassNames,
+  };
+}

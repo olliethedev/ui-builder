@@ -11,7 +11,7 @@ import { ErrorFallback } from "@/components/ui/ui-builder/internal/components/er
 import { isPrimitiveComponent } from "@/lib/ui-builder/store/editor-utils";
 import { hasLayerChildren, canLayerAcceptChildren, findLayerRecursive } from "@/lib/ui-builder/store/layer-utils";
 import { DevProfiler } from "@/components/ui/ui-builder/internal/components/dev-profiler";
-import type { ComponentRegistry, ComponentLayer, Variable, PropValue, FunctionRegistry } from '@/components/ui/ui-builder/types';
+import type { ComponentRegistry, ComponentLayer, Variable, PropValue, FunctionRegistry, EditorConfig } from '@/components/ui/ui-builder/types';
 import { isVariableReference } from '@/components/ui/ui-builder/types';
 import { useLayerStore } from "@/lib/ui-builder/store/layer-store";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
@@ -75,13 +75,8 @@ function isLayerBeingDraggedOrDescendant(
   return false;
 }
 
-export interface EditorConfig {
-  zIndex: number;
-  totalLayers: number;
-  selectedLayer: ComponentLayer;
-  parentUpdated?: boolean;
-  onSelectElement: (layerId: string) => void;
-}
+// EditorConfig is defined in types.ts and re-exported here for convenience
+export type { EditorConfig };
 
 
 
@@ -288,33 +283,45 @@ export const RenderLayer: React.FC<{
 
     if (!editorConfig) {
       return DragFeedbackWrapper;
-    } else {
-      const {
-        zIndex,
-        totalLayers,
-        selectedLayer,
-        onSelectElement,
-      } = editorConfig;
+    }
 
+    // Components with skipEditorWrapper render without the ElementSelector overlay.
+    // This is required for structural HTML elements (<html>, <head>, <body>) that
+    // cannot legally be children of the <span> MeasureRange uses internally.
+    // These layers are still accessible via the layer tree panel.
+    if (componentDefinition?.skipEditorWrapper) {
       return (
-        <DevProfiler
-          id={layer.type}
-          threshold={20}
-        >
-          <ElementSelector
-            key={layer.id}
-            layer={layer}
-            zIndex={zIndex}
-            isSelected={layer.id === selectedLayer?.id}
-            onSelectElement={onSelectElement}
-            isPageLayer={isLayerAPage}
-            totalLayers={totalLayers}
-          >
-            {DragFeedbackWrapper}
-          </ElementSelector>
+        <DevProfiler id={layer.type} threshold={20}>
+          {DragFeedbackWrapper}
         </DevProfiler>
       );
     }
+
+    const {
+      zIndex,
+      totalLayers,
+      selectedLayer,
+      onSelectElement,
+    } = editorConfig;
+
+    return (
+      <DevProfiler
+        id={layer.type}
+        threshold={20}
+      >
+        <ElementSelector
+          key={layer.id}
+          layer={layer}
+          zIndex={zIndex}
+          isSelected={layer.id === selectedLayer?.id}
+          onSelectElement={onSelectElement}
+          isPageLayer={isLayerAPage}
+          totalLayers={totalLayers}
+        >
+          {DragFeedbackWrapper}
+        </ElementSelector>
+      </DevProfiler>
+    );
   },
   (prevProps, nextProps) => {
     if(nextProps.editorConfig?.parentUpdated) {

@@ -272,6 +272,21 @@ describe("UIBuilder Component", () => {
     const componentEditor = await screen.findByTestId("component-editor");
     expect(componentEditor).toBeInTheDocument();
   });
+
+  it("UIBuilder: hides TailwindThemePanel when tailwindThemePanel is false", async () => {
+    const user = userEvent.setup();
+    render(
+      <UIBuilder
+        componentRegistry={componentRegistry}
+        tailwindThemePanel={false}
+      />
+    );
+
+    await screen.findByTestId("component-editor");
+    await user.click(screen.getByRole("tab", { name: "Appearance" }));
+    expect(screen.queryByTestId("tailwind-theme-panel")).not.toBeInTheDocument();
+  });
+
 });
 
 describe("PageConfigPanel Component", () => {
@@ -452,6 +467,21 @@ describe("Exported Functions", () => {
     expect(result.layers.title).toBe("Layers");
     expect(result.appearance?.title).toBe("Appearance");
     expect(result.data?.title).toBe("Data");
+  });
+
+  it("defaultConfigTabsContent: omits TailwindThemePanel when override is false", () => {
+    const result = defaultConfigTabsContent(false);
+    render(<>{result.appearance?.content}</>);
+    expect(screen.queryByTestId("tailwind-theme-panel")).not.toBeInTheDocument();
+  });
+
+  it("defaultConfigTabsContent: renders custom Tailwind panel override", () => {
+    const result = defaultConfigTabsContent(
+      <div data-testid="custom-default-tailwind-panel">Custom Panel</div>
+    );
+    render(<>{result.appearance?.content}</>);
+    expect(screen.getByTestId("custom-default-tailwind-panel")).toBeInTheDocument();
+    expect(screen.queryByTestId("tailwind-theme-panel")).not.toBeInTheDocument();
   });
 
   it("getDefaultPanelConfigValues: returns default panel configuration", () => {
