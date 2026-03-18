@@ -765,7 +765,6 @@ export const LAYOUT_ORDER: Array<
   ];
 
 export const EMAIL_CLASSNAME_CONTROL_PROFILE: ClassNameControlProfile = {
-  allowedConfigKeys: Object.keys(CONFIG),
   allowedClassNames: [
     ...TAILWIND_AUTO_WIDTH_CLASSES,
     ...TAILWIND_FIXED_WIDTH_CLASSES,
