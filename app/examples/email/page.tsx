@@ -1,7 +1,3 @@
-"use client";
-
-import "web-streams-polyfill/polyfill";
-
 import { EmailBuilder } from "app/platform/email-builder";
 
 export default function EmailExamplePage() {

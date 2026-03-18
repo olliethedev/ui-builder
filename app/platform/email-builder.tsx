@@ -7,6 +7,7 @@
  * @/lib/ui-builder/email/email-builder-utils (part of the email registry).
  */
 
+import "web-streams-polyfill/polyfill";
 import React from "react";
 import UIBuilder from "@/components/ui/ui-builder";
 import { reactEmailComponentDefinitions } from "@/lib/ui-builder/registry/react-email-component-definitions";
