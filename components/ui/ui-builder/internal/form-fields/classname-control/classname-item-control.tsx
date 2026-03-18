@@ -197,9 +197,9 @@ export function ClassNameItemControl({ value, onChange, classProfile }: ClassNam
           // Remove all classes in classesToClear from state for all keys in the group except the selected one
           for (const k of group.keys) {
             if (k !== key) {
-              const config = configByKey[k];
-              if (!config) continue;
-              if (config.multiple && Array.isArray(newState[k])) {
+              const keyConfig = config[k];
+              if (!keyConfig) continue;
+              if (keyConfig.multiple && Array.isArray(newState[k])) {
                 newState[k] = (newState[k] as string[]).filter(
                   (v) => !classesToClear.includes(v as any)
                 );
@@ -220,8 +220,6 @@ export function ClassNameItemControl({ value, onChange, classProfile }: ClassNam
         });
       }
     };
-
-    const configByKey = config;
   
     // Call onChange with the new class string after state/unhandled change
     useEffect(() => {
@@ -241,7 +239,7 @@ export function ClassNameItemControl({ value, onChange, classProfile }: ClassNam
               const selectedKey = selectedKeys[group.label] || keys[0];
               if (entry.isVisible && !entry.isVisible(state)) return null;
               if (!selectedKey) return null;
-              const groupConfig = configByKey[selectedKey as keyof typeof configByKey];
+              const groupConfig = config[selectedKey as keyof typeof config];
               if (!groupConfig) return null;
   
               return (
@@ -259,7 +257,7 @@ export function ClassNameItemControl({ value, onChange, classProfile }: ClassNam
             } else if (entry.type === "item") {
               if (entry.isVisible && !entry.isVisible(state)) return null;
               const configKey = entry.key;
-              const ungroupedConfig = configByKey[configKey];
+              const ungroupedConfig = config[configKey];
               if (!ungroupedConfig) return null;
               return (
                 <div key={configKey} className={cn("w-full", entry.className)} data-testid={`item-${configKey}`}>
