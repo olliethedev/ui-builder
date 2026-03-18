@@ -298,8 +298,10 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
     className: "contents",
     page: selectedPage,
     editorConfig: editorConfig,
-    componentRegistry: componentRegistry
-  }), [selectedPage, editorConfig, componentRegistry]);
+    componentRegistry: componentRegistry,
+    variables: variables,
+    functionRegistry: functionRegistry,
+  }), [selectedPage, editorConfig, componentRegistry, variables, functionRegistry]);
 
   const getPageTypeRenderer = useEditorStore((state) => state.getPageTypeRenderer);
   const pageTypeRenderer = useMemo(
