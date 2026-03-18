@@ -28,8 +28,8 @@ test.describe('Email Builder (/smoke/email)', () => {
     // The page should render the smoke-email-page test id
     await expect(page.getByTestId('smoke-email-page')).toBeVisible();
 
-    // The current page "Email 1" should be shown in the nav
-    await expect(page.getByTestId('current-page-button')).toContainText('Email 1');
+    // The current page "Welcome Email" should be shown in the nav
+    await expect(page.getByTestId('current-page-button')).toContainText('Welcome Email');
   });
 
   test('shows the layers tree with email components', async ({ page }) => {
@@ -37,7 +37,7 @@ test.describe('Email Builder (/smoke/email)', () => {
     await expect(layersTree).toBeVisible();
 
     // The initial template has Html, Head, Preview, Body layers
-    await expect(layersTree).toContainText('Email 1');
+    await expect(layersTree).toContainText('Welcome Email');
   });
 
   test('page type selector appears when creating a new page', async ({ page }) => {
@@ -123,9 +123,9 @@ test.describe('Email Builder (/smoke/email)', () => {
 
     // The iframe should contain the initial email body text from the template
     const frameLocator = page.frameLocator('[data-testid="auto-frame"]').first();
-    await expect(frameLocator.getByText('Hello from UIBuilder Email!')).toBeVisible({ timeout: 10000 });
-    await expect(frameLocator.getByText('Edit this email template using the UIBuilder editor.')).toBeVisible();
-    await expect(frameLocator.getByText('Get Started')).toBeVisible();
+    await expect(frameLocator.getByText('Build beautiful emails — visually.')).toBeVisible({ timeout: 10000 });
+    await expect(frameLocator.getByText(/UIBuilder gives your team a Figma-style editor/)).toBeVisible();
+    await expect(frameLocator.getByText(/Get Started/)).toBeVisible();
   });
 
   test('can select a layer in the email page', async ({ page }) => {
