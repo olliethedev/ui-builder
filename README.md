@@ -38,6 +38,22 @@ Install the full shadcn component library with 54 pre-configured components and 
 npx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/shadcn-components-registry.json
 ```
 
+### Optional: Add React Email Support
+
+Install the react-email registry when you are building email templates in UI Builder:
+
+```bash
+npx shadcn@latest add https://raw.githubusercontent.com/olliethedev/ui-builder/main/registry/react-email-components-registry.json
+```
+
+This installs the react-email component registry plus email-specific builder utilities (`emailPageRenderer`, `emailCodeGenerator`, and `DEFAULT_EMAIL_TAILWIND_CONFIG`).
+
+For Safari/iOS compatibility with `@react-email/render`, add this import at the top of your email route entry file:
+
+```ts
+import "web-streams-polyfill/polyfill";
+```
+
 ### Handling Peer Dependencies
 
 If you encounter peer dependency warnings (common with React 19), create a `.npmrc` file:
@@ -73,6 +89,26 @@ const myComponentRegistry: ComponentRegistry = {
 export function App() {
   return <UIBuilder componentRegistry={myComponentRegistry} />;
 }
+```
+
+### Tailwind Theme Panel Override
+
+You can override or hide the default `TailwindThemePanel` in the Appearance tab without replacing full panel wiring:
+
+```tsx
+<UIBuilder
+  componentRegistry={myComponentRegistry}
+  tailwindThemePanel={false} // hide panel
+/>
+```
+
+Or provide your own custom node:
+
+```tsx
+<UIBuilder
+  componentRegistry={myComponentRegistry}
+  tailwindThemePanel={<MyCustomThemePanel />}
+/>
 ```
 
 ## Documentation

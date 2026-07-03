@@ -108,6 +108,7 @@ describe("LayerMenu", () => {
       if (typeof selector === 'function') {
         return selector({
           registry: mockRegistry,
+          getFilteredRegistry: jest.fn().mockReturnValue(mockRegistry),
           allowPagesCreation: true,
           allowPagesDeletion: true,
         } as any);

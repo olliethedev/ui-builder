@@ -65,6 +65,9 @@ import {
 import type {
   ComponentRegistry,
   ComponentLayer,
+  PageTypeRenderer,
+  Variable,
+  FunctionRegistry,
 } from "@/components/ui/ui-builder/types";
 import {
   Tooltip,
@@ -90,7 +93,10 @@ export interface NavBarProps {
 export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBarProps = {}) {
   const selectedPageId = useLayerStore((state) => state.selectedPageId);
   const findLayerById = useLayerStore((state) => state.findLayerById);
+  const variables = useLayerStore((state) => state.variables);
   const componentRegistry = useEditorStore((state) => state.registry);
+  const getPageTypeRenderer = useEditorStore((state) => state.getPageTypeRenderer);
+  const functionRegistry = useEditorStore((state) => state.functionRegistry);
   const incrementRevision = useEditorStore((state) => state.incrementRevision);
   
   // Panel visibility state
@@ -111,6 +117,10 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
   const { undo, redo } = useLayerStore.temporal.getState();
 
   const page = findLayerById(selectedPageId) as ComponentLayer;
+  const pageTypeRenderer = useMemo(
+    () => getPageTypeRenderer?.(page?.pageType ?? ""),
+    [getPageTypeRenderer, page?.pageType]
+  );
 
   const canUndo = !!pastStates.length;
   const canRedo = !!futureStates.length;
@@ -283,6 +293,9 @@ export function NavBar({ leftChildren, rightChildren, showExport = true }: NavBa
         onOpenChange={setIsPreviewModalOpen}
         page={page}
         componentRegistry={componentRegistry}
+        pageTypeRenderer={pageTypeRenderer}
+        variables={variables}
+        functionRegistry={functionRegistry}
       />
       {showExport && (
         <CodeDialog
@@ -493,6 +506,9 @@ interface PreviewDialogProps {
   onOpenChange: (open: boolean) => void;
   page: ComponentLayer;
   componentRegistry: ComponentRegistry;
+  pageTypeRenderer?: PageTypeRenderer;
+  variables?: Variable[];
+  functionRegistry?: FunctionRegistry;
 }
 
 const PreviewDialog: React.FC<PreviewDialogProps> = ({
@@ -500,6 +516,9 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
   onOpenChange,
   page,
   componentRegistry,
+  pageTypeRenderer,
+  variables,
+  functionRegistry,
 }) => {
   const style = useMemo(() => ({ zIndex: Z_INDEX + 1 }), []);
 
@@ -531,11 +550,22 @@ const PreviewDialog: React.FC<PreviewDialogProps> = ({
             <span className="text-lg font-semibold">Page Preview</span>
           </DialogTitle>
         </DialogHeader>
-        <LayerRenderer
-          className="w-full h-full flex flex-col overflow-x-hidden"
-          page={page}
-          componentRegistry={componentRegistry}
-        />
+        {pageTypeRenderer
+          ? pageTypeRenderer.renderEditorCanvas({
+              page,
+              componentRegistry,
+              variables,
+              functionRegistry,
+            })
+          : (
+            <LayerRenderer
+              className="w-full h-full flex flex-col overflow-x-hidden"
+              page={page}
+              componentRegistry={componentRegistry}
+              variables={variables}
+              functionRegistry={functionRegistry}
+            />
+          )}
       </DialogContentWithZIndex>
     </Dialog>
   );
@@ -633,9 +663,14 @@ function PagesPopover() {
     selectedPageId
   );
   const [textInputValue, setTextInputValue] = useState("");
+  const [selectedPageType, setSelectedPageType] = useState<string | undefined>(undefined);
+  const [pageNameError, setPageNameError] = useState<string | null>(null);
   const allowPagesCreation = useEditorStore(
     (state) => state.allowPagesCreation
   );
+  const pageTypeRenderers = useEditorStore((state) => state.pageTypeRenderers);
+  const pageTypeKeys = useMemo(() => Object.keys(pageTypeRenderers), [pageTypeRenderers]);
+  const hasPageTypes = pageTypeKeys.length > 0;
 
   const selectedPageData = useMemo(() => {
     return pages.find((page) => page.id === selectedPageId);
@@ -652,10 +687,35 @@ function PagesPopover() {
 
   const handleAddPageLayer = useCallback(
     (pageName: string) => {
-      addPageLayer(pageName);
+      const trimmedPageName = pageName.trim();
+      if (!trimmedPageName) {
+        setPageNameError("Page name is required.");
+        return;
+      }
+      const renderer = selectedPageType ? pageTypeRenderers[selectedPageType] : undefined;
+      addPageLayer(
+        trimmedPageName,
+        selectedPageType,
+        renderer?.defaultRootLayerType,
+        renderer?.defaultRootLayerProps,
+      );
       setTextInputValue("");
+      setSelectedPageType(undefined);
+      setPageNameError(null);
     },
-    [addPageLayer, setTextInputValue]
+    [addPageLayer, selectedPageType, pageTypeRenderers]
+  );
+
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (!nextOpen) {
+        setTextInputValue("");
+        setSelectedPageType(undefined);
+        setPageNameError(null);
+      }
+      setOpen(nextOpen);
+    },
+    []
   );
 
   const handleSubmit = useCallback(
@@ -669,8 +729,11 @@ function PagesPopover() {
   const handleTextInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setTextInputValue(e.target.value);
+      if (pageNameError !== null) {
+        setPageNameError(null);
+      }
     },
-    [setTextInputValue]
+    [pageNameError]
   );
 
   const handleKeyDown = useCallback(
@@ -685,25 +748,64 @@ function PagesPopover() {
 
   const style = useMemo(() => ({ zIndex: Z_INDEX + 1 }), []);
 
+  const pageTypeSelector = hasPageTypes ? (
+    <div className="flex gap-1 flex-wrap mb-2" data-testid="page-type-selector">
+      <button
+        type="button"
+        onClick={() => setSelectedPageType(undefined)}
+        className={cn(
+          "px-2 py-0.5 text-xs rounded-full border transition-colors",
+          selectedPageType === undefined
+            ? "bg-primary text-primary-foreground border-primary"
+            : "bg-background text-muted-foreground border-border hover:border-foreground"
+        )}
+      >
+        Web
+      </button>
+      {pageTypeKeys.map((key) => (
+        <button
+          key={key}
+          type="button"
+          onClick={() => setSelectedPageType(key)}
+          className={cn(
+            "px-2 py-0.5 text-xs rounded-full border transition-colors",
+            selectedPageType === key
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-background text-muted-foreground border-border hover:border-foreground"
+          )}
+        >
+          {pageTypeRenderers[key]?.label ?? key}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
   const textInputForm = (
     <form className="w-full" onSubmit={handleSubmit}>
+      {pageTypeSelector}
       <div className="w-full flex items-center space-x-2">
         <Input
-          className="w-full flex-grow"
+          className="w-full grow"
           placeholder="New page name..."
           value={textInputValue}
           onChange={handleTextInputChange}
           onKeyDown={handleKeyDown}
+          aria-invalid={pageNameError !== null}
         />
-        <Button type="submit" variant="secondary">
+        <Button type="submit" variant="secondary" disabled={!textInputValue.trim()}>
           <PlusIcon className="w-4 h-4" />
         </Button>
       </div>
+      {pageNameError !== null ? (
+        <p className="mt-2 text-xs text-destructive" role="alert">
+          {pageNameError}
+        </p>
+      ) : null}
     </form>
   );
   return (
     <div className="relative flex justify-center">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={handleOpenChange}>
         <Tooltip>
           <PopoverTrigger asChild>
             <TooltipTrigger asChild>
@@ -711,6 +813,7 @@ function PagesPopover() {
                 variant="outline"
                 size="default"
                 className="max-w-30 overflow-hidden"
+                data-testid="current-page-button"
               >
                 {selectedPageData?.name}
               </Button>

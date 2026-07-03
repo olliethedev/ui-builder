@@ -18,10 +18,14 @@ interface RegistryConfig {
     targetFunction?: (path: string) => string;
 }
 
-// Files to exclude from the core registry (they go in shadcn-components-registry.json)
+// Files to exclude from the core registry (they go in their own separate registries)
 const excludePatterns = [
     'shadcn-component-definitions.ts',
     'block-definitions.ts',
+    'react-email-component-definitions.ts',
+    'email-builder-utils.tsx',
+    'email-theme-config.ts',
+    'email-tailwind-theme-panel.tsx',
 ];
 
 const registryConfigs: RegistryConfig[] = [
@@ -150,7 +154,42 @@ function getDependencies(): string[] {
         "react-zoom-pan-pinch",
         "object-hash",
         "@floating-ui/react",
-        "react-resizable-panels"
+        "react-resizable-panels",
+        "@tiptap/core@3.20.1",
+        "@tiptap/react@3.20.1",
+        "@tiptap/pm@3.20.1",
+        "@tiptap/starter-kit@3.20.1",
+        "@tiptap/extensions@3.20.1",
+        "@tiptap/markdown@3.20.1",
+        "@tiptap/extension-blockquote@3.20.1",
+        "@tiptap/extension-bold@3.20.1",
+        "@tiptap/extension-bubble-menu@3.20.1",
+        "@tiptap/extension-bullet-list@3.20.1",
+        "@tiptap/extension-code@3.20.1",
+        "@tiptap/extension-code-block@3.20.1",
+        "@tiptap/extension-code-block-lowlight@3.20.1",
+        "@tiptap/extension-color@3.20.1",
+        "@tiptap/extension-document@3.20.1",
+        "@tiptap/extension-dropcursor@3.20.1",
+        "@tiptap/extension-floating-menu@3.20.1",
+        "@tiptap/extension-gapcursor@3.20.1",
+        "@tiptap/extension-hard-break@3.20.1",
+        "@tiptap/extension-heading@3.20.1",
+        "@tiptap/extension-horizontal-rule@3.20.1",
+        "@tiptap/extension-image@3.20.1",
+        "@tiptap/extension-italic@3.20.1",
+        "@tiptap/extension-link@3.20.1",
+        "@tiptap/extension-list@3.20.1",
+        "@tiptap/extension-list-item@3.20.1",
+        "@tiptap/extension-list-keymap@3.20.1",
+        "@tiptap/extension-ordered-list@3.20.1",
+        "@tiptap/extension-paragraph@3.20.1",
+        "@tiptap/extension-strike@3.20.1",
+        "@tiptap/extension-table@3.20.1",
+        "@tiptap/extension-text@3.20.1",
+        "@tiptap/extension-text-style@3.20.1",
+        "@tiptap/extension-typography@3.20.1",
+        "@tiptap/extension-underline@3.20.1",
     ];
 }
 

@@ -496,7 +496,7 @@ export const MeasureRange: React.FC<MeasureRangeProps> = ({
 
   return (
     <>
-      <span ref={wrapperRef} style={style}>
+      <span ref={wrapperRef} style={style} suppressHydrationWarning>
         {children}
       </span>
 

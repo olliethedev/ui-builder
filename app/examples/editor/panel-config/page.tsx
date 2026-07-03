@@ -1,5 +1,7 @@
 import { PanelConfigDemo } from "app/platform/panel-config-demo";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Panel Configuration - UI Builder",
   description: "Demonstrates custom panel configuration options"

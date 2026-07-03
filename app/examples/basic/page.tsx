@@ -1,5 +1,7 @@
 import { SimpleBuilder } from "@/app/platform/simple-builder";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "UI Builder",
 };

@@ -244,6 +244,8 @@ describe("EditorPanel", () => {
     registry: mockRegistry,
     allowPagesCreation: true,
     allowPagesDeletion: true,
+    getPageTypeRenderer: jest.fn().mockReturnValue(undefined),
+    getFilteredRegistry: jest.fn().mockReturnValue(mockRegistry),
   };
 
   beforeEach(() => {
@@ -1288,6 +1290,66 @@ describe("EditorPanel", () => {
       
       expect(screen.getByTestId("total-layers")).toHaveTextContent("0");
       expect(screen.getByTestId("layer-renderer")).toBeInTheDocument();
+    });
+  });
+
+  describe("Custom Page Type Renderer", () => {
+    it("renders LayerContextMenuPortal when using default renderer (no pageTypeRenderer)", () => {
+      renderEditorPanel();
+
+      expect(screen.getByTestId("layer-context-menu-portal")).toBeInTheDocument();
+    });
+
+    it("renders LayerContextMenuPortal when pageTypeRenderer renders inside AutoFrame (skipAutoFrame falsy)", () => {
+      const customCanvasContent = <div data-testid="custom-canvas-content" />;
+      const mockPageTypeRenderer = {
+        skipAutoFrame: false,
+        renderEditorCanvas: jest.fn().mockReturnValue(customCanvasContent),
+      };
+
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector({
+            ...mockEditorState,
+            getPageTypeRenderer: jest.fn().mockReturnValue(mockPageTypeRenderer),
+          });
+        }
+        return {
+          ...mockEditorState,
+          getPageTypeRenderer: jest.fn().mockReturnValue(mockPageTypeRenderer),
+        };
+      });
+
+      renderEditorPanel();
+
+      expect(screen.getByTestId("custom-canvas-content")).toBeInTheDocument();
+      expect(screen.getByTestId("layer-context-menu-portal")).toBeInTheDocument();
+    });
+
+    it("does NOT render LayerContextMenuPortal when pageTypeRenderer uses skipAutoFrame", () => {
+      const customCanvasContent = <div data-testid="custom-full-canvas" />;
+      const mockPageTypeRenderer = {
+        skipAutoFrame: true,
+        renderEditorCanvas: jest.fn().mockReturnValue(customCanvasContent),
+      };
+
+      mockedUseEditorStore.mockImplementation((selector) => {
+        if (typeof selector === "function") {
+          return selector({
+            ...mockEditorState,
+            getPageTypeRenderer: jest.fn().mockReturnValue(mockPageTypeRenderer),
+          });
+        }
+        return {
+          ...mockEditorState,
+          getPageTypeRenderer: jest.fn().mockReturnValue(mockPageTypeRenderer),
+        };
+      });
+
+      renderEditorPanel();
+
+      expect(screen.getByTestId("custom-full-canvas")).toBeInTheDocument();
+      expect(screen.queryByTestId("layer-context-menu-portal")).not.toBeInTheDocument();
     });
   });
 

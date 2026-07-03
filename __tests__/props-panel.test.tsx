@@ -136,6 +136,7 @@ describe("PropsPanel", () => {
 
   const mockLayerState = {
     selectedLayerId: "layer-1",
+    selectedPageId: "page-1",
     findLayerById: mockFindLayerById,
     removeLayer: mockRemoveLayer,
     duplicateLayer: mockDuplicateLayer,
@@ -153,6 +154,7 @@ describe("PropsPanel", () => {
   const mockEditorState = {
     registry: mockRegistry,
     getComponentDefinition: mockGetComponentDefinition,
+    getFilteredRegistry: jest.fn().mockReturnValue(mockRegistry),
     incrementRevision: mockIncrementRevision,
     revisionCounter: 0,
     allowPagesCreation: true,

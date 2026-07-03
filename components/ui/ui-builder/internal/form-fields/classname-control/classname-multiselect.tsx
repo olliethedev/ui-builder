@@ -4,22 +4,48 @@ import MultipleSelector, {
   type Option,
 } from "@/components/ui/ui-builder/internal/components/multi-select";
 import { TAILWIND_CLASSES_WITH_BREAKPOINTS } from "@/components/ui/ui-builder/internal/utils/tailwind-classes";
+import type { ClassNameControlProfile } from "@/components/ui/ui-builder/internal/form-fields/classname-control/config";
 
 const EMPTY_OPTIONS: Option[] = [];
 
 interface ClassNameMultiselectProps {
   value: string;
   onChange: (newClassName: string) => void;
+  classProfile?: ClassNameControlProfile;
 }
 
 const ClassNameMultiselect: React.FC<ClassNameMultiselectProps> = ({
   value,
   onChange,
+  classProfile,
 }) => {
+  const allowedClassSet = useMemo(
+    () =>
+      classProfile?.allowedClassNames
+        ? new Set(classProfile.allowedClassNames)
+        : null,
+    [classProfile]
+  );
+
+  const searchableClasses = useMemo(() => {
+    if (!allowedClassSet) {
+      return TAILWIND_CLASSES_WITH_BREAKPOINTS;
+    }
+
+    return TAILWIND_CLASSES_WITH_BREAKPOINTS.filter((cls) => {
+      if (allowedClassSet.has(cls)) {
+        return true;
+      }
+      const parts = cls.split(":");
+      const baseClass = parts[parts.length - 1] ?? cls;
+      return allowedClassSet.has(baseClass);
+    });
+  }, [allowedClassSet]);
+
   const searchClasses = useCallback(
     async (value: string): Promise<Option[]> => {
       return new Promise((resolve) => {
-        const res = TAILWIND_CLASSES_WITH_BREAKPOINTS.filter((option) =>
+        const res = searchableClasses.filter((option) =>
           option.includes(value)
         );
         resolve(
@@ -30,7 +56,7 @@ const ClassNameMultiselect: React.FC<ClassNameMultiselectProps> = ({
         );
       });
     },
-    []
+    [searchableClasses]
   );
 
   const handleChange = useCallback(

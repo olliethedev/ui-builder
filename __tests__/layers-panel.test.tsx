@@ -198,6 +198,7 @@ describe("LayersPanel", () => {
     registry: mockEditorRegistry,
     initializeRegistry: mockInitializeRegistry,
     getComponentDefinition: mockGetComponentDefinition,
+    getFilteredRegistry: jest.fn().mockReturnValue(mockEditorRegistry),
     previewMode: 'responsive',
     setPreviewMode: jest.fn(),
   };
@@ -331,7 +332,14 @@ describe("LayersPanel", () => {
         mockTreeConfig.onChange(validNewLayers);
       });
       
-      expect(mockUpdateLayer).toHaveBeenCalledWith("page-1", {}, { children: validNewLayers[0]?.children ?? [] });
+      expect(mockUpdateLayer).toHaveBeenCalledWith("page-1", {}, {
+        children: [
+          expect.objectContaining({
+            id: "layer-1",
+            type: "HeaderComponent",
+          }),
+        ],
+      });
       expect(consoleSpy).not.toHaveBeenCalled();
       
       consoleSpy.mockRestore();
@@ -449,6 +457,85 @@ describe("LayersPanel", () => {
       expect(mockUpdateLayer).toHaveBeenCalledWith("page-1", {}, { children: [] });
     });
 
+    it("preserves string children when persisting drag reorder changes", () => {
+      const pageWithTextChild: ComponentLayer = {
+        id: "text-page",
+        name: "Text Page",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "sibling",
+            name: "Sibling",
+            type: "div",
+            props: {},
+            children: [],
+          },
+          {
+            id: "container",
+            name: "Container",
+            type: "div",
+            props: {},
+            children: [
+              {
+                id: "text-child",
+                name: "Text Child",
+                type: "span",
+                props: {},
+                children: "Preserved text",
+              },
+            ],
+          },
+        ],
+      };
+
+      const props = {
+        ...defaultTreeProps,
+        layers: [pageWithTextChild],
+        selectedPageId: "text-page",
+      };
+
+      render(<LayersTree {...props} />);
+
+      // Simulates he-tree processed node shape where string children become [] for traversal.
+      const processedTreeResult = [
+        {
+          ...pageWithTextChild,
+          children: [
+            {
+              ...(pageWithTextChild.children as ComponentLayer[])[1],
+              children: [
+                {
+                  ...((pageWithTextChild.children as ComponentLayer[])[1]
+                    ?.children as ComponentLayer[])[0],
+                  children: [],
+                },
+              ],
+            },
+            {
+              ...(pageWithTextChild.children as ComponentLayer[])[0],
+              children: [],
+            },
+          ],
+        },
+      ];
+
+      act(() => {
+        mockTreeConfig.onChange(processedTreeResult);
+      });
+
+      const updatedChildren = mockUpdateLayer.mock.calls[0]?.[2]?.children as
+        | ComponentLayer[]
+        | undefined;
+      expect(updatedChildren?.[0]?.id).toBe("container");
+      expect(updatedChildren?.[0]?.children).toEqual([
+        expect.objectContaining({
+          id: "text-child",
+          children: "Preserved text",
+        }),
+      ]);
+    });
+
     it("renders with empty layers array", () => {
       const emptyProps = {
         ...defaultTreeProps,
@@ -550,6 +637,45 @@ describe("LayersPanel", () => {
       const nonDroppableLayer = { node: (mockPageLayer.children as ComponentLayer[])[0] };
       const canDrop2 = mockTreeConfig.canDrop(nonDroppableLayer);
       expect(canDrop2).toBe(true); // Empty array is still considered as having children capability
+    });
+
+    it("does not allow dropping into text-only layers", () => {
+      const layerWithTextLeaf: ComponentLayer = {
+        id: "drop-page",
+        name: "Drop Page",
+        type: "_page_",
+        props: {},
+        children: [
+          {
+            id: "text-leaf",
+            name: "Text Leaf",
+            type: "span",
+            props: {},
+            children: "Only text",
+          },
+        ],
+      };
+
+      const props = {
+        ...defaultTreeProps,
+        layers: [layerWithTextLeaf],
+        selectedPageId: "drop-page",
+      };
+
+      render(<LayersTree {...props} />);
+
+      // Simulates processed node where text children became [].
+      const canDrop = mockTreeConfig.canDrop({
+        node: {
+          id: "text-leaf",
+          name: "Text Leaf",
+          type: "span",
+          props: {},
+          children: [],
+        },
+      });
+
+      expect(canDrop).toBe(false);
     });
   });
 

@@ -1,5 +1,9 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
-import { CONFIG, LAYOUT_GROUPS, LAYOUT_ORDER, type StateType } from "@/components/ui/ui-builder/internal/form-fields/classname-control/config";
+import {
+  resolveClassNameControlConfig,
+  type ClassNameControlProfile,
+  type StateType,
+} from "@/components/ui/ui-builder/internal/form-fields/classname-control/config";
 import { ClassNameGroupControl } from "@/components/ui/ui-builder/internal/form-fields/classname-control/classname-group-control";
 import { cn } from "@/lib/utils";
 import { isTailwindClass } from "@/components/ui/ui-builder/internal/form-fields/classname-control/helpers";
@@ -7,15 +11,21 @@ import { isTailwindClass } from "@/components/ui/ui-builder/internal/form-fields
 interface ClassNameItemControlProps {
     value: string;
     onChange: (value: string) => void;
+    classProfile?: ClassNameControlProfile;
 }
 
-export function ClassNameItemControl({ value, onChange }: ClassNameItemControlProps) {
+export function ClassNameItemControl({ value, onChange, classProfile }: ClassNameItemControlProps) {
+    const { config, layoutGroups, layoutOrder } = useMemo(
+      () => resolveClassNameControlConfig(classProfile),
+      [classProfile]
+    );
+
     // Memoize parsing for performance
     const parsed = useMemo(() => {
       if (value) {
         const tokens = value.trim().split(/\s+/);
         // Parse all keys
-        const parsedState = Object.entries(CONFIG).reduce(
+        const parsedState = Object.entries(config).reduce(
           (acc, [key, config]) => {
             const parsed = tokens.filter((token) => isTailwindClass(config.possibleTypes.filter((type): type is string => type !== null), token));
             if (parsed.length > 0) {
@@ -23,14 +33,14 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
             }
             return acc;
           },
-          Object.fromEntries(Object.keys(CONFIG).map((k) => [k, null])) as Record<
+          Object.fromEntries(Object.keys(config).map((k) => [k, null])) as Record<
             string,
             any
           >
         ) as StateType;
         // For each group, only allow one key to be active at a time
         const initialSelected: { [groupLabel: string]: string } = {};
-        LAYOUT_GROUPS.forEach((group) => {
+        layoutGroups.forEach((group) => {
           // If multiple keys have values, clear all but the first
           let found = false;
           group.keys.forEach((key) => {
@@ -64,7 +74,7 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
       } else {
         // Reset state if value is empty
         const initialSelected: { [groupLabel: string]: string } = {};
-        LAYOUT_GROUPS.forEach((group) => {
+        layoutGroups.forEach((group) => {
           if (group.keys[0]) {
             initialSelected[group.label] = group.keys[0];
           }
@@ -75,7 +85,7 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
           initialSelected,
         };
       }
-    }, [value]);
+    }, [value, config, layoutGroups]);
   
     const [state, setState] = useState<StateType>(parsed.parsedState);
     const [unhandled, setUnhandled] = useState<string[]>(parsed.unhandledTokens);
@@ -124,7 +134,7 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
       setState((prev) => {
         const newState = { ...prev, [key]: value };
         // If this key is part of a group, update selectedKeys and clear other keys in the group
-        const group = LAYOUT_GROUPS.find((g) => g.keys.includes(key as string));
+        const group = layoutGroups.find((g) => g.keys.includes(key as string));
         if (group) {
           setSelectedKeys((prevSel) => ({
             ...prevSel,
@@ -144,14 +154,14 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
         }
   
         // if visibility changes from visible to invisible null the value for that key in the newState
-        const layoutOrderItemsInvisible = LAYOUT_ORDER.filter(
+        const layoutOrderItemsInvisible = layoutOrder.filter(
           (item) => item.isVisible && !item.isVisible(newState)
         );
         layoutOrderItemsInvisible.forEach((item) => {
           if (item.type === "item") {
             newState[item.key] = null;
           } else if (item.type === "group") {
-            const group = LAYOUT_GROUPS.find((g) => g.label === item.label);
+            const group = layoutGroups.find((g) => g.label === item.label);
             if (group) {
               group.keys.forEach((key) => {
                 newState[key] = null;
@@ -162,7 +172,7 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
   
         return newState;
       });
-    }, []);
+    }, [layoutGroups, layoutOrder]);
   
     // Helper to create bound change handlers
     const createChangeHandler = useCallback((key: keyof StateType) => 
@@ -176,7 +186,7 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
         ...prev,
         [groupLabel]: key,
       }));
-      const group = LAYOUT_GROUPS.find((g) => g.label === groupLabel);
+      const group = layoutGroups.find((g) => g.label === groupLabel);
       if (group) {
         let classesToClear: string[] = [];
         setState((prevState) => {
@@ -187,9 +197,9 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
           // Remove all classes in classesToClear from state for all keys in the group except the selected one
           for (const k of group.keys) {
             if (k !== key) {
-              const config = CONFIG[k];
-              if (!config) continue;
-              if (config.multiple && Array.isArray(newState[k])) {
+              const keyConfig = config[k];
+              if (!keyConfig) continue;
+              if (keyConfig.multiple && Array.isArray(newState[k])) {
                 newState[k] = (newState[k] as string[]).filter(
                   (v) => !classesToClear.includes(v as any)
                 );
@@ -221,15 +231,15 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
     return (
       <div className="w-full" data-testid="classname-item-control">
         <div className="flex flex-wrap gap-y-1 px-4 pt-2 pb-4">
-          {LAYOUT_ORDER.map((entry) => {
+          {layoutOrder.map((entry) => {
             if (entry.type === "group") {
-              const group = LAYOUT_GROUPS.find((g) => g.label === entry.label);
+              const group = layoutGroups.find((g) => g.label === entry.label);
               if (!group) return null;
               const keys = group.keys.map(String);
               const selectedKey = selectedKeys[group.label] || keys[0];
               if (entry.isVisible && !entry.isVisible(state)) return null;
               if (!selectedKey) return null;
-              const groupConfig = CONFIG[selectedKey as keyof typeof CONFIG];
+              const groupConfig = config[selectedKey as keyof typeof config];
               if (!groupConfig) return null;
   
               return (
@@ -247,7 +257,7 @@ export function ClassNameItemControl({ value, onChange }: ClassNameItemControlPr
             } else if (entry.type === "item") {
               if (entry.isVisible && !entry.isVisible(state)) return null;
               const configKey = entry.key;
-              const ungroupedConfig = CONFIG[configKey];
+              const ungroupedConfig = config[configKey];
               if (!ungroupedConfig) return null;
               return (
                 <div key={configKey} className={cn("w-full", entry.className)} data-testid={`item-${configKey}`}>

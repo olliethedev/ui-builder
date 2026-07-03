@@ -93,6 +93,7 @@ describe('CodePanel', () => {
       const state = {
         registry: mockComponentRegistry,
         functionRegistry: undefined,
+        getPageTypeCodeGenerator: jest.fn().mockReturnValue(undefined),
       } as any;
       return selector(state);
     });
@@ -129,7 +130,6 @@ export default Page;
     
     expect(screen.getByText('React')).toBeInTheDocument();
     expect(screen.getByText('Serialized')).toBeInTheDocument();
-    expect(screen.queryByText('With Variables')).not.toBeInTheDocument();
   });
 
   it('should call pageLayerToCode with variables', () => {
@@ -214,6 +214,54 @@ export default Page;
     const { container } = render(<CodePanel className="custom-class" />);
     
     expect(container.firstChild).toHaveClass('custom-class');
+  });
+
+  it('should use custom code generator and label when page has a pageType', () => {
+    const mockEmailPage: ComponentLayer = {
+      id: 'email-page',
+      type: 'Html',
+      name: 'Email Template',
+      pageType: 'email',
+      props: { lang: 'en' },
+      children: [],
+    };
+    const mockEmailCode = '<html lang="en"></html>';
+    const mockCodeGenerator = {
+      label: 'HTML Email',
+      generateCode: jest.fn().mockReturnValue(mockEmailCode),
+    };
+
+    mockUseLayerStore.mockImplementation((selector) => {
+      const state = {
+        selectedPageId: 'email-page',
+        findLayerById: jest.fn().mockReturnValue(mockEmailPage),
+        variables: [],
+      } as any;
+      return selector(state);
+    });
+
+    mockUseEditorStore.mockImplementation((selector) => {
+      const state = {
+        registry: mockComponentRegistry,
+        functionRegistry: undefined,
+        getPageTypeCodeGenerator: jest.fn().mockReturnValue(mockCodeGenerator),
+      } as any;
+      return selector(state);
+    });
+
+    render(<CodePanel />);
+
+    // Tab label should be "HTML Email" not "React"
+    expect(screen.getByText('HTML Email')).toBeInTheDocument();
+    expect(screen.queryByText('React')).not.toBeInTheDocument();
+
+    // The custom generator should have been called
+    expect(mockCodeGenerator.generateCode).toHaveBeenCalledWith(mockEmailPage, mockComponentRegistry);
+    // pageLayerToCode should NOT be called
+    expect(mockPageLayerToCode).not.toHaveBeenCalled();
+
+    // Code output should be the custom generator output
+    expect(screen.getByTestId('codeblock-tsx')).toHaveTextContent(mockEmailCode);
   });
 
   it('should generate correct serialized data structure with separate variables and layers', () => {

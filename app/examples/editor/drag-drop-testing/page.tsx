@@ -1,5 +1,7 @@
 import { BuilderDragDropTest } from "../../../platform/builder-drag-drop-test";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "UI Builder - Drag & Drop Testing",
   description: "Comprehensive testing environment for drag and drop functionality across various layout types"

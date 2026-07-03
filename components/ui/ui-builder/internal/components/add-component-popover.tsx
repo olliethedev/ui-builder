@@ -98,9 +98,27 @@ export function AddComponentsPopover({
   const [open, setOpen] = React.useState(false);
   const [activeView, setActiveView] = React.useState<"components" | "blocks">("components");
 
-  const componentRegistry = useEditorStore((state) => state.registry);
   const blocks = useEditorStore((state) => state.blocks);
+  const getFilteredRegistry = useEditorStore((state) => state.getFilteredRegistry);
+  const registry = useEditorStore((state) => state.registry);
   const findLayerById = useLayerStore((state) => state.findLayerById);
+  const selectedPageId = useLayerStore((state) => state.selectedPageId);
+
+  // Get the page type for the active page so filterRegistry can be applied
+  const activePageType = useMemo(() => {
+    const page = findLayerById(selectedPageId);
+    return page?.pageType;
+  }, [findLayerById, selectedPageId]);
+
+  // Apply per-page-type registry filtering.
+  // `registry` is included as a dependency so this recomputes if the store's
+  // registry changes — `getFilteredRegistry` reads it internally via get() but
+  // is itself a stable function reference that would not trigger recomputation.
+  const componentRegistry = useMemo(
+    () => getFilteredRegistry(activePageType),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getFilteredRegistry, activePageType, registry]
+  );
 
   // Get the parent layer type to filter valid child components
   const parentLayerType = useMemo(() => {
@@ -279,6 +297,7 @@ export function AddComponentsPopover({
                           <GroupedComponentItem
                             key={component.value}
                             component={component}
+                            componentRegistry={componentRegistry}
                             onClick={handleSelect}
                             onDragStart={handleDragStart}
                             enableDrag={enableDragToCanvas}
@@ -421,11 +440,13 @@ function formatBlockName(name: string): string {
 
 const GroupedComponentItem = memo(({
   component,
+  componentRegistry,
   onClick,
   onDragStart,
   enableDrag = false,
 }: {
   component: { value: string; label: string };
+  componentRegistry: ComponentRegistry;
   onClick: (value: string) => void;
   onDragStart?: () => void;
   enableDrag?: boolean;
@@ -433,8 +454,6 @@ const GroupedComponentItem = memo(({
   const handleSelect = useCallback(() => {
     onClick(component.value);
   }, [onClick, component.value]);
-
-  const componentRegistry = useEditorStore((state) => state.registry);
 
   const content = (
     <div className="flex items-center gap-3">

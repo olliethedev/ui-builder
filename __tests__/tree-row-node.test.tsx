@@ -157,10 +157,12 @@ describe('TreeRowNode', () => {
     
     // Mock EditorStore with registry
     mockUseEditorStore.mockImplementation((selector) => {
+      const mockReg = createMockRegistry('div', true, false);
       const state = {
         allowPagesCreation: true,
         allowPagesDeletion: true,
-        registry: createMockRegistry('div', true, false),
+        registry: mockReg,
+        getFilteredRegistry: jest.fn().mockReturnValue(mockReg),
       };
       return selector(state as any);
     });

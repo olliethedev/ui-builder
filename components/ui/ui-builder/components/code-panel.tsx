@@ -14,11 +14,16 @@ import { Label } from "../../label";
 export function CodePanel({className}: {className?: string}) {
   const componentRegistry = useEditorStore((state) => state.registry);
   const functionRegistry = useEditorStore((state) => state.functionRegistry);
+  const getPageTypeCodeGenerator = useEditorStore((state) => state.getPageTypeCodeGenerator);
   const selectedPageId = useLayerStore( state => state.selectedPageId);
   const findLayerById = useLayerStore( state => state.findLayerById);
   const variables = useLayerStore( state => state.variables);
 
   const page = findLayerById(selectedPageId) as ComponentLayer;
+
+  // Use a custom code generator if one is registered for this page type
+  const customCodeGenerator = page?.pageType ? getPageTypeCodeGenerator(page.pageType) : undefined;
+
   const codeBlocks = useMemo(() => {
     // Create separate serialized data for variables and layers
     const serializedVariables = variables.map(v => ({
@@ -28,8 +33,13 @@ export function CodePanel({className}: {className?: string}) {
       defaultValue: v.defaultValue
     }));
 
+    const primaryCode = customCodeGenerator
+      ? customCodeGenerator.generateCode(page, componentRegistry)
+      : pageLayerToCode(page, componentRegistry, variables, functionRegistry);
+
     return {
-      react: pageLayerToCode(page, componentRegistry, variables, functionRegistry),
+      primary: primaryCode,
+      primaryLabel: customCodeGenerator?.label ?? "React",
       variables: JSON.stringify(
         serializedVariables,
         (key, value) => (typeof value === "function" ? undefined : value),
@@ -41,7 +51,7 @@ export function CodePanel({className}: {className?: string}) {
         2
       ),
     };
-  }, [page, componentRegistry, variables, functionRegistry]);
+  }, [page, componentRegistry, variables, functionRegistry, customCodeGenerator]);
 
   return <CodeContent codeBlocks={codeBlocks} className={className} />;
 }
@@ -50,19 +60,19 @@ const CodeContent = ({
   codeBlocks,
   className,
 }: {
-  codeBlocks: Record<"react" | "variables" | "layers", string>;
+  codeBlocks: { primary: string; primaryLabel: string; variables: string; layers: string };
   className?: string;
 }) => {
   return (
-    <Tabs defaultValue="react" className={cn("w-full overflow-hidden", className)}>
+    <Tabs defaultValue="primary" className={cn("w-full overflow-hidden", className)}>
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="react">React</TabsTrigger>
+        <TabsTrigger value="primary">{codeBlocks.primaryLabel}</TabsTrigger>
         <TabsTrigger value="serialized">Serialized</TabsTrigger>
       </TabsList>
-      <TabsContent value="react">
+      <TabsContent value="primary">
         <div className="relative">
           <div className="overflow-auto max-h-[400px] w-full">
-            <CodeBlock language="tsx" value={codeBlocks.react} />
+            <CodeBlock language="tsx" value={codeBlocks.primary} />
           </div>
         </div>
       </TabsContent>

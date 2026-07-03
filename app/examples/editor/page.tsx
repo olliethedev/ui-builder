@@ -1,6 +1,8 @@
 
 import { BuilderWithPages } from "app/platform/builder-with-pages";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "UI Builder",
 };

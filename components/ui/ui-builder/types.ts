@@ -1,5 +1,6 @@
  
 import { type ZodObject, type ZodSchema, type ZodTuple } from "zod";
+import type React from "react";
 import { type ComponentType as ReactComponentType, type ReactNode } from 'react';
 import {
     type FieldConfigItem,
@@ -9,6 +10,14 @@ export type {
     AutoFormInputComponentProps,
     FieldConfigItem,
   } from "@/components/ui/auto-form/types";
+
+/**
+ * Controls how the default Appearance tab renders the Tailwind theme panel.
+ * - undefined: render the built-in TailwindThemePanel
+ * - false: hide the Tailwind theme panel
+ * - ReactNode: render custom content in place of the default panel
+ */
+export type TailwindThemePanelOverride = ReactNode | false;
 
 // Enhanced prop value types that can accommodate React props, variables, and common data types
 export type PropValue = 
@@ -34,6 +43,12 @@ export interface ComponentLayer<TProps extends Record<string, PropValue> = Recor
     id: string;
     name?: string;
     type: string;
+    /**
+     * Optional page type identifier. Only meaningful on page-level layers (top-level entries in the pages array).
+     * Used to determine which PageTypeRenderer to use for this page in the editor canvas.
+     * Undefined means the default web renderer is used.
+     */
+    pageType?: string;
     props: ComponentProps<TProps>;
     children: ComponentLayer[] | string | VariableReference;
 }
@@ -86,6 +101,17 @@ export interface RegistryEntry<T extends ReactComponentType<any>> {
    * Example: TabsTrigger has childOf: ["TabsList"]
    */
   childOf?: string[];
+  /**
+   * When true, the editor will render this component without wrapping it in the
+   * ElementSelector / MeasureRange <span> overlay. Use this for components that
+   * render structural HTML elements (<html>, <head>, <body>) which cannot legally
+   * be children of a <span> according to the HTML spec. Without this flag, those
+   * elements are moved or suppressed by the browser, making canvas content invisible.
+   *
+   * Layers with this flag set can still be selected via the layer tree panel; they
+   * simply won't have click-to-select overlays in the canvas.
+   */
+  skipEditorWrapper?: boolean;
 }
 
 // Improved field config function type
@@ -168,6 +194,76 @@ export interface BlockDefinition {
 export type BlockRegistry = Record<string, BlockDefinition>;
 
 /**
+ * Configuration passed to LayerRenderer / RenderLayer when running in editor mode.
+ * When undefined, the renderer runs in production/preview mode without editor chrome.
+ */
+export interface EditorConfig {
+  zIndex: number;
+  totalLayers: number;
+  selectedLayer: ComponentLayer;
+  parentUpdated?: boolean;
+  onSelectElement: (layerId: string) => void;
+}
+
+/**
+ * Props passed to a custom page type renderer's renderEditorCanvas function.
+ */
+export interface PageTypeRendererProps {
+  page: ComponentLayer;
+  componentRegistry: ComponentRegistry;
+  editorConfig?: EditorConfig;
+  variables?: Variable[];
+  variableValues?: Record<string, PropValue>;
+  functionRegistry?: FunctionRegistry;
+}
+
+/**
+ * Configuration for a custom page type.
+ * Register these via the `pageTypeRenderers` prop on UIBuilder.
+ */
+export interface PageTypeRenderer {
+  /** Display label shown in the page creation UI (e.g. "Email", "PDF") */
+  label?: string;
+  /** Root layer type for new pages of this type. Defaults to "div" if omitted. */
+  defaultRootLayerType?: string;
+  /** Initial props for the root layer of a new page. Defaults to DEFAULT_PAGE_PROPS if omitted. */
+  defaultRootLayerProps?: Record<string, unknown>;
+  /**
+   * When true, EditorPanel skips AutoFrame + ResizableWrapper entirely — the renderer
+   * owns the full canvas area including scroll and zoom.
+   * Reserved for page types that CANNOT render inside an iframe (e.g. PDF viewer, react-native-web).
+   * Do NOT use for email — email components render fine in a browser via LayerRenderer.
+   */
+  skipAutoFrame?: boolean;
+  /**
+   * Filters the global componentRegistry to control which components appear in the
+   * add-component popover for this page type.
+   * Return a subset of the registry to restrict available components.
+   */
+  filterRegistry?: (registry: ComponentRegistry) => ComponentRegistry;
+  /** Renders the editor canvas for this page type. */
+  renderEditorCanvas: (props: PageTypeRendererProps) => React.ReactNode;
+}
+
+/** Map of page type key → renderer config. Passed to UIBuilder via `pageTypeRenderers` prop. */
+export type PageTypeRenderers = Record<string, PageTypeRenderer>;
+
+/**
+ * Custom code generator for a page type.
+ * Registered separately via `pageTypeCodeGenerators` prop on UIBuilder.
+ * When present, replaces the default React code tab in the CodePanel for pages of this type.
+ */
+export interface PageTypeCodeGenerator {
+  /** generateCode receives the root page layer and the active registry. Return a string of code. */
+  generateCode: (page: ComponentLayer, registry: ComponentRegistry) => string;
+  /** Label for the code tab, e.g. "HTML Email", "PDF", "React Native". Defaults to "React". */
+  label?: string;
+}
+
+/** Map of page type key → code generator. Passed to UIBuilder via `pageTypeCodeGenerators` prop. */
+export type PageTypeCodeGenerators = Record<string, PageTypeCodeGenerator>;
+
+/**
  * Function definition for the function registry.
  * Describes a function that can be bound to component event handlers.
  */
@@ -195,5 +291,4 @@ export interface FunctionDefinition {
  * Used to provide callable functions that can be bound to component event handlers.
  */
 export type FunctionRegistry = Record<string, FunctionDefinition>;
-
 

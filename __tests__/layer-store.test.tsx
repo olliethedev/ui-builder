@@ -207,6 +207,71 @@ describe('LayerStore', () => {
       expect(newPage!.name).toBe('Page 2');
       expect(result.current.selectedPageId).toBe(newPage!.id);
     });
+
+    it('should add a page with a custom pageType', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addPageLayer('Email Page', 'email');
+      });
+
+      const newPage = result.current.pages[1];
+      expect(newPage).toBeDefined();
+      expect(newPage!.pageType).toBe('email');
+      expect(newPage!.type).toBe('div');
+    });
+
+    it('should add a page with custom rootLayerType and rootLayerProps', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addPageLayer('Html Email', 'email', 'Html', { lang: 'en' });
+      });
+
+      const newPage = result.current.pages[1];
+      expect(newPage).toBeDefined();
+      expect(newPage!.pageType).toBe('email');
+      expect(newPage!.type).toBe('Html');
+      expect(newPage!.props).toEqual({ lang: 'en' });
+    });
+
+    it('should not set pageType when not provided', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addPageLayer('Regular Page');
+      });
+
+      const newPage = result.current.pages[1];
+      expect(newPage).toBeDefined();
+      expect(newPage!.pageType).toBeUndefined();
+    });
+
+    it('should use empty props when rootLayerType is non-div and rootLayerProps is omitted', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addPageLayer('PDF Page', 'pdf', 'Document');
+      });
+
+      const newPage = result.current.pages[1];
+      expect(newPage).toBeDefined();
+      expect(newPage!.type).toBe('Document');
+      expect(newPage!.props).toEqual({});
+    });
+
+    it('should use DEFAULT_PAGE_PROPS when rootLayerType is div and rootLayerProps is omitted', () => {
+      const { result } = renderHook(() => useLayerStore());
+
+      act(() => {
+        result.current.addPageLayer('Div Page', undefined, 'div');
+      });
+
+      const newPage = result.current.pages[1];
+      expect(newPage).toBeDefined();
+      expect(newPage!.type).toBe('div');
+      expect(newPage!.props).toHaveProperty('className');
+    });
   });
 
   describe('duplicateLayer', () => {

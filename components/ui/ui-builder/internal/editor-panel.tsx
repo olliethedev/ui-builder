@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { Plus, Crosshair, ZoomIn, ZoomOut, MousePointer } from "lucide-react";
 import { countLayers, useLayerStore } from "@/lib/ui-builder/store/layer-store";
-import type { ComponentLayer } from "@/components/ui/ui-builder/types";
+import type { ComponentLayer, Variable, FunctionRegistry } from "@/components/ui/ui-builder/types";
 import {
   TransformWrapper,
   TransformComponent,
@@ -143,9 +143,11 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
     selectedLayerId,
     findLayerById,
     selectedPageId,
+    variables,
   } = useLayerStore();
   const previewMode = useEditorStore((state) => state.previewMode);
   const componentRegistry = useEditorStore((state) => state.registry);
+  const functionRegistry = useEditorStore((state) => state.functionRegistry);
   const selectedLayer = findLayerById(selectedLayerId) as ComponentLayer;
   const selectedPage = findLayerById(selectedPageId) as ComponentLayer;
 
@@ -166,6 +168,8 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ className }) => {
         selectedPage={selectedPage}
         previewMode={previewMode}
         componentRegistry={componentRegistry}
+        variables={variables}
+        functionRegistry={functionRegistry}
         autoZoomToSelected={false}
         onSelectElement={onSelectElement}
       />
@@ -183,6 +187,8 @@ interface EditorPanelContentProps {
   selectedPage: ComponentLayer;
   previewMode: string;
   componentRegistry: any;
+  variables: Variable[];
+  functionRegistry: FunctionRegistry | undefined;
   autoZoomToSelected?: boolean;
   onSelectElement: (layerId: string) => void;
 }
@@ -196,6 +202,8 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
   selectedPage,
   previewMode,
   componentRegistry,
+  variables,
+  functionRegistry,
   autoZoomToSelected,
   onSelectElement,
 }) => {
@@ -290,24 +298,55 @@ const EditorPanelContent: React.FC<EditorPanelContentProps> = ({
     className: "contents",
     page: selectedPage,
     editorConfig: editorConfig,
-    componentRegistry: componentRegistry
-  }), [selectedPage, editorConfig, componentRegistry]);
+    componentRegistry: componentRegistry,
+    variables: variables,
+    functionRegistry: functionRegistry,
+  }), [selectedPage, editorConfig, componentRegistry, variables, functionRegistry]);
+
+  const getPageTypeRenderer = useEditorStore((state) => state.getPageTypeRenderer);
+  const pageTypeRenderer = useMemo(
+    () => getPageTypeRenderer(selectedPage?.pageType ?? ""),
+    [getPageTypeRenderer, selectedPage?.pageType]
+  );
+
+  const pageTypeRendererProps = useMemo(() => {
+    if (!pageTypeRenderer) return null;
+    return {
+      page: selectedPage,
+      componentRegistry,
+      editorConfig,
+      variables,
+      functionRegistry,
+    };
+  }, [pageTypeRenderer, selectedPage, componentRegistry, editorConfig, variables, functionRegistry]);
 
   const renderer = useMemo(
-    () => (
-      <ResizableWrapper {...resizableProps}>
-        <div
-          id="editor-panel-content"
-          className={cn("overflow-visible ", widthClass)}
-        >
-          <AutoFrame {...autoFrameProps} ref={frameRef}>
-            <LayerRenderer {...layerRendererProps} />
-            <LayerContextMenuPortal />
-          </AutoFrame>
-        </div>
-      </ResizableWrapper>
-    ),
-    [resizableProps, widthClass, autoFrameProps, layerRendererProps]
+    () => {
+      // When skipAutoFrame is true, the custom renderer owns the full canvas area
+      if (pageTypeRenderer?.skipAutoFrame && pageTypeRendererProps) {
+        return pageTypeRenderer.renderEditorCanvas(pageTypeRendererProps);
+      }
+
+      // Default path: keep AutoFrame + ResizableWrapper
+      // Custom renderers that don't skipAutoFrame render inside the same AutoFrame chrome
+      const canvasContent = pageTypeRenderer && pageTypeRendererProps
+        ? <>{pageTypeRenderer.renderEditorCanvas(pageTypeRendererProps)}<LayerContextMenuPortal /></>
+        : <><LayerRenderer {...layerRendererProps} /><LayerContextMenuPortal /></>;
+
+      return (
+        <ResizableWrapper {...resizableProps}>
+          <div
+            id="editor-panel-content"
+            className={cn("overflow-visible ", widthClass)}
+          >
+            <AutoFrame {...autoFrameProps} ref={frameRef}>
+              {canvasContent}
+            </AutoFrame>
+          </div>
+        </ResizableWrapper>
+      );
+    },
+    [resizableProps, widthClass, autoFrameProps, layerRendererProps, pageTypeRenderer, pageTypeRendererProps]
   );
 
   

@@ -34,6 +34,7 @@ import { Input } from "@/components/ui/input";
 import { useEditorStore } from "@/lib/ui-builder/store/editor-store";
 import { Card, CardContent } from "@/components/ui/card";
 import BreakpointClassNameControl from "@/components/ui/ui-builder/internal/form-fields/classname-control";
+import { EMAIL_CLASSNAME_CONTROL_PROFILE } from "@/components/ui/ui-builder/internal/form-fields/classname-control/config";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -63,6 +64,32 @@ export const classNameFieldOverrides: FieldConfigFunction = (
         <BreakpointClassNameControl
           value={field.value}
           onChange={field.onChange}
+        />
+      </FormFieldWrapper>
+    ),
+  };
+};
+
+export const emailClassNameFieldOverrides: FieldConfigFunction = (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  layer,
+) => {
+  return {
+    fieldType: ({
+      label,
+      isRequired,
+      field,
+      fieldConfigItem,
+    }: AutoFormInputComponentProps) => (
+      <FormFieldWrapper
+        label={label}
+        isRequired={isRequired}
+        fieldConfigItem={fieldConfigItem}
+      >
+        <BreakpointClassNameControl
+          value={field.value}
+          onChange={field.onChange}
+          classProfile={EMAIL_CLASSNAME_CONTROL_PROFILE}
         />
       </FormFieldWrapper>
     ),

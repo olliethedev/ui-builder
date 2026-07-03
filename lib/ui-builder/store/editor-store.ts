@@ -1,6 +1,6 @@
 import { create, type StateCreator } from 'zustand';
 import type { ComponentType as ReactComponentType } from "react";
-import type { RegistryEntry, ComponentRegistry, BlockRegistry, FunctionRegistry, FunctionDefinition, ComponentLayer } from '@/components/ui/ui-builder/types';
+import type { RegistryEntry, ComponentRegistry, BlockRegistry, FunctionRegistry, FunctionDefinition, ComponentLayer, PageTypeRenderers, PageTypeRenderer, PageTypeCodeGenerators, PageTypeCodeGenerator } from '@/components/ui/ui-builder/types';
 
 /**
  * Clipboard state for copy/cut/paste operations
@@ -23,6 +23,13 @@ export interface ContextMenuState {
 
 
 
+export interface EditorStoreInitializeOptions {
+  blocks?: BlockRegistry;
+  functionRegistry?: FunctionRegistry;
+  pageTypeRenderers?: PageTypeRenderers;
+  pageTypeCodeGenerators?: PageTypeCodeGenerators;
+}
+
 export interface EditorStore {
     previewMode: 'mobile' | 'tablet' | 'desktop' | 'responsive';
     setPreviewMode: (mode: 'mobile' | 'tablet' | 'desktop' | 'responsive') => void;
@@ -30,10 +37,16 @@ export interface EditorStore {
     registry: ComponentRegistry;
     blocks: BlockRegistry | undefined;
     functionRegistry: FunctionRegistry | undefined;
+    pageTypeRenderers: PageTypeRenderers;
+    pageTypeCodeGenerators: PageTypeCodeGenerators;
 
-    initialize: (registry: ComponentRegistry, persistLayerStoreConfig: boolean, allowPagesCreation: boolean, allowPagesDeletion: boolean, allowVariableEditing: boolean, blocks?: BlockRegistry, functionRegistry?: FunctionRegistry) => void;
+    initialize: (registry: ComponentRegistry, persistLayerStoreConfig: boolean, allowPagesCreation: boolean, allowPagesDeletion: boolean, allowVariableEditing: boolean, options?: EditorStoreInitializeOptions) => void;
     getComponentDefinition: (type: string) => RegistryEntry<ReactComponentType<any>> | undefined;
     getFunctionDefinition: (id: string) => FunctionDefinition | undefined;
+    getPageTypeRenderer: (pageType: string) => PageTypeRenderer | undefined;
+    getPageTypeCodeGenerator: (pageType: string) => PageTypeCodeGenerator | undefined;
+    /** Returns the registry filtered by the active page type's filterRegistry hook, if any. */
+    getFilteredRegistry: (pageType?: string) => ComponentRegistry;
 
     persistLayerStoreConfig: boolean;
     setPersistLayerStoreConfig: (shouldPersist: boolean) => void;
@@ -73,9 +86,12 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
     registry: {},
     blocks: undefined,
     functionRegistry: undefined,
+    pageTypeRenderers: {},
+    pageTypeCodeGenerators: {},
 
-    initialize: (registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks, functionRegistry) => {
-        set(state => ({ ...state, registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks, functionRegistry }));
+    initialize: (registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing, options) => {
+        const { blocks, functionRegistry, pageTypeRenderers = {}, pageTypeCodeGenerators = {} } = options ?? {};
+        set(state => ({ ...state, registry, persistLayerStoreConfig, allowPagesCreation, allowPagesDeletion, allowVariableEditing, blocks, functionRegistry, pageTypeRenderers, pageTypeCodeGenerators }));
     },
     getComponentDefinition: (type: string) => {
         const { registry } = get();
@@ -91,6 +107,21 @@ const store: StateCreator<EditorStore, [], []> = (set, get) => ({
             return undefined;
         }
         return functionRegistry[id];
+    },
+    getPageTypeRenderer: (pageType: string) => {
+        const { pageTypeRenderers } = get();
+        return pageTypeRenderers[pageType];
+    },
+    getPageTypeCodeGenerator: (pageType: string) => {
+        const { pageTypeCodeGenerators } = get();
+        return pageTypeCodeGenerators[pageType];
+    },
+    getFilteredRegistry: (pageType?: string) => {
+        const { registry, pageTypeRenderers } = get();
+        if (!pageType) return registry;
+        const renderer = pageTypeRenderers[pageType];
+        if (!renderer?.filterRegistry) return registry;
+        return renderer.filterRegistry(registry);
     },
 
     persistLayerStoreConfig: true,
